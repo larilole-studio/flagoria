@@ -282,7 +282,7 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	## castles match the host's from its first frame, including the castle
 	## add_player just placed for this peer (#278).
 	## Placed plank bridges go too (BridgeBuilder.to_sync, #297).
-	## Free-form walls, solved auto junctions and cities follow (#498).
+	## Free-form walls, cities and on-demand buildings follow (#498, #26).
 	## The cut list goes JOIN_CUTS_PER_MESSAGE cuts at a time (#354): the
 	## first part with the params, the rest in receive_join_cuts right after.
 	if world_params == null:
@@ -303,6 +303,7 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	var capture := get_node_or_null("World/TowerCapture")
 	if capture != null:
 		capture.sync_to_peer(peer_id)
+	var generated := get_node_or_null("World/GeneratedBuildings"); if generated != null: generated.sync_to_peer(peer_id)
 	for i in range(1, parts.size()):
 		rpc_id(peer_id, "receive_join_cuts", parts[i])
 
