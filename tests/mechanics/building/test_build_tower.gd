@@ -273,7 +273,7 @@ func _test_construction_tower_cached() -> int:
 		return 1
 	var placer := ConstructionPlacer.new(world)
 	var foot := placer.tower_footprint(anchor)
-	var cached: Structure = placer.get("_tower")
+	var cached: Structure = placer.get("_named").get(BuildCosts.TOWER)
 	if cached == null:
 		printerr("FAIL construction_tower_cached: footprint did not cache the tower")
 		fail += 1
@@ -284,13 +284,13 @@ func _test_construction_tower_cached() -> int:
 			var cells: Array[Vector2i] = [at]
 			placer.tower_footprint(at)
 			placer.can_place_geometry(BuildCosts.TOWER, cells)
-			if placer.get("_tower") != cached:
+			if placer.get("_named").get(BuildCosts.TOWER) != cached:
 				printerr("FAIL construction_tower_cached: anchor change replaced the cached tower")
 				fail += 1
 		var inventory: Inventory = scene.get_node("Inventory")
 		inventory.add(Inventory.WOOD, 10)
 		var one: Array[Vector2i] = [anchor]
-		if not placer.place(BuildCosts.TOWER, one, inventory) or placer.get("_tower") != cached \
+		if not placer.place(BuildCosts.TOWER, one, inventory) or placer.get("_named").get(BuildCosts.TOWER) != cached \
 				or inventory.count_of(Inventory.WOOD) != 0:
 			printerr("FAIL construction_tower_cached: placement did not reuse the cached tower")
 			fail += 1
