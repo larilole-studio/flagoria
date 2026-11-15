@@ -13,6 +13,7 @@ const WALL_BLOCK := &"wall_block"
 const TOWER := &"tower"
 const CASTLE := &"castle"
 const GUARD_POST := &"guard_post"
+const BARRACKS := &"barracks"
 const START_CASTLE := &"start_castle"
 
 ## Kind -> wood for one unit: a plank is one bridge cell, a wall block one
@@ -24,6 +25,7 @@ const WOOD := {
 	TOWER: 10,
 	CASTLE: 50,
 	GUARD_POST: 20,
+	BARRACKS: 30,
 	START_CASTLE: 0,
 }
 ## Share of the cost given back when a build is removed. Nothing removes a

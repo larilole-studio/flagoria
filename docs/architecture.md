@@ -78,10 +78,11 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/mechanics/structures/structure.gd` | Parse hand-drawn structures | moved from `Scripts/structure.gd` (#261) |
 | `Scripts/mechanics/structures/structure_placer.gd` | Check and place a parsed structure on the map, keep placements across redraws | new (#270) |
 | `Scripts/mechanics/building/build_costs.gd` | Wood cost and refund per buildable; buy: check wood, spend, place | new (#272) |
-| `Scripts/mechanics/building/build_placement.gd` | Buildings column of round Plank/Tower/Castle/Guard/Wall buttons, snapped plank/wall and footprint preview via ConstructionPlacer | stays (#225 / #273 / #276, #480, #528) |
+| `Scripts/mechanics/building/build_tool_row.gd` | Buildings-column tool icons, tips, footprint kinds and picker buttons | new (#556) |
+| `Scripts/mechanics/building/build_placement.gd` | Snapped plank/wall and footprint preview via ConstructionPlacer; picker from BuildToolRow | stays (#225 / #273 / #276, #480, #528, #556) |
 | `Scripts/mechanics/building/build_placement_rotate.gd` | Round rotate control beside footprint placement preview | new (#493) |
 | `Scripts/mechanics/building/footprint_orientation.gd` | Rotated facing marker on preview and placed footprint tools | new (#493) |
-| `Scripts/mechanics/building/structure_requests.gd` | Host-request pipeline for towers, castles, guard posts, free-form walls, and a joining peer's starting castle | new (#497, #498, #278, #527, #528) |
+| `Scripts/mechanics/building/structure_requests.gd` | Host-request pipeline for towers, castles, guard posts, barracks, free-form walls, and a joining peer's starting castle | new (#497, #498, #278, #527, #528, #556) |
 | `Scripts/mechanics/building_blocks/building_block_piece.gd` | One WFC modular piece: TileCatalog tile and cardinal edge sockets | new (#23) |
 | `Scripts/mechanics/building_blocks/building_block_catalog.gd` | Piece set, socket compatibility and adjacency table for WFC | new (#23) |
 | `Scripts/mechanics/building_blocks/wfc_solver.gd` | Pure GDScript WFC: collapse, propagate, seeded restarts (#24) | new (#24) |

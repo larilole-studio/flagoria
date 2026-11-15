@@ -26,12 +26,14 @@ const KINDS := {
 	BuildCosts.TOWER: true,
 	BuildCosts.CASTLE: true,
 	BuildCosts.GUARD_POST: true,
+	BuildCosts.BARRACKS: true,
 	BuildCosts.WALL_BLOCK: true,
 }
 
 const TOWER_STRUCTURE := "tower_wood"
 const CASTLE_STRUCTURE := "castle"
 const GUARD_STRUCTURE := "guard_post"
+const BARRACKS_STRUCTURE := "barracks"
 
 const _REASON_ORDER := [
 	EMPTY_CELLS, UNKNOWN_KIND, WRONG_GROUND, OCCUPIED, NOT_STRAIGHT, NOT_ADJACENT,
@@ -60,7 +62,7 @@ func can_place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, q
 		match kind:
 			BuildCosts.PLANK:
 				_check_plank(cells, found)
-			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST:
+			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST, BuildCosts.BARRACKS:
 				_check_named(kind, cells, found, quarter_turns)
 			BuildCosts.WALL_BLOCK:
 				_check_wall(cells, found)
@@ -84,7 +86,7 @@ func can_place_geometry(kind: StringName, cells: Array[Vector2i], quarter_turns:
 		match kind:
 			BuildCosts.PLANK:
 				_check_plank(cells, found)
-			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST:
+			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST, BuildCosts.BARRACKS:
 				_check_named(kind, cells, found, quarter_turns)
 			BuildCosts.WALL_BLOCK:
 				_check_wall(cells, found)
@@ -158,7 +160,7 @@ func place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quart
 	match kind:
 		BuildCosts.PLANK:
 			return _place_plank(cells, inventory)
-		BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST:
+		BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST, BuildCosts.BARRACKS:
 			return _place_named(kind, cells, inventory, quarter_turns)
 		BuildCosts.WALL_BLOCK:
 			return _place_wall(cells, inventory)
@@ -174,6 +176,8 @@ static func named_structure_file(kind: StringName) -> String:
 			return CASTLE_STRUCTURE
 		BuildCosts.GUARD_POST:
 			return GUARD_STRUCTURE
+		BuildCosts.BARRACKS:
+			return BARRACKS_STRUCTURE
 	return ""
 
 
@@ -208,7 +212,8 @@ func guard_footprint(anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vec
 
 
 func _units(kind: StringName, cells: Array) -> int:
-	return 1 if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST else cells.size()
+	return 1 if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE \
+			or kind == BuildCosts.GUARD_POST or kind == BuildCosts.BARRACKS else cells.size()
 
 
 func _place_wall(cells: Array[Vector2i], inventory: Inventory) -> bool:
