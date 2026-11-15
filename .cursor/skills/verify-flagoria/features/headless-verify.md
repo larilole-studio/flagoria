@@ -14,7 +14,7 @@ Headless verify checks file sizes, opens the Godot 4.7 project, parses every GDS
 - `verify-audio` runs `res://tools/audio_check.gd` with `--audio-driver Dummy` and requires `AUDIO_CHECK_OK`. It drives the player scene through a timeline and fails when an expected sound is not heard, a step is silent or too loud, or the mix clips. On failure, see `artifacts/out/audio_check.png`.
 - `verify-generators` runs `res://tools/generator_smoke.gd` and requires `GENERATOR_SMOKE_OK`. It checks the committed hero sheet, app icon and main menu theme. When `python3` with Pillow is available, verify first regenerates the hero sheet with `tools/hero/make_hero.py` into the run's temp dir and passes it as `--hero-sheet=`, which must match the committed sheet pixel for pixel; otherwise it prints `Hero regeneration: skipped` and checks only the committed art.
 - `verify-map-render` runs `res://tools/cli.gd -- map render --seed 42` and compares the text render to `tests/golden/map_render_seed42.txt`. On a mismatch it fails and prints the diff; when the change is intended, regenerate with the same command plus `--out tests/golden/map_render_seed42.txt`. The CLI is in [Map characterization](./map-characterization.md).
-- `verify-runner-self` the runner's own checks: `test_smoke_true` and `test_discovery_messages` (a misnamed or indented test function is reported by line, and `--only=` points at that warning).
+- `verify-runner-self` the runner's own check: `test_discovery_messages` (a misnamed or indented test function is reported by line, and `--only=` points at that warning).
 
 Each step's log is a temp file inside the run's own temp dir, which is removed on exit, including after Ctrl-C (exit 130) or SIGTERM (exit 143).
 
