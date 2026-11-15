@@ -9,7 +9,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `project.godot` | Main scene `flagoria_main.tscn`, and six autoloads: `MapGen` (`Scripts/map_gen.gd`), `AudioSettings` (`Scripts/audio_settings.gd`), `GameSettings` (`Scripts/game_settings.gd`), `HudLayout` (`Scripts/hud_layout.gd`), `MusicPlayer` (`Scripts/music_player.gd`), `UiSfx` (`Scripts/ui_sfx.gd`). |
 | `flagoria_main.tscn` + `flagoria_main.gd` | The game: main menu, HUD, `World/worldMap` (the `TileMap`), `World/Mobs`, `World/Interaction`, `Inventory`, `Points`, `Discovery`. Host, join, the dedicated server (`-- --server`), player spawn and the map-parameter sync. |
 | `tests/run_tests.gd` | Headless test runner (`--only`, `--list`). It finds every `tests/**/test_*.gd` file; see `tests/README.md`. |
-| `tools/verify.sh` | What CI's verify job runs: import, parse every script, run every test. |
+| `tools/verify.sh` | What CI's verify job runs: import, parse every script in one process (`tools/parse_scripts.gd`), run every test. |
 | `tools/cli.gd` | Headless map commands (`map render`, `map stats`, in `tools/map_cli.gd`). |
 
 ## Main data flows
@@ -39,7 +39,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `addons/server_shutdown/` | Linux SIGTERM helper for `-- --server` only. |
 | `Dockerfile`, `docker-compose.yml`, `docker/` | Non-root dedicated-server image. The game is not rebuilt there beyond Godot's import. |
 | `tests/` | Runner (`tests/run_tests.gd`, plus its own self-checks), area test files (`tests/<area>/test_*.gd`), shared helpers (`tests/helpers/test_helpers.gd`), probes started as separate processes, `tests/fixtures/`, `tests/golden/`. |
-| `tools/` | Verify, CLI, renders, asset generators, CI helpers (`tools/pr_hygiene.py`, `tools/private_server_doc.py`, `tools/file_budget.py`, `tools/play_review_paths.py`, `tools/verify_drive_picks.py`, `tools/stress_netcode.py`, `tools/stress_scenario_lint.py`, `tools/ci_job_times.py`, `tools/issue_triage.py`, `tools/required_checks.py`), and local git hooks (`tools/commit_identity_hook.py`, `tools/staged_import_hook.py`). |
+| `tools/` | Verify, CLI, renders, asset generators, CI helpers (`tools/pr_hygiene.py`, `tools/private_server_doc.py`, `tools/file_budget.py`, `tools/play_review_paths.py`, `tools/verify_drive_picks.py`, `tools/stress_netcode.py`, `tools/stress_scenario_lint.py`, `tools/ci_job_times.py`, `tools/issue_triage.py`, `tools/required_checks.py`, `tools/parse_scripts.gd`), and local git hooks (`tools/commit_identity_hook.py`, `tools/staged_import_hook.py`). |
 | `.github/workflows/` | verify, pr-hygiene, play-review-label, play-review, pr-debug-apk, android-apk, job-times, issue-triage. |
 | `.cursor/skills/verify-flagoria/` | Launch, doctor and drive scripts, and one feature file per feature under `.cursor/skills/verify-flagoria/features/`. |
 | `docs/` | Feature and process notes, e.g. `docs/interactables.md` (checklist for a new choppable type). |
