@@ -7,7 +7,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | Entry | What starts there |
 |---|---|
 | `project.godot` | Main scene `flagoria_main.tscn`, and six autoloads: `MapGen` (`Scripts/map_gen.gd`), `AudioSettings` (`Scripts/audio_settings.gd`), `GameSettings` (`Scripts/game_settings.gd`), `HudLayout` (`Scripts/hud_layout.gd`), `MusicPlayer` (`Scripts/music_player.gd`), `UiSfx` (`Scripts/ui_sfx.gd`). |
-| `flagoria_main.tscn` + `flagoria_main.gd` | The game: main menu, HUD, `World/worldMap` (the `TileMap`), `World/Mobs`, `World/Interaction`, `World/RangedShots`, `Inventory`, `Points`, `Discovery`. Host, join, the dedicated server (`-- --server`), player spawn and the map-parameter sync. |
+| `flagoria_main.tscn` + `flagoria_main.gd` | The game: main menu, HUD, `World/worldMap` (the `TileMap`), `World/Mobs`, `World/Interaction`, `World/RangedShots`, `Inventory`, `Points`, `Discovery`. Host, join, the dedicated server (`-- --server`), player spawn and the map-parameter sync. Join re-dials in `Scripts/join_dial.gd`. |
 | `tests/run_tests.gd` | Headless test runner (`--only`, `--list`). It finds every `tests/**/test_*.gd` file; see `tests/README.md`. |
 | `tools/verify.sh` | What CI's verify job runs: import, parse every script in one process (`tools/parse_scripts.gd`), run every test. |
 | `tools/cli.gd` | Headless map commands (`map render`, `map stats`, in `tools/map_cli.gd`). |
