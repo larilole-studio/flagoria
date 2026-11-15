@@ -267,3 +267,160 @@ func _test_mob_sheet_swap() -> int:
 	if fail == 0:
 		print("PASS test_mob_sheet_swap (%s types)" % MobCatalog.names().size())
 	return fail
+
+
+func _test_mob_band_plan() -> int:
+	## Ambient placement is a pure function of the seed: the ring, the chase
+	## pin, and the caps. Seed 11. About 0.5 s.
+	print("-- test_mob_band_plan")
+	var scene = load("res://flagoria_main.tscn").instantiate()
+	root.add_child(scene)
+	var world = scene.get_node("World/worldMap")
+	world.apply_map_params(_spawn_params(11, 0.0))
+	var player := _band_grass(world)
+	var fail := 0
+	var one := MobSpawner.ambient_caps(1.0)
+	var two := MobSpawner.ambient_caps(2.0)
+	if one != {"per_player": 10, "total": 30} or two != {"per_player": 20, "total": 60}:
+		printerr("FAIL mob_band_plan caps 1x %s 2x %s" % [one, two])
+		fail += 1
+	var mob: Mob = load("res://Mobs/mob.tscn").instantiate()
+	if mob.pinned():
+		printerr("FAIL mob_band_plan an idle mob is pinned")
+		fail += 1
+	mob.state = Mob.State.CHASE
+	if not mob.pinned():
+		printerr("FAIL mob_band_plan a chasing mob is not pinned")
+		fail += 1
+	mob.free()
+	var none: Dictionary = MobSpawner.plan_tick(world, [], [{"name": "mob_0", "cell": player, "pinned": false}], 11, 0, 1.0)
+	if not none["spawn"].is_empty() or not none["despawn"].is_empty():
+		printerr("FAIL mob_band_plan empty players changed the wave: %s" % none)
+		fail += 1
+	var open_a: Dictionary = MobSpawner.plan_tick(world, [player], [], 11, 0, 1.0)
+	var open_b: Dictionary = MobSpawner.plan_tick(world, [player], [], 11, 0, 1.0)
+	if open_a != open_b:
+		printerr("FAIL mob_band_plan the same arguments differed")
+		fail += 1
+	if open_a["spawn"].is_empty():
+		printerr("FAIL mob_band_plan seed 11 spawned nothing around %s" % player)
+		fail += 1
+	var seen := {}
+	var chunks := {}
+	for item in open_a["spawn"]:
+		var name := str(item["name"])
+		var cell: Vector2i = item["cell"]
+		var tail := name.trim_prefix("mob_a_")
+		if not name.begins_with("mob_a_") or not tail.is_valid_int():
+			printerr("FAIL mob_band_plan name %s is not mob_a_N" % name)
+			fail += 1
+		if seen.has(name):
+			printerr("FAIL mob_band_plan duplicate %s" % name)
+			fail += 1
+		seen[name] = true
+		if not _band_cell_ok(world, cell, [player], str(item["type"])):
+			printerr("FAIL mob_band_plan %s %s at %s is outside the band" % [name, item["type"], cell])
+			fail += 1
+		if not _band_lowest(world, cell, player, 11):
+			printerr("FAIL mob_band_plan %s is not the lowest rank in its chunk" % cell)
+			fail += 1
+		var chunk := _band_chunk(cell)
+		chunks[chunk] = int(chunks.get(chunk, 0)) + 1
+		if int(chunks[chunk]) > MobSpawner.PER_CHUNK_CAP:
+			printerr("FAIL mob_band_plan chunk %s has %s spawns" % [chunk, chunks[chunk]])
+			fail += 1
+	if open_a["spawn"].size() > int(one["per_player"]) or open_a["spawn"].size() > int(one["total"]):
+		printerr("FAIL mob_band_plan spawned %s over the cap %s" % [open_a["spawn"].size(), one])
+		fail += 1
+	var pinned := {"name": "mob_0", "cell": player + Vector2i(0, 80), "pinned": true}
+	var loose := {"name": "mob_1", "cell": player + Vector2i(80, 0), "pinned": false}
+	var close := {"name": "mob_2", "cell": player + Vector2i(3, 0), "pinned": false}
+	var moved: Dictionary = MobSpawner.plan_tick(world, [player], [pinned, loose, close], 11, 1, 1.0)
+	if moved["despawn"].has("mob_0") or not moved["despawn"].has("mob_1") or moved["despawn"].has("mob_2"):
+		printerr("FAIL mob_band_plan despawn %s (pin stays, far unpinned goes, near stays)" % moved["despawn"])
+		fail += 1
+	var fillers: Array = []
+	for i in int(one["per_player"]):
+		fillers.append({"name": "mob_%d" % i, "cell": player + Vector2i(20, 0), "pinned": false})
+	var capped: Dictionary = MobSpawner.plan_tick(world, [player], fillers, 11, 2, 1.0)
+	if not capped["spawn"].is_empty() or not capped["despawn"].is_empty():
+		printerr("FAIL mob_band_plan per-player cap still spawned %s despawned %s" % [capped["spawn"], capped["despawn"]])
+		fail += 1
+	var globe: Array = []
+	var filler_at := player + Vector2i(60, 0)
+	if chunks.has(_band_chunk(filler_at)) and chunks.size() == 1:
+		filler_at = player + Vector2i(0, 60)
+	for i in int(one["total"]):
+		globe.append({"name": "hold_%d" % i, "cell": filler_at, "pinned": false})
+	var full: Dictionary = MobSpawner.plan_tick(world, [player], globe, 11, 3, 1.0)
+	if not full["spawn"].is_empty() or not full["despawn"].is_empty():
+		printerr("FAIL mob_band_plan global cap still spawned %s despawned %s" % [full["spawn"], full["despawn"]])
+		fail += 1
+	var wider: Dictionary = MobSpawner.plan_tick(world, [player], fillers, 11, 2, 2.0)
+	if wider["spawn"].is_empty() and chunks.size() > 1:
+		printerr("FAIL mob_band_plan rate 2 did not use the raised per-player cap")
+		fail += 1
+	var other := player + Vector2i(8, 0)
+	var both: Dictionary = MobSpawner.plan_tick(world, [player, other], [], 11, 4, 1.0)
+	for item in both["spawn"]:
+		if not _band_cell_ok(world, item["cell"], [player, other], str(item["type"])):
+			printerr("FAIL mob_band_plan two players: %s at %s breaks the band" % [item["name"], item["cell"]])
+			fail += 1
+	if both != MobSpawner.plan_tick(world, [player, other], [], 11, 4, 1.0):
+		printerr("FAIL mob_band_plan two-player plan was not stable")
+		fail += 1
+	scene.queue_free()
+	if fail == 0:
+		print("PASS test_mob_band_plan (%s spawns around %s)" % [open_a["spawn"].size(), player])
+	return fail
+
+
+func _band_grass(world: TileMap) -> Vector2i:
+	for r in 48:
+		for x in range(-r, r + 1):
+			for y in range(-r, r + 1):
+				if maxi(absi(x), absi(y)) != r:
+					continue
+				var cell := Vector2i(x, y)
+				if MobSpawner.is_home_cell(world, cell, MobCatalog.HOME_GRASS):
+					return cell
+	return Vector2i.ZERO
+
+
+func _band_chunk(cell: Vector2i) -> Vector2i:
+	return Vector2i(floori(float(cell.x) / 32.0), floori(float(cell.y) / 32.0))
+
+
+func _band_rank(cell: Vector2i, seed_value: int) -> int:
+	return hash(Vector3i(cell.x, cell.y, seed_value)) & 0x7FFFFFFF
+
+
+func _band_cell_ok(world: TileMap, cell: Vector2i, players: Array, type: String) -> bool:
+	var home: int = MobCatalog.stat(type, "home")
+	if not MobSpawner.is_home_cell(world, cell, home):
+		return false
+	var near := false
+	for p in players:
+		var at: Vector2i = p
+		var d := maxi(absi(cell.x - at.x), absi(cell.y - at.y))
+		if d <= MobSpawner.SPAWN_MIN_RADIUS:
+			return false
+		if d <= MobSpawner.SPAWN_MAX_RADIUS:
+			near = true
+	return near
+
+
+func _band_lowest(world: TileMap, cell: Vector2i, player: Vector2i, seed_value: int) -> bool:
+	var rank := _band_rank(cell, seed_value)
+	var origin := _band_chunk(cell) * MobSpawner.CHUNK
+	for y in MobSpawner.CHUNK:
+		for x in MobSpawner.CHUNK:
+			var other := origin + Vector2i(x, y)
+			var d := maxi(absi(other.x - player.x), absi(other.y - player.y))
+			if d <= MobSpawner.SPAWN_MIN_RADIUS or d > MobSpawner.SPAWN_MAX_RADIUS:
+				continue
+			if MobSpawner.home_kind(world, other) < 0:
+				continue
+			if _band_rank(other, seed_value) < rank:
+				return false
+	return true
