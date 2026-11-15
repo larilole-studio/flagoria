@@ -8,7 +8,7 @@ extends RefCounted
 ## #297 / #497 / #498). Preview green cells and cost match exactly what
 ## commit places and charges. Wall keeps a persistent tip while selected (#276).
 
-enum Tool { CUT, PLANK, TOWER, CASTLE, WALL }
+enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL }
 
 const VALID_TINT := Color(0.2, 0.85, 0.3, 0.42)
 const INVALID_TINT := Color(0.92, 0.22, 0.18, 0.48)
@@ -21,15 +21,21 @@ const TOOL_ICONS := {
 	Tool.PLANK: preload("res://art/ui/ui_tool_plank.png"),
 	Tool.TOWER: preload("res://art/ui/ui_tool_tower.png"),
 	Tool.CASTLE: preload("res://art/ui/ui_tool_castle.png"),
+	Tool.GUARD: preload("res://art/ui/ui_tool_guard.png"),
 	Tool.WALL: preload("res://art/ui/ui_tool_wall.png"),
+}
+const FOOTPRINT_KIND := {
+	Tool.TOWER: BuildCosts.TOWER,
+	Tool.CASTLE: BuildCosts.CASTLE,
+	Tool.GUARD: BuildCosts.GUARD_POST,
 }
 const TOOL_TIPS := {
 	Tool.CUT: "Cut", Tool.PLANK: "Plank", Tool.TOWER: "Tower", Tool.CASTLE: "Castle",
-	Tool.WALL: "Wall",
+	Tool.GUARD: "Guard post", Tool.WALL: "Wall",
 }
 const BUTTON_NAMES := {
 	Tool.PLANK: "PlankButton", Tool.TOWER: "TowerButton", Tool.CASTLE: "CastleButton",
-	Tool.WALL: "WallButton",
+	Tool.GUARD: "GuardButton", Tool.WALL: "WallButton",
 }
 const BUILDINGS_ICON := preload("res://assets/ui/hud/icon_buildings.png")
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
@@ -88,7 +94,7 @@ func setup(interaction: Interaction) -> void:
 
 
 static func is_footprint_tool(value: Tool) -> bool:
-	return value == Tool.TOWER or value == Tool.CASTLE
+	return FOOTPRINT_KIND.has(value)
 
 
 func set_tool(value: Tool) -> void:
@@ -165,11 +171,8 @@ func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 		clear_preview()
 		return
 	cost_viewport = end_viewport
-	if tool == Tool.TOWER:
-		_update_footprint_preview(end_viewport, inventory, BuildCosts.TOWER)
-		return
-	if tool == Tool.CASTLE:
-		_update_footprint_preview(end_viewport, inventory, BuildCosts.CASTLE)
+	if FOOTPRINT_KIND.has(tool):
+		_update_footprint_preview(end_viewport, inventory, FOOTPRINT_KIND[tool])
 		return
 	if tool == Tool.WALL:
 		_update_wall_preview(start_viewport, end_viewport, inventory)
@@ -198,10 +201,8 @@ func commit() -> bool:
 		clear_preview()
 		return false
 	var ok := false
-	if tool == Tool.TOWER:
-		ok = _commit_footprint(inventory, BuildCosts.TOWER)
-	elif tool == Tool.CASTLE:
-		ok = _commit_footprint(inventory, BuildCosts.CASTLE)
+	if FOOTPRINT_KIND.has(tool):
+		ok = _commit_footprint(inventory, FOOTPRINT_KIND[tool])
 	elif tool == Tool.PLANK:
 		ok = _commit_plank(inventory)
 	elif tool == Tool.WALL:
@@ -294,10 +295,7 @@ func _update_footprint_preview(end_viewport: Vector2, inventory: Inventory, kind
 	if _preview_inputs_unchanged(anchor, anchor, inventory):
 		return
 	_remember_preview_inputs(anchor, anchor, inventory)
-	if kind == BuildCosts.TOWER:
-		cells = _placer.tower_footprint(anchor, _rotate.quarter_turns)
-	else:
-		cells = _placer.castle_footprint(anchor, _rotate.quarter_turns)
+	cells = _placer.footprint_of(kind, anchor, _rotate.quarter_turns)
 	cell_ok.clear()
 	var one: Array[Vector2i] = [anchor]
 	var placeable := false
@@ -371,7 +369,7 @@ func _ensure_picker() -> void:
 	for child in _picker.get_children():
 		child.queue_free()
 	_buttons.clear()
-	for t in [Tool.PLANK, Tool.TOWER, Tool.CASTLE, Tool.WALL]:
+	for t in [Tool.PLANK, Tool.TOWER, Tool.CASTLE, Tool.GUARD, Tool.WALL]:
 		var button := Button.new()
 		button.name = BUTTON_NAMES[t]
 		button.toggle_mode = true
