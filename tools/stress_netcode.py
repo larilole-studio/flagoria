@@ -122,7 +122,7 @@ SCENARIO_WORST_S = {
     "test_flags_held_off_in_multiplayer": 4.2,
     "test_ingame_menu_leave": 8.8,
     "test_interact_in_multiplayer": 3.9,
-    "test_join_fail_host_quits": 8.4,
+    "test_join_fail_host_quits": 12.0,
     "test_join_fail_no_host": 10.3,
     "test_join_port_dedicated": 5.9,
     "test_land_score_client_skips": 4.1,

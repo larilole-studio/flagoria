@@ -24,5 +24,5 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_no_host` ~1–3 s in
 
 ## Gotchas
 
-- The client peer timeout is capped (`set_timeout(8, 800, 3000)`) so a dead join fails within about 3 s instead of ENet's longer default.
-- `leave_to_main_menu` reloads the current scene; the host-quits check runs in `tests/join_fail_probe.gd` as its own process (same pattern as `test_ingame_menu_leave`).
+- An unanswered dial times out quickly (`set_timeout(8, 800, 3000)`), so a join with nobody listening fails within about 3 s. After the server accepts the peer, a lost host is noticed within about 6 s (`set_timeout(8, 4000, 5500)`), which still outlasts a server frame that places a castle.
+- `leave_to_main_menu` reloads the current scene; the host-quits check runs in `tests/join_fail_probe.gd` as its own process (same pattern as `test_ingame_menu_leave`). That probe dials only after the server log says it is listening, so a slow boot is not treated as an unanswered dial.

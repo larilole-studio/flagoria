@@ -55,7 +55,9 @@ func _test_join_fail_no_host() -> int:
 func _test_join_fail_host_quits() -> int:
 	## A client whose host process exits lands back on the main menu. Runs
 	## tests/join_fail_probe.gd in its own process (leave reloads the current
-	## scene). Time cost: ~3–6 s in verify (~8 s alone with --only=).
+	## scene). The probe dials after the server log says it is listening, so
+	## a slow boot does not burn the unanswered-join timeout. Time cost:
+	## ~6–8 s in verify (~12 s alone with --only=).
 	print("-- test_join_fail_host_quits")
 	var port := _free_udp_port()
 	if port == 0:
