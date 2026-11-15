@@ -412,6 +412,9 @@ func add_player_joined(port: int = PORT):
 	multiplayer.multiplayer_peer = enet_peer
 	_ensure_join_signals()
 	# Fail faster than ENet's default when nothing answers (#348 tests).
+	# A live session restores the defaults in _relax_join_timeout: this floor
+	# is only for the dial. Once the server has accepted the peer, a join
+	# can spend a frame placing a castle, and 800 ms drops that peer.
 	var peer := enet_peer.get_peer(1)
 	if peer != null:
 		peer.set_timeout(8, 800, 3000)
@@ -424,6 +427,17 @@ func _ensure_join_signals() -> void:
 		multiplayer.connection_failed.connect(_on_connection_failed)
 	if not multiplayer.server_disconnected.is_connected(_on_server_disconnected):
 		multiplayer.server_disconnected.connect(_on_server_disconnected)
+	if not multiplayer.connected_to_server.is_connected(_relax_join_timeout):
+		multiplayer.connected_to_server.connect(_relax_join_timeout)
+
+
+func _relax_join_timeout() -> void:
+	## The short timeout in add_player_joined is for a dial nobody answers.
+	## ENet's own defaults (limit 32, 5 s floor, 30 s cap) apply once this
+	## peer is in the match, so a busy server frame cannot drop it.
+	var peer := enet_peer.get_peer(1)
+	if peer != null:
+		peer.set_timeout(32, 5000, 30000)
 
 
 func _on_connection_failed() -> void:

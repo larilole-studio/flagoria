@@ -91,6 +91,13 @@ func _run() -> void:
 	var deadline := Time.get_ticks_msec() + 90000
 	var next_write := 0
 	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):
+		# A dropped peer reloads the main scene and frees World. Leaving the
+		# loop on that error used to skip quit(), so the process held the
+		# stress runner's pipe until the job timed out.
+		if not is_instance_valid(world):
+			printerr("late_join_probe: world freed, peer %s left the match" % _id)
+			quit(1)
+			return
 		var me: Node = world.get_node_or_null(str(_id))
 		if me and not me.health.respawned.is_connected(_on_respawned):
 			me.health.respawned.connect(_on_respawned)
