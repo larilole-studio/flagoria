@@ -180,6 +180,19 @@ func reset_to_defaults() -> void:
 	_edit_exclusion = Rect2()
 	if FileAccess.file_exists(save_path):
 		DirAccess.remove_absolute(save_path)
+	_flush_default_layout()
+
+
+func _flush_default_layout() -> void:
+	var scene := get_tree().root.get_node_or_null("Flagoria")
+	if scene == null:
+		return
+	var layer := scene.get_node_or_null("CanvasLayer1") as CanvasLayer
+	if layer == null:
+		return
+	var row := layer.get_node_or_null("HudToolRow") as HudToolRow
+	if row != null:
+		row.restore_defaults(layer)
 
 
 func forget_memory() -> void:

@@ -27,6 +27,16 @@ func _hud_layout_active() -> bool:
 	return hl != null and hl.layout_active()
 
 
+func _status_sibling(node_name: String) -> Node:
+	var node := get_node_or_null(NodePath("../" + node_name))
+	if node != null:
+		return node
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
+	if plate != null:
+		return plate.get_node_or_null(node_name)
+	return null
+
+
 func _follow_score() -> void:
 	var hl := get_node_or_null("/root/HudLayout")
 	if hl != null and hl.layout_active():
@@ -39,8 +49,8 @@ func _follow_score() -> void:
 		position = HudToolRow.LAYOUT["scores"] - inset * k
 		set_anchors_preset(Control.PRESET_TOP_LEFT)
 	else:
-		var score := get_node_or_null("../ScoreHud") as Control
-		var hearts := get_node_or_null("../HeartsHud") as Control
+		var score := _status_sibling("ScoreHud") as Control
+		var hearts := _status_sibling("HeartsHud") as Control
 		if score == null:
 			return
 		var k := hearts.scale.x if hearts != null else 1.0
@@ -81,10 +91,15 @@ static func layout_hit_rect(layer: CanvasLayer) -> Rect2:
 		var ready := toggle.get_global_rect()
 		if ready.size.x > 0.0:
 			return ready
+	var plate := layer.get_node_or_null("StatusPlate") as StatusPlateHud
 	var hearts := layer.get_node_or_null("HeartsHud") as Control
+	if hearts == null and plate != null:
+		hearts = plate.get_node_or_null("HeartsHud") as Control
 	if hearts == null:
 		return Rect2()
 	var score := layer.get_node_or_null("ScoreHud") as Control
+	if score == null and plate != null:
+		score = plate.get_node_or_null("ScoreHud") as Control
 	var k := maxf(hearts.scale.x, 0.001)
 	var hit := RoundHudStyle.HIT * k
 	var score_w := 36.0 * k

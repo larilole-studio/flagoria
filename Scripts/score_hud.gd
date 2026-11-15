@@ -17,12 +17,14 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if get_parent() is StatusPlateHud:
+		return
 	follow_hearts()
 
 
 func follow_hearts() -> void:
 	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
-	if plate != null:
+	if plate != null and plate.visible:
 		return
 	var hearts := get_node_or_null("../HeartsHud") as Control
 	if hearts == null:

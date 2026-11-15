@@ -31,6 +31,10 @@ func _process(_delta: float) -> void:
 	_layout()
 
 
+func restore_defaults(layer: Node) -> void:
+	_restore_touch_defaults(layer)
+
+
 func _layout() -> void:
 	var layer := get_parent()
 	if layer == null:
@@ -86,11 +90,21 @@ func _place_column(layer: Node) -> void:
 		_place_buildings(layer, buildings)
 
 
+func _status_node(layer: Node, node_name: String) -> Node:
+	var node := layer.get_node_or_null(node_name)
+	if node != null:
+		return node
+	var plate := layer.get_node_or_null("StatusPlate") as StatusPlateHud
+	if plate != null:
+		return plate.get_node_or_null(node_name)
+	return null
+
+
 func _place_status(layer: Node) -> void:
 	var plate := layer.get_node_or_null("StatusPlate") as StatusPlateHud
-	var hearts := layer.get_node_or_null("HeartsHud") as Control
-	var score := layer.get_node_or_null("ScoreHud") as Label
-	var wood := layer.get_node_or_null("ResourceHud") as ResourceHud
+	var hearts := _status_node(layer, "HeartsHud") as Control
+	var score := _status_node(layer, "ScoreHud") as Label
+	var wood := _status_node(layer, "ResourceHud") as ResourceHud
 	var scores := layer.get_node_or_null("ScoreboardToggle") as Button
 	if plate != null and hearts != null and score != null and wood != null:
 		plate.bind_nodes(hearts, score, wood)

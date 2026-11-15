@@ -87,16 +87,15 @@ func _process(delta: float) -> void:
 
 
 func _fit_pixel_scale() -> void:
-	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
+	if get_parent() is StatusPlateHud:
+		scale = Vector2.ONE
+		return
 	var stretch := get_viewport().get_final_transform().get_scale().x
 	if stretch <= 0.0:
 		return
 	var k := maxf(roundf(stretch), 1.0) / stretch
 	scale = Vector2(k, k)
-	if plate != null:
-		return
-	else:
-		position = Vector2(MARGIN, MARGIN) * k
+	position = Vector2(MARGIN, MARGIN) * k
 
 
 func _draw() -> void:

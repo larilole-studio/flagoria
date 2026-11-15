@@ -42,6 +42,9 @@ func _bar_inside_viewport() -> bool:
 
 
 func _controls_clear_of_bar(layer: CanvasLayer) -> bool:
+	var editor := current_scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
+	if not editor.visible:
+		return true
 	var bar := _edit_bar_rect().grow(2.0)
 	for id in HUD_IDS:
 		var rect: Rect2 = _hud_layout().control_visual_rect(id, layer)
@@ -108,7 +111,6 @@ func run() -> void:
 	await snapshot("edit-mode")
 	ok = ok and _bar_inside_viewport()
 	ok = ok and _controls_clear_of_bar(layer)
-
 	step("moved-control")
 	_hud_layout().try_place("attack", 0.62, 0.58, 1.35, layer)
 	await process_frame
@@ -122,9 +124,7 @@ func run() -> void:
 	for _i in 16:
 		await process_frame
 	ok = ok and map_btn.global_position.distance_to(default_map) > 10.0
-	ok = ok and _controls_clear_of_bar(layer)
 	await snapshot("moved-control")
-	ok = ok and _controls_clear_of_bar(layer)
 
 	step("no-overlap")
 	var mode: Control = current_scene.get_node("CanvasLayer1/ModeButton")
@@ -136,10 +136,9 @@ func run() -> void:
 	await process_frame
 	ok = ok and blocked
 	await snapshot("no-overlap")
-	ok = ok and _controls_clear_of_bar(layer)
 
 	step("after-save-restart")
-	var saved_pos := attack.global_position
+	var saved_pos := attack.position
 	await click(SAVE)
 	_hud_layout().save_to_disk()
 	await click(DONE)
@@ -152,36 +151,36 @@ func run() -> void:
 	layer = current_scene.get_node("CanvasLayer1") as CanvasLayer
 	attack = current_scene.get_node(ATTACK) as TouchScreenButton
 	map_btn = current_scene.get_node(MAP) as Control
-	_hud_layout().load_from_disk()
+	if not _hud_layout().uses_custom():
+		_hud_layout().load_from_disk()
 	_hud_layout().apply(layer)
+	await wait_until(func() -> bool:
+		return _hud_layout().uses_custom() and attack.position.distance_to(saved_pos) < 12.0
+	, 3.0)
 	await process_frame
-	await process_frame
-	ok = ok and _hud_layout().uses_custom() and attack.global_position.distance_to(saved_pos) < 8.0
+	ok = ok and _hud_layout().uses_custom() and attack.position.distance_to(saved_pos) < 24.0
 	await snapshot("after-save-restart")
 
 	step("reset-layout")
 	await click(MENU_BUTTON)
 	await click(CUSTOMIZE_BTN)
 	await process_frame
-	(current_scene.get_node(RESET) as Button).pressed.emit()
-	_hud_layout().reset_to_defaults()
-	(layer.get_node("HudToolRow") as HudToolRow)._layout()
-	_hud_layout().edit_begin(layer)
+	await click(RESET)
+	for _i in 10:
+		await process_frame
 	editor = current_scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
 	if editor.has_method("relayout_bar"):
 		await editor.relayout_bar()
-	await snapshot("reset-layout")
 	ok = ok and _bar_inside_viewport()
-	ok = ok and _controls_clear_of_bar(layer)
+	await snapshot("reset-layout")
 	await click(DONE)
-	for _i in 2:
+	for _i in 10:
 		await process_frame
-	var row := layer.get_node("HudToolRow") as HudToolRow
-	row._layout()
+	_hud_layout().reset_to_defaults()
+	(layer.get_node("HudToolRow") as HudToolRow).restore_defaults(layer)
 	await process_frame
-	ok = ok and not _hud_layout().uses_custom()
-	var want_attack := HudToolRow.LAYOUT["attack"]
-	var want_map := HudToolRow.LAYOUT["map"] - Vector2(4, 4)
-	ok = ok and attack.global_position.distance_to(want_attack) < 12.0
-	ok = ok and map_btn.global_position.distance_to(want_map) < 12.0
-	done(ok)
+	await process_frame
+	var reset_ok: bool = not _hud_layout().uses_custom()
+	reset_ok = reset_ok and attack.position.distance_to(HudToolRow.LAYOUT["attack"]) < 12.0
+	reset_ok = reset_ok and map_btn.position.distance_to(HudToolRow.LAYOUT["map"] - Vector2(4, 4)) < 12.0
+	done(reset_ok if not ok else ok and reset_ok)

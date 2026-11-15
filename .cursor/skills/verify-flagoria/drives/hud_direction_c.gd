@@ -10,7 +10,7 @@ const CUSTOMIZE := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/CustomizeHud
 func run() -> void:
 	if not await start_game():
 		return
-	await _snap_size("hud-1280", 1280, 720)
+	await _resize_window("hud-1280", 1280, 720)
 	step("scores-selected")
 	await click(SCORES)
 	await snapshot("scores-selected")
@@ -22,19 +22,25 @@ func run() -> void:
 	step("bow")
 	await click(BOW)
 	await snapshot("weapon-bow-1280")
+	step("1080p")
+	await _resize_window("hud-1920", 1920, 1080)
+	step("customize")
 	await click(MENU_BUTTON)
 	await click(CUSTOMIZE)
 	var ok := await wait_until(func() -> bool:
 		return root.get_node("HudLayout").editing()
 	, 3.0)
 	await snapshot("hud-disabled-edit")
-	step("1080p")
-	await _snap_size("hud-1920", 1920, 1080)
 	done(ok)
 
 
-func _snap_size(label: String, width: int, height: int) -> void:
+func _resize_window(label: String, width: int, height: int) -> void:
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(Vector2i(width, height))
-	await process_frame
-	await process_frame
+	root.size = Vector2i(width, height)
+	for _i in 12:
+		await process_frame
 	await snapshot(label)
+	if DisplayServer.get_name() != "headless":
+		var img := root.get_texture().get_image()
+		print("drive: %s png %dx%d" % [label, img.get_width(), img.get_height()])

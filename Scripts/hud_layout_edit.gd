@@ -74,7 +74,15 @@ func relayout_bar() -> void:
 
 
 func close_editor() -> void:
+	var layer := _layer()
 	_hl().edit_end()
+	if layer != null:
+		var row := layer.get_node_or_null("HudToolRow") as HudToolRow
+		if row != null:
+			if _hl().uses_custom():
+				_hl().apply(layer)
+			else:
+				row.restore_defaults(layer)
 	_set_pause(false)
 	hide()
 	var menu := get_parent()
@@ -345,7 +353,7 @@ func _on_reset() -> void:
 	_hl().reset_to_defaults()
 	var row := layer.get_node_or_null("HudToolRow") as HudToolRow
 	if row != null:
-		row._layout()
+		row.restore_defaults(layer)
 	_hl().edit_begin(layer)
 	_set_pause(_should_pause_game())
 	_selected = ""
