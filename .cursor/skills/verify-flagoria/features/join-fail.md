@@ -16,7 +16,7 @@ A Join that never connects (wrong address, host not running, port blocked) retur
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_no_host` ~1–3 s in verify (~2 s alone with `--only=`); `join_fail_host_quits` ~3–6 s (probe); live drive ~4 s.
+Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_no_host` ~6 s in verify (~8 s alone with `--only=`); `join_fail_host_quits` ~6–8 s (probe); live drive ~8 s.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_fail_no_host,join_fail_host_quits`, or full `tools/verify.sh`.
 - **Drive (live).** `bin/launch.sh drives/join_fail.gd --display` (## launch: --seed 42). Steps `menu`, `join`: open the main scene, set address `127.0.0.1`, join a free UDP port with nothing listening, wait for the menu and `JoinStatus`, `snapshot("before-join")` then `snapshot("join-failed")`, `done(true)`.
@@ -24,5 +24,5 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_no_host` ~1–3 s in
 
 ## Gotchas
 
-- An unanswered dial times out quickly (`set_timeout(8, 800, 3000)`), so a join with nobody listening fails within about 3 s. After the server accepts the peer, a lost host is noticed within about 6 s (`set_timeout(8, 4000, 5500)`), which still outlasts a server frame that places a castle.
+- One dial stops sending connect packets after about 1.5 s (`set_timeout(8, 800, 3000)`) and then waits out the cap. Join dials again every 1 s for 6 s, so a host that is still starting is contacted, and a join with nobody listening still returns inside 8 s. After the server accepts the peer, a lost host is noticed within about 6 s (`set_timeout(8, 4000, 5500)`). The longest castle placement measured with four joins at once was 331 ms, and a 2 s stall after accept left the peer up.
 - `leave_to_main_menu` reloads the current scene; the host-quits check runs in `tests/join_fail_probe.gd` as its own process (same pattern as `test_ingame_menu_leave`). That probe dials only after the server log says it is listening, so a slow boot is not treated as an unanswered dial.

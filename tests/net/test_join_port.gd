@@ -15,7 +15,7 @@ const STATUS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinStatus"
 func _test_join_port_button() -> int:
 	## Button presses for blank, bare hosts, explicit ports, rejected forms,
 	## and one no-listener port-1 timeout. No second process. Time cost:
-	## ~4 s in verify (the port-1 wait is the ENet timeout, about 3 s).
+	## ~7 s in verify (the port-1 wait is the 6 s dial budget).
 	print("-- test_join_port_button")
 	var fail := 0
 	if JoinAddress.DEFAULT_PORT != Main.PORT:
