@@ -107,7 +107,9 @@ func _place_status(layer: Node) -> void:
 	var wood := _status_node(layer, "ResourceHud") as ResourceHud
 	var scores := layer.get_node_or_null("ScoreboardToggle") as Button
 	if plate != null and hearts != null and score != null and wood != null:
-		plate.bind_nodes(hearts, score, wood)
+		var on_plate := hearts.get_parent() == plate and score.get_parent() == plate and wood.get_parent() == plate
+		if not on_plate:
+			plate.bind_nodes(hearts, score, wood)
 	if scores != null:
 		_pin(scores)
 		RoundHudStyle.apply_scores(scores)
