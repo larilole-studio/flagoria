@@ -113,16 +113,19 @@ NET_LINE = re.compile(r"rpc|multiplayer|peer|authority|replicat|synchroniz|spawn
 # or tests/net file). play-review.yml still runs --self-test and
 # classification; it skips Godot and stress_netcode.py.
 #
-# LIGHT_RUNS (5): pull_request + gameplay paths, but stress_tier() picks the
+# LIGHT_RUNS (4): pull_request + gameplay paths, but stress_tier() picks the
 # light tier — no NETCODE file changed, and no netcode-tagged line in a changed
-# NETCODE_MIXED file (git diff -U0). Roughly 3–10 minutes for the job.
+# NETCODE_MIXED file (git diff -U0). One wave of the 4-at-a-time runner.
+# A 5th run would start a second wave for a single scenario.
 #
-# FULL_RUNS (20): event push (when the matrix runs), or any NETCODE path
+# FULL_RUNS (8): event push (when the matrix runs), or any NETCODE path
 # changed (including STRESS_MATRIX: the runner, the lint, tests/net, and
 # tests/*_probe.gd), or any NETCODE_MIXED path whose changed lines match
 # NET_LINE, or (when --diff is omitted) any NETCODE_MIXED path in the path
-# list. Up to ~25 minutes.
-FULL_RUNS, LIGHT_RUNS = 20, 5
+# list. Two full waves. Each run is still its own Godot process; only the
+# repetition count changed. On the measured main matrix, 20 runs (five waves)
+# made the slowest shard about 20 minutes and every scenario passed 20/20.
+FULL_RUNS, LIGHT_RUNS = 8, 4
 
 
 def _match(path: str, patterns: list[str]) -> bool:

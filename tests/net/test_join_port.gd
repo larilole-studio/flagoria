@@ -175,7 +175,7 @@ func _test_join_port_dedicated() -> int:
 	## 127.0.0.1:port and localhost:port. Each client gets a World player and
 	## the server spawns no player 1. An invalid address on the same menu
 	## does not block the following join. Time cost: ~8 s in verify, and
-	## ~8 s x 20 in netcode stress (one scenario, 4 at a time).
+	## ~8 s x 8 on the full netcode-stress tier (one scenario, 4 at a time).
 	print("-- test_join_port_dedicated")
 	await process_frame
 	var port := _free_udp_port()

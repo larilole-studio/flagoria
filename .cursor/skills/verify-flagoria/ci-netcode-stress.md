@@ -12,16 +12,16 @@ The change is not gameplay and it does not touch the stress matrix: no changed p
 
 `STRESS_MATRIX` is the stress runner (`tools/stress_netcode.py`), the stress lint and its allow list, `tests/net/*`, and `tests/*_probe.gd`. Those paths are not player-facing gameplay, so they do not add the label, a drive, or a debug APK. They do run the full matrix, so a broken runner or probe fails on the pull request that changed it.
 
-## 5 runs per scenario (`LIGHT_RUNS`)
+## 4 runs per scenario (`LIGHT_RUNS`)
 
 - GitHub `event` is `pull_request` (not a push to `main`).
 - At least one gameplay path changed (or `needs-play-review` is present).
 - No file in `NETCODE` changed.
 - For each changed `NETCODE_MIXED` file, no added/removed line in the PR diff matches `NET_LINE` (RPCs, peers, authority, synchronizers, and the other tokens in `play_review_paths.py`).
 
-Typical job time is a few to about ten minutes, depending on scenario count.
+Typical job time is one wave of the 4-at-a-time runner (a few minutes on the measured matrix). Five runs used to start a second wave for a single scenario.
 
-## 20 runs per scenario (`FULL_RUNS`)
+## 8 runs per scenario (`FULL_RUNS`)
 
 Any of:
 
@@ -30,6 +30,8 @@ Any of:
 - A changed `NETCODE_MIXED` file has at least one changed line matching `NET_LINE` in the PR diff.
 
 If `stress_tier()` is called without `--diff`, any changed `NETCODE_MIXED` path counts as netcode (used in self-tests and anywhere diff is not passed). CI on pull requests always passes `--diff`.
+
+Eight runs is two saturated waves. Twenty runs was five waves. On main run 43658274161 every scenario passed 20/20 with no retries, and the slowest shard's stress step was 20 minutes. Two waves keep eight fresh processes per scenario (a separate Godot start each time) and drop that step to about two fifths. The assertions inside each scenario are unchanged. The local default stays 20.
 
 ## Local runs
 
