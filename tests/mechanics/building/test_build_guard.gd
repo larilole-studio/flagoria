@@ -16,7 +16,7 @@ func _test_build_picker_includes_guard() -> int:
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	await process_frame
 	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
-	if picker == null or picker.get_child_count() != 5:
+	if picker == null or picker.get_child_count() != 6:
 		printerr("FAIL build_picker_includes_guard: picker children %s"
 				% [picker.get_child_count() if picker else null])
 		fail += 1

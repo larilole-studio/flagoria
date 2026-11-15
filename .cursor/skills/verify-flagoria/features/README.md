@@ -67,6 +67,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag; multiplayer asks the host (#273, #497).
 - [Build castle](./build-castle.md) — extra `castle.txt` for 50 wood with rotation, save/reload and multiplayer sync (#527).
 - [Build guard post](./build-guard-post.md) — `guard_post.txt` for 20 wood from the build picker, save/reload and multiplayer sync (#528).
+- [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
 - [Footprint rotation](./footprint-rotation.md) — rotate footprint structures before placing; tower today (#493).
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
