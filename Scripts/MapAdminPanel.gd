@@ -23,6 +23,7 @@ var _spin_boxes: Dictionary = {}
 
 func _ready() -> void:
 	_build_extra_controls(get_node("/root/MapGen").params)
+	_build_generate_button()
 	_populate_noise_types()
 	load_from_params(get_node("/root/MapGen").params)
 	# Every number field is typed on an in-game pad instead of the OS keyboard.
@@ -164,6 +165,25 @@ func _on_back_pressed() -> void:
 	get_node("/root/MapGen").save_to_disk()
 	hide()
 	emit_signal("closed")
+
+
+func _build_generate_button() -> void:
+	## Inside the scrolling form, so the pinned Host row stays on screen.
+	var button := Button.new()
+	button.name = "GenerateBuilding"
+	button.text = "Generate building"
+	button.custom_minimum_size = Vector2(160, 24)
+	button.pressed.connect(_on_generate_building_pressed)
+	form.add_child(button)
+
+
+func _on_generate_building_pressed() -> void:
+	## Host only. The placement itself refuses a client. Size and style are
+	## whatever the spins say now, including a value not yet saved with Back.
+	apply_to_params(get_node("/root/MapGen").params)
+	var buildings := get_node_or_null("/root/Flagoria/World/GeneratedBuildings")
+	if buildings != null:
+		buildings.generate_at_player()
 
 
 func _on_start_pressed() -> void:
