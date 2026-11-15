@@ -219,6 +219,7 @@ def self_test() -> int:
         (["tools/stress_netcode.py", "tools/stress_scenario_lint.py"], None, None, False),
         (["tools/stress_scenario_lint_allow.txt"], None, None, False),
         (["tests/wall_sync_probe.gd", "tests/net/test_wall_sync.gd"], None, None, False),
+        (["tests/wall_break_probe.gd", "tests/net/test_wall_break_sync.gd"], None, None, False),
         (["tests/docker_publish_probe.gd"], None, None, False),
         (["Scripts/attack_aim.gd"], None, None, True),
         (["Scripts/aim_cone_style.gd"], None, None, True),
@@ -254,6 +255,8 @@ def self_test() -> int:
         ("pull_request", ["tests/wall_sync_probe.gd"], "", FULL_RUNS),
         ("pull_request", ["tests/net/test_wall_sync.gd"], "", FULL_RUNS),
         ("pull_request", ["tests/net/test_wall_sync.gd.uid"], "", FULL_RUNS),
+        ("pull_request", ["tests/wall_break_probe.gd"], "", FULL_RUNS),
+        ("pull_request", ["tests/net/test_wall_break_sync.gd"], "", FULL_RUNS),
         ("pull_request", ["Scripts/player.gd"], play_net, FULL_RUNS),
         ("pull_request", ["flagoria_main.tscn"], scene_net, FULL_RUNS),
         ("pull_request", ["Scripts/player.gd"], None, FULL_RUNS),
@@ -294,6 +297,8 @@ def self_test() -> int:
         ["tests/wall_sync_probe.gd"],
         ["tests/late_join_probe.gd"],
         ["tests/net/test_wall_sync.gd"],
+        ["tests/wall_break_probe.gd"],
+        ["tests/net/test_wall_break_sync.gd"],
         ["tests/docker_publish_probe.gd"],
     ]
     for paths in matrix_cases:

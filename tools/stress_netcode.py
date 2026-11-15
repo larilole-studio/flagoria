@@ -21,7 +21,7 @@ The first run that fails (after that retry, when there is one) stops the job.
 Remaining runs of that scenario are not started, in-flight runs are killed,
 and later scenarios are not started. The table covers the runs that finished.
 Each run is killed after --timeout seconds (default 60) so one hang cannot
-hold the job. Passing runs on a full matrix have stayed under 20 s.
+hold the job. The slowest passing run on the measured main matrix was 36 s.
 
 Usage:
   python3 tools/stress_netcode.py                  # N=20
@@ -93,10 +93,97 @@ def net_scenarios(sources: list[str]) -> list[str]:
     return [n[1:] for n in bodies if n.startswith("_test_") and n in net]
 
 
+# Worst-run seconds from one full main matrix (20 runs, 4 at a time).
+# Scheduling only: a stale weight still runs every scenario once. A name that
+# is not listed uses DEFAULT_WORST_S. Refresh when a scenario's time moves a lot.
+DEFAULT_WORST_S = 8.0
+SCENARIO_WORST_S = {
+    "test_attack_angle_two_players": 5.3,
+    "test_build_costs_buy": 7.0,
+    "test_build_picker_hides_on_multiplayer_start": 4.3,
+    "test_build_picker_includes_tower": 4.1,
+    "test_build_picker_includes_wall": 6.9,
+    "test_build_sync_two_players": 8.0,
+    "test_castle_build_two_players": 8.3,
+    "test_castle_owners_two_players": 13.6,
+    "test_castle_sync_join": 6.1,
+    "test_cities_client_keeps_list": 4.2,
+    "test_city_change_two_players": 14.5,
+    "test_construction_placer_plank": 4.0,
+    "test_construction_placer_tower": 4.2,
+    "test_construction_placer_wall": 6.8,
+    "test_cut_refused_two_players": 10.5,
+    "test_cut_save_late_join": 5.7,
+    "test_cut_sync_two_players": 14.8,
+    "test_dead_cut_client": 7.6,
+    "test_dedicated_play_round": 9.4,
+    "test_dedicated_server_join": 9.1,
+    "test_dedicated_server_params_file": 6.6,
+    "test_flags_held_off_in_multiplayer": 4.2,
+    "test_ingame_menu_leave": 8.8,
+    "test_interact_in_multiplayer": 3.9,
+    "test_join_fail_host_quits": 8.4,
+    "test_join_fail_no_host": 10.3,
+    "test_join_port_dedicated": 5.9,
+    "test_land_score_client_skips": 4.1,
+    "test_land_score_two_players": 13.5,
+    "test_legacy_save_stays_in_the_list": 3.9,
+    "test_mob_chase_two_players": 6.1,
+    "test_mob_contact_two_players": 8.9,
+    "test_mob_spawn_rate": 5.4,
+    "test_mob_sword_two_players": 8.5,
+    "test_mobs_sync_to_peer": 10.8,
+    "test_player_health_join_while_dead": 3.7,
+    "test_player_health_sync": 4.0,
+    "test_player_respawn_hold_releases": 11.7,
+    "test_player_respawn_no_snapback": 5.4,
+    "test_points_discovery_two_players": 7.9,
+    "test_points_kill_late_join": 11.5,
+    "test_points_mob_kill_once": 4.0,
+    "test_points_scoreboard_four_players": 3.9,
+    "test_points_scoreboard_late_join": 6.5,
+    "test_points_scoreboard_two_players": 3.6,
+    "test_points_sync": 4.0,
+    "test_quit_prompt_on_back": 6.7,
+    "test_regrow_sync_two_players": 14.4,
+    "test_rejoin_sees_every_death": 10.7,
+    "test_run_two_players": 7.4,
+    "test_saved_world_round_trip": 4.2,
+    "test_server_quit": 6.3,
+    "test_spawn_late_join": 36.1,
+    "test_sprout_sync_two_players": 9.9,
+    "test_start_castle": 5.6,
+    "test_structure_place_refused": 7.1,
+    "test_structure_sync_join": 7.7,
+    "test_tower_capture_off_in_multiplayer": 4.1,
+    "test_tower_capture_two_players": 15.0,
+    "test_tower_place_two_players": 9.1,
+    "test_two_player_smoke": 10.5,
+    "test_wall_place_two_players": 14.9,
+    "test_world_save_preview": 4.3,
+}
+
+
+def scenario_weight(name: str) -> float:
+    return SCENARIO_WORST_S.get(name, DEFAULT_WORST_S)
+
+
 def shard_scenarios(names: list[str], shard_index: int, shard_count: int) -> list[str]:
-    """Deterministic split: sorted scenario names, index i goes to shard i % count."""
-    ordered = sorted(names)
-    return [n for i, n in enumerate(ordered) if i % shard_count == shard_index]
+    """Deterministic split. Heaviest weight first, onto the lightest shard.
+
+    Ties go to the lower shard index. Names inside a shard are sorted.
+    Every name is on exactly one shard.
+    """
+    if shard_count < 1:
+        return []
+    loads = [0.0] * shard_count
+    buckets: list[list[str]] = [[] for _ in range(shard_count)]
+    ordered = sorted(names, key=lambda name: (-scenario_weight(name), name))
+    for name in ordered:
+        slot = min(range(shard_count), key=lambda i: (loads[i], i))
+        buckets[slot].append(name)
+        loads[slot] += scenario_weight(name)
+    return sorted(buckets[shard_index])
 
 
 def port_block(slot: int, jobs: int) -> str:
@@ -106,8 +193,8 @@ def port_block(slot: int, jobs: int) -> str:
     return "%d-%d" % (lo, lo + size - 1)
 
 
-# One hung run must not sit for minutes. Full-matrix passes on main have
-# stayed under 20 s; 60 s is the per-run budget above that.
+# One hung run must not sit for minutes. The slowest passing run on the
+# measured main matrix was 36 s; 60 s is the per-run budget above that.
 DEFAULT_TIMEOUT = 60.0
 
 
@@ -454,6 +541,18 @@ def self_test() -> int:
             pieces.extend(shard_scenarios(universe, idx, count))
         check(sorted(pieces) == sorted(universe) and len(pieces) == len(universe),
               "shard partition count=%d: %s" % (count, pieces))
+
+    real = net_scenarios(test_sources())
+    seen: list[str] = []
+    loads: list[float] = []
+    for idx in range(3):
+        part = shard_scenarios(real, idx, 3)
+        seen.extend(part)
+        loads.append(sum(scenario_weight(name) for name in part))
+    check(sorted(seen) == sorted(real) and len(seen) == len(real),
+          "real scenarios are not partitioned: %d vs %d" % (len(seen), len(real)))
+    check(bool(loads) and max(loads) <= min(loads) * 1.25,
+          "shard weights unbalanced: %s" % loads)
 
     print("stress_netcode self-test: %s" % ("ok" if fail == 0 else "%d failed" % fail))
     return 1 if fail else 0

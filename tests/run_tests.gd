@@ -204,16 +204,6 @@ func _filter_tests(names: Array[String], wanted: PackedStringArray, skipped: Dic
 	return picked
 
 
-func _test_smoke_true() -> int:
-	## Trivial sanity check that the headless runner executes and reports.
-	print("-- test_smoke_true")
-	if true:
-		print("PASS test_smoke_true")
-		return 0
-	printerr("FAIL test_smoke_true")
-	return 1
-
-
 func _test_discovery_messages() -> int:
 	## A misnamed test, and an indented copy of a real test's name, are
 	## reported by line, and `--only=` points at the WARNING for them instead

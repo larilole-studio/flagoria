@@ -25,11 +25,13 @@ const KINDS := {
 	BuildCosts.PLANK: true,
 	BuildCosts.TOWER: true,
 	BuildCosts.CASTLE: true,
+	BuildCosts.GUARD_POST: true,
 	BuildCosts.WALL_BLOCK: true,
 }
 
 const TOWER_STRUCTURE := "tower_wood"
 const CASTLE_STRUCTURE := "castle"
+const GUARD_STRUCTURE := "guard_post"
 
 const _REASON_ORDER := [
 	EMPTY_CELLS, UNKNOWN_KIND, WRONG_GROUND, OCCUPIED, NOT_STRAIGHT, NOT_ADJACENT,
@@ -37,12 +39,7 @@ const _REASON_ORDER := [
 ]
 
 var _map: _WorldMap
-## The shipped tower definition is read-only and unchanged during play.
-## Load once per placer, not once per footprint / preview check (#386).
-var _tower: Structure
-var _tower_loaded := false
-var _castle: Structure
-var _castle_loaded := false
+var _named: Dictionary = {}  ## Kind -> parsed Structure, loaded once per placer.
 
 
 func _init(map: _WorldMap) -> void:
@@ -63,10 +60,8 @@ func can_place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, q
 		match kind:
 			BuildCosts.PLANK:
 				_check_plank(cells, found)
-			BuildCosts.TOWER:
-				_check_tower(cells, found, quarter_turns)
-			BuildCosts.CASTLE:
-				_check_castle(cells, found, quarter_turns)
+			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST:
+				_check_named(kind, cells, found, quarter_turns)
 			BuildCosts.WALL_BLOCK:
 				_check_wall(cells, found)
 	if not cells.is_empty() and KINDS.has(kind):
@@ -89,10 +84,8 @@ func can_place_geometry(kind: StringName, cells: Array[Vector2i], quarter_turns:
 		match kind:
 			BuildCosts.PLANK:
 				_check_plank(cells, found)
-			BuildCosts.TOWER:
-				_check_tower(cells, found, quarter_turns)
-			BuildCosts.CASTLE:
-				_check_castle(cells, found, quarter_turns)
+			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST:
+				_check_named(kind, cells, found, quarter_turns)
 			BuildCosts.WALL_BLOCK:
 				_check_wall(cells, found)
 	return _ordered(found)
@@ -123,30 +116,28 @@ func write_wall(cells: Array[Vector2i]) -> bool:
 	return _map.place_wall_cells(cells)
 
 
-func write_castle(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
-	## Write one castle for `owner` with no wood spend. Returns the placement
-	## id, or -1 when the footprint refuses or the write fails.
+func write_named(kind: StringName, anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
+	## Write one named footprint structure for `owner` with no wood spend.
+	## Returns the placement id, or -1 when the footprint refuses or the write fails.
 	var one: Array[Vector2i] = [anchor]
-	if not can_place_geometry(BuildCosts.CASTLE, one, quarter_turns).is_empty():
+	if not can_place_geometry(kind, one, quarter_turns).is_empty():
 		return -1
-	var structure := _load_castle()
+	var structure := _load_named(kind)
 	if structure == null:
 		return -1
 	return _map._structures.place_from_host(structure, anchor, owner, quarter_turns)
+
+
+func write_castle(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
+	return write_named(BuildCosts.CASTLE, anchor, owner, quarter_turns)
 
 
 func write_tower(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
-	## Write one wooden tower for `owner` with no wood spend. Returns the
-	## placement id, or -1 when the footprint refuses or the write fails.
-	## The host uses this for a peer's request (#497). The multiplayer refuse
-	## on StructurePlacer.can_place is not a footprint failure.
-	var one: Array[Vector2i] = [anchor]
-	if not can_place_geometry(BuildCosts.TOWER, one, quarter_turns).is_empty():
-		return -1
-	var structure := _load_tower()
-	if structure == null:
-		return -1
-	return _map._structures.place_from_host(structure, anchor, owner, quarter_turns)
+	return write_named(BuildCosts.TOWER, anchor, owner, quarter_turns)
+
+
+func write_guard_post(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
+	return write_named(BuildCosts.GUARD_POST, anchor, owner, quarter_turns)
 
 
 func cost(kind: StringName, cells: Array) -> int:
@@ -167,55 +158,57 @@ func place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quart
 	match kind:
 		BuildCosts.PLANK:
 			return _place_plank(cells, inventory)
-		BuildCosts.TOWER:
-			return _place_tower(cells, inventory, quarter_turns)
-		BuildCosts.CASTLE:
-			return _place_castle(cells, inventory, quarter_turns)
+		BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST:
+			return _place_named(kind, cells, inventory, quarter_turns)
 		BuildCosts.WALL_BLOCK:
 			return _place_wall(cells, inventory)
 	return false
 
 
-func _load_tower() -> Structure:
-	if not _tower_loaded:
-		_tower = StructurePlacer.load_named(TOWER_STRUCTURE)
-		_tower_loaded = true
-	return _tower
+static func named_structure_file(kind: StringName) -> String:
+	## Structure text file for a one-cell footprint buildable kind.
+	match kind:
+		BuildCosts.TOWER:
+			return TOWER_STRUCTURE
+		BuildCosts.CASTLE:
+			return CASTLE_STRUCTURE
+		BuildCosts.GUARD_POST:
+			return GUARD_STRUCTURE
+	return ""
 
 
-func _load_castle() -> Structure:
-	if not _castle_loaded:
-		_castle = StructurePlacer.load_named(CASTLE_STRUCTURE)
-		_castle_loaded = true
-	return _castle
+func _load_named(kind: StringName) -> Structure:
+	if not _named.has(kind):
+		_named[kind] = StructurePlacer.load_named(named_structure_file(kind))
+	return _named[kind]
+
+
+func footprint_of(kind: StringName, anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vector2i]:
+	## Map cells a named footprint structure would cover with its anchor on `anchor_cell`.
+	var structure := _load_named(kind)
+	if structure == null:
+		return []
+	structure = Structure.rotated(structure, quarter_turns)
+	var out: Array[Vector2i] = []
+	for cell: Vector2i in StructurePlacer.footprint(structure, anchor_cell):
+		out.append(cell)
+	return out
 
 
 func tower_footprint(anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vector2i]:
-	## Map cells the wooden tower would cover with its anchor on `anchor_cell`.
-	var structure := _load_tower()
-	if structure == null:
-		return []
-	structure = Structure.rotated(structure, quarter_turns)
-	var out: Array[Vector2i] = []
-	for cell: Vector2i in StructurePlacer.footprint(structure, anchor_cell):
-		out.append(cell)
-	return out
+	return footprint_of(BuildCosts.TOWER, anchor_cell, quarter_turns)
 
 
 func castle_footprint(anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vector2i]:
-	## Map cells an extra castle would cover with its anchor on `anchor_cell`.
-	var structure := _load_castle()
-	if structure == null:
-		return []
-	structure = Structure.rotated(structure, quarter_turns)
-	var out: Array[Vector2i] = []
-	for cell: Vector2i in StructurePlacer.footprint(structure, anchor_cell):
-		out.append(cell)
-	return out
+	return footprint_of(BuildCosts.CASTLE, anchor_cell, quarter_turns)
+
+
+func guard_footprint(anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vector2i]:
+	return footprint_of(BuildCosts.GUARD_POST, anchor_cell, quarter_turns)
 
 
 func _units(kind: StringName, cells: Array) -> int:
-	return 1 if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE else cells.size()
+	return 1 if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST else cells.size()
 
 
 func _place_wall(cells: Array[Vector2i], inventory: Inventory) -> bool:
@@ -267,42 +260,21 @@ func _place_plank(cells: Array[Vector2i], inventory: Inventory) -> bool:
 	return why == ""
 
 
-func _place_castle(cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> bool:
-	## One castle: spend 50 wood, then StructurePlacer writes structures/castle
-	## owned by the local peer (#527). With peers connected, StructureRequests
-	## asks the host instead of writing here.
+func _place_named(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> bool:
+	## One named structure: spend, then StructurePlacer writes it owned by the
+	## local peer. With peers connected, StructureRequests asks the host instead.
 	if cells.size() != 1:
 		return false
 	if Interaction.multiplayer_on(_map.multiplayer):
 		var requests := _map.get_node_or_null("../StructureRequests")
-		return requests != null and requests.place(BuildCosts.CASTLE, cells, quarter_turns)
-	var structure := _load_castle()
+		return requests != null and requests.place(kind, cells, quarter_turns)
+	var structure := _load_named(kind)
 	if structure == null:
 		return false
 	var anchor: Vector2i = cells[0]
 	var owner := inventory.multiplayer.get_unique_id()
 	var turns := quarter_turns
-	var why := BuildCosts.buy(inventory, BuildCosts.CASTLE, 1, func() -> bool:
-		return _map.place_structure(structure, anchor, owner, turns) > 0)
-	return why == ""
-
-
-func _place_tower(cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> bool:
-	## One tower: spend 10 wood, then StructurePlacer writes tower_wood owned
-	## by the local peer so TowerCapture can take it (#274). With peers
-	## connected, StructureRequests asks the host instead of writing here.
-	if cells.size() != 1:
-		return false
-	if Interaction.multiplayer_on(_map.multiplayer):
-		var requests := _map.get_node_or_null("../StructureRequests")
-		return requests != null and requests.place(BuildCosts.TOWER, cells, quarter_turns)
-	var structure := _load_tower()
-	if structure == null:
-		return false
-	var anchor: Vector2i = cells[0]
-	var owner := inventory.multiplayer.get_unique_id()
-	var turns := quarter_turns
-	var why := BuildCosts.buy(inventory, BuildCosts.TOWER, 1, func() -> bool:
+	var why := BuildCosts.buy(inventory, kind, 1, func() -> bool:
 		return _map.place_structure(structure, anchor, owner, turns) > 0)
 	return why == ""
 
@@ -325,35 +297,13 @@ func _check_plank(cells: Array[Vector2i], found: Dictionary) -> void:
 		found[NOT_ADJACENT] = true
 
 
-func _check_castle(cells: Array[Vector2i], found: Dictionary, quarter_turns: int = 0) -> void:
-	if cells.size() != 1:
-		found[EMPTY_CELLS] = true
-		return
-	var structure := _load_castle()
-	if structure == null:
-		found[UNKNOWN_KIND] = true
-		return
-	for reason in _map.can_place_structure(structure, cells[0], quarter_turns):
-		if reason == StructurePlacer.MULTIPLAYER_ON:
-			continue
-		match reason:
-			StructurePlacer.WATER, StructurePlacer.OUT_OF_MAP:
-				found[WRONG_GROUND] = true
-			StructurePlacer.TREE, StructurePlacer.BUSH, \
-			StructurePlacer.OVERLAPS_STRUCTURE, StructurePlacer.OVERLAPS_PLAYER, \
-			StructurePlacer.OVERLAPS_MOB:
-				found[OCCUPIED] = true
-			StructurePlacer.MULTIPLAYER_ON:
-				found[MULTIPLAYER_ON] = true
-
-
-func _check_tower(cells: Array[Vector2i], found: Dictionary, quarter_turns: int = 0) -> void:
+func _check_named(kind: StringName, cells: Array[Vector2i], found: Dictionary, quarter_turns: int = 0) -> void:
 	## Anchor must be exactly one cell; StructurePlacer reasons map onto the
 	## shared vocabulary (land only, no overlap with structures/players/mobs).
 	if cells.size() != 1:
 		found[EMPTY_CELLS] = true
 		return
-	var structure := _load_tower()
+	var structure := _load_named(kind)
 	if structure == null:
 		found[UNKNOWN_KIND] = true
 		return

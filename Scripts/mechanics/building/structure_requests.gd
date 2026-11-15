@@ -10,6 +10,7 @@ extends Node
 const REQUEST_KINDS := {
 	BuildCosts.TOWER: true,
 	BuildCosts.CASTLE: true,
+	BuildCosts.GUARD_POST: true,
 	BuildCosts.WALL_BLOCK: true,
 }
 
@@ -47,7 +48,8 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	## Host accepts `peer_id`'s request, or places for itself. False charges nothing.
 	if not multiplayer.is_server() or not REQUEST_KINDS.has(kind) or cells.is_empty():
 		return false
-	if (kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE) and cells.size() != 1:
+	if (kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST) \
+			and cells.size() != 1:
 		return false
 	var body := get_node_or_null("../" + str(peer_id)) as Node2D
 	if body == null or Interaction.player_dead(body):
@@ -56,13 +58,25 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	for cell in cells:
 		if body.global_position.distance_to(interaction.cell_center(cell)) > Interaction.REACH + Interaction.REACH_SLACK:
 			return false
-	if kind == BuildCosts.TOWER:
-		return _host_tower(cells[0], peer_id, quarter_turns)
-	if kind == BuildCosts.CASTLE:
-		return _host_castle(cells[0], peer_id, quarter_turns)
+	if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST:
+		return _host_named(kind, cells[0], peer_id, quarter_turns)
 	if kind == BuildCosts.WALL_BLOCK:
 		return _host_wall(cells, peer_id)
 	return false
+
+
+func host_damage_wall(cell: Vector2i) -> bool:
+	## Host applies one sword hit to a free-form wall (#35). At 0 hp the cell
+	## is removed through host_erase_wall so cities stay in sync.
+	if not multiplayer.is_server():
+		return false
+	var left: int = _map()._walls.damage(cell)
+	if left < 0:
+		return false
+	if left == 0:
+		return host_erase_wall(cell)
+	_publish()
+	return true
 
 
 func host_erase_wall(cell: Vector2i) -> bool:
@@ -96,49 +110,33 @@ func sync_to_peer(peer_id: int) -> void:
 	if not multiplayer.is_server():
 		return
 	var snap := _wall_snapshot()
-	apply_wall_state.rpc_id(peer_id, snap[0], snap[1])
+	apply_wall_state.rpc_id(peer_id, snap[0], snap[1], snap[2])
 
 
-func _host_castle(anchor: Vector2i, peer_id: int, quarter_turns: int = 0) -> bool:
-	var placer := ConstructionPlacer.new(_map())
-	if peer_id == multiplayer.get_unique_id():
-		var inventory := get_node_or_null("../../Inventory") as Inventory
-		if inventory == null:
-			return false
-		var turns := quarter_turns
-		var why := BuildCosts.buy(inventory, BuildCosts.CASTLE, 1, func() -> int:
-			return placer.write_castle(anchor, peer_id, turns))
-		if why != "":
-			return false
-	elif placer.write_castle(anchor, peer_id, quarter_turns) <= 0:
-		return false
-	else:
-		_interaction().rpc_id(peer_id, "receive_charge", BuildCosts.cost(BuildCosts.CASTLE, 1))
-	apply_structure.rpc(ConstructionPlacer.CASTLE_STRUCTURE, peer_id, anchor, quarter_turns)
-	var cities := get_node_or_null("../Cities") as Cities
-	if cities != null:
-		cities.tick()
-	return true
-
-
-func _host_tower(anchor: Vector2i, peer_id: int, quarter_turns: int = 0) -> bool:
+func _host_named(kind: StringName, anchor: Vector2i, peer_id: int, quarter_turns: int = 0) -> bool:
 	## Solo footprint rules. The host spends its own wood; a client is charged
 	## with receive_charge after the write, same order as a plank (#297).
 	var placer := ConstructionPlacer.new(_map())
+	var structure_name := ConstructionPlacer.named_structure_file(kind)
+	if structure_name == "":
+		return false
 	if peer_id == multiplayer.get_unique_id():
 		var inventory := get_node_or_null("../../Inventory") as Inventory
 		if inventory == null:
 			return false
 		var turns := quarter_turns
-		var why := BuildCosts.buy(inventory, BuildCosts.TOWER, 1, func() -> int:
-			return placer.write_tower(anchor, peer_id, turns))
+		var why := BuildCosts.buy(inventory, kind, 1, func() -> int:
+			return placer.write_named(kind, anchor, peer_id, turns))
 		if why != "":
 			return false
-	elif placer.write_tower(anchor, peer_id, quarter_turns) <= 0:
+	elif placer.write_named(kind, anchor, peer_id, quarter_turns) <= 0:
 		return false
 	else:
-		_interaction().rpc_id(peer_id, "receive_charge", BuildCosts.cost(BuildCosts.TOWER, 1))
-	apply_structure.rpc(ConstructionPlacer.TOWER_STRUCTURE, peer_id, anchor, quarter_turns)
+		_interaction().rpc_id(peer_id, "receive_charge", BuildCosts.cost(kind, 1))
+	apply_structure.rpc(structure_name, peer_id, anchor, quarter_turns)
+	var cities := get_node_or_null("../Cities") as Cities
+	if cities != null and (kind == BuildCosts.GUARD_POST or kind == BuildCosts.CASTLE):
+		cities.tick()
 	return true
 
 
@@ -167,24 +165,28 @@ func _publish() -> void:
 	## Walls first, then Cities.tick, so a closed or opened loop is the host's
 	## decision and leaves on the same reliable channel.
 	var snap := _wall_snapshot()
-	apply_wall_state.rpc(snap[0], snap[1])
+	apply_wall_state.rpc(snap[0], snap[1], snap[2])
 	var cities := get_node_or_null("../Cities") as Cities
 	if cities != null:
 		cities.tick()
 
 
 func _wall_snapshot() -> Array:
-	## [free-form cells, auto junction entries [cell, solved tile name]].
+	## [free-form cells, auto junctions [cell, tile name], [cell, hp] under max].
 	var map := _map()
 	var free: Array = []
+	var hp_rows: Array = []
 	for cell: Vector2i in map._walls._wall_cells:
 		free.append(cell)
+		var left: int = map._walls.hp(cell)
+		if left < WallBuilder.MAX_HP:
+			hp_rows.append([cell, left])
 	var autos: Array = []
 	for cell: Vector2i in map._structures.auto_cells():
 		var name := WallBuilder._atlas_wall_name(map._structures.object_at(cell))
 		if name != "":
 			autos.append([cell, name])
-	return [free, autos]
+	return [free, autos, hp_rows]
 
 
 @rpc("any_peer", "reliable", "call_remote")
@@ -218,13 +220,16 @@ func apply_structure(structure_name: String, owner: int, anchor: Vector2i, quart
 
 
 @rpc("authority", "reliable", "call_remote")
-func apply_wall_state(free_cells: Array, autos: Array) -> void:
-	## Free-form chain and solved auto junctions the host decided. A late
-	## joiner and a live place both use this, so the pieces match.
+func apply_wall_state(free_cells: Array, autos: Array, hp_rows: Array = []) -> void:
+	## Free-form chain, solved auto junctions and remaining hp the host decided.
+	## A late joiner and a live place both use this, so the pieces match.
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	var map := _map()
 	map._walls.replace_from_host(free_cells)
+	for entry in hp_rows:
+		if entry is Array and entry.size() >= 2 and entry[0] is Vector2i:
+			map._walls.set_hp(entry[0], int(entry[1]))
 	for entry in autos:
 		if entry is Array and entry.size() >= 2 and entry[0] is Vector2i \
 				and entry[1] is String and str(entry[1]) != "":

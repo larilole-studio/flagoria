@@ -45,4 +45,4 @@ A single flaky run otherwise shows up only after every scenario has finished, wh
 
 - `python3 tools/play_review_paths.py --self-test` includes tier cases for both `FULL_RUNS` and `LIGHT_RUNS`.
 - Required check name stays **Netcode stress** (aggregator job); shards use other display names.
-- Scenarios are split deterministically: sorted scenario list, index `i` on shard `i % STRESS_SHARD_COUNT` (see workflow `env.STRESS_SHARD_COUNT` and `STRESS_SHARD_INDEX` per matrix job). Each shard log prints its scenario list.
+- Scenarios are split by longest-processing-time: heaviest worst-run weight first, onto the lightest shard, ties to the lower index (`SCENARIO_WORST_S` in `tools/stress_netcode.py`). A name with no weight uses the default. Alphabetical `i % count` piled the slow scenarios onto one shard (about 20 min vs about 11 min on the measured main run). The split stays deterministic and still covers every scenario once. Each shard log prints its scenario list.

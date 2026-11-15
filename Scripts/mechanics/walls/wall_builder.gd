@@ -11,9 +11,13 @@ const CAP_LAYER_2 := 4
 const CAP_LAYER_3 := 5
 const CAP_LAYER_4 := 6
 const CAP_LAYERS: Array[int] = [3, 4, 5, 6]
+const MAX_HP := 3
+const NO_WALL := Vector2i(1 << 20, 0)
 
 ## Free-form wall cells -> WallSolver entry ({"family": PALISADE, ...}).
 var _wall_cells: Dictionary = {}
+## Free-form cell -> remaining hit points (#35).
+var _hp: Dictionary = {}
 ## Solved TileCatalog atlas at each free-form cell (for redraw).
 var _pieces: Dictionary = {}
 ## Free-form cell -> full CAP_COLLAR_* list (N, E, S, W order).
@@ -27,6 +31,13 @@ func _init(map: _WorldMap) -> void:
 
 func has_wall(cell: Vector2i) -> bool:
 	return _wall_cells.has(cell)
+
+
+func hp(cell: Vector2i) -> int:
+	## Remaining hits on a free-form wall, or -1 when `cell` is not one.
+	if not _wall_cells.has(cell):
+		return -1
+	return int(_hp.get(cell, MAX_HP))
 
 
 func piece(cell: Vector2i) -> Vector2i:
@@ -47,6 +58,7 @@ func clear() -> void:
 	_wall_cells.clear()
 	_pieces.clear()
 	_caps.clear()
+	_hp.clear()
 
 
 func erase_cells(cells: Array[Vector2i]) -> bool:
@@ -59,6 +71,7 @@ func erase_cells(cells: Array[Vector2i]) -> bool:
 		_wall_cells.erase(cell)
 		_pieces.erase(cell)
 		_caps.erase(cell)
+		_hp.erase(cell)
 		_map._predict_cache.erase(cell)
 		_erase_tiles(cell)
 		removed = true
@@ -77,8 +90,53 @@ func place_cells(cells: Array[Vector2i]) -> bool:
 			return false
 	for cell in cells:
 		_wall_cells[cell] = {"family": WallSolver.PALISADE}
+		_hp[cell] = MAX_HP
 	resolve()
 	return true
+
+
+func damage(cell: Vector2i) -> int:
+	## One sword hit on a free-form palisade (#35). Returns the remainder, or
+	## -1 when `cell` is not a free-form wall. Does not erase; the host erases at 0.
+	if not _wall_cells.has(cell):
+		return -1
+	var left: int = hp(cell) - 1
+	_hp[cell] = left
+	_paint_free(cell)
+	return left
+
+
+func set_hp(cell: Vector2i, amount: int) -> void:
+	## Host sync: apply remaining hits after replace_from_host.
+	if not _wall_cells.has(cell):
+		return
+	_hp[cell] = clampi(amount, 0, MAX_HP)
+	_paint_free(cell)
+
+
+func nearest_in_arc(origin: Vector2, direction: float, reach: float, arc: float) -> Vector2i:
+	## Nearest free-form wall in the sword arc (#35), same walk as
+	## ObjectRemovals.cells_in_arc. Returns NO_WALL when none qualify.
+	var best := NO_WALL
+	var best_dist := INF
+	var half := arc * 0.5
+	var cell_px: float = float(_map.tile_set.tile_size.x) * _map.global_scale.x
+	var radius := int(ceil(reach / cell_px)) + 1
+	var centre := _map.local_to_map(_map.to_local(origin))
+	for dy in range(-radius, radius + 1):
+		for dx in range(-radius, radius + 1):
+			var cell := centre + Vector2i(dx, dy)
+			if not _wall_cells.has(cell):
+				continue
+			var offset := _map.to_global(_map.map_to_local(cell)) - origin
+			if offset.length() > reach or offset.length() <= 0.001:
+				continue
+			if absf(angle_difference(direction, offset.angle())) > half:
+				continue
+			if offset.length() < best_dist:
+				best_dist = offset.length()
+				best = cell
+	return best
 
 
 func replace_from_host(cells: Array) -> void:
@@ -95,6 +153,7 @@ func replace_from_host(cells: Array) -> void:
 		_wall_cells.erase(cell)
 		_pieces.erase(cell)
 		_caps.erase(cell)
+		_hp.erase(cell)
 		_map._predict_cache.erase(cell)
 		_erase_tiles(cell)
 		removed = true
@@ -103,6 +162,7 @@ func replace_from_host(cells: Array) -> void:
 		if _wall_cells.has(cell):
 			continue
 		_wall_cells[cell] = {"family": WallSolver.PALISADE}
+		_hp[cell] = MAX_HP
 		added = true
 	if added or removed:
 		resolve()
@@ -110,7 +170,7 @@ func replace_from_host(cells: Array) -> void:
 
 func paint_cell(cell: Vector2i) -> void:
 	## Redraw one free-form wall after a chunk draw. has_wall must be true.
-	_map.set_cell(1, cell, TileCatalog.SOURCE_ID, _pieces[cell])
+	_map.set_cell(1, cell, TileCatalog.SOURCE_ID, _display_atlas(cell))
 	_paint_caps(cell)
 
 
@@ -155,7 +215,7 @@ func _paint_free(cell: Vector2i) -> void:
 		return
 	_map.erase_cell(1, cell)
 	_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
-	_map.set_cell(1, cell, TileCatalog.SOURCE_ID, _pieces[cell])
+	_map.set_cell(1, cell, TileCatalog.SOURCE_ID, _display_atlas(cell))
 	_paint_caps(cell)
 
 
@@ -185,6 +245,35 @@ static func _same(a: Array, b: Array) -> bool:
 		if a[i] != b[i]:
 			return false
 	return true
+
+
+func _display_atlas(cell: Vector2i) -> Vector2i:
+	## Solved piece in `_pieces`, with crack or chunk overlay when damaged (#35).
+	var base: Vector2i = _pieces[cell]
+	var amount: int = hp(cell)
+	if amount >= MAX_HP:
+		return base
+	var name := _atlas_wall_name(base)
+	if not (name.ends_with("_H") or name.ends_with("_V")):
+		return base
+	var dmg := name
+	if amount == 2:
+		dmg = name + "_DMG_CRACK"
+	elif amount == 1:
+		dmg = name + "_DMG_CHUNK" if name.ends_with("_H") else name + "_DMG_CRACK"
+	if not TileCatalog.TILES.has(dmg):
+		return base
+	var atlas: Vector2i = TileCatalog.TILES[dmg]["atlas"]
+	if _tile_blocks(atlas):
+		return atlas
+	return base
+
+
+func _tile_blocks(atlas: Vector2i) -> bool:
+	var src := _map.tile_set.get_source(TileCatalog.SOURCE_ID) as TileSetAtlasSource
+	if src == null or not src.has_tile(atlas):
+		return false
+	return src.get_tile_data(atlas, 0).get_collision_polygons_count(0) > 0
 
 
 static func _atlas_wall_name(atlas: Vector2i) -> String:

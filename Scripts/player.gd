@@ -31,6 +31,8 @@ const RESOURCE_HUD_PATH := "/root/Flagoria/CanvasLayer1/ResourceHud"
 const INVENTORY_PATH := "/root/Flagoria/Inventory"
 const INTERACTION_PATH := "/root/Flagoria/World/Interaction"
 const MAP_PATH := "/root/Flagoria/World/worldMap"
+const BOW_BUTTON_PATH := "/root/Flagoria/CanvasLayer1/BowButton"
+const RANGED_PATH := "/root/Flagoria/World/RangedShots"
 ## Walk frame is 16 px, centred on Sprite2D at (0, -8), so the body runs from
 ## the feet (this node's origin) up 16 px. Wall caps sit at z 2 through 5.
 const BODY_RECT := Rect2(-8, -16, 16, 16)
@@ -222,9 +224,28 @@ func _unhandled_input(event):
 		attack_animation.rpc()
 
 func attack_toward(direction: String, angle := NAN):
-	## An aimed attack (AttackAim): swing toward `direction`, at `angle` when
-	## given, on every peer.
+	## An aimed attack (AttackAim). The bow toggle sends one shot and does
+	## not swing. The sword path is the same call as before.
+	if _bow_armed():
+		var shots := get_node_or_null(RANGED_PATH)
+		if shots != null and shots.has_method("send_shot"):
+			shots.send_shot(global_position + AttackAimScript.ORIGIN, _bow_aim(direction, angle))
+		return
 	attack_animation.rpc(direction, angle)
+
+
+func _bow_armed() -> bool:
+	var button := get_node_or_null(BOW_BUTTON_PATH) as BaseButton
+	return button != null and button.button_pressed
+
+
+func _bow_aim(direction: String, angle: float) -> Vector2:
+	if not is_nan(angle):
+		return Vector2.from_angle(angle)
+	var named := AttackAimScript.direction_vector(direction)
+	if named != Vector2.ZERO:
+		return named
+	return AttackAimScript.direction_vector(lastAnimDirection)
 
 @rpc("call_local")  # the call local calls in all remotes and the local too
 func attack_animation(direction: String = "", angle: float = NAN):
@@ -289,6 +310,15 @@ func _swing_world_decor(direction: String, angle: float) -> void:
 		if not is_nan(turn):
 			swing += turn
 	map._object_removals.cells_in_arc(global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC, true)
+	if not multiplayer.is_server():
+		return
+	var requests := get_node_or_null("../StructureRequests") as StructureRequests
+	if requests == null:
+		return
+	var cell: Vector2i = map._walls.nearest_in_arc(global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC)
+	if cell == WallBuilder.NO_WALL:
+		return
+	requests.host_damage_wall(cell)
 
 
 func _facing_to_angle(facing: String) -> float:
