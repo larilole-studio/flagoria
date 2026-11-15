@@ -179,6 +179,11 @@ func think(delta: float) -> void:
 		_start_walk()
 
 
+func pinned() -> bool:
+	## Ambient despawn keeps a chasing mob, even past the despawn radius.
+	return state == State.CHASE
+
+
 func players() -> Array:
 	## Player bodies in this world (World holds players next to Mobs).
 	var world_root := get_node_or_null("../..")

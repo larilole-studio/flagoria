@@ -7,7 +7,9 @@ func run() -> void:
 	step("start")
 	if not await start_game():
 		return
-	for node in current_scene.get_node("World/Mobs").get_children():
+	var mobs: Node = current_scene.get_node("World/Mobs")
+	mobs.set_physics_process(false)
+	for node in mobs.get_children():
 		if node is Mob:
 			node.set_physics_process(false)
 			node.global_position = Vector2(100000, 100000)
