@@ -4,7 +4,7 @@ Drive: drives/generated_building.gd
 
 A host generates one building at the local player (#26). The debug key is B. The same action is the Generate building button at the bottom of Map Settings, opened from the in-game menu while hosting. Building width, height and style are Map Settings fields (`building_width`, `building_height`, `building_style` on `MapGenParams`). Style 0 uses the stone piece tiles. Style 1 remaps the wall, corner, door and window onto the moss tiles and shifts the solve seed.
 
-Pieces are painted on TileMap layer 7 (`buildings`), never on layer 0 or 1, because chunk refresh rewrites those. Walls, corners, windows and the roof band collide. The floor and the door do not. The host sends the seed, size, style and cell. Each peer runs `WfcBuildingConstraints.solve_building` and paints the same tiles. A peer that joins after the placement receives the same record. A client cannot place one. Neighbour blending is a later slice.
+Pieces are painted on TileMap layer 7 (`buildings`), never on layer 0 or 1, because chunk refresh rewrites those. Walls, corners, windows and the roof band collide. The floor and the door do not. The host sends the seed, size, style and cell. Each peer runs `WfcBuildingConstraints.solve_building` and paints the same tiles. A peer that joins after the placement receives the same record. A client cannot place one. Full-edge neighbour blending is [Building merge](./building-merge.md) (#27).
 
 ## Sub-features
 
