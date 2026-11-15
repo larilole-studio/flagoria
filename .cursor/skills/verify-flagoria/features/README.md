@@ -39,6 +39,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Player health](./player-health.md) — hearts, HUD, regen, death, respawn hold, rejoin, health sync.
 - [Combat and aiming](./combat-and-aiming.md) — swing, 30 px reach, mid-swing hitbox, mouse and touch aim, exact-angle swing, cone, cancel, wall line-of-sight; live `combat_hud` drive.
 - [Mobs](./mobs.md) — seeded placement, spawn rate, wander, chase, contact damage, sword hits, hidden on ungenerated ground, sounds, sync.
+- [Mob band](./mob-band.md) — server spawn and despawn around players, caps, late joiners see the same names.
 - [Player spawn](./player-spawn.md) — spawn on reachable land, a free spot per player within 64 px, late joiners.
 - [Hero in front of walls](./hero-wall-draw.md) — the hero draws over a wall until about two thirds of the body is on the wall.
 - [Tileset and collision](./tileset-and-collision.md) — tile catalog, water and forest walls.
