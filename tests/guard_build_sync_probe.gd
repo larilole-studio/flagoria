@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a buildable-guard-post sync session (#528). Modes place, watch.
 
 
@@ -58,6 +59,7 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
+		HostListen.arm_host(out)
 		var map_gen = root.get_node("MapGen")
 		var error: String = map_gen.load_map_inputs(save)
 		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
@@ -65,8 +67,9 @@ func _run() -> void:
 			quit(1)
 			return
 		main.add_player(1)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var deadline := Time.get_ticks_msec() + 90000

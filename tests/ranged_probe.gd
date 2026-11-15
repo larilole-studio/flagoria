@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a bow-shot session, started by test_ranged_two_players.
 ##   -- --port=N --out=PATH --host --seed=11   listen host on seed 11
 ##   -- --port=N --out=PATH --seed=11          join localhost:N
@@ -59,6 +60,7 @@ func _run() -> void:
 	await process_frame
 	var main = current_scene
 	if _host:
+		HostListen.arm_host(_out)
 		var params := MapGenParams.make_defaults()
 		params.biome_frequency = 0.0
 		params.altitude_seed = _seed
@@ -66,11 +68,12 @@ func _run() -> void:
 		params.temperature_seed = _seed
 		params.items_seed = _seed
 		params.biome_seed = _seed
-		main.setup_server(params, port)
-		main.add_player(1)
-		_quiet_mobs(main)
+		if main.setup_server(params, port) == OK:
+			main.add_player(1)
+			_quiet_mobs(main)
+			HostListen.mark_host_listening(_out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, _out)
 	var world: Node = main.get_node("World")
 	var deadline := Time.get_ticks_msec() + 90000
 	var next_write := 0

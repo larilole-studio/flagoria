@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a wall and city sync session (#498).
 ## Host: --host --save --port --out --mode. Client: --port --out --mode [--shot].
 
@@ -66,6 +67,7 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
+		HostListen.arm_host(out)
 		var map_gen = root.get_node("MapGen")
 		var error: String = map_gen.load_map_inputs(save)
 		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
@@ -74,8 +76,9 @@ func _run() -> void:
 			return
 		main.add_player(1)
 		_park_mobs(main)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var opened := false

@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a cut sync session, run as its own headless process by
 ## test_cut_save_late_join (tests/saves/test_cut_save.gd) and
 ## test_cut_sync_two_players (tests/net/test_cut_sync.gd) and
@@ -114,6 +115,7 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
+		HostListen.arm_host(out)
 		var map_gen = root.get_node("MapGen")
 		var error: String = map_gen.load_map_inputs(save)
 		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
@@ -128,8 +130,9 @@ func _run() -> void:
 				quit(1)
 				return
 		main.add_player(1)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var interaction: Interaction = main.get_node("World/Interaction")
 	if regrow >= 0.0:

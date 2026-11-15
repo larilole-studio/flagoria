@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a land-score session (#279).
 ## Host: --host --save --port --out. Client: --port --out --mode.
 ## The host scores city land. A ".drop" file hands the host castle to neutral.
@@ -55,6 +56,7 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
+		HostListen.arm_host(out)
 		var map_gen = root.get_node("MapGen")
 		var error: String = map_gen.load_map_inputs(save)
 		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
@@ -64,8 +66,9 @@ func _run() -> void:
 		main.add_player(1)
 		main.get_node("Discovery").set_physics_process(false)
 		_park_mobs(main)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var checked_client := false
 	var deadline := Time.get_ticks_msec() + 60000

@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a mob-band session. The host sets the ambient delay to 0 and
 ## calls run_ambient_tick once the test drops a .tick file.
 ##   -- --port=N --out=PATH --role=host --seed=11
@@ -62,14 +63,16 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if role == "host":
+		HostListen.arm_host(_out)
 		root.get_node("GameSettings").set_mob_rate(1.0, false)
 		if main.setup_server(_params(seed_value), port) != OK:
 			printerr("mob_band_probe: could not host")
 			quit(1)
 			return
 		main.add_player(1)
+		HostListen.mark_host_listening(_out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, _out)
 	var deadline := Time.get_ticks_msec() + 45000
 	var next_write := 0
 	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):

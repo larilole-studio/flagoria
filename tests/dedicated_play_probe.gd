@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of the dedicated cut-and-hit round (tests/net/test_dedicated_play_round.gd).
 ##
 ##   -- --port=N --out=PATH --cells=x,y [--mob=mob_N] [--rate=F] --dedicated --save=SAVE
@@ -67,6 +68,7 @@ func _run() -> void:
 	await process_frame
 	var main = current_scene
 	if dedicated:
+		HostListen.arm_host(out)
 		var loaded: Dictionary = MapSave.load_map(save)
 		if rate >= 0.0:
 			root.get_node("GameSettings").set_mob_rate(rate, false)
@@ -74,8 +76,9 @@ func _run() -> void:
 			printerr("dedicated_play_probe: could not host %s: %s" % [save, loaded["error"]])
 			quit(1)
 			return
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var cut_done := {}
