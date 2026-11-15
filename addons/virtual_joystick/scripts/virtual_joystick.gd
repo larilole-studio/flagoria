@@ -15,6 +15,8 @@ signal analogic_released
 		_draw()
 
 @export var stick_active: Texture2D  ## the knob while a finger drags the stick; none keeps `stick`
+@export var border_disabled: Texture2D
+@export var stick_disabled: Texture2D
 @export var radius := Vector2(32, 32)  ## half the knob (the knob is top-left anchored)
 @export var boundary := 64  ## knob travel from the centre
 @export var start_radius := -1.0  ## a drag may start this far from the centre; below 0 uses `boundary`
@@ -34,11 +36,14 @@ func _draw() -> void:
 	if joystick.get_child_count() == 0:
 		joystick.add_child(touch)	
 		
-	joystick.texture = border if is_instance_valid(border) else preload("res://addons/virtual_joystick/sprites/joystick.png")
+	var dim := HudLayoutVisual.blocks_hud_actions()
+	joystick.texture = border_disabled if dim and is_instance_valid(border_disabled) else border if is_instance_valid(border) else preload("res://addons/virtual_joystick/sprites/joystick.png")
 	touch.texture_normal = _knob()
 
 
 func _knob() -> Texture2D:
+	if HudLayoutVisual.blocks_hud_actions() and is_instance_valid(stick_disabled):
+		return stick_disabled
 	if ongoing_drag != -1 and is_instance_valid(stick_active):
 		return stick_active
 	return stick if is_instance_valid(stick) else preload("res://addons/virtual_joystick/sprites/stick.png")

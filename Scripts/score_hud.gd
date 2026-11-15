@@ -21,6 +21,9 @@ func _process(_delta: float) -> void:
 
 
 func follow_hearts() -> void:
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
+	if plate != null:
+		return
 	var hearts := get_node_or_null("../HeartsHud") as Control
 	if hearts == null:
 		return

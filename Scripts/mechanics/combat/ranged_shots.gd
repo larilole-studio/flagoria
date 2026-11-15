@@ -10,7 +10,6 @@ const ORIGIN_LIMIT := 24.0
 const LINE_WIDTH := 2.0
 const LINE_TIME := 0.2
 const LINE_COLOR := Color(1.0, 0.93, 0.2)
-const BOW_SIZE := Vector2(36, 22)
 
 var accepted := 0
 var rejected := 0
@@ -144,13 +143,13 @@ func _ensure_bow() -> void:
 	button.name = "BowButton"
 	button.toggle_mode = true
 	button.button_pressed = false
-	button.text = "Bow"
+	button.text = ""
+	button.tooltip_text = "Weapon"
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
-	button.custom_minimum_size = BOW_SIZE
-	var run := layer.get_node_or_null("RunButton") as Button
-	if run != null and run.theme != null:
-		button.theme = run.theme
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	RoundHudStyle.apply_weapon(button, false)
+	button.toggled.connect(func(_on: bool) -> void: RoundHudStyle.apply_weapon(button, _on))
 	layer.add_child(button)
 	_place_bow()
 
@@ -159,16 +158,10 @@ func _place_bow() -> void:
 	var button := get_node_or_null("../../CanvasLayer1/BowButton") as Control
 	if button == null:
 		return
-	var run := button.get_parent().get_node_or_null("RunButton") as Control
-	if run == null:
+	var hl := get_node_or_null("/root/HudLayout")
+	if hl != null and hl.layout_active():
 		return
-	var size := button.size
-	if size.x < 1.0:
-		size = button.get_combined_minimum_size()
-	# Left of Run, which itself sits left of the attack button.
-	var x := run.position.x - 2.0 - size.x
-	var y := run.position.y + (run.size.y - size.y) * 0.5
-	if x < 4.0:
-		x = 4.0
-	button.position = Vector2(roundf(x), roundf(y))
+	var inset := Vector2(2, 2)
+	button.position = HudToolRow.LAYOUT["weapon"] - inset
 	button.z_index = 4
+	RoundHudStyle.apply_weapon(button as Button, (button as Button).button_pressed)

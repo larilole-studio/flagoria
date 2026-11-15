@@ -89,7 +89,10 @@ static func populate_picker(
 		button.theme = theme
 		button.icon = icon(t)
 		button.tooltip_text = tip(t)
-		RoundHudStyle.apply(button, RoundHudStyle.HIT, RoundHudStyle.SIZE, COLUMN_ICON)
+		RoundHudStyle.apply_build(button)
+		button.icon = icon(t)
+		button.expand_icon = true
+		button.add_theme_constant_override("icon_max_width", COLUMN_ICON)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
 		picker.add_child(button)

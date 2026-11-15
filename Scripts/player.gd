@@ -100,6 +100,9 @@ func _ready():
 	var hud = get_node_or_null(HUD_PATH)
 	if hud:
 		hud.bind(health)
+	var plate := get_node_or_null("/root/Flagoria/CanvasLayer1/StatusPlate") as StatusPlateHud
+	if plate != null:
+		plate.show()
 	var score_hud = get_node_or_null(SCORE_HUD_PATH)
 	var points = get_node_or_null(POINTS_PATH)
 	if score_hud and points:

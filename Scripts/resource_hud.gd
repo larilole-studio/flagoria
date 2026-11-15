@@ -30,12 +30,22 @@ func _process(_delta: float) -> void:
 
 
 func follow_hearts() -> void:
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
+	if plate != null:
+		return
 	var hearts := get_node_or_null("../HeartsHud") as Control
 	if hearts == null:
 		return
 	reset_size()
 	scale = hearts.scale
 	position = Vector2(roundf((get_viewport_rect().size.x - size.x * scale.x) / 2.0), hearts.position.y)
+
+
+func follow_plate_slot(score: Label) -> void:
+	reset_size()
+	var pts_y := (StatusPlateHud.PLATE_H - StatusPlateHud.FONT_SIZE) * 0.5
+	position.y = pts_y
+	position.x = score.position.x + score.size.x + StatusPlateHud.WOOD_GAP
 
 
 func bind(inventory: Inventory) -> void:

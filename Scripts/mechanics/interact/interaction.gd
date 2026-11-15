@@ -98,7 +98,6 @@ func _ready() -> void:
 	world_map.trees_sprouted.connect(_on_trees_sprouted)
 	var button := get_node_or_null(BUTTON_PATH) as Button
 	if button:
-		RoundHudStyle.apply(button)
 		button.pressed.connect(toggle_mode)
 	_refresh_button()
 
@@ -124,9 +123,9 @@ func set_mode(value: Mode) -> void:
 func _refresh_button() -> void:
 	var button := get_node_or_null(BUTTON_PATH) as Button
 	if button:
-		button.icon = ICONS[mode]
 		button.tooltip_text = TOOLTIPS[mode]
 		button.set_pressed_no_signal(mode == Mode.INTERACT)
+		RoundHudStyle.apply_mode(button, mode)
 
 
 static func multiplayer_on(api: MultiplayerAPI) -> bool:

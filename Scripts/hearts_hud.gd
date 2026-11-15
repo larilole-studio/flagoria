@@ -13,7 +13,7 @@ const ICON_EMPTY: Texture2D = preload("res://art/ui/hearts/ui_heart_empty.png")
 const ICON_FLASH_0: Texture2D = preload("res://art/ui/hearts/ui_heart_flash_0.png")
 const ICON_FLASH_1: Texture2D = preload("res://art/ui/hearts/ui_heart_flash_1.png")
 const SPACING := 1  ## px between hearts at 1x (10 px pitch for 9x9 icons)
-const MARGIN := 4  ## px from the screen corner at 1x
+const MARGIN := 4  ## px from the screen corner at 1x when no status plate
 const FLASH_FRAME := 0.06  ## seconds each flash icon is shown
 
 var current := 0
@@ -87,14 +87,16 @@ func _process(delta: float) -> void:
 
 
 func _fit_pixel_scale() -> void:
-	## Keep the hearts at a whole number of screen pixels per art pixel (the
-	## window stretch can be fractional), MARGIN art pixels from the corner.
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
 	var stretch := get_viewport().get_final_transform().get_scale().x
 	if stretch <= 0.0:
 		return
 	var k := maxf(roundf(stretch), 1.0) / stretch
 	scale = Vector2(k, k)
-	position = Vector2(MARGIN, MARGIN) * k
+	if plate != null:
+		return
+	else:
+		position = Vector2(MARGIN, MARGIN) * k
 
 
 func _draw() -> void:

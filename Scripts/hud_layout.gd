@@ -7,8 +7,8 @@ extends Node
 
 const SECTION := "hud"
 const SAVE_VERSION := 1
-const SIDE := 4.0
-const GAP := 2.0
+const SIDE := 12.0
+const GAP := 4.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
@@ -405,21 +405,26 @@ func _apply_attack(btn: TouchScreenButton, pos: Vector2, s: float) -> void:
 
 
 func _apply_run(button: Button, pos: Vector2, s: float) -> void:
-	var hit := RoundHudStyle.RUN_HIT * s
-	var disc := RoundHudStyle.RUN_SIZE * s
-	RoundHudStyle.apply(button, hit, disc, RoundHudStyle.RUN_ICON)
+	RoundHudStyle.apply_run(button, RoundHudStyle.RUN_HIT * s, RoundHudStyle.RUN_SIZE * s)
 	button.position = pos
 
 
 func _apply_round(button: Button, pos: Vector2, s: float, _is_run := false) -> void:
-	var hit := RoundHudStyle.HIT * s
-	var disc := RoundHudStyle.SIZE * s
-	var icon := RoundHudStyle.ICON
 	if button.get_script() != null and str(button.get_script().resource_path).ends_with("run_control.gd"):
-		hit = RoundHudStyle.RUN_HIT * s
-		disc = RoundHudStyle.RUN_SIZE * s
-		icon = RoundHudStyle.RUN_ICON
-	RoundHudStyle.apply(button, hit, disc, icon)
+		_apply_run(button, pos, s)
+		return
+	if button.name == "ScoreboardToggle":
+		RoundHudStyle.apply_scores(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	elif button.name == "BuildingsButton":
+		RoundHudStyle.apply_build(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	elif button.name == "ModeButton":
+		var mode := Interaction.Mode.COMBAT
+		var world := button.get_node_or_null("/root/Flagoria/World/Interaction") as Interaction
+		if world != null:
+			mode = world.mode
+		RoundHudStyle.apply_mode(button, mode, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	else:
+		RoundHudStyle.apply(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	button.position = pos
 
 
