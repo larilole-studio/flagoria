@@ -18,11 +18,12 @@ func _test_resource_hud_in_scene() -> int:
 	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu").menu_button.get_global_rect()
 	hud.follow_hearts()
 	var hud_rect := hud.get_global_rect()
-	var mid: float = scene.get_viewport().get_visible_rect().get_center().x
+	var plate := scene.get_node_or_null("CanvasLayer1/StatusPlate") as Control
 	if not hud.visible or hud.label.text != "0" or hud.scale != hearts.scale \
-			or absf(hud_rect.get_center().x - mid) > 1.0 or hud_rect.intersects(menu_rect):
-		printerr("FAIL resource_hud_in_scene: counter visible %s text '%s' at %s x%s"
-				% [hud.visible, hud.label.text, hud_rect, hud.scale])
+			or plate == null or not plate.visible \
+			or hud_rect.position.x < plate.position.x or hud_rect.intersects(menu_rect):
+		printerr("FAIL resource_hud_in_scene: counter visible %s text '%s' at %s plate %s"
+				% [hud.visible, hud.label.text, hud_rect, plate])
 		fail += 1
 	var inventory: Inventory = scene.get_node("Inventory")
 	if inventory.add(Inventory.WOOD, 3) != 3 or inventory.count_of(Inventory.WOOD) != 3 or hud.label.text != "3":

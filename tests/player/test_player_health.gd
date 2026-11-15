@@ -90,6 +90,13 @@ func _test_player_health() -> int:
 	world.add_child(other)
 	var h: PlayerHealth = me.health
 	var hud: HeartsHud = scene.get_node("CanvasLayer1/HeartsHud")
+	var plate: StatusPlateHud = scene.get_node("CanvasLayer1/StatusPlate")
+	var score: ScoreHud = scene.get_node("CanvasLayer1/ScoreHud")
+	scene.get_node("CanvasLayer1").show()
+	hud.bind(h)
+	plate.show()
+	plate.bind_nodes(hud, score, scene.get_node("CanvasLayer1/ResourceHud"))
+	await process_frame
 	var deaths := [0]
 	h.died.connect(func() -> void: deaths[0] += 1)
 
@@ -158,7 +165,8 @@ func _test_player_health() -> int:
 		printerr("FAIL player_health: loss flash %s, want [F00, F11, FHE, FFF]" % [seen])
 		fail += 1
 	hud.set_process(true)
-	if not hud.position.is_equal_approx(Vector2(HeartsHud.MARGIN, HeartsHud.MARGIN) * hud.scale.x):
+	var want := (Vector2(12, 12) + StatusPlateHud.HEART_SLOT) * hud.scale.x
+	if not hud.position.is_equal_approx(want):
 		printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
 		fail += 1
 	# Death: health stops at 0, the player hides and cannot be hit or healed.

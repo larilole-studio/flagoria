@@ -59,7 +59,7 @@ func _test_points_hud_in_scene() -> int:
 	if not hud.visible or hud.text != "0 pts":
 		printerr("FAIL points_hud_in_scene counter visible %s, text '%s'" % [hud.visible, hud.text])
 		fail += 1
-	if hud.position.y < hearts.position.y + hearts.size.y * hearts.scale.y or hud.scale != hearts.scale:
+	if hud.position.x < hearts.position.x + hearts.size.x * hearts.scale.x - 1.0 or hud.scale != hearts.scale:
 		printerr("FAIL points_hud_in_scene counter at %s x%s, hearts at %s size %s x%s"
 				% [hud.position, hud.scale, hearts.position, hearts.size, hearts.scale])
 		fail += 1

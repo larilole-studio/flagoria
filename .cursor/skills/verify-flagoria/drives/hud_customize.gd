@@ -83,6 +83,9 @@ func run() -> void:
 	var map_btn := current_scene.get_node(MAP) as Control
 	var ok := attack != null and attack.texture_normal != null and map_btn != null
 	step("default-layout")
+	await wait_until(func() -> bool:
+		return map_btn.global_position.x > 400.0 and attack.global_position.x > 400.0
+	, 5.0)
 	await snapshot("default-layout")
 	var default_pos := attack.global_position
 	var default_map := map_btn.global_position
@@ -177,6 +180,8 @@ func run() -> void:
 	row._layout()
 	await process_frame
 	ok = ok and not _hud_layout().uses_custom()
-	ok = ok and attack.global_position.distance_to(default_pos) < 16.0
-	ok = ok and map_btn.global_position.distance_to(default_map) < 16.0
+	var want_attack := HudToolRow.LAYOUT["attack"]
+	var want_map := HudToolRow.LAYOUT["map"] - Vector2(4, 4)
+	ok = ok and attack.global_position.distance_to(want_attack) < 12.0
+	ok = ok and map_btn.global_position.distance_to(want_map) < 12.0
 	done(ok)

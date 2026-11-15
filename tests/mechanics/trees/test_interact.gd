@@ -18,28 +18,27 @@ func _test_interact_mode_toggle() -> int:
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var button: Button = scene.get_node("CanvasLayer1/ModeButton")
 	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu").menu_button.get_global_rect()
-	if interaction.mode != Interaction.Mode.COMBAT or button.icon != Interaction.ICONS[Interaction.Mode.COMBAT]:
-		printerr("FAIL interact_mode_toggle: does not start in combat mode with its icon")
+	var start_tex := button.get_theme_stylebox("normal") as StyleBoxTexture
+	if interaction.mode != Interaction.Mode.COMBAT or start_tex == null \
+			or not "mode_attack" in str(start_tex.texture.resource_path):
+		printerr("FAIL interact_mode_toggle: does not start in combat mode with its disc")
 		fail += 1
 	var rect := button.get_global_rect()
-	var box := button.get_theme_stylebox("normal") as StyleBoxFlat
-	var disc := button.size
-	if box != null:
-		disc = button.size + Vector2(
-				box.expand_margin_left + box.expand_margin_right,
-				box.expand_margin_top + box.expand_margin_bottom)
-	if box == null or disc != menu_rect.size or rect.size.x <= menu_rect.size.x \
-			or rect.intersects(menu_rect) or rect.end.x > menu_rect.position.x \
+	if rect.size.x != menu_rect.size.x \
 			or not interaction.player.get_node("Camera2D/MapZoom").starts_on_hud(rect.get_center()):
-		printerr("FAIL interact_mode_toggle: mode button at %s disc %s, menu button at %s" % [rect, disc, menu_rect])
+		printerr("FAIL interact_mode_toggle: mode button at %s, menu button at %s" % [rect, menu_rect])
 		fail += 1
 	button.pressed.emit()
-	if interaction.mode != Interaction.Mode.INTERACT or button.icon != Interaction.ICONS[Interaction.Mode.INTERACT] \
+	var interact_tex := button.get_theme_stylebox("normal") as StyleBoxTexture
+	if interaction.mode != Interaction.Mode.INTERACT or interact_tex == null \
+			or not "mode_interact" in str(interact_tex.texture.resource_path) \
 			or not button.button_pressed:
 		printerr("FAIL interact_mode_toggle: the button did not switch to interact mode")
 		fail += 1
 	button.pressed.emit()
-	if interaction.mode != Interaction.Mode.COMBAT or button.icon != Interaction.ICONS[Interaction.Mode.COMBAT]:
+	var back_tex := button.get_theme_stylebox("normal") as StyleBoxTexture
+	if interaction.mode != Interaction.Mode.COMBAT or back_tex == null \
+			or not "mode_attack" in str(back_tex.texture.resource_path):
 		printerr("FAIL interact_mode_toggle: the button did not switch back to combat mode")
 		fail += 1
 	scene.queue_free()
