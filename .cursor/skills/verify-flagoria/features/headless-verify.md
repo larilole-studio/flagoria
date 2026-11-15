@@ -8,7 +8,7 @@ Headless verify checks file sizes, opens the Godot 4.7 project, parses every GDS
 
 - `verify-file-budget` runs `tools/file_budget.py --self-test`, then `tools/file_budget.py`, before any Godot step. It fails when a `.gd` file under `Scripts/` or `flagoria_main.gd` is over 500 lines, or a test file under `tests/` is over 1,500, unless `tools/file_budget_allow.txt` lists it with a reason and a cap it may not grow past. Each failure line names the file, its size and the fix.
 - `verify-import-load` imports/opens the project headless via the editor.
-- `verify-parse` parses each `.gd` with `--check-only`.
+- `verify-parse` compiles every `.gd` in one Godot process (`tools/parse_scripts.gd`). The file list is the same `find` as before (everything except `.git` and `.godot`). A file that fails to load, or a log line with `SCRIPT ERROR` / `Parse Error` / `Failed to load script` / `Failed loading resource`, fails the step.
 - `verify-tests` runs `res://tests/run_tests.gd` and requires `All tests passed.`
 - `verify-biomes` runs `res://tools/render_biomes.gd -- --seed=42 --size=4096 --step=16 --out=res://artifacts/out/verify_biomes` and requires `BIOME_COVERAGE_OK`. It fails when a biome covers 0 % of the area or its land grows no trees or bushes.
 - `verify-audio` runs `res://tools/audio_check.gd` with `--audio-driver Dummy` and requires `AUDIO_CHECK_OK`. It drives the player scene through a timeline and fails when an expected sound is not heard, a step is silent or too loud, or the mix clips. On failure, see `artifacts/out/audio_check.png`.
