@@ -8,8 +8,10 @@ other function in those files). Each run is `run_tests.gd -- --only=<name>` in a
 process with its own XDG dirs. Runs go JOBS at a time (default 4); each
 parallel slot gets its own block of UDP ports through FLAGORIA_TEST_PORTS, so
 two runs never pick the same port. A run passes when it exits 0, prints
-"All tests passed." and logs no script error. The process group of each run
-is killed afterwards, so servers a test started cannot outlive it.
+"All tests passed." and logs no script error. The run and every process it
+started are killed afterwards. Godot's OS.create_process calls setsid, so
+those peers are not in the run's process group; killing only the group
+leaves them holding the run's stdout pipe.
 
 A scenario in KNOWN_FLAKY gets one retry after a failed run; the run counts
 as failed only if the retry fails too. The table still reports first-attempt
@@ -197,6 +199,74 @@ def port_block(slot: int, jobs: int) -> str:
 DEFAULT_TIMEOUT = 60.0
 
 
+def _descendants(pid: int) -> list[int]:
+    """Child processes of pid, including ones that called setsid.
+
+    ppid stays the parent until the parent exits, so this must run while pid
+    is still alive. /proc/<pid>/stat's comm can contain spaces; ppid is the
+    field after the closing parenthesis.
+    """
+    children: dict[int, list[int]] = {}
+    for entry in os.listdir("/proc"):
+        if not entry.isdigit():
+            continue
+        try:
+            with open("/proc/%s/stat" % entry, "r", encoding="utf-8") as handle:
+                stat = handle.read()
+        except OSError:
+            continue
+        mark = stat.rfind(")")
+        if mark < 0:
+            continue
+        fields = stat[mark + 2:].split()
+        if len(fields) < 2:
+            continue
+        try:
+            parent = int(fields[1])
+            child = int(entry)
+        except ValueError:
+            continue
+        children.setdefault(parent, []).append(child)
+    found: list[int] = []
+    stack = [pid]
+    while stack:
+        current = stack.pop()
+        for child in children.get(current, []):
+            found.append(child)
+            stack.append(child)
+    return found
+
+
+def _kill_pids(pids) -> None:
+    for pid in pids:
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+
+def _stop_process(proc: subprocess.Popen, tracked: set[int]) -> str:
+    """Kill proc, the setsid children it spawned, and return any unread output.
+
+    communicate() waits for EOF on the stdout pipe. A child Godot started
+    with OS.create_process inherits that pipe and calls setsid, so killing
+    the process group does not close it. Read with a bound so a survivor
+    cannot hold the stress job.
+    """
+    if proc.poll() is None:
+        tracked.update(_descendants(proc.pid))
+    _kill_pids(tracked)
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    try:
+        drained, _ = proc.communicate(timeout=2)
+    except subprocess.TimeoutExpired:
+        return ""
+    return drained or ""
+
+
 def run_command(cmd: list[str], timeout: float, stop: threading.Event,
                 env: dict | None = None) -> tuple[str, float, str]:
     """Run cmd. Returns (kind, seconds, output). kind is pass, fail, timeout, or abort.
@@ -209,12 +279,24 @@ def run_command(cmd: list[str], timeout: float, stop: threading.Event,
                             stderr=subprocess.STDOUT, text=True, start_new_session=True)
     out = ""
     reason = ""
+    tracked: set[int] = set()
     try:
         while True:
+            if proc.poll() is None:
+                tracked.update(_descendants(proc.pid))
             try:
                 out, _ = proc.communicate(timeout=0.2)
                 break
             except subprocess.TimeoutExpired:
+                # The leader already exited and a setsid child still holds
+                # the pipe. Reap that child and read the leader's result.
+                if proc.poll() is not None:
+                    _kill_pids(tracked)
+                    try:
+                        out, _ = proc.communicate(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        out = ""
+                    break
                 if stop.is_set():
                     reason = "abort"
                     break
@@ -222,21 +304,14 @@ def run_command(cmd: list[str], timeout: float, stop: threading.Event,
                     reason = "timeout"
                     break
         if reason:
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            drained, _ = proc.communicate()
-            body = drained or ""
+            body = _stop_process(proc, tracked)
             elapsed = time.monotonic() - start
             if reason == "abort":
                 return "abort", elapsed, "ABORTED\n" + body
             return "timeout", elapsed, "TIMEOUT after %.0f s\n%s" % (timeout, body)
     finally:
-        try:  # servers and peers the test started share the group
-            os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
+        if proc.poll() is None:
+            _stop_process(proc, tracked)
     elapsed = time.monotonic() - start
     ok = (proc.returncode == 0 and "All tests passed." in (out or "")
           and not ERROR_RE.search(out or ""))
@@ -415,6 +490,50 @@ def self_test() -> int:
     kind, elapsed, out = run_command(["sleep", "30"], 10, stop)
     check(kind == "abort" and elapsed < 2 and out.startswith("ABORTED"),
           "abort on stop: %s %.2f" % (kind, elapsed))
+
+    # Godot OS.create_process calls setsid and inherits stdout. A child that
+    # outlives the leader must not keep communicate() blocked, and a timeout
+    # must kill it even though it left the process group.
+    def setsid_script(parent_sleep: float, pid_path: str) -> str:
+        return (
+            "import os,sys,time\n"
+            "pid=os.fork()\n"
+            "if pid==0:\n"
+            " os.setsid()\n"
+            " open(%r,'w').write(str(os.getpid()))\n"
+            " sys.stdout.write('child\\n'); sys.stdout.flush()\n"
+            " time.sleep(60)\n"
+            " os._exit(0)\n"
+            "sys.stdout.write('All tests passed.\\n'); sys.stdout.flush()\n"
+            "time.sleep(%s)\n" % (pid_path, parent_sleep)
+        )
+
+    def child_alive(pid_path: str) -> bool:
+        try:
+            child = int(open(pid_path, encoding="utf-8").read().strip())
+        except (OSError, ValueError):
+            return False
+        try:
+            os.kill(child, 0)
+        except ProcessLookupError:
+            return False
+        return True
+
+    fd, pid_path = tempfile.mkstemp()
+    os.close(fd)
+    kind, elapsed, out = run_command(
+        [sys.executable, "-c", setsid_script(0.6, pid_path)], 10, threading.Event())
+    check(kind == "pass" and elapsed < 4 and not child_alive(pid_path),
+          "setsid child after leader exit: %s %.2f alive=%s" % (kind, elapsed, child_alive(pid_path)))
+    os.remove(pid_path)
+
+    fd, pid_path = tempfile.mkstemp()
+    os.close(fd)
+    kind, elapsed, out = run_command(
+        [sys.executable, "-c", setsid_script(60, pid_path)], 0.5, threading.Event())
+    check(kind == "timeout" and elapsed < 3 and not child_alive(pid_path),
+          "setsid child on timeout: %s %.2f alive=%s %r" % (kind, elapsed, child_alive(pid_path), out[:40]))
+    os.remove(pid_path)
 
     universe = ["a", "b", "c", "d", "e", "f"]
     for count in (1, 2, 3, 4):

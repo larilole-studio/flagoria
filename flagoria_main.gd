@@ -1,6 +1,7 @@
 extends Node2D
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
+const JoinEnetTimeout = preload("res://Scripts/join_enet_timeout.gd")
 const PORT = 9786
 ## Most cuts in one join message (#354); see _sync_map_params_to_peer.
 const JOIN_CUTS_PER_MESSAGE := 500
@@ -282,7 +283,7 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	## castles match the host's from its first frame, including the castle
 	## add_player just placed for this peer (#278).
 	## Placed plank bridges go too (BridgeBuilder.to_sync, #297).
-	## Free-form walls, solved auto junctions and cities follow (#498).
+	## Free-form walls, cities and on-demand buildings follow (#498, #26).
 	## The cut list goes JOIN_CUTS_PER_MESSAGE cuts at a time (#354): the
 	## first part with the params, the rest in receive_join_cuts right after.
 	if world_params == null:
@@ -303,6 +304,7 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	var capture := get_node_or_null("World/TowerCapture")
 	if capture != null:
 		capture.sync_to_peer(peer_id)
+	var generated := get_node_or_null("World/GeneratedBuildings"); if generated != null: generated.sync_to_peer(peer_id)
 	for i in range(1, parts.size()):
 		rpc_id(peer_id, "receive_join_cuts", parts[i])
 
@@ -410,10 +412,7 @@ func add_player_joined(port: int = PORT):
 		return
 	multiplayer.multiplayer_peer = enet_peer
 	_ensure_join_signals()
-	# Fail faster than ENet's default when nothing answers (#348 tests).
-	var peer := enet_peer.get_peer(1)
-	if peer != null:
-		peer.set_timeout(8, 800, 3000)
+	JoinEnetTimeout.apply_dial_timeout(enet_peer)
 	var world = get_node("World/worldMap")
 	world.player_spawned = true
 
@@ -423,6 +422,7 @@ func _ensure_join_signals() -> void:
 		multiplayer.connection_failed.connect(_on_connection_failed)
 	if not multiplayer.server_disconnected.is_connected(_on_server_disconnected):
 		multiplayer.server_disconnected.connect(_on_server_disconnected)
+	JoinEnetTimeout.ensure_relax_on_connected(multiplayer, enet_peer)
 
 
 func _on_connection_failed() -> void:

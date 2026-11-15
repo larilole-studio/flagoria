@@ -191,6 +191,7 @@ free-form palisade wall cell (#276) is an entry on its cell:
 | `order` | Placement order, so placement ids come back the same. |
 | `rotation` | Optional quarter turns clockwise (0–3) for a footprint structure placed in a rotated orientation (#493). Omitted when zero. |
 | `wall` | `palisade`: a free-form wall cell. Its piece is solved again on load. |
+| `hp` | Optional remaining hits on a free-form wall (1 or 2). Omitted means full health (#35). |
 
 `StructureSaves.to_changes` writes the entries and `StructureSaves.restore`
 reads them back, placements first so the walls join the structure walls.

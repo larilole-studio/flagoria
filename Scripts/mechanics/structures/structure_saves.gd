@@ -23,7 +23,11 @@ static func to_changes(map: _WorldMap) -> Dictionary[String, Dictionary]:
 		_put(out, entry[2], cell_data)
 		order += 1
 	for cell: Vector2i in map._walls._wall_cells:
-		_put(out, cell, {"wall": PALISADE})
+		var entry := {"wall": PALISADE}
+		var left: int = map._walls.hp(cell)
+		if left < WallBuilder.MAX_HP:
+			entry["hp"] = left
+		_put(out, cell, entry)
 	return out
 
 
@@ -38,6 +42,7 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 		cities.on_world_cleared()
 	var placed := []
 	var walls: Array[Vector2i] = []
+	var hp_by_cell: Dictionary = {}
 	for chunk in changes:
 		for key in changes[chunk]:
 			var entry = changes[chunk][key]
@@ -49,6 +54,8 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 				placed.append([int(entry.get("order", 0)), entry["structure"], int(entry.get("owner", 0)), cell, turns])
 			elif entry.get("wall") == PALISADE and map.ground_is_walkable(map.predict_cell(cell)[0]):
 				walls.append(cell)
+				if entry.has("hp"):
+					hp_by_cell[cell] = int(entry["hp"])
 	placed.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	var list := placed.map(func(p: Array) -> Array:
 		var row: Array = [p[1], p[2], p[3]]
@@ -57,6 +64,9 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 		return row)
 	var count: int = map.replace_structures(list) if not list.is_empty() else 0
 	if not walls.is_empty() and map.place_wall_cells(walls):
+		for cell: Vector2i in walls:
+			if hp_by_cell.has(cell):
+				map._walls.set_hp(cell, int(hp_by_cell[cell]))
 		count += walls.size()
 	if count > 0 and cities != null:
 		cities.refresh_after_structure_restore()
