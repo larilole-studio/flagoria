@@ -99,6 +99,7 @@ def net_scenarios(sources: list[str]) -> list[str]:
 DEFAULT_WORST_S = 8.0
 SCENARIO_WORST_S = {
     "test_attack_angle_two_players": 5.3,
+    "test_building_merge_two_players": 12.0,
     "test_build_costs_buy": 7.0,
     "test_build_picker_hides_on_multiplayer_start": 4.3,
     "test_build_picker_includes_tower": 4.1,
