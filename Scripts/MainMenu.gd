@@ -23,6 +23,7 @@ const WorldSavePreview = preload("res://Scripts/world_save_preview.gd")
 @onready var raid_radius_value: Label = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadiusValue
 
 var admin_panel: PanelContainer
+var _settings_over_match := false
 
 signal new_server_created
 signal new_player_added
@@ -386,6 +387,19 @@ func _on_worlds_back_pressed() -> void:
 	main_menu.show()
 
 
+func open_settings_over_match() -> void:
+	## Host, during a match: the same Map Settings panel, without leaving the
+	## world. Host stays disabled so it cannot start a second server.
+	if admin_panel == null or not admin_panel.is_inside_tree():
+		return
+	_settings_over_match = true
+	admin_panel.load_from_params(get_node("/root/MapGen").params)
+	var start := admin_panel.get_node_or_null("Margin/VBox/Buttons2/Start") as Button
+	if start != null:
+		start.disabled = true
+	admin_panel.show()
+
+
 func _on_map_settings_pressed() -> void:
 	main_menu.hide()
 	if admin_panel == null:
@@ -398,6 +412,14 @@ func _on_map_settings_pressed() -> void:
 
 
 func _on_admin_closed() -> void:
+	var start: Button = null
+	if admin_panel != null:
+		start = admin_panel.get_node_or_null("Margin/VBox/Buttons2/Start") as Button
+	if start != null:
+		start.disabled = false
+	if _settings_over_match:
+		_settings_over_match = false
+		return
 	main_menu.show()
 
 

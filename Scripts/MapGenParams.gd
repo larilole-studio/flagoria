@@ -88,6 +88,13 @@ extends Resource
 # (BiomeCatalog.PLANTS). Biomes on only.
 @export_range(-1.0, 2.0, 0.05) var swamp_bush_min_chance: float = 0.3
 
+# On-demand WFC building (#26). Width and height are the footprint in cells.
+# Style 0 keeps the stone piece tiles; style 1 remaps walls onto the moss set
+# and shifts the solve seed. The host sends the values used for each building.
+@export_range(5, 16) var building_width: int = 6
+@export_range(5, 16) var building_height: int = 5
+@export_range(0, 1) var building_style: int = 0
+
 
 ## Playable ranges for Random specs (#335): narrower than @export_range where
 ## the editor limits allow broken maps (all water, no land, missing biomes).
@@ -129,7 +136,10 @@ const PLAYABLE_RANGES := {
 }
 
 ## Properties Random specs never changes (#335).
-const RANDOM_SPECS_SKIP := ["chunk_width", "chunk_height", "chunk_refresh_frames"]
+const RANDOM_SPECS_SKIP := [
+	"chunk_width", "chunk_height", "chunk_refresh_frames",
+	"building_width", "building_height", "building_style",
+]
 
 
 static func make_defaults() -> MapGenParams:

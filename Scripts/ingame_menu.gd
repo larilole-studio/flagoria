@@ -18,6 +18,7 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var resume_button: Button = $Pause/Panel/Margin/VBox/Resume
 @onready var save_button: Button = $Pause/Panel/Margin/VBox/Save
 @onready var customize_hud_button: Button = $Pause/Panel/Margin/VBox/CustomizeHud
+@onready var map_settings_button: Button = $Pause/Panel/Margin/VBox/MapSettings
 @onready var main_menu_button: Button = $Pause/Panel/Margin/VBox/MainMenu
 @onready var status_label: Label = $Pause/Panel/Margin/VBox/Status
 @onready var hud_layout_edit: Control = $HudLayoutEdit
@@ -29,6 +30,7 @@ func _ready() -> void:
 	resume_button.pressed.connect(close)
 	save_button.pressed.connect(save_world)
 	customize_hud_button.pressed.connect(_on_customize_hud_pressed)
+	map_settings_button.pressed.connect(_on_map_settings_pressed)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 
 
@@ -48,7 +50,15 @@ func is_open() -> bool:
 func open() -> void:
 	panel.show()
 	menu_button.hide()
+	map_settings_button.visible = multiplayer.is_server()
 	resume_button.grab_focus()
+
+
+func _on_map_settings_pressed() -> void:
+	close()
+	var menu := get_node_or_null("/root/Flagoria/CanvasLayer2/MainMenu")
+	if menu != null and menu.has_method("open_settings_over_match"):
+		menu.open_settings_over_match()
 
 
 func close() -> void:
