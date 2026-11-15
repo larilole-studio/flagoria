@@ -90,7 +90,11 @@ func _place_column(layer: Node) -> void:
 		_place_buildings(layer, buildings)
 
 
-func _status_node(layer: Node, node_name: String) -> Node:
+static func hud_child(layer: Node, node_name: String) -> Node:
+	return status_node(layer, node_name)
+
+
+static func status_node(layer: Node, node_name: String) -> Node:
 	var node := layer.get_node_or_null(node_name)
 	if node != null:
 		return node
@@ -102,9 +106,9 @@ func _status_node(layer: Node, node_name: String) -> Node:
 
 func _place_status(layer: Node) -> void:
 	var plate := layer.get_node_or_null("StatusPlate") as StatusPlateHud
-	var hearts := _status_node(layer, "HeartsHud") as Control
-	var score := _status_node(layer, "ScoreHud") as Label
-	var wood := _status_node(layer, "ResourceHud") as ResourceHud
+	var hearts := status_node(layer, "HeartsHud") as Control
+	var score := status_node(layer, "ScoreHud") as Label
+	var wood := status_node(layer, "ResourceHud") as ResourceHud
 	var scores := layer.get_node_or_null("ScoreboardToggle") as Button
 	if plate != null and hearts != null and score != null and wood != null:
 		var on_plate := hearts.get_parent() == plate and score.get_parent() == plate and wood.get_parent() == plate

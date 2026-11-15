@@ -14,8 +14,8 @@ func _test_resource_hud_in_scene() -> int:
 	scene.add_player(scene.multiplayer.get_unique_id())
 	await process_frame
 	var plate := scene.get_node_or_null("CanvasLayer1/StatusPlate") as StatusPlateHud
-	var hud: ResourceHud = scene.find_child("ResourceHud", true, false) as ResourceHud
-	var hearts: Control = scene.find_child("HeartsHud", true, false) as Control
+	var hud: ResourceHud = _hud_on_canvas(scene, "ResourceHud") as ResourceHud
+	var hearts: Control = _hud_on_canvas(scene, "HeartsHud") as Control
 	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu").menu_button.get_global_rect()
 	hud.follow_hearts()
 	var hud_rect := hud.get_global_rect()

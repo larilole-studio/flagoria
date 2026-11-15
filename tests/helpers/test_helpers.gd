@@ -621,6 +621,21 @@ func _sword_on(player: Node2D, mob: Mob) -> void:
 	player.velocity = Vector2.ZERO
 
 
+func _hud_on_canvas(scene: Node, node_name: String) -> Node:
+	## Status widgets may sit under StatusPlate after the local player binds HUD.
+	var layer := scene.get_node_or_null("CanvasLayer1")
+	if layer != null:
+		var direct := layer.get_node_or_null(node_name)
+		if direct != null:
+			return direct
+		var plate := layer.get_node_or_null("StatusPlate")
+		if plate != null:
+			var nested := plate.get_node_or_null(node_name)
+			if nested != null:
+				return nested
+	return scene.find_child(node_name, true, false)
+
+
 func _ui_plays_since(ui, before: Dictionary) -> Dictionary:
 	## Events that played since `before` (a copy of ui.plays), with counts.
 	var delta := {}

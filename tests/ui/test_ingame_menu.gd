@@ -41,8 +41,8 @@ func _test_ingame_menu_open_resume() -> int:
 	# 1280x720, clear of the hearts and points in the other corner.
 	var button_rect: Rect2 = menu.menu_button.get_global_rect()
 	var tap_px: float = button_rect.size.x * 1280.0 / scene.get_viewport().get_visible_rect().size.x
-	var hearts_rect: Rect2 = scene.get_node("CanvasLayer1/HeartsHud").get_global_rect()
-	var score_rect: Rect2 = scene.get_node("CanvasLayer1/ScoreHud").get_global_rect()
+	var hearts_rect: Rect2 = (_hud_on_canvas(scene, "HeartsHud") as Control).get_global_rect()
+	var score_rect: Rect2 = (_hud_on_canvas(scene, "ScoreHud") as Control).get_global_rect()
 	var menu_box := menu.menu_button.get_theme_stylebox("normal") as StyleBoxTexture
 	if menu.menu_button.text != "" or menu_box == null or menu_box.texture == null \
 			or not str(menu_box.texture.resource_path).contains("ui_menu") \

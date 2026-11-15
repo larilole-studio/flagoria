@@ -125,7 +125,7 @@ func _check_cluster(scene: Node, label: String) -> int:
 	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
 	var mode: Button = scene.get_node("CanvasLayer1/ModeButton")
 	var run: Button = scene.get_node("CanvasLayer1/RunButton")
-	var wood: Control = scene.get_node("CanvasLayer1/ResourceHud")
+	var wood: Control = _hud_on_canvas(scene, "ResourceHud") as Control
 	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu/MenuButton").get_global_rect()
 	var wood_rect := Rect2(wood.global_position, Vector2(
 			wood.size.x * minf(wood.scale.x, 2.0), wood.size.y * minf(wood.scale.y, 2.0)))
