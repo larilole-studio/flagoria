@@ -10,6 +10,7 @@ func _test_tower_gun_two_players() -> int:
 	## The client places a tower with the existing request. The host, pinned
 	## inside 80 px, loses health on both peers. Outside range, health stays.
 	## The client's own health stays full. A late joiner sees the health.
+	## The probe stops regen so the hit is still there when a slow joiner is ready.
 	## Time cost: ~10 s per run.
 	print("-- test_tower_gun_two_players")
 	var session := _open()

@@ -70,6 +70,7 @@ func _run() -> void:
 			return
 		main.add_player(1)
 		_park_mobs(main)
+		_stop_regen(main)
 	else:
 		main.add_player_joined(port)
 	var world = main.get_node("World/worldMap")
@@ -86,6 +87,7 @@ func _run() -> void:
 		var ready := main.world_params != null and me != null
 		if host:
 			_park_mobs(main)
+			_stop_regen(main)
 			var phase := FileAccess.get_file_as_string(out + ".phase").strip_edges() if FileAccess.file_exists(out + ".phase") else ""
 			var info := _tower_wood(world)
 			if ready and not info.is_empty() and phase in ["in", "out"]:
@@ -148,6 +150,23 @@ func _park_mobs(main) -> void:
 		if node is Mob:
 			node.set_physics_process(false)
 			node.global_position = Vector2(100000, 100000)
+
+
+func _stop_regen(main) -> void:
+	## Regen restores one half-heart every 5 s from the moment a player
+	## spawns. The late joiner starts only after the hit and the outside
+	## hold, and a loaded runner can take longer than the rest of that
+	## window to reach ready. Both peers then report full health and the
+	## check cannot tell a synced hit from a miss. heal() runs on the
+	## server only, so stopping these timers keeps the damaged value.
+	var world: Node = main.get_node_or_null("World")
+	if world == null:
+		return
+	for node in world.get_children():
+		if node is CharacterBody2D:
+			var timer := node.get_node_or_null("regen_timer") as Timer
+			if timer:
+				timer.stop()
 
 
 func _pin(body: Node2D, at: Vector2) -> void:
