@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The required check **Netcode stress** (`.github/workflows/play-review.yml`) runs `tools/stress_netcode.py` when `tools/play_review_paths.py` sets `run_stress=true`: a gameplay change, or a change to the stress runner, the stress lint, `tests/net/`, or a `tests/*_probe.gd` probe. How many times each multiplayer scenario runs is chosen in that script (`FULL_RUNS`, `LIGHT_RUNS`, `stress_tier()`). Do not change default run counts in the workflow; set `STRESS_RUNS` from that script's output only.
+The required check **Netcode stress** (`.github/workflows/play-review.yml`, job `stress`) aggregates shard jobs that each run a slice of `tools/stress_netcode.py` when `tools/play_review_paths.py` sets `run_stress=true`: a gameplay change, or a change to the stress runner, the stress lint, `tests/net/`, or a `tests/*_probe.gd` probe. How many times each multiplayer scenario runs is chosen in that script (`FULL_RUNS`, `LIGHT_RUNS`, `stress_tier()`). Do not change default run counts in the workflow; set `STRESS_RUNS` from that script's output only.
 
 Pull-request workflows classify changes once per job through `.github/actions/classify-change`, which runs `play_review_paths.py` and exposes `gameplay` and `stress_runs` outputs. `play-review-label.yml` uses the same composite with paths read via the API (no checkout of PR code).
 
@@ -44,4 +44,5 @@ A single flaky run otherwise shows up only after every scenario has finished, wh
 ## Proof
 
 - `python3 tools/play_review_paths.py --self-test` includes tier cases for both `FULL_RUNS` and `LIGHT_RUNS`.
-- Required check name stays **Netcode stress**.
+- Required check name stays **Netcode stress** (aggregator job); shards use other display names.
+- Scenarios are split deterministically: sorted scenario list, index `i` on shard `i % STRESS_SHARD_COUNT` (see workflow `env.STRESS_SHARD_COUNT` and `STRESS_SHARD_INDEX` per matrix job). Each shard log prints its scenario list.

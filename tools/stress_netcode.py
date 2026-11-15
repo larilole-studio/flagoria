@@ -26,6 +26,8 @@ Usage:
   python3 tools/stress_netcode.py -n 3 --only=mob_chase_two_players
   python3 tools/stress_netcode.py -j 1             # one run at a time
   python3 tools/stress_netcode.py --list
+  STRESS_SHARD_INDEX=0 STRESS_SHARD_COUNT=3 python3 tools/stress_netcode.py  # shard 0 of 3
+  python3 tools/stress_netcode.py --shard-index 1 --shard-count 3
   python3 tools/stress_netcode.py --self-test
   GODOT=/path/to/godot python3 tools/stress_netcode.py
 
@@ -87,6 +89,12 @@ def net_scenarios(sources: list[str]) -> list[str]:
                 net.add(name)
                 changed = True
     return [n[1:] for n in bodies if n.startswith("_test_") and n in net]
+
+
+def shard_scenarios(names: list[str], shard_index: int, shard_count: int) -> list[str]:
+    """Deterministic split: sorted scenario names, index i goes to shard i % count."""
+    ordered = sorted(names)
+    return [n for i, n in enumerate(ordered) if i % shard_count == shard_index]
 
 
 def port_block(slot: int, jobs: int) -> str:
@@ -320,6 +328,14 @@ def self_test() -> int:
     check(kind == "abort" and elapsed < 2 and out.startswith("ABORTED"),
           "abort on stop: %s %.2f" % (kind, elapsed))
 
+    universe = ["a", "b", "c", "d", "e", "f"]
+    for count in (1, 2, 3, 4):
+        pieces: list[str] = []
+        for idx in range(count):
+            pieces.extend(shard_scenarios(universe, idx, count))
+        check(sorted(pieces) == sorted(universe) and len(pieces) == len(universe),
+              "shard partition count=%d: %s" % (count, pieces))
+
     print("stress_netcode self-test: %s" % ("ok" if fail == 0 else "%d failed" % fail))
     return 1 if fail else 0
 
@@ -334,6 +350,14 @@ def main() -> int:
                     help="runs at a time")
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--shard-index", type=int,
+                    default=int(os.environ["STRESS_SHARD_INDEX"])
+                    if os.environ.get("STRESS_SHARD_INDEX", "").isdigit() else None,
+                    help="0-based shard index (with --shard-count)")
+    ap.add_argument("--shard-count", type=int,
+                    default=int(os.environ["STRESS_SHARD_COUNT"])
+                    if os.environ.get("STRESS_SHARD_COUNT", "").isdigit() else None,
+                    help="number of shards (sorted list, i %% count)")
     args = ap.parse_args()
     if args.self_test:
         return self_test()
@@ -347,6 +371,20 @@ def main() -> int:
                   file=sys.stderr)
             return 1
         names = [n for n in names if n in wanted]
+    shard_index = args.shard_index
+    shard_count = args.shard_count
+    if (shard_index is None) != (shard_count is None):
+        print("Pass both --shard-index and --shard-count (or neither)", file=sys.stderr)
+        return 1
+    if shard_count is not None:
+        if shard_count < 1 or shard_index < 0 or shard_index >= shard_count:
+            print("shard: need 0 <= index < count and count >= 1", file=sys.stderr)
+            return 1
+        all_names = names
+        names = shard_scenarios(all_names, shard_index, shard_count)
+        print("Shard %d/%d: %d of %d scenarios" % (shard_index + 1, shard_count, len(names), len(all_names)),
+              flush=True)
+        print("Scenarios on this shard:\n" + "\n".join(names), flush=True)
     if args.list:
         print("\n".join(names))
         return 0
