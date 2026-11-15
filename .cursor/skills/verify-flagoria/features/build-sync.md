@@ -41,7 +41,7 @@ Walls and towers are requested from the host
 
 Preconditions: `doctor.sh` exits `0`. Time cost:
 `test_build_sync_two_players` about 8–15 s alone with `--only=` (three Godot
-peers); in the Netcode stress job it is one scenario × 20 runs.
+peers); in the Netcode stress job it is one scenario × 8 runs on the full tier.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=build_sync_two_players`, or the Netcode stress job / full `tools/verify.sh`.
 - **Proof.** Header `-- test_build_sync_two_players` in the log with

@@ -19,7 +19,7 @@ Main Menu Join accepts a hostname or an IPv4 address, with an optional `:port`. 
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `join_port_button` ~4 s in verify (one ~3 s no-listener wait); `join_port_dedicated` ~5 s in verify and ~5 s × 20 in netcode stress (4 at a time). Live drive ~10 s.
+Preconditions: `doctor.sh` exits `0`. Time cost: `join_port_button` ~4 s in verify (one ~3 s no-listener wait); `join_port_dedicated` ~5 s in verify and ~5 s × 8 on the full netcode-stress tier (4 at a time). Live drive ~10 s.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_port_button,join_port_dedicated`, or full `tools/verify.sh`. Both tests call `MainMenu._on_join_button_pressed`.
 - **Drive (live).** `bin/launch.sh drives/join_port.gd --display` (## launch: --seed 42). The drive starts dedicated servers on loopback `9786` and `9799`, clicks Join with a blank address, returns to the menu, types `host:abc` and `127.0.0.1:1` and `127.0.0.1:9799`, and clicks Join each time. Snapshots: `default-address`, `joined-default`, `invalid-address`, `join-timeout`, `joined-9799`.
