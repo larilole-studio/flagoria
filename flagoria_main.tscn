@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=36 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -33,6 +33,7 @@
 [ext_resource type="Script" path="res://Scripts/hud_tool_row.gd" id="20_hud_row"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building/structure_requests.gd" id="21_requests"]
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/land_score.gd" id="22_land"]
+[ext_resource type="Script" path="res://Scripts/mechanics/defense/tower_guns.gd" id="23_tower_guns"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bm55c"]
 radius = 24.0
@@ -219,6 +220,9 @@ script = ExtResource("21_requests")
 [node name="TowerCapture" type="Node2D" parent="World"]
 script = ExtResource("16_tower_capture")
 
+[node name="TowerGuns" type="Node2D" parent="World"]
+script = ExtResource("23_tower_guns")
+
 [node name="Cities" type="Node2D" parent="World"]
 script = ExtResource("17_cities")
 
@@ -252,9 +256,12 @@ custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_bottom = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 2
 
 [node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -354,6 +361,75 @@ value = 2.0
 custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
 text = "2x"
+horizontal_alignment = 2
+
+[node name="TowerRangeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+text = "Tower range"
+
+[node name="TowerRange" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 32.0
+max_value = 160.0
+step = 8.0
+value = 80.0
+
+[node name="TowerRangeValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "80 px"
+horizontal_alignment = 2
+
+[node name="TowerDamageRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+text = "Tower damage"
+
+[node name="TowerDamage" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 1.0
+max_value = 3.0
+step = 1.0
+value = 1.0
+
+[node name="TowerDamageValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "1"
+horizontal_alignment = 2
+
+[node name="TowerCooldownRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+text = "Tower cooldown"
+
+[node name="TowerCooldown" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.5
+max_value = 5.0
+step = 0.1
+value = 1.5
+
+[node name="TowerCooldownValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "1.5 s"
 horizontal_alignment = 2
 
 [node name="QuitLayer" type="CanvasLayer" parent="."]

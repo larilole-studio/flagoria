@@ -14,6 +14,12 @@ const WorldSavePreview = preload("res://Scripts/world_save_preview.gd")
 @onready var sfx_value: Label = $MarginContainer/VBoxContainer/SFXVolumeRow/SFXValue
 @onready var mob_rate: HSlider = $MarginContainer/VBoxContainer/MobRateRow/MobRate
 @onready var mob_rate_value: Label = $MarginContainer/VBoxContainer/MobRateRow/MobRateValue
+@onready var tower_range: HSlider = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRange
+@onready var tower_range_value: Label = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRangeValue
+@onready var tower_damage: HSlider = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamage
+@onready var tower_damage_value: Label = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamageValue
+@onready var tower_cooldown: HSlider = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldown
+@onready var tower_cooldown_value: Label = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldownValue
 
 var admin_panel: PanelContainer
 
@@ -47,6 +53,31 @@ func _ready() -> void:
 	mob_rate.value_changed.connect(func(v: float) -> void:
 		game.set_mob_rate(v)
 		mob_rate_value.text = game.rate_label(game.mob_rate))
+	# Tower guns read these on the host. A client's saved values are not the match.
+	tower_range.min_value = game.TOWER_RANGE_MIN
+	tower_range.max_value = game.TOWER_RANGE_MAX
+	tower_range.step = game.TOWER_RANGE_STEP
+	tower_range.value = game.tower_range
+	tower_range_value.text = game.px_label(game.tower_range)
+	tower_range.value_changed.connect(func(v: float) -> void:
+		game.set_tower_range(v)
+		tower_range_value.text = game.px_label(game.tower_range))
+	tower_damage.min_value = game.TOWER_DAMAGE_MIN
+	tower_damage.max_value = game.TOWER_DAMAGE_MAX
+	tower_damage.step = 1
+	tower_damage.value = game.tower_damage
+	tower_damage_value.text = str(game.tower_damage)
+	tower_damage.value_changed.connect(func(v: float) -> void:
+		game.set_tower_damage(v)
+		tower_damage_value.text = str(game.tower_damage))
+	tower_cooldown.min_value = game.TOWER_COOLDOWN_MIN
+	tower_cooldown.max_value = game.TOWER_COOLDOWN_MAX
+	tower_cooldown.step = game.TOWER_COOLDOWN_STEP
+	tower_cooldown.value = game.tower_cooldown
+	tower_cooldown_value.text = game.seconds_label(game.tower_cooldown)
+	tower_cooldown.value_changed.connect(func(v: float) -> void:
+		game.set_tower_cooldown(v)
+		tower_cooldown_value.text = game.seconds_label(game.tower_cooldown))
 	# The join address is typed on the in-game letter keyboard, not the OS one.
 	var keyboard: NumberPad = preload("res://number_pad.tscn").instantiate()
 	keyboard.name = "LetterKeyboard"

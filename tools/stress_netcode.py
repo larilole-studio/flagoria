@@ -155,6 +155,7 @@ SCENARIO_WORST_S = {
     "test_structure_sync_join": 7.7,
     "test_tower_capture_off_in_multiplayer": 4.1,
     "test_tower_capture_two_players": 15.0,
+    "test_tower_gun_two_players": 12.0,
     "test_tower_place_two_players": 9.1,
     "test_two_player_smoke": 10.5,
     "test_wall_place_two_players": 14.9,
