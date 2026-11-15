@@ -65,6 +65,20 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	return false
 
 
+func host_damage_wall(cell: Vector2i) -> bool:
+	## Host applies one sword hit to a free-form wall (#35). At 0 hp the cell
+	## is removed through host_erase_wall so cities stay in sync.
+	if not multiplayer.is_server():
+		return false
+	var left: int = _map()._walls.damage(cell)
+	if left < 0:
+		return false
+	if left == 0:
+		return host_erase_wall(cell)
+	_publish()
+	return true
+
+
 func host_erase_wall(cell: Vector2i) -> bool:
 	## Host removes one free-form wall and sends the chain and the cities.
 	## A loop that opens dissolves on the host; peers receive that list.
@@ -96,7 +110,7 @@ func sync_to_peer(peer_id: int) -> void:
 	if not multiplayer.is_server():
 		return
 	var snap := _wall_snapshot()
-	apply_wall_state.rpc_id(peer_id, snap[0], snap[1])
+	apply_wall_state.rpc_id(peer_id, snap[0], snap[1], snap[2])
 
 
 func _host_castle(anchor: Vector2i, peer_id: int, quarter_turns: int = 0) -> bool:
@@ -167,24 +181,28 @@ func _publish() -> void:
 	## Walls first, then Cities.tick, so a closed or opened loop is the host's
 	## decision and leaves on the same reliable channel.
 	var snap := _wall_snapshot()
-	apply_wall_state.rpc(snap[0], snap[1])
+	apply_wall_state.rpc(snap[0], snap[1], snap[2])
 	var cities := get_node_or_null("../Cities") as Cities
 	if cities != null:
 		cities.tick()
 
 
 func _wall_snapshot() -> Array:
-	## [free-form cells, auto junction entries [cell, solved tile name]].
+	## [free-form cells, auto junctions [cell, tile name], [cell, hp] under max].
 	var map := _map()
 	var free: Array = []
+	var hp_rows: Array = []
 	for cell: Vector2i in map._walls._wall_cells:
 		free.append(cell)
+		var left: int = map._walls.hp(cell)
+		if left < WallBuilder.MAX_HP:
+			hp_rows.append([cell, left])
 	var autos: Array = []
 	for cell: Vector2i in map._structures.auto_cells():
 		var name := WallBuilder._atlas_wall_name(map._structures.object_at(cell))
 		if name != "":
 			autos.append([cell, name])
-	return [free, autos]
+	return [free, autos, hp_rows]
 
 
 @rpc("any_peer", "reliable", "call_remote")
@@ -218,13 +236,16 @@ func apply_structure(structure_name: String, owner: int, anchor: Vector2i, quart
 
 
 @rpc("authority", "reliable", "call_remote")
-func apply_wall_state(free_cells: Array, autos: Array) -> void:
-	## Free-form chain and solved auto junctions the host decided. A late
-	## joiner and a live place both use this, so the pieces match.
+func apply_wall_state(free_cells: Array, autos: Array, hp_rows: Array = []) -> void:
+	## Free-form chain, solved auto junctions and remaining hp the host decided.
+	## A late joiner and a live place both use this, so the pieces match.
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	var map := _map()
 	map._walls.replace_from_host(free_cells)
+	for entry in hp_rows:
+		if entry is Array and entry.size() >= 2 and entry[0] is Vector2i:
+			map._walls.set_hp(entry[0], int(entry[1]))
 	for entry in autos:
 		if entry is Array and entry.size() >= 2 and entry[0] is Vector2i \
 				and entry[1] is String and str(entry[1]) != "":

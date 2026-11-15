@@ -289,6 +289,15 @@ func _swing_world_decor(direction: String, angle: float) -> void:
 		if not is_nan(turn):
 			swing += turn
 	map._object_removals.cells_in_arc(global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC, true)
+	if not multiplayer.is_server():
+		return
+	var requests := get_node_or_null("../StructureRequests") as StructureRequests
+	if requests == null:
+		return
+	var cell: Vector2i = map._walls.nearest_in_arc(global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC)
+	if cell == WallBuilder.NO_WALL:
+		return
+	requests.host_damage_wall(cell)
 
 
 func _facing_to_angle(facing: String) -> float:
