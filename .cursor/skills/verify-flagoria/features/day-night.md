@@ -27,4 +27,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the three headless tests add ab
 ## Gotchas
 
 - The cycle is 10 minutes, so the drive seeks the host clock to the middle of each hold instead of waiting for dusk and night.
-- Lights, the HUD clock icon, night overlays and mob changes are separate slices. The art files for those stay unused.
+- Lights, the HUD clock icon and night overlays are separate slices. The art files for those stay unused. Ambient caps at night are [Night mobs](./night-mobs.md).
