@@ -1,7 +1,7 @@
 class_name Soldier
 extends Mob
-## A trained unit that follows its owner or holds position (#553), and fights
-## nearby mobs on the host (#554).
+## A trained unit that follows its owner or holds position (#553), fights
+## nearby mobs on the host (#554), and strikes enemy players (#555).
 
 const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
 
@@ -58,7 +58,7 @@ func think(delta: float) -> void:
 			_start_idle()
 		return
 	_step_move(delta)
-	_fight_mobs()
+	_fight()
 
 
 func take_hit(by_peer: int = 0) -> bool:
@@ -91,32 +91,37 @@ func _step_move(delta: float) -> void:
 	_hold_pos = global_position
 
 
-func _fight_mobs() -> void:
-	var mob_root := get_node_or_null("../../Mobs")
+func _fight() -> void:
+	var world := get_parent().get_parent() if get_parent() != null else null
+	var mob_root := world.get_node_or_null("Mobs") if world != null else null
 	if mob_root == null or not mob_root.has_method("mobs"):
 		return
-	var target: Mob = null
-	var best_d := SoldierStats.ATTACK_RANGE
-	for node in mob_root.mobs():
-		if not node is Mob:
-			continue
-		var mob := node as Mob
-		if mob.state == State.DYING or mob.is_queued_for_deletion():
-			continue
-		var d := position.distance_to(mob.position)
-		if d <= best_d:
-			best_d = d
-			target = mob
+	var owner := world.get_node_or_null(str(owner_peer)) as Node2D
+	var players: Array = []
+	if world != null:
+		for child in world.get_children():
+			if child is CharacterBody2D and str(child.name).is_valid_int():
+				players.append(child)
+	var target: Object = SoldierTarget.pick(self, owner, mob_root.mobs(), players)
 	if target == null:
 		return
 	var my_box := contact_box()
-	var their_box := target.contact_box()
-	if my_box.intersects(their_box) and _strike_cd <= 0.0:
-		if target.take_hit(owner_peer):
-			_strike_cd = SoldierStats.HIT_EVERY
-	if their_box.intersects(my_box) and _hurt_cd <= 0.0:
-		if take_hit(0):
-			_hurt_cd = SoldierStats.HIT_EVERY
+	if target is Mob:
+		var mob := target as Mob
+		var their_box := mob.contact_box()
+		if my_box.intersects(their_box) and _strike_cd <= 0.0:
+			if mob.take_hit(owner_peer):
+				_strike_cd = SoldierStats.HIT_EVERY
+		if their_box.intersects(my_box) and _hurt_cd <= 0.0:
+			if take_hit(0):
+				_hurt_cd = SoldierStats.HIT_EVERY
+	elif target is Node2D:
+		var player := target as Node2D
+		var their_box := player_box(player)
+		if my_box.intersects(their_box) and _strike_cd <= 0.0:
+			var health := player.get_node_or_null("Health") as PlayerHealth
+			if health != null and health.take_damage(1):
+				_strike_cd = SoldierStats.HIT_EVERY
 
 
 func set_order(next: String) -> void:

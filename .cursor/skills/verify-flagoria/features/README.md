@@ -73,6 +73,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
 - [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
 - [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bow hits from other peers land; multiplayer hp sync (#554).
+- [Soldier vs peer](./soldier-vs-peer.md) — trained soldiers on Follow or Hold strike living enemy players; owner is never a target; health sync (#555).
 - [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
