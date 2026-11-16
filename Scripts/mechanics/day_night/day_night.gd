@@ -8,6 +8,8 @@ extends Node
 ## the HUD CanvasLayers stay at full brightness. Clients and a late joiner
 ## are sent the host's elapsed time.
 
+const _NightLights := preload("res://Scripts/mechanics/day_night/night_lights.gd")
+
 const CYCLE_SECONDS := 600.0
 ## How often the host repeats the elapsed time. A peer coasts between
 ## messages, so it stays within one tint step of the host.
@@ -59,6 +61,11 @@ func _ready() -> void:
 	_modulate = CanvasModulate.new()
 	_modulate.name = "WorldTint"
 	add_child(_modulate)
+	# Local pools (#560). The child creates nothing and does no per-frame work
+	# on a headless host; a display peer draws from state it already has.
+	var lights := _NightLights.new()
+	lights.name = "NightLights"
+	add_child(lights)
 	_apply_tint()
 	multiplayer.peer_connected.connect(_on_peer_connected)
 
