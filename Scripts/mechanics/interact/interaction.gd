@@ -146,7 +146,7 @@ func _process(delta: float) -> void:
 	if mode == Mode.INTERACT:
 		# Keep the build preview honest while the finger is held still: wood,
 		# reach (player walked) or the map can change without a new drag event.
-		if _touch != -1 and build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+		if _touch != -1 and build.tracks_pointer():
 			build.update_preview(_start, _end)
 		queue_redraw()
 
@@ -171,7 +171,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cancel()  # a second finger: a pinch, not a selection
 		elif event.index == _touch:
 			_end = event.position
-			if build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+			if build.tracks_pointer():
 				build.update_preview(_start, _end)
 				build.commit()
 			elif _dragging:
@@ -184,7 +184,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_end = event.position
 		if _start.distance_to(_end) > DRAG_START:
 			_dragging = true
-		if build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+		if build.tracks_pointer():
 			build.update_preview(_start, _end)
 
 
@@ -504,7 +504,7 @@ func receive_yields(cell: Vector2i, yields: Dictionary) -> void:
 func _draw() -> void:
 	if mode != Mode.INTERACT or player == null:
 		return
-	if build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+	if build.tracks_pointer():
 		build.draw_preview(self)
 	elif _stick.dragging:
 		var sweep := chop_sweep()

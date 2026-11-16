@@ -99,10 +99,12 @@ def net_scenarios(sources: list[str]) -> list[str]:
 DEFAULT_WORST_S = 8.0
 SCENARIO_WORST_S = {
     "test_attack_angle_two_players": 5.3,
+    "test_building_merge_two_players": 12.0,
     "test_build_costs_buy": 7.0,
     "test_build_picker_hides_on_multiplayer_start": 4.3,
     "test_build_picker_includes_tower": 4.1,
     "test_build_picker_includes_wall": 6.9,
+    "test_barracks_build_two_players": 12.0,
     "test_build_sync_two_players": 8.0,
     "test_castle_build_two_players": 8.3,
     "test_castle_owners_two_players": 13.6,
@@ -122,7 +124,7 @@ SCENARIO_WORST_S = {
     "test_flags_held_off_in_multiplayer": 4.2,
     "test_ingame_menu_leave": 8.8,
     "test_interact_in_multiplayer": 3.9,
-    "test_join_fail_host_quits": 8.4,
+    "test_join_fail_host_quits": 12.0,
     "test_join_fail_no_host": 10.3,
     "test_join_port_dedicated": 5.9,
     "test_land_score_client_skips": 4.1,

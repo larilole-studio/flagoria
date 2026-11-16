@@ -7,7 +7,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | Entry | What starts there |
 |---|---|
 | `project.godot` | Main scene `flagoria_main.tscn`, and six autoloads: `MapGen` (`Scripts/map_gen.gd`), `AudioSettings` (`Scripts/audio_settings.gd`), `GameSettings` (`Scripts/game_settings.gd`), `HudLayout` (`Scripts/hud_layout.gd`), `MusicPlayer` (`Scripts/music_player.gd`), `UiSfx` (`Scripts/ui_sfx.gd`). |
-| `flagoria_main.tscn` + `flagoria_main.gd` | The game: main menu, HUD, `World/worldMap` (the `TileMap`), `World/Mobs`, `World/Interaction`, `World/RangedShots`, `Inventory`, `Points`, `Discovery`. Host, join, the dedicated server (`-- --server`), player spawn and the map-parameter sync. |
+| `flagoria_main.tscn` + `flagoria_main.gd` | The game: main menu, HUD, `World/worldMap` (the `TileMap`), `World/Mobs`, `World/Interaction`, `World/RangedShots`, `Inventory`, `Points`, `Discovery`. Host, join, the dedicated server (`-- --server`), player spawn and the map-parameter sync. Join re-dials in `Scripts/join_dial.gd`. |
 | `tests/run_tests.gd` | Headless test runner (`--only`, `--list`). It finds every `tests/**/test_*.gd` file; see `tests/README.md`. |
 | `tools/verify.sh` | What CI's verify job runs: import, parse every script in one process (`tools/parse_scripts.gd`), run every test. |
 | `tools/cli.gd` | Headless map commands (`map render`, `map stats`, in `tools/map_cli.gd`). |
@@ -78,15 +78,17 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/mechanics/structures/structure.gd` | Parse hand-drawn structures | moved from `Scripts/structure.gd` (#261) |
 | `Scripts/mechanics/structures/structure_placer.gd` | Check and place a parsed structure on the map, keep placements across redraws | new (#270) |
 | `Scripts/mechanics/building/build_costs.gd` | Wood cost and refund per buildable; buy: check wood, spend, place | new (#272) |
-| `Scripts/mechanics/building/build_placement.gd` | Buildings column of round Plank/Tower/Castle/Guard/Wall buttons, snapped plank/wall and footprint preview via ConstructionPlacer | stays (#225 / #273 / #276, #480, #528) |
+| `Scripts/mechanics/building/build_tool_row.gd` | Buildings-column tool icons, tips, footprint kinds and picker buttons | new (#556) |
+| `Scripts/mechanics/building/build_placement.gd` | Snapped plank/wall and footprint preview via ConstructionPlacer; picker from BuildToolRow | stays (#225 / #273 / #276, #480, #528, #556) |
 | `Scripts/mechanics/building/build_placement_rotate.gd` | Round rotate control beside footprint placement preview | new (#493) |
 | `Scripts/mechanics/building/footprint_orientation.gd` | Rotated facing marker on preview and placed footprint tools | new (#493) |
-| `Scripts/mechanics/building/structure_requests.gd` | Host-request pipeline for towers, castles, guard posts, free-form walls, and a joining peer's starting castle | new (#497, #498, #278, #527, #528) |
+| `Scripts/mechanics/building/structure_requests.gd` | Host-request pipeline for towers, castles, guard posts, barracks, free-form walls, and a joining peer's starting castle | new (#497, #498, #278, #527, #528, #556) |
 | `Scripts/mechanics/building_blocks/building_block_piece.gd` | One WFC modular piece: TileCatalog tile and cardinal edge sockets | new (#23) |
 | `Scripts/mechanics/building_blocks/building_block_catalog.gd` | Piece set, socket compatibility and adjacency table for WFC | new (#23) |
 | `Scripts/mechanics/building_blocks/wfc_solver.gd` | Pure GDScript WFC: collapse, propagate, seeded restarts (#24) | new (#24) |
 | `Scripts/mechanics/building_blocks/wfc_building_constraints.gd` | Building footprint rules: ring, door, reachability, roof, pre-seed + re-solve (#25) | new (#25) |
 | `Scripts/mechanics/building_blocks/generated_buildings.gd` | Host places one WFC building at the player; peers solve the same seed and paint layer 7 (#26) | new (#26) |
+| `Scripts/mechanics/building_blocks/building_merge.gd` | Merge two full-edge footprints with a constrained WFC re-solve and stitch fallback (#27) | new (#27) |
 | `Scripts/mechanics/walls/wall_builder.gd` | Free-form palisade cells, shared solve with structure walls and towers, piece and collar paint, kept on redraw | new (#276) |
 | `Scripts/world/plant_picker.gd` | Plant or stones for one walkable cell from altitude, moisture, chance and biome | moved from `Scripts/TileMap.gd` (#370 put that file over its 500-line budget); `Scripts/TileMap.gd` keeps `plant_tile` and `structure_tile` wrappers |
 | `Scripts/world/object_removals.gd` | Picked flowers and destroyed stones on the map; `world.object_changes` entries with `removed` | new (#198) |

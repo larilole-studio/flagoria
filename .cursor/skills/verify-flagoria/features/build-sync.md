@@ -28,7 +28,9 @@ Walls and towers are requested from the host
   replaces its bridges with it (`world.replace_bridges` /
   `BridgeBuilder.replace_from_host`). Live places after that arrive on the same
   reliable channel.
-- `build-mode` interact mode shows Plank, Tower and Wall in multiplayer.
+- `build-mode` interact mode shows the full Buildings column (Plank, Tower,
+  Castle, Guard post, Barracks and Wall) in multiplayer; nothing hides on
+  connect (`BuildToolRow.MP_HIDDEN` is empty).
 
 ## How to get to it (user POV)
 
@@ -41,7 +43,7 @@ Walls and towers are requested from the host
 
 Preconditions: `doctor.sh` exits `0`. Time cost:
 `test_build_sync_two_players` about 8–15 s alone with `--only=` (three Godot
-peers); in the Netcode stress job it is one scenario × 20 runs.
+peers); in the Netcode stress job it is one scenario × 8 runs on the full tier.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=build_sync_two_players`, or the Netcode stress job / full `tools/verify.sh`.
 - **Proof.** Header `-- test_build_sync_two_players` in the log with
@@ -51,6 +53,7 @@ peers); in the Netcode stress job it is one scenario × 20 runs.
 
 - Inventories stay local per peer; the host charges the placer with
   `receive_charge`, it does not spend the host's wood for a client's place.
-- Do not lift the Wall multiplayer gate here; towers already use StructureRequests (#497).
+- Wall and tower peer sync live in [Walls and cities sync](./walls-cities-sync.md)
+  and [Conquest sync](./conquest-sync.md); this file covers plank bridges only.
 - Bridge join list is a flat `[x, y, atlas_x, atlas_y]` array, not the cut
   changes dictionary.

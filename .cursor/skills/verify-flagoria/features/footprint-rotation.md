@@ -2,11 +2,12 @@
 
 Drive: drives/footprint_rotation.gd
 
-While placing a footprint structure (the wooden tower today), interact mode
-shows a round Rotate control beside the placement preview. Each tap turns the
-footprint 90° clockwise; green/red cells, wood cost and refusal reasons follow
-the rotated shape. Committing writes that rotation on the placement so saves
-and join sync restore it (#493).
+While placing a footprint structure (tower, extra castle, guard post or
+barracks — `BuildToolRow.FOOTPRINT_KIND`), interact mode shows a round Rotate
+control beside the placement preview. Each tap turns the footprint 90° clockwise;
+green/red cells, wood cost and refusal reasons follow the rotated shape.
+Committing writes that rotation on the placement so saves and join sync restore
+it (#493).
 
 ## Sub-features
 
@@ -39,7 +40,8 @@ Preconditions: `doctor.sh` exits `0`. Time cost: three headless tests
 
 ## Gotchas
 
-- Rotation applies to footprint tools only (Tower today); planks and walls keep
-  drag direction. Rotation resets when the tool changes or interact mode closes.
+- Rotation applies to footprint tools only (tower, castle, guard post,
+  barracks); planks and walls keep drag direction. Rotation resets when the tool
+  changes or interact mode closes.
 - `Structure.rotated` returns a copy; the cached `tower_wood` definition must
   not be mutated in place.

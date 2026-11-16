@@ -58,16 +58,18 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
 - [Explored map](./explored-map.md) — wood minimap (collapse, reopen, maximize) and the parchment full map; cells revealed within 10 cells of the hero.
-- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; the starting castle still refuses while multiplayer is on; live path is the build picker.
-- [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for buildables; plank, wooden tower and wall block (through `BuildCosts.buy`); live path is the build picker.
+- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), castle (50), guard post (20), barracks (30), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; only the starting castle refuses while multiplayer is on; live path is the build picker.
+- [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for six buildable kinds (plank, tower, castle, guard post, barracks, wall block) through `BuildCosts.buy`; live path is the build picker.
 - [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
 - [Generated building](./generated-building.md) — host debug key and Map Settings button place one WFC building at the player; clients and a late joiner solve the same seed (#26).
-- [Build placement](./build-placement.md)
-- [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297). — interact-mode Cut/Plank/Tower/Wall picker, H/V-snapped plank and wall drag, tower footprint preview, green/red preview and wood cost; places through ConstructionPlacer (#225 / #273 / #276).
+- [Building merge](./building-merge.md) — full-edge neighbours share a wall; removal re-seals; two-player and late-joiner replay (#27).
+- [Build placement](./build-placement.md) — interact-mode Buildings column (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; H/V-snapped plank and wall drag, footprint previews, green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
+- [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297).
 - [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag; multiplayer asks the host (#273, #497).
 - [Build castle](./build-castle.md) — extra `castle.txt` for 50 wood with rotation, save/reload and multiplayer sync (#527).
 - [Build guard post](./build-guard-post.md) — `guard_post.txt` for 20 wood from the build picker, save/reload and multiplayer sync (#528).
-- [Footprint rotation](./footprint-rotation.md) — rotate footprint structures before placing; tower today (#493).
+- [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
+- [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
 - [Wall and tower junctions](./wall-junctions.md) — mask pieces, collar overlays on stone, tower ring with the team flag, far corner flips when a loop closes.
@@ -85,7 +87,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Buildings, Map and Mode on a top-right arc, build tools on discs in a column, map panel clear of the arc, Run beside attack (#480).
 - [Customize HUD layout](./hud-customize.md) — in-game menu edit mode; drag and resize touch controls; per-device user settings (#492).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
-- [Structure placement](./structure-placement.md) — place a structure file at an anchor cell, refusal reasons, kept on redraw, a placed stump does not regrow; placed by a host still alone, sent to joining peers.
+- [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.
 - [Starting castle](./start-castle.md) — each player's castle next to the spawn, player starts outside the gate; placed by the host while alone, sent to joining peers.
 - [Cities](./cities.md) — closed wall loop around a flag tower makes a city; tint + minimap; capture transfers; the host decides in multiplayer (#277, #498).
 - [Tower capture](./tower-capture.md) — flag towers taken by a lone other side or mobs standing by the flag for 5 s; the host decides, peers receive owner and progress (#274, #497).
