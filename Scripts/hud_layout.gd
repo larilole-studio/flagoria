@@ -12,14 +12,13 @@ const GAP := 2.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
-const IDS := ["joystick", "attack", "run", "buildings", "map", "mode", "scores"]
+const IDS := ["joystick", "attack", "run", "buildings", "map", "scores"]
 const PATHS := {
 	"joystick": "player_joystick",
 	"attack": "TouchScreenButton",
 	"run": "RunButton",
 	"buildings": "BuildingsButton",
 	"map": "MinimapButton",
-	"mode": "ModeButton",
 	"scores": "ScoreboardToggle",
 }
 

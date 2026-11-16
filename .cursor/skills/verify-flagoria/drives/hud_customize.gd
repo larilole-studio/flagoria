@@ -12,7 +12,7 @@ const DONE := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Done"
 const SAVE := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Save"
 const RESET := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Reset"
 const SIZE_SLIDER := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/SizeSlider"
-const HUD_IDS := ["joystick", "attack", "run", "buildings", "map", "mode"]
+const HUD_IDS := ["joystick", "attack", "run", "buildings", "map", "scores"]
 
 
 func _hud_layout() -> Node:
@@ -124,12 +124,12 @@ func run() -> void:
 	ok = ok and _controls_clear_of_bar(layer)
 
 	step("no-overlap")
-	var mode: Control = current_scene.get_node("CanvasLayer1/ModeButton")
+	var buildings: Control = current_scene.get_node("CanvasLayer1/BuildingsButton")
 	attack_at = to_window(attack, attack.texture_normal.get_size() * attack.scale * 0.5)
 	await _tap(attack_at)
 	var blocked: bool = not _hud_layout().try_place(
-			"attack", mode.global_position.x / layer.get_viewport().get_visible_rect().size.x,
-			mode.global_position.y / layer.get_viewport().get_visible_rect().size.y, 1.0, layer)
+			"attack", buildings.global_position.x / layer.get_viewport().get_visible_rect().size.x,
+			buildings.global_position.y / layer.get_viewport().get_visible_rect().size.y, 1.0, layer)
 	await process_frame
 	ok = ok and blocked
 	await snapshot("no-overlap")

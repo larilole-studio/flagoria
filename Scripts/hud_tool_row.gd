@@ -1,17 +1,40 @@
 class_name HudToolRow
 extends Node
-## Places the top-right half-moon and the Run button (#480).
+## Places the top-right arc, Run, and the tool wheel button (#480, #574).
 ##
-## Buildings, Map and Mode sit on a quarter arc in the top-right corner,
-## clear of the menu button. The wood panel sits left of that arc so an open
-## map never covers a button. The build tools stack in a column under
-## Buildings while that list is open. Run sits beside the attack button.
+## Buildings and Map sit on a quarter arc in the top-right corner, clear of
+## the menu button. The wood panel sits left of that arc so an open map never
+## covers a button. The build tools stack in a column under Buildings while
+## that list is open. Run sits beside the attack button. The tool wheel sits
+## left of Run. A headless dedicated host builds no wheel and skips this
+## layout pass.
+
+const ToolWheelScript := preload("res://Scripts/tool_wheel.gd")
 
 const GAP := 2.0
 const SIDE := 4.0
 const ARC_RADIUS := 40.0
-const ARC_START := -80.0  ## degrees, y down; Mode sits up-right on the circle
+const ARC_START := -80.0  ## degrees, y down; Map sits up-right on the circle
 const ARC_STEP := 48.0
+
+
+func _ready() -> void:
+	# The canvas layer is still entering the tree here, so the wheel is added
+	# on the next idle frame. A headless dedicated host never adds it and
+	# does not keep laying out the HUD.
+	if ToolWheelScript.headless_host():
+		set_process(false)
+		return
+	call_deferred("_add_wheel")
+
+
+func _add_wheel() -> void:
+	var layer := get_parent()
+	if layer == null or layer.get_node_or_null("ToolWheel") != null:
+		return
+	var wheel := ToolWheelScript.new()
+	wheel.name = "ToolWheel"
+	layer.add_child(wheel)
 
 
 func _process(_delta: float) -> void:
@@ -25,21 +48,22 @@ func _layout() -> void:
 	var layout := get_node_or_null("/root/HudLayout")
 	if layout != null and layout.layout_active():
 		layout.apply(layer)
+		_place_tool(layer)
 		return
 	_restore_touch_defaults(layer)
 	var buildings := layer.get_node_or_null("BuildingsButton") as Control
 	var map_button := layer.get_node_or_null("MinimapButton") as Control
-	var mode := layer.get_node_or_null("ModeButton") as Control
 	var view := get_viewport().get_visible_rect().size
-	if mode != null:
+	var anchor: Control = map_button if map_button != null else buildings
+	if anchor != null:
 		var menu := _menu_rect(layer)
 		var right := view.x - SIDE
 		if menu.size != Vector2.ZERO:
 			right = minf(right, menu.position.x - GAP)
-		var mode_center := Vector2(right - RoundHudStyle.HIT * 0.5, SIDE + RoundHudStyle.HIT * 0.5)
+		var corner := Vector2(right - RoundHudStyle.HIT * 0.5, SIDE + RoundHudStyle.HIT * 0.5)
 		# Corner first, then along the arc, so Buildings is the low end and
-		# its column can drop without crossing Map or Mode.
-		var ordered: Array[Control] = [mode]
+		# its column can drop without crossing Map.
+		var ordered: Array[Control] = []
 		if map_button != null:
 			ordered.append(map_button)
 		if buildings != null:
@@ -47,7 +71,7 @@ func _layout() -> void:
 		for i in ordered.size():
 			var control: Control = ordered[i]
 			_pin(control)
-			var center := _arc_center(i, mode_center)
+			var center := _arc_center(i, corner)
 			var size := _size_of(control)
 			control.position = Vector2(
 					roundf(center.x - size.x * 0.5), roundf(center.y - size.y * 0.5))
@@ -55,6 +79,7 @@ func _layout() -> void:
 	_place_buildings(layer, buildings)
 	_place_panel(layer, view)
 	_place_run(layer)
+	_place_tool(layer)
 
 
 func _arc_center(index: int, mode_center: Vector2) -> Vector2:
@@ -101,7 +126,7 @@ func _place_panel(layer: Node, view: Vector2) -> void:
 	var width := panel.size.x * panel.scale.x
 	var height := panel.size.y * panel.scale.y
 	var arc_left := view.x
-	for node_name in ["ModeButton", "MinimapButton", "BuildingsButton"]:
+	for node_name in ["MinimapButton", "BuildingsButton"]:
 		arc_left = minf(arc_left, _left_of(layer.get_node_or_null(node_name) as Control))
 	var picker := layer.get_node_or_null("BuildPicker") as Control
 	if picker != null:
@@ -153,6 +178,28 @@ func _place_run(layer: Node) -> void:
 		y = attack.position.y - GAP - run_size.y
 	run.position = Vector2(roundf(x), roundf(y))
 	run.z_index = 2
+
+
+func _place_tool(layer: Node) -> void:
+	## Left of Run, in the attack cluster. A saved layout moves Run and
+	## attack; the wheel button follows Run and is not its own layout id.
+	var wheel := layer.get_node_or_null("ToolWheel")
+	if wheel == null or not wheel.has_method("place_button"):
+		return
+	var button := wheel.get_node_or_null("ToolButton") as Control
+	var run := layer.get_node_or_null("RunButton") as Control
+	if button == null or run == null:
+		return
+	_pin(button)
+	var run_size := _size_of(run)
+	var button_size := _size_of(button)
+	var x := run.position.x - GAP - button_size.x
+	var y := run.position.y + (run_size.y - button_size.y) * 0.5
+	if x < SIDE:
+		x = run.position.x
+		y = run.position.y - GAP - button_size.y
+	wheel.place_button(Vector2(roundf(x), roundf(y)))
+	button.z_index = 4
 
 
 func _menu_rect(layer: Node) -> Rect2:

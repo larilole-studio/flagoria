@@ -2,7 +2,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Bow aim and one shot. Start with `bin/launch.sh drives/ranged_bow.gd --seed 11`.
 
-const BOW := "CanvasLayer1/BowButton"
+const WHEEL := "CanvasLayer1/ToolWheel"
 
 
 func run() -> void:
@@ -11,10 +11,11 @@ func run() -> void:
 	var ok := true
 	var shots: RangedShots = current_scene.get_node("World/RangedShots")
 	step("bow")
-	var button: BaseButton = current_scene.get_node(BOW)
+	var wheel: ToolWheel = current_scene.get_node(WHEEL)
+	var button: BaseButton = wheel.get_node("ToolButton")
 	var placed := await wait_until(func() -> bool: return button.size.y > 1.0, 2.0)
-	await click(BOW)
-	var armed := await wait_until(func() -> bool: return button.button_pressed, 2.0)
+	await tap_key(KEY_2)
+	var armed := await wait_until(func() -> bool: return wheel.bow_armed(), 2.0)
 	print("ranged_bow: placed %s armed %s at %s" % [placed, armed, button.position])
 	ok = ok and placed and armed and not hero().isAttacking
 

@@ -21,7 +21,7 @@ In interact mode the hero chops trees and bushes for wood. Each choppable kind i
 
 ## How to get to it (user POV)
 
-- Start or join a game, tap the mode button to switch to interact, then tap a tree or bush next to the hero. The wood count on the HUD goes up when it falls.
+- Start or join a game, select chop on the tool wheel, then tap a tree or bush next to the hero. The wood count on the HUD goes up when it falls.
 
 ## Driving it with verify-flagoria helpers
 
