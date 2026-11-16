@@ -120,6 +120,10 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/mob.gd` | One mob's behaviour and sync | stays |
 | `Scripts/mob_spawner.gd` | Server mob placement and the ambient band | stays |
 | `Scripts/mechanics/mobs/raid_director.gd` | Host raid clock: a group of mobs walks to the nearest player city or owned tower | new (#529) |
+| `Scripts/mechanics/npcs/soldier.gd` | Trained soldier movement: follow the owner or hold position | new (#553) |
+| `Scripts/mechanics/npcs/soldier_requests.gd` | Host train pipeline, follow/hold toggle, `World/Soldiers` spawner | new (#553) |
+| `Scripts/mechanics/npcs/soldier_saves.gd` | `world.soldiers` capture and restore beside structures | new (#553) |
+| `Scripts/mechanics/npcs/soldier_stats.gd` | Train cost, cap, timings and walk speed constants | new (#553) |
 | `Scripts/mechanics/mobs/raid_step.gd` | One raiding mob's walk and free-form wall strike | new (#529) |
 | `Scripts/mob_catalog.gd` | Mob types and sheet layout | stays (shared catalogue) |
 | `Scripts/points.gd` | Point totals (server owned) | stays |

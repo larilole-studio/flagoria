@@ -87,10 +87,32 @@ const SOUNDS := {
 			preload("res://art/audio/sfx/mobs/piglet/piglet_idle_02.wav"),
 		],
 	},
+	"soldier": {
+		"notice": [
+			preload("res://art/audio/sfx/mobs/soldier/soldier_notice_01.wav"),
+		],
+		"attack": [
+			preload("res://art/audio/sfx/mobs/soldier/soldier_attack_01.wav"),
+			preload("res://art/audio/sfx/mobs/soldier/soldier_attack_02.wav"),
+			preload("res://art/audio/sfx/mobs/soldier/soldier_attack_03.wav"),
+		],
+		"hurt": [
+			preload("res://art/audio/sfx/mobs/soldier/soldier_hurt_01.wav"),
+			preload("res://art/audio/sfx/mobs/soldier/soldier_hurt_02.wav"),
+			preload("res://art/audio/sfx/mobs/soldier/soldier_hurt_03.wav"),
+		],
+		"death": [
+			preload("res://art/audio/sfx/mobs/soldier/soldier_death_01.wav"),
+		],
+		"idle": [
+			preload("res://art/audio/sfx/mobs/soldier/soldier_idle_01.wav"),
+			preload("res://art/audio/sfx/mobs/soldier/soldier_idle_02.wav"),
+		],
+	},
 }
 const VOLUME_DB := {"notice": -12.0, "attack": -11.0, "hurt": -10.0, "death": -9.0, "idle": -12.0}
 ## Added to VOLUME_DB per mob type: the crab clips are 1-3.6 dB quieter.
-const MOB_VOLUME_DB := {"slime": 0.0, "crab": 2.0, "piglet": 0.0}
+const MOB_VOLUME_DB := {"slime": 0.0, "crab": 2.0, "piglet": 0.0, "soldier": 0.0}
 ## Minimum seconds between two plays of the same event on one mob.
 const COOLDOWN := {"notice": 1.0, "attack": 0.3, "hurt": 0.1, "death": 0.5, "idle": 1.0}
 ## Seconds between idle sounds, picked at random per mob within this range.

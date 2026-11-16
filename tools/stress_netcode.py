@@ -105,6 +105,7 @@ SCENARIO_WORST_S = {
     "test_build_picker_includes_tower": 4.1,
     "test_build_picker_includes_wall": 6.9,
     "test_barracks_build_two_players": 12.0,
+    "test_soldier_train_two_players": 15.0,
     "test_build_sync_two_players": 8.0,
     "test_castle_build_two_players": 8.3,
     "test_castle_owners_two_players": 13.6,

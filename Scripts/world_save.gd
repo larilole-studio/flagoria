@@ -39,6 +39,8 @@ var updated: int = 0
 ## Seconds into the day/night cycle (#558). 0, or a missing clock, is the
 ## start of day. The cycle switch itself is params.day_night_cycle.
 var clock_elapsed: float = 0.0
+## Living trained soldiers (#553). Not a WORLD_SECTIONS chunk dict.
+var soldiers: Array = []
 
 
 func _init(inputs: MapGenParams = null) -> void:
@@ -49,6 +51,7 @@ func world_to_dict() -> Dictionary:
 	var out := {}
 	for section in WORLD_SECTIONS:
 		out[section] = get(section)
+	out["soldiers"] = soldiers
 	return out
 
 
@@ -63,6 +66,12 @@ func world_from_dict(data: Dictionary) -> String:
 			if not chunks[chunk] is Dictionary:
 				return "world.%s[%s] is not an object" % [section, chunk]
 		(get(section) as Dictionary).assign(chunks)
+	var troops = data.get("soldiers", [])
+	if troops == null:
+		troops = []
+	if not troops is Array:
+		return "world.soldiers is not an array"
+	soldiers = troops.duplicate(true)
 	return ""
 
 

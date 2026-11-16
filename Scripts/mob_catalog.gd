@@ -9,6 +9,7 @@ extends RefCounted
 const SLIME := "slime"
 const CRAB := "crab"
 const PIGLET := "piglet"
+const SOLDIER := "soldier"
 
 ## Where a mob type may stand and walk.
 const HOME_GRASS := 0
@@ -22,6 +23,7 @@ const TYPES := {
 	SLIME: {"sheet": "res://art/mobs/mob_slime_sheet.png", "home": HOME_GRASS, "wander_speed": 16.0, "chase_speed": 40.0, "body": Vector2(10, 6), "hp": 2, "hurtbox": Vector2(12, 9)},
 	CRAB: {"sheet": "res://art/mobs/mob_crab_sheet.png", "home": HOME_SAND, "wander_speed": 20.0, "chase_speed": 44.0, "body": Vector2(12, 6), "hp": 3, "hurtbox": Vector2(14, 10)},
 	PIGLET: {"sheet": "res://art/mobs/mob_piglet_sheet.png", "home": HOME_GRASS, "wander_speed": 24.0, "chase_speed": 52.0, "body": Vector2(8, 6), "hp": 2, "hurtbox": Vector2(12, 10)},
+	SOLDIER: {"sheet": "res://art/mobs/mob_piglet_sheet.png", "home": HOME_GRASS, "wander_speed": 48.0, "chase_speed": 48.0, "body": Vector2(10, 6), "hp": 4, "hurtbox": Vector2(12, 9)},
 }
 
 const HURTBOX_Y := -4.0
