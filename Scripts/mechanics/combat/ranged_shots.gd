@@ -117,10 +117,16 @@ func _is_dead(body: Node) -> bool:
 
 
 func _mobs() -> Array:
+	var out: Array = []
 	var root := get_node_or_null("../Mobs")
 	if root != null and root.has_method("mobs"):
-		return root.mobs()
-	return []
+		out.append_array(root.mobs())
+	var troops := get_node_or_null("../Soldiers")
+	if troops != null:
+		for child in troops.get_children():
+			if child is Mob and child.state != Mob.State.DYING:
+				out.append(child)
+	return out
 
 
 func _players() -> Array:
