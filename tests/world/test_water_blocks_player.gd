@@ -36,6 +36,19 @@ func _test_water_blocks_player() -> int:
 		await physics_frame
 		var checked := 0
 		var open := 0
+		var blocked := false
+		for cell in world.sea_cells():
+			checked += 1
+			point.position = world.to_global(world.map_to_local(cell))
+			blocked = false
+			for hit in space.intersect_point(point, 8):
+				if hit["collider"] == world:
+					blocked = true
+					break
+			if not blocked:
+				open += 1
+				if open <= 3:
+					printerr("FAIL water_blocks_player case=%s cell=%s is open" % [case["name"], cell])
 		for cell in world.get_used_cells(0):
 			if world.is_walkable_land(cell):
 				continue
@@ -44,7 +57,7 @@ func _test_water_blocks_player() -> int:
 			# so get_coords_for_body_rid no longer names a single cell. Probe this
 			# cell's centre instead: a TileMap hit there is this cell's own shape.
 			point.position = world.to_global(world.map_to_local(cell))
-			var blocked := false
+			blocked = false
 			for hit in space.intersect_point(point, 8):
 				if hit["collider"] == world:
 					blocked = true

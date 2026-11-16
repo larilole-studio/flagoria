@@ -93,7 +93,7 @@ func apply_solved(cell: Vector2i, tile_name: String) -> void:
 		return
 	_cells[cell][1] = atlas
 	_map._predict_cache.erase(cell)
-	if _map.get_cell_source_id(0, cell) == -1:
+	if not _map.is_drawn(cell):
 		return
 	_map.erase_cell(1, cell)
 	_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
@@ -254,10 +254,10 @@ func _write(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_tur
 		_cells[cell] = [ground, object]
 		_map.forget_cut(cell)
 		_map._predict_cache.erase(cell)
-		if _map.get_cell_source_id(0, cell) == -1:
+		if not _map.is_drawn(cell):
 			continue  # not drawn yet: generate_chunk draws it
 		if ground != _WorldMap.NO_PLANT:
-			_map.set_cell(0, cell, TileCatalog.SOURCE_ID, ground)
+			_map.claim_ground(cell, ground)
 		_map.erase_cell(1, cell)
 		_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
 		if object != _WorldMap.NO_PLANT:

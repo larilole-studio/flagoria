@@ -91,6 +91,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/mechanics/building_blocks/building_merge.gd` | Merge two full-edge footprints with a constrained WFC re-solve and stitch fallback (#27) | new (#27) |
 | `Scripts/mechanics/walls/wall_builder.gd` | Free-form palisade cells, shared solve with structure walls and towers, piece and collar paint, kept on redraw | new (#276) |
 | `Scripts/world/plant_picker.gd` | Plant or stones for one walkable cell from altitude, moisture, chance and biome | moved from `Scripts/TileMap.gd` (#370 put that file over its 500-line budget); `Scripts/TileMap.gd` keeps `plant_tile` and `structure_tile` wrappers |
+| `Scripts/world/sky_islands.gd` | Open sea as an empty cell, island-edge terrain, invisible sea collision, clouds on their own layer | new. `Scripts/TileMap.gd` keeps `ground_tile`, `is_drawn`, `is_open_sea`, `sea_cells` and `claim_ground` |
 | `Scripts/world/object_removals.gd` | Picked flowers and destroyed stones on the map; `world.object_changes` entries with `removed` | new (#198) |
 | `Scripts/world/start_castle.gd` | Find the spot for a player's starting castle next to the spawn and place it, including a joining peer's castle outside the shared spawn | new (#271, #278) |
 | `Scripts/mechanics/conquest/tower_capture.gd` | Flag towers change hands: who stands by each flag, capture progress, the progress bars | new (#274) |

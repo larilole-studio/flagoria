@@ -71,7 +71,7 @@ func _test_build_costs_buy() -> int:
 	for s in [11, 42, 7, 1, 99]:
 		world.apply_map_params(_spawn_params(s, 0.0))
 		world.generate_chunk(Vector2(0, 0))
-		for cell in world.get_used_cells(0):
+		for cell in world.sea_cells():
 			if range(3).all(func(i: int) -> bool: return world.predict_cell(cell + Vector2i(i, 0))[0] == TileCatalog.WATER):
 				start = cell
 				break

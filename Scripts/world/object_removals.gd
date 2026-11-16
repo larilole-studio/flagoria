@@ -29,7 +29,7 @@ func is_empty() -> bool:
 func decor_at(cell: Vector2i) -> Vector2i:
 	## FLOWER, STONES or NO_PLANT on `cell`: the drawn ground decor when the
 	## chunk is there, else what predict_cell would place on the decor layer.
-	if _map.get_cell_source_id(0, cell) != -1:
+	if _map.is_drawn(cell):
 		var decor := _map.get_cell_atlas_coords(_WorldMap.GROUND_DECOR_LAYER, cell)
 		if decor == TileCatalog.FLOWER or decor == TileCatalog.STONES:
 			return decor
@@ -70,7 +70,7 @@ func _mark_removed(cell: Vector2i) -> void:
 	_removed[cell] = true
 	_map._predict_cache.erase(cell)
 	_map.tree_sprouts().touch(cell)
-	if _map.get_cell_source_id(0, cell) != -1:
+	if _map.is_drawn(cell):
 		_map.erase_cell(1, cell)
 		_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
 
@@ -125,7 +125,7 @@ func restore(changes: Dictionary) -> int:
 			_removed[cell] = true
 			_map._predict_cache.erase(cell)
 			_map.tree_sprouts().touch(cell)
-			if _map.get_cell_source_id(0, cell) != -1:
+			if _map.is_drawn(cell):
 				_map.erase_cell(1, cell)
 				_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
 			added += 1
@@ -150,7 +150,7 @@ func replace(changes: Dictionary) -> int:
 func _redraw(cell: Vector2i) -> void:
 	## Put generated decor back on a drawn cell whose removal was dropped.
 	_map._predict_cache.erase(cell)
-	if _map.get_cell_source_id(0, cell) == -1:
+	if not _map.is_drawn(cell):
 		return
 	_map.erase_cell(1, cell)
 	_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)

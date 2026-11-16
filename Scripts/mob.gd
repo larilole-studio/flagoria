@@ -145,7 +145,7 @@ func update_chart_visibility() -> void:
 	if _world == null:
 		return
 	_chart_cell = _world.local_to_map(position)
-	visible = visible_in_uncharted or _world.get_cell_source_id(0, _chart_cell) != -1
+	visible = visible_in_uncharted or _world.is_drawn(_chart_cell)
 
 
 func _on_ground_changed(cells: Rect2i) -> void:

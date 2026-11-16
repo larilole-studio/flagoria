@@ -324,7 +324,7 @@ func _clear_cover(map: TileMap, cell: Vector2i, piece_id: String) -> void:
 	map.erase_cell(1, cell)
 	map.erase_cell(map.GROUND_DECOR_LAYER, cell)
 	if WALKABLE.has(piece_id) and not map.is_walkable_land(cell):
-		map.set_cell(0, cell, TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
+		map.claim_ground(cell, TileCatalog.GRASS_A)
 
 
 func _clear_door_exit(map: TileMap, door: Vector2i, x: int, y: int, width: int, height: int) -> void:
@@ -346,7 +346,7 @@ func _clear_door_exit(map: TileMap, door: Vector2i, x: int, y: int, width: int, 
 		map.erase_cell(1, cell)
 		map.erase_cell(map.GROUND_DECOR_LAYER, cell)
 		if not map.is_walkable_land(cell):
-			map.set_cell(0, cell, TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
+			map.claim_ground(cell, TileCatalog.GRASS_A)
 
 
 func _solid_alternative(map: TileMap, atlas: Vector2i) -> int:
