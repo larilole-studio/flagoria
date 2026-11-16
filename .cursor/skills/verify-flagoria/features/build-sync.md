@@ -28,7 +28,9 @@ Walls and towers are requested from the host
   replaces its bridges with it (`world.replace_bridges` /
   `BridgeBuilder.replace_from_host`). Live places after that arrive on the same
   reliable channel.
-- `build-mode` interact mode shows Plank, Tower and Wall in multiplayer.
+- `build-mode` interact mode shows the full Buildings column (Plank, Tower,
+  Castle, Guard post, Barracks and Wall) in multiplayer; nothing hides on
+  connect (`BuildToolRow.MP_HIDDEN` is empty).
 
 ## How to get to it (user POV)
 
@@ -51,6 +53,7 @@ peers); in the Netcode stress job it is one scenario × 8 runs on the full tier.
 
 - Inventories stay local per peer; the host charges the placer with
   `receive_charge`, it does not spend the host's wood for a client's place.
-- Do not lift the Wall multiplayer gate here; towers already use StructureRequests (#497).
+- Wall and tower peer sync live in [Walls and cities sync](./walls-cities-sync.md)
+  and [Conquest sync](./conquest-sync.md); this file covers plank bridges only.
 - Bridge join list is a flat `[x, y, atlas_x, atlas_y]` array, not the cut
   changes dictionary.

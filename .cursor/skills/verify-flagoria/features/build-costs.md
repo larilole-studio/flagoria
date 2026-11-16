@@ -10,13 +10,15 @@ What each buildable costs in wood, and buying one. `BuildCosts` (`Scripts/mechan
 | `wall_block` | 2 | one wall cell |
 | `tower` | 10 | one tower |
 | `castle` | 50 | one extra castle (#527) |
+| `guard_post` | 20 | one guard post (#528) |
+| `barracks` | 30 | one barracks (#556) |
 | `start_castle` | 0 | the castle each player starts with |
 
 A removal gives back `REFUND_SHARE` (half) of the total cost of the units removed together, rounded down. Nothing removes a build yet, so nothing reads it in play.
 
 `buy(inventory, kind, units, place)` checks first, takes the wood, then calls the writer `place` (for example `build_bridge`). Refusals, with nothing placed and nothing spent: `not enough wood`, `multiplayer on`, `unknown kind`. If `spend` fails after the check, `buy` returns `spend failed` and never calls the writer. If the writer refuses after the spend, the wood is put back and `buy` returns `not placed`. Charge and write stay atomic (#380 item 3).
 
-With peers connected, wood is still local. `buy` allows planks, towers and walls: the host decides the placement and charges the placer (#297, #497, #498). `buy` still refuses the starting castle with `multiplayer on`. `StructurePlacer.can_place` still reports `multiplayer on`; the host writes a tower with `place_from_host` and a wall with `write_wall`.
+With peers connected, wood is still local. `buy` allows planks, towers, castles, guard posts, barracks and wall blocks: the host decides the placement and charges the placer (#297, #497, #498, #527, #528, #556). `buy` still refuses only the starting castle with `multiplayer on` (`HOST_ALONE` in `build_costs.gd`). A raw `StructurePlacer.can_place` still reports `multiplayer on` on clients; the host writes structures and walls after a request.
 
 ## Sub-features
 
