@@ -75,6 +75,7 @@ The JSON inside the gzip, shown with line breaks:
 | `world.tile_edits` | Changed tiles (#41). |
 | `world.object_changes` | Changed world objects such as felled trees or picked items (#198). |
 | `world.structures` | Placed structures (#42). |
+| `world.soldiers` | Living trained soldiers (#553). Optional array on format version 3; missing means none. |
 | `player` | The player's own progress (#197). Empty means the default player. |
 | `clock` | Seconds into the day/night cycle (#558). Missing means the start of day. |
 
