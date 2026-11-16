@@ -194,7 +194,7 @@ func _restore_loaded_world() -> int:
 	_saved_player_ready = true
 	var bridges: int = world.replace_bridges(BridgeBuilder.from_changes(loaded.tile_edits, world))
 	var cuts: int = world.restore_object_changes(loaded.object_changes)
-	return cuts + bridges + StructureSaves.restore(loaded.structures, world)  # after cuts: a structure clears its cells
+	return cuts + bridges + StructureSaves.restore(loaded.structures, world) + SoldierSaves.restore(loaded.soldiers, get_node("World/Soldiers"))  # after cuts: a structure clears its cells
 
 
 func _apply_params_to_world(params: MapGenParams) -> void:
