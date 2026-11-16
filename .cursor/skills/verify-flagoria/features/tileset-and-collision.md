@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The world map uses tileset v3.1 through named tiles. Water, and rows of trees or bushes, block movement.
+The world map uses the v3 TileSet resource `art/flagoria/flagoria_tiles_v3.tres` with the v4 atlas texture `art/flagoria/flagoria_tiles_v4.png`, through named tiles in `TileCatalog`. Water, and rows of trees or bushes, block movement.
 
 ## Sub-features
 
