@@ -402,7 +402,7 @@ func _test_points_mob_kill() -> int:
 	## on a dying mob pay nothing, and a hit with no known player pays no one.
 	print("-- test_points_mob_kill")
 	var fail := 0
-	var want_values := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10}
+	var want_values := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10, MobCatalog.SOLDIER: 10}
 	if Points.MOB_KILL_POINTS != want_values or Points.MOB_KILL_POINTS.size() != MobCatalog.names().size():
 		printerr("FAIL points_mob_kill values %s for types %s" % [Points.MOB_KILL_POINTS, MobCatalog.names()])
 		fail += 1

@@ -23,6 +23,7 @@ GameSettings="*res://Scripts/game_settings.gd"
 HudLayout="*res://Scripts/hud_layout.gd"
 MusicPlayer="*res://Scripts/music_player.gd"
 UiSfx="*res://Scripts/ui_sfx.gd"
+DayNight="*res://Scripts/mechanics/day_night/day_night.gd"
 
 [display]
 

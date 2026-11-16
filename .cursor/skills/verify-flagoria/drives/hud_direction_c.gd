@@ -1,9 +1,9 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
-## Direction C HUD at 1280x720 and 1920x1080: discs, plate, weapon swap.
+## Direction C HUD at 1280x720 and 1920x1080: discs, plate, tool wheel.
 ## bin/launch.sh drives/hud_direction_c.gd --display --seed 49
 
 const SCORES := "CanvasLayer1/ScoreboardToggle"
-const BOW := "CanvasLayer1/BowButton"
+const WHEEL := "CanvasLayer1/ToolWheel"
 const CUSTOMIZE := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/CustomizeHud"
 
 
@@ -16,11 +16,13 @@ func run() -> void:
 	await snapshot("scores-selected")
 	await click(SCORES)
 	step("interact")
-	await click(MODE_BUTTON)
+	await toggle_mode()
 	await snapshot("mode-interact")
-	await click(MODE_BUTTON)
+	await toggle_mode()
 	step("bow")
-	await click(BOW)
+	var wheel: ToolWheel = current_scene.get_node(WHEEL)
+	await tap_key(KEY_2)
+	var armed := await wait_until(func() -> bool: return wheel.bow_armed(), 2.0)
 	await snapshot("weapon-bow-1280")
 	step("1080p")
 	await _resize_window("hud-1920", 1920, 1080)
@@ -31,7 +33,7 @@ func run() -> void:
 		return root.get_node("HudLayout").editing()
 	, 3.0)
 	await snapshot("hud-disabled-edit")
-	done(ok)
+	done(ok and armed)
 
 
 func _resize_window(label: String, width: int, height: int) -> void:

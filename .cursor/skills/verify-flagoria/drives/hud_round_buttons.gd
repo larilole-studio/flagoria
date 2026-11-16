@@ -23,7 +23,7 @@ func run() -> void:
 	step("match-start")
 	ok = ok and _cluster_ok(panel) and _disc_is(buildings, "ui_disc_build") \
 			and _disc_is(current_scene.get_node(MAP_BUTTON), "ui_disc_map") \
-			and _disc_is(current_scene.get_node(MODE_BUTTON), "mode_attack")
+			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_attack.png")
 	await snapshot("match-start")
 	print("hud round: start panel %s tool %s" % [panel.visible, interaction.build.tool])
 
@@ -57,16 +57,15 @@ func run() -> void:
 
 	step("interact")
 	var before := interaction.mode
-	await click(MODE_BUTTON)
-	var mode := current_scene.get_node(MODE_BUTTON) as Button
+	await toggle_mode()
 	var switched: bool = interaction.mode != before and interaction.mode == Interaction.Mode.INTERACT \
-			and _disc_is(mode, "mode_interact") \
+			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_interact.png") \
 			and interaction.build.tool == BuildPlacement.Tool.PLANK
 	ok = ok and _column_outside(panel)
 	await snapshot("interact")
-	await click(MODE_BUTTON)
+	await toggle_mode()
 	var back: bool = interaction.mode == before and interaction.build.tool == BuildPlacement.Tool.CUT \
-			and _disc_is(mode, "mode_attack")
+			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_attack.png")
 	print("hud round: mode switched %s back %s" % [switched, back])
 
 	step("run")
@@ -82,13 +81,12 @@ func _plank() -> Button:
 
 
 func _cluster_ok(panel: MinimapPanel) -> bool:
-	var mode := current_scene.get_node(MODE_BUTTON) as Button
 	var map_button := current_scene.get_node(MAP_BUTTON) as Button
 	var buildings := current_scene.get_node(BUILDINGS) as Button
 	var run := current_scene.get_node(RUN_BUTTON) as Button
 	var attack := current_scene.get_node("CanvasLayer1/TouchScreenButton") as TouchScreenButton
-	if panel.visible or not _round(mode) or not _round(map_button) or not _round(buildings):
-		printerr("hud round: start buttons mode %s" % mode.size)
+	if panel.visible or not _round(map_button) or not _round(buildings):
+		printerr("hud round: start buttons map %s buildings %s" % [map_button.size, buildings.size])
 		return false
 	if not _disc_is(run, "ui_disc_run"):
 		printerr("hud round: Run disc")
@@ -98,11 +96,10 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 	if run_rect.intersects(attack_rect) or run_rect.size.x >= attack_rect.size.x:
 		printerr("hud round: Run %s attack %s" % [run_rect, attack_rect])
 		return false
-	var mode_c := mode.get_global_rect().get_center()
 	var map_c := map_button.get_global_rect().get_center()
 	var build_c := buildings.get_global_rect().get_center()
-	if absf(mode_c.x - map_c.x) > 2.0 or not (mode_c.y + 2.0 < map_c.y and map_c.y + 2.0 < build_c.y):
-		printerr("hud round: column mode %s map %s buildings %s" % [mode_c, map_c, build_c])
+	if absf(map_c.x - build_c.x) > 2.0 or not (map_c.y + 2.0 < build_c.y):
+		printerr("hud round: column map %s buildings %s" % [map_c, build_c])
 		return false
 	return true
 
@@ -131,12 +128,17 @@ func _column_ok() -> bool:
 
 func _column_outside(panel: Control) -> bool:
 	var panel_rect := panel.get_global_rect()
-	for path in [BUILDINGS, MAP_BUTTON, MODE_BUTTON]:
+	for path in [BUILDINGS, MAP_BUTTON]:
 		var button := current_scene.get_node(path) as Control
 		if button.get_global_rect().intersects(panel_rect):
 			printerr("hud round: %s %s hits the minimap %s" % [path, button.get_global_rect(), panel_rect])
 			return false
 	return true
+
+
+func _icon_is(button: Control, file_name: String) -> bool:
+	var icon: Texture2D = button.get("icon")
+	return icon != null and str(icon.resource_path).ends_with(file_name)
 
 
 func _disc_is(button: Button, stem: String) -> bool:

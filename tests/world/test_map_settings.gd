@@ -46,7 +46,8 @@ func _test_map_settings_covers_params() -> int:
 		if not keys.has(key):
 			printerr("FAIL map_settings_covers_params %s missing from to_dict()" % key)
 			fail += 1
-		if not panel._spin_boxes.has(key) and not hand_wired.has(key):
+		var named: Node = panel.find_child(key, true, false)
+		if not panel._spin_boxes.has(key) and not hand_wired.has(key) and named == null:
 			printerr("FAIL map_settings_covers_params %s has no panel control" % key)
 			fail += 1
 

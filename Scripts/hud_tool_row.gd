@@ -1,62 +1,74 @@
 class_name HudToolRow
 extends Node
-## Default touch HUD placement for Direction C (#480, #492).
+## Direction C touch HUD: top-right column, status plate, tool wheel (#480, #492, #574).
+##
+## Map and Buildings stack in the top-right column. Customize HUD can move every
+## control including the wheel (#575). Layout runs on viewport and visibility
+## changes, not every frame. A headless dedicated host builds no wheel.
+
+const ToolWheelScript := preload("res://Scripts/tool_wheel.gd")
 
 const GAP := 4.0
+const WHEEL_GAP := 2.0
 const SIDE := 12.0
 const LAYOUT := {
 	"menu": Vector2(444, 12),
-	"mode": Vector2(444, 40),
 	"map": Vector2(444, 68),
 	"build": Vector2(444, 96),
 	"scores": Vector2(116, 12),
 	"attack": Vector2(428, 218),
 	"run": Vector2(392, 222),
-	"weapon": Vector2(406, 186),
 	"joystick": Vector2(77, 201),
 }
 
 const HIT_INSET := {
 	"menu": Vector2(4, 4),
-	"mode": Vector2(4, 4),
 	"map": Vector2(4, 4),
 	"build": Vector2(4, 4),
 	"scores": Vector2(4, 4),
 	"run": Vector2(2, 2),
-	"weapon": Vector2(2, 2),
 }
 
 
 func _ready() -> void:
-	if DisplayServer.get_name() == "headless":
+	if ToolWheelScript.headless_host():
 		set_process(false)
-		call_deferred("_bind_headless_relayout")
+		call_deferred("_bind_relayout")
+		return
+	call_deferred("_add_wheel")
+	call_deferred("_bind_relayout")
 
 
-func _bind_headless_relayout() -> void:
+func _add_wheel() -> void:
+	var layer := get_parent()
+	if layer == null or layer.get_node_or_null("ToolWheel") != null:
+		return
+	var wheel := ToolWheelScript.new()
+	wheel.name = "ToolWheel"
+	layer.add_child(wheel)
+	_layout()
+
+
+func _bind_relayout() -> void:
 	var layer := get_parent()
 	if layer == null:
 		return
 	_layout()
-	for node_name in ["BuildingsButton", "MinimapButton", "ModeButton"]:
+	for node_name in ["BuildingsButton", "MinimapButton"]:
 		var btn := layer.get_node_or_null(node_name) as BaseButton
-		if btn != null and not btn.toggled.is_connected(_on_headless_relayout):
-			btn.toggled.connect(_on_headless_relayout)
+		if btn != null and not btn.toggled.is_connected(_on_relayout):
+			btn.toggled.connect(_on_relayout)
 	var picker := layer.get_node_or_null("BuildPicker") as CanvasItem
-	if picker != null and not picker.visibility_changed.is_connected(_on_headless_relayout):
-		picker.visibility_changed.connect(_on_headless_relayout)
+	if picker != null and not picker.visibility_changed.is_connected(_on_relayout):
+		picker.visibility_changed.connect(_on_relayout)
 	var panel := layer.get_node_or_null("MinimapPanel") as CanvasItem
-	if panel != null and not panel.visibility_changed.is_connected(_on_headless_relayout):
-		panel.visibility_changed.connect(_on_headless_relayout)
-	if not get_viewport().size_changed.is_connected(_on_headless_relayout):
-		get_viewport().size_changed.connect(_on_headless_relayout)
+	if panel != null and not panel.visibility_changed.is_connected(_on_relayout):
+		panel.visibility_changed.connect(_on_relayout)
+	if not get_viewport().size_changed.is_connected(_on_relayout):
+		get_viewport().size_changed.connect(_on_relayout)
 
 
-func _on_headless_relayout(_on: Variant = null) -> void:
-	_layout()
-
-
-func _process(_delta: float) -> void:
+func _on_relayout(_on: Variant = null) -> void:
 	_layout()
 
 
@@ -71,6 +83,7 @@ func _layout() -> void:
 	var layout := get_node_or_null("/root/HudLayout")
 	if layout != null and layout.layout_active():
 		layout.apply(layer)
+		_place_tool(layer)
 		return
 	_restore_touch_defaults(layer)
 
@@ -83,6 +96,7 @@ func _restore_touch_defaults(layer: Node) -> void:
 	_place_attack(layer)
 	_place_joystick(layer)
 	_place_panel(layer)
+	_place_tool(layer)
 
 
 func _place_menu(layer: Node) -> void:
@@ -99,13 +113,8 @@ func _place_menu(layer: Node) -> void:
 
 
 func _place_column(layer: Node) -> void:
-	var mode := layer.get_node_or_null("ModeButton") as Button
 	var map_button := layer.get_node_or_null("MinimapButton") as Button
 	var buildings := layer.get_node_or_null("BuildingsButton") as Button
-	if mode != null:
-		_pin(mode)
-		_set_art(mode, "mode")
-		mode.z_index = 2
 	if map_button != null:
 		_pin(map_button)
 		RoundHudStyle.apply(map_button)
@@ -152,17 +161,11 @@ func _place_status(layer: Node) -> void:
 
 func _place_combat(layer: Node) -> void:
 	var run := layer.get_node_or_null("RunButton") as Button
-	var weapon := layer.get_node_or_null("BowButton") as Button
 	if run != null:
 		_pin(run)
 		RoundHudStyle.apply_run(run)
 		_set_art(run, "run")
 		run.z_index = 2
-	if weapon != null:
-		_pin(weapon)
-		var bow := weapon.button_pressed
-		RoundHudStyle.apply_weapon(weapon, bow)
-		_set_art(weapon, "weapon")
 
 
 func _place_attack(layer: Node) -> void:
@@ -183,6 +186,8 @@ func _place_joystick(layer: Node) -> void:
 
 
 func _place_buildings(layer: Node, buildings: Control) -> void:
+	if buildings == null:
+		return
 	var picker := layer.get_node_or_null("BuildPicker") as Control
 	if picker == null:
 		return
@@ -207,11 +212,11 @@ func _place_panel(layer: Node) -> void:
 	var panel := layer.get_node_or_null("MinimapPanel") as Control
 	if panel == null or panel.size.x <= 0.0:
 		return
-	var view := layer.get_viewport().get_visible_rect().size
+	var view := get_viewport().get_visible_rect().size
 	var width := panel.size.x * panel.scale.x
 	var height := panel.size.y * panel.scale.y
 	var arc_left := view.x
-	for node_name in ["ModeButton", "MinimapButton", "BuildingsButton"]:
+	for node_name in ["MinimapButton", "BuildingsButton"]:
 		arc_left = minf(arc_left, _left_of(layer.get_node_or_null(node_name) as Control))
 	var picker := layer.get_node_or_null("BuildPicker") as Control
 	if picker != null:
@@ -236,6 +241,32 @@ func _place_panel(layer: Node) -> void:
 		var dropped := plate.get_global_rect().end.y + GAP
 		if dropped + height <= limit:
 			panel.position.y = roundf(dropped)
+
+
+func _place_tool(layer: Node) -> void:
+	var layout := get_node_or_null("/root/HudLayout")
+	if layout != null and not layout.get_entry("wheel").is_empty():
+		return
+	var wheel := layer.get_node_or_null("ToolWheel")
+	if wheel == null or not wheel.has_method("place_button"):
+		return
+	var button := wheel.get_node_or_null("ToolButton") as Control
+	var run := layer.get_node_or_null("RunButton") as Control
+	if button == null or run == null:
+		return
+	_pin(button)
+	var disc := button as Button
+	if disc != null and absf(disc.size.x - RoundHudStyle.HIT) > 0.5:
+		RoundHudStyle.apply(disc)
+	var run_size := _size_of(run)
+	var button_size := _size_of(button)
+	var x := run.position.x - WHEEL_GAP - button_size.x
+	var y := run.position.y + (run_size.y - button_size.y) * 0.5
+	if x < SIDE:
+		x = run.position.x
+		y = run.position.y - WHEEL_GAP - button_size.y
+	wheel.place_button(Vector2(roundf(x), roundf(y)))
+	button.z_index = 4
 
 
 func _set_art(control: Control, id: String) -> void:

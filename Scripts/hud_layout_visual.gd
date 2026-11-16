@@ -47,6 +47,9 @@ static func dismiss_popups(layer: CanvasLayer) -> void:
 	var scores := layer.get_node_or_null("ScoreboardPanel") as ScoreboardPanel
 	if scores != null:
 		scores.close()
+	var wheel := layer.get_node_or_null("ToolWheel")
+	if wheel != null and wheel.has_method("close"):
+		wheel.close()
 
 
 static func _joystick_rect(stick: Node2D) -> Rect2:

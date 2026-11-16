@@ -40,6 +40,7 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/building_blocks/generated_buildings.gd" id="23_buildings"]
 [ext_resource type="Script" path="res://Scripts/mechanics/combat/ranged_shots.gd" id="24_ranged"]
 [ext_resource type="Script" path="res://Scripts/mechanics/mobs/raid_director.gd" id="25_raid"]
+[ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier_requests.gd" id="26_soldiers"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bm55c"]
 radius = 24.0
@@ -153,14 +154,6 @@ theme = ExtResource("6_menu")
 text = ""
 script = ExtResource("19_run")
 
-[node name="ModeButton" type="Button" parent="CanvasLayer1"]
-offset_right = 24.0
-offset_bottom = 24.0
-focus_mode = 0
-theme = ExtResource("6_menu")
-toggle_mode = true
-icon_alignment = 1
-
 [node name="HudToolRow" type="Node" parent="CanvasLayer1"]
 script = ExtResource("20_hud_row")
 
@@ -261,6 +254,13 @@ script = ExtResource("24_ranged")
 [node name="Mobs" type="Node2D" parent="World"]
 y_sort_enabled = true
 script = ExtResource("8_mobs")
+
+[node name="Soldiers" type="Node2D" parent="World"]
+y_sort_enabled = true
+script = ExtResource("26_soldiers")
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World/Soldiers"]
+spawn_path = NodePath("..")
 
 [node name="RaidDirector" type="Node" parent="World"]
 script = ExtResource("25_raid")

@@ -147,7 +147,7 @@ func _nearest_plant() -> Vector2i:
 
 
 func _chop(cell: Vector2i) -> bool:
-	await click(MODE_BUTTON)
+	await toggle_mode()
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var delta: Vector2 = map.to_global(map.map_to_local(cell)) - hero().global_position
 	var reach: Vector2 = delta.normalized() * minf(delta.length() + 20.0, 240.0)

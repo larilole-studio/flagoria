@@ -25,7 +25,7 @@ const SERVER_ID := 1
 const DISCOVERY_POINTS := 1  ## first player to stand in a map chunk (DiscoveryPoints)
 const FLAGS_HELD_POINTS := 1  ## per owned flag tower each FlagsHeldPoints tick (#275)
 ## Paid to the player whose sword hit kills a mob, by mob type (Mob.take_hit).
-const MOB_KILL_POINTS := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10}
+const MOB_KILL_POINTS := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10, MobCatalog.SOLDIER: 10}
 
 var _totals := {}  ## peer id -> points, land included
 var _land := {}  ## peer id -> land cells currently included in that total

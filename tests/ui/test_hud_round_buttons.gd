@@ -1,12 +1,12 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Top-right HUD arc: Buildings, Map and Mode, with Run beside attack (#480).
+## Top-right HUD arc: Buildings and Map, with Run beside attack (#480).
 
 
 func _test_hud_round_buttons() -> int:
 	## A hosted scene starts with the wood panel closed and the build list
-	## collapsed. Buildings, Map and Mode are a top-right arc of round buttons.
+	## collapsed. Buildings and Map are a top-right arc of round buttons.
 	## Buildings opens a column; a pick selects that tool and collapses it.
-	## Map toggles the panel. Mode swaps attack and interact icons. Run sits
+	## Map toggles the panel. Chop keeps the picked build tool. Run sits
 	## beside the attack button and is smaller. The same arc holds at
 	## 1280x720 and 2400x1080. Time cost: about 0.8 s in tools/verify.sh.
 	print("-- test_hud_round_buttons")
@@ -34,8 +34,8 @@ func _test_hud_round_buttons() -> int:
 	var tower: Button = picker.get_node("TowerButton")
 	var wall: Button = picker.get_node("WallButton")
 	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
-	var mode: Button = scene.get_node("CanvasLayer1/ModeButton")
 	var interaction: Interaction = scene.get_node("World/Interaction")
+	var wheel: ToolWheel = scene.get_node("CanvasLayer1/ToolWheel")
 	if panel.visible or scene.get_node_or_null("CanvasLayer1/MapReopen") != null:
 		printerr("FAIL hud_round_buttons: panel %s or the old chip is showing" % panel.visible)
 		fail += 1
@@ -83,17 +83,19 @@ func _test_hud_round_buttons() -> int:
 		printerr("FAIL hud_round_buttons: second press left the panel open")
 		fail += 1
 	var before := interaction.mode
-	mode.pressed.emit()
+	wheel.select(ToolWheel.Tool.CHOP)
+	var tool_icon: Texture2D = wheel.get_node("ToolButton").icon
 	if interaction.mode == before or interaction.mode != Interaction.Mode.INTERACT \
-			or not _mode_disc_is(mode, "mode_interact"):
-		printerr("FAIL hud_round_buttons: mode did not switch to interact (%s)" % interaction.mode)
+			or tool_icon == null or not str(tool_icon.resource_path).ends_with("icon_mode_interact.png"):
+		printerr("FAIL hud_round_buttons: chop did not switch to interact (%s)" % interaction.mode)
 		fail += 1
 	if interaction.build.tool != BuildPlacement.Tool.PLANK:
 		printerr("FAIL hud_round_buttons: entering interact cleared the plank tool")
 		fail += 1
-	mode.pressed.emit()
+	wheel.select(ToolWheel.Tool.SWORD)
+	tool_icon = wheel.get_node("ToolButton").icon
 	if interaction.mode != Interaction.Mode.COMBAT or interaction.build.tool != BuildPlacement.Tool.CUT \
-			or not _mode_disc_is(mode, "mode_attack"):
+			or tool_icon == null or not str(tool_icon.resource_path).ends_with("icon_mode_attack.png"):
 		printerr("FAIL hud_round_buttons: leaving interact mode %s tool %s"
 				% [interaction.mode, interaction.build.tool])
 		fail += 1
@@ -123,13 +125,12 @@ func _check_cluster(scene: Node, label: String) -> int:
 	var view: Vector2 = scene.get_viewport().get_visible_rect().size
 	var buildings: Button = scene.get_node("CanvasLayer1/BuildingsButton")
 	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
-	var mode: Button = scene.get_node("CanvasLayer1/ModeButton")
 	var run: Button = scene.get_node("CanvasLayer1/RunButton")
 	var wood: Control = _hud_on_canvas(scene, "ResourceHud") as Control
 	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu/MenuButton").get_global_rect()
 	var wood_rect := Rect2(wood.global_position, Vector2(
 			wood.size.x * minf(wood.scale.x, 2.0), wood.size.y * minf(wood.scale.y, 2.0)))
-	var mains: Array[Button] = [buildings, map_button, mode]
+	var mains: Array[Button] = [buildings, map_button]
 	var seen: Array[Rect2] = []
 	for i in mains.size():
 		var button: Button = mains[i]
@@ -147,13 +148,11 @@ func _check_cluster(scene: Node, label: String) -> int:
 				printerr("FAIL hud_round_buttons %s: %s overlaps %s" % [label, rect, other])
 				fail += 1
 		seen.append(rect)
-	var mode_c := mode.get_global_rect().get_center()
 	var map_c := map_button.get_global_rect().get_center()
 	var build_c := buildings.get_global_rect().get_center()
-	if mode_c.x < view.x * 0.55 or absf(mode_c.x - map_c.x) > 2.0 or absf(map_c.x - build_c.x) > 2.0 \
-			or not (mode_c.y + 2.0 < map_c.y and map_c.y + 2.0 < build_c.y):
-		printerr("FAIL hud_round_buttons %s: column mode %s map %s buildings %s view %s"
-				% [label, mode_c, map_c, build_c, view])
+	if absf(map_c.x - build_c.x) > 2.0 or not (map_c.y + 2.0 < build_c.y):
+		printerr("FAIL hud_round_buttons %s: column map %s buildings %s view %s"
+				% [label, map_c, build_c, view])
 		fail += 1
 	var attack: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
 	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
@@ -170,11 +169,6 @@ func _check_cluster(scene: Node, label: String) -> int:
 		printerr("FAIL hud_round_buttons %s: minimap overlaps the arc" % label)
 		fail += 1
 	return fail
-
-
-func interaction_mode_is_interact(scene: Node) -> bool:
-	var interaction: Interaction = scene.get_node("World/Interaction")
-	return interaction.mode == Interaction.Mode.INTERACT
 
 
 func _check_column(buildings: Button, buttons: Array[Button]) -> int:
@@ -226,7 +220,7 @@ func _gap(a: Rect2, b: Rect2) -> float:
 func _panel_clear(scene: Node) -> bool:
 	var panel := scene.get_node("CanvasLayer1/MinimapPanel") as Control
 	var panel_rect := panel.get_global_rect()
-	for node_name in ["BuildingsButton", "MinimapButton", "ModeButton"]:
+	for node_name in ["BuildingsButton", "MinimapButton"]:
 		var button := scene.get_node("CanvasLayer1/" + node_name) as Control
 		if button.get_global_rect().intersects(panel_rect):
 			printerr("FAIL hud_round_buttons: %s %s hits panel %s"

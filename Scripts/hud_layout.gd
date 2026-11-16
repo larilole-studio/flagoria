@@ -12,15 +12,16 @@ const GAP := 4.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
-const IDS := ["joystick", "attack", "run", "buildings", "map", "mode", "scores"]
+## wheel is the tool button. A legacy mode_* key is not an id (#575).
+const IDS := ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]
 const PATHS := {
 	"joystick": "player_joystick",
 	"attack": "TouchScreenButton",
 	"run": "RunButton",
 	"buildings": "BuildingsButton",
 	"map": "MinimapButton",
-	"mode": "ModeButton",
 	"scores": "ScoreboardToggle",
+	"wheel": "ToolWheel/ToolButton",
 }
 
 ## Tests point this at a scratch file.
