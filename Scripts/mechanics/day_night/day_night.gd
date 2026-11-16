@@ -118,6 +118,13 @@ func phase() -> String:
 	return phase_at(elapsed)
 
 
+func spawn_scale() -> float:
+	## Ambient mob caps. The host and a joiner both call this: it is 1 with
+	## the cycle off or in the day hold, 2 in the night hold, and the dusk
+	## and dawn smoothstep in between. Not used from _process.
+	return spawn_scale_for(elapsed, enabled)
+
+
 func displayed_tint() -> Color:
 	if not enabled:
 		return color_of("day")
@@ -235,6 +242,29 @@ static func cycle_ease(t: float) -> float:
 	## t * t * (3 - 2 * t), the ease in docs/day_night.json.
 	var x := clampf(t, 0.0, 1.0)
 	return x * x * (3.0 - 2.0 * x)
+
+
+static func night_weight(seconds: float) -> float:
+	## 0 through the day hold, smoothstep across the dusk window, 1 through
+	## the night hold, smoothstep back to 0 across dawn. Same seconds the
+	## phase and the tint use.
+	var t := cycle_wrap(seconds)
+	var day_end := PHASE_END[0]
+	var dusk_end := PHASE_END[1]
+	var night_end := PHASE_END[2]
+	if t < day_end:
+		return 0.0
+	if t < dusk_end:
+		return cycle_ease((t - day_end) / (dusk_end - day_end))
+	if t < night_end:
+		return 1.0
+	return 1.0 - cycle_ease((t - night_end) / (CYCLE_SECONDS - night_end))
+
+
+static func spawn_scale_for(seconds: float, cycle_on: bool) -> float:
+	if not cycle_on:
+		return 1.0
+	return 1.0 + night_weight(seconds)
 
 
 static func color_of(phase: String) -> Color:

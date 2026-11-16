@@ -41,6 +41,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Ranged bow](./ranged-bow.md) — one bow shot on that aim, host-decided hit, short line; live `ranged_bow` drive.
 - [Mobs](./mobs.md) — seeded placement, spawn rate, wander, chase, contact damage, sword hits, hidden on ungenerated ground, sounds, sync.
 - [Mob band](./mob-band.md) — server spawn and despawn around players, caps, late joiners see the same names.
+- [Night mobs](./night-mobs.md) — ambient caps double at night and ramp at dusk and dawn; extras leave at dawn only out of view (#559).
 - [Mob raids](./mob-raid.md) — host sends idle mobs at the nearest player city or owned tower; raids stay off until turned on (#529).
 - [Player spawn](./player-spawn.md) — spawn on reachable land, a free spot per player within 64 px, late joiners.
 - [Hero in front of walls](./hero-wall-draw.md) — the hero draws over a wall until about two thirds of the body is on the wall.
@@ -72,6 +73,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Build guard post](./build-guard-post.md) — `guard_post.txt` for 20 wood from the build picker, save/reload and multiplayer sync (#528).
 - [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
 - [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
+- [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bow hits from other peers land; multiplayer hp sync (#554).
 - [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).

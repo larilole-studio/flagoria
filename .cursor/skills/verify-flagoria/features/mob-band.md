@@ -19,7 +19,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_mob_band_plan` is about 0
 
 - A new mob is on its home ground, farther than 12 cells from every living player, and within 40 of at least one. Each 32×32 chunk contributes one cell per tick.
 - An unpinned mob farther than 64 cells from every living player is removed. A chasing mob stays. Nothing is removed while no living player exists.
-- Caps at 1× are 10 mobs per player and 30 in the world. The host's mob rate scales those the same way as the opening caps. New names are `mob_a_N`.
+- Caps at 1× are 10 mobs per player and 30 in the world. The host's mob rate scales those the same way as the opening caps. New names are `mob_a_N`. Those figures are the day hold. Night doubles them; dusk and dawn sit between. See [Night mobs](./night-mobs.md).
 - The server decides. Peers and late joiners get the spawn and the free through the mob spawner. The set is not written into the save.
 
 ## Gotchas
