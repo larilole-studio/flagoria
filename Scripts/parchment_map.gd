@@ -29,6 +29,8 @@ var _view: Control
 var _fog: ImageTexture
 var _close: MapWoodButton
 var _recentre: MapWoodButton
+var _zoom_in: MapWoodButton
+var _zoom_out: MapWoodButton
 var _touches := {}  ## touch index -> screen position
 var _pinch_span := 0.0
 var _pinch_cell_px := DEFAULT_CELL_PX
@@ -49,8 +51,10 @@ func _ready() -> void:
 	_view.texture_filter = TEXTURE_FILTER_NEAREST
 	_view.draw.connect(_draw_map)
 	add_child(_view)
+	_zoom_out = _button("ZoomOutButton", MapWoodButton.Glyph.MINUS, _on_zoom_out)
+	_zoom_in = _button("ZoomInButton", MapWoodButton.Glyph.CROSS, _on_zoom_in)
+	_recentre = _button("RecentreButton", MapWoodButton.Glyph.TARGET, _on_recentre)
 	_close = _button("CloseButton", MapWoodButton.Glyph.X, _on_close)
-	_recentre = _button("RecentreButton", MapWoodButton.Glyph.CROSS, _on_recentre)
 	resized.connect(_fit)
 	get_viewport().size_changed.connect(_fit)
 	_fit()
@@ -138,8 +142,12 @@ func _fit() -> void:
 	_view.position = Vector2(INSET, INSET)
 	_view.size = Vector2(maxi(size.x - INSET * 2, 1), maxi(size.y - INSET * 2, 1))
 	# Top-left, under the hearts, so closing does not land on the menu button.
-	_recentre.position = Vector2(8, 36)
-	_close.position = Vector2(32, 36)
+	var row := Vector2(8, 36)
+	var step := Vector2(24, 0)
+	_zoom_out.position = row
+	_zoom_in.position = row + step
+	_recentre.position = row + step * 2
+	_close.position = row + step * 3
 	queue_redraw()
 
 
@@ -317,6 +325,14 @@ func _on_close() -> void:
 	hide_map()
 	if panel:
 		panel.apply_chrome()
+
+
+func _on_zoom_in() -> void:
+	_zoom_at(hero_view_focus(), cell_px + 1)
+
+
+func _on_zoom_out() -> void:
+	_zoom_at(hero_view_focus(), cell_px - 1)
 
 
 func _on_recentre() -> void:

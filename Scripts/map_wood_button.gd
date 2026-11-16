@@ -5,7 +5,7 @@ extends Control
 
 signal activated
 
-enum Glyph { MINUS, SQUARE, PANEL, CROSS, X }
+enum Glyph { MINUS, SQUARE, PANEL, CROSS, X, TARGET }
 
 const INK := Color("2a2238")
 const FACE := Color("e0a96b")
@@ -47,6 +47,12 @@ func _draw() -> void:
 			for i in 7:
 				draw_rect(Rect2(mid.x - 4 + i, mid.y - 4 + i, 2, 2), INK)
 				draw_rect(Rect2(mid.x + 2 - i, mid.y - 4 + i, 2, 2), INK)
+		Glyph.TARGET:
+			draw_rect(Rect2(mid.x - 1, mid.y - 1, 2, 2), INK)
+			draw_rect(Rect2(mid.x - 1, mid.y - 5, 2, 2), INK)
+			draw_rect(Rect2(mid.x - 1, mid.y + 3, 2, 2), INK)
+			draw_rect(Rect2(mid.x - 5, mid.y - 1, 2, 2), INK)
+			draw_rect(Rect2(mid.x + 3, mid.y - 1, 2, 2), INK)
 
 
 func _chevron(at: Vector2, up: bool) -> void:
