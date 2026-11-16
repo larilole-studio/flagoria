@@ -19,6 +19,7 @@ const HAND_WIRED := ["altitude_seed", "moisture_seed", "temperature_seed", "item
 const LABEL_WORDS := {"alt": "altitude"}
 
 var _spin_boxes: Dictionary = {}
+var _checks: Dictionary = {}
 
 
 func _ready() -> void:
@@ -47,11 +48,15 @@ func _populate_noise_types() -> void:
 
 
 func _build_extra_controls(params: MapGenParams) -> void:
-	## One spinbox row per exported int/float property outside HAND_WIRED, in
-	## declaration order, with min/max/step from its @export_range hint.
+	## One row per exported property outside HAND_WIRED, in declaration order:
+	## a switch for a bool, otherwise a spin box from its @export_range hint.
 	for prop in params.exported_properties():
 		var key: String = prop["name"]
 		if HAND_WIRED.has(key):
+			continue
+		if prop["type"] == TYPE_BOOL:
+			var label := "Day and night" if key == "day_night_cycle" else _label_for(key)
+			_add_check(key, label, bool(params.get(key)))
 			continue
 		if prop["hint"] != PROPERTY_HINT_RANGE:
 			push_warning("MapGenParams.%s has no @export_range; no Map Settings row" % key)
@@ -111,6 +116,26 @@ func _add_spin_row(key: String, label_text: String, spin: SpinBox) -> void:
 	_spin_boxes[key] = spin
 
 
+func _add_check(key: String, label_text: String, default_on: bool) -> void:
+	## Same centered row as a spin box: a 140 px label and a 140 px switch.
+	var row := HBoxContainer.new()
+	row.name = key
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := Label.new()
+	label.text = label_text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(140, 0)
+	var check := CheckButton.new()
+	check.name = "Check"
+	check.text = ""
+	check.button_pressed = default_on
+	check.custom_minimum_size = Vector2(140, 22)
+	row.add_child(label)
+	row.add_child(check)
+	form.add_child(row)
+	_checks[key] = check
+
+
 func load_from_params(p: MapGenParams) -> void:
 	if seed_alt == null:
 		return
@@ -129,6 +154,8 @@ func load_from_params(p: MapGenParams) -> void:
 		# already equal, so a typed-but-uncommitted string can survive a reopen.
 		# Int rows show "24", not "24.0", so the pad's digits append cleanly.
 		spin.get_line_edit().text = str(int(spin.value)) if spin.rounded else str(spin.value)
+	for key in _checks.keys():
+		(_checks[key] as CheckButton).button_pressed = bool(p.get(key))
 
 
 func apply_to_params(p: MapGenParams) -> void:
@@ -140,6 +167,8 @@ func apply_to_params(p: MapGenParams) -> void:
 	p.noise_type = noise_type_opt.get_selected_id()
 	for key in _spin_boxes.keys():
 		p.set(key, _spin_boxes[key].value)
+	for key in _checks.keys():
+		p.set(key, (_checks[key] as CheckButton).button_pressed)
 
 
 func _on_random_seed_pressed() -> void:
