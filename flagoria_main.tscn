@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=39 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -36,6 +36,8 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/defense/tower_guns.gd" id="23_tower_guns"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building_blocks/generated_buildings.gd" id="23_buildings"]
 [ext_resource type="Script" path="res://Scripts/mechanics/combat/ranged_shots.gd" id="24_ranged"]
+[ext_resource type="Script" path="res://Scripts/mechanics/mobs/raid_director.gd" id="25_raid"]
+[ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier_requests.gd" id="26_soldiers"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bm55c"]
 radius = 24.0
@@ -136,14 +138,6 @@ mouse_filter = 0
 theme = ExtResource("6_menu")
 text = ""
 script = ExtResource("19_run")
-
-[node name="ModeButton" type="Button" parent="CanvasLayer1"]
-offset_right = 24.0
-offset_bottom = 24.0
-focus_mode = 0
-theme = ExtResource("6_menu")
-toggle_mode = true
-icon_alignment = 1
 
 [node name="HudToolRow" type="Node" parent="CanvasLayer1"]
 script = ExtResource("20_hud_row")
@@ -248,6 +242,16 @@ script = ExtResource("24_ranged")
 [node name="Mobs" type="Node2D" parent="World"]
 y_sort_enabled = true
 script = ExtResource("8_mobs")
+
+[node name="Soldiers" type="Node2D" parent="World"]
+y_sort_enabled = true
+script = ExtResource("26_soldiers")
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World/Soldiers"]
+spawn_path = NodePath("..")
+
+[node name="RaidDirector" type="Node" parent="World"]
+script = ExtResource("25_raid")
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World/Mobs"]
 spawn_path = NodePath("..")
@@ -446,6 +450,87 @@ value = 1.5
 custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "1.5 s"
+horizontal_alignment = 2
+
+[node name="RaidsRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Raids"
+
+[node name="RaidsEnabled" type="CheckButton" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+layout_mode = 2
+button_pressed = false
+
+[node name="RaidIntervalRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Interval"
+
+[node name="RaidInterval" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 15.0
+max_value = 180.0
+step = 1.0
+value = 45.0
+
+[node name="RaidIntervalValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "45s"
+horizontal_alignment = 2
+
+[node name="RaidGroupRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Group"
+
+[node name="RaidGroup" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 1.0
+max_value = 8.0
+step = 1.0
+value = 3.0
+
+[node name="RaidGroupValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "3"
+horizontal_alignment = 2
+
+[node name="RaidRadiusRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Radius"
+
+[node name="RaidRadius" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 16.0
+max_value = 96.0
+step = 1.0
+value = 48.0
+
+[node name="RaidRadiusValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "48"
 horizontal_alignment = 2
 
 [node name="QuitLayer" type="CanvasLayer" parent="."]

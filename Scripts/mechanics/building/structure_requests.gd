@@ -11,6 +11,7 @@ const REQUEST_KINDS := {
 	BuildCosts.TOWER: true,
 	BuildCosts.CASTLE: true,
 	BuildCosts.GUARD_POST: true,
+	BuildCosts.BARRACKS: true,
 	BuildCosts.WALL_BLOCK: true,
 }
 
@@ -48,8 +49,8 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	## Host accepts `peer_id`'s request, or places for itself. False charges nothing.
 	if not multiplayer.is_server() or not REQUEST_KINDS.has(kind) or cells.is_empty():
 		return false
-	if (kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST) \
-			and cells.size() != 1:
+	if (kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST \
+			or kind == BuildCosts.BARRACKS) and cells.size() != 1:
 		return false
 	var body := get_node_or_null("../" + str(peer_id)) as Node2D
 	if body == null or Interaction.player_dead(body):
@@ -58,7 +59,8 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	for cell in cells:
 		if body.global_position.distance_to(interaction.cell_center(cell)) > Interaction.REACH + Interaction.REACH_SLACK:
 			return false
-	if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST:
+	if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST \
+			or kind == BuildCosts.BARRACKS:
 		return _host_named(kind, cells[0], peer_id, quarter_turns)
 	if kind == BuildCosts.WALL_BLOCK:
 		return _host_wall(cells, peer_id)

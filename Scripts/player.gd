@@ -31,7 +31,7 @@ const RESOURCE_HUD_PATH := "/root/Flagoria/CanvasLayer1/ResourceHud"
 const INVENTORY_PATH := "/root/Flagoria/Inventory"
 const INTERACTION_PATH := "/root/Flagoria/World/Interaction"
 const MAP_PATH := "/root/Flagoria/World/worldMap"
-const BOW_BUTTON_PATH := "/root/Flagoria/CanvasLayer1/BowButton"
+const TOOL_WHEEL_PATH := "/root/Flagoria/CanvasLayer1/ToolWheel"
 const RANGED_PATH := "/root/Flagoria/World/RangedShots"
 ## Walk frame is 16 px, centred on Sprite2D at (0, -8), so the body runs from
 ## the feet (this node's origin) up 16 px. Wall caps sit at z 2 through 5.
@@ -224,7 +224,7 @@ func _unhandled_input(event):
 		attack_animation.rpc()
 
 func attack_toward(direction: String, angle := NAN):
-	## An aimed attack (AttackAim). The bow toggle sends one shot and does
+	## An aimed attack (AttackAim). The bow tool sends one shot and does
 	## not swing. The sword path is the same call as before.
 	if _bow_armed():
 		var shots := get_node_or_null(RANGED_PATH)
@@ -235,8 +235,8 @@ func attack_toward(direction: String, angle := NAN):
 
 
 func _bow_armed() -> bool:
-	var button := get_node_or_null(BOW_BUTTON_PATH) as BaseButton
-	return button != null and button.button_pressed
+	var wheel := get_node_or_null(TOOL_WHEEL_PATH)
+	return wheel != null and wheel.has_method("bow_armed") and bool(wheel.bow_armed())
 
 
 func _bow_aim(direction: String, angle: float) -> Vector2:

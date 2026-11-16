@@ -19,7 +19,7 @@ Main Menu Join accepts a hostname or an IPv4 address, with an optional `:port`. 
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `join_port_button` ~4 s in verify (one ~3 s no-listener wait); `join_port_dedicated` ~5 s in verify and ~5 s × 20 in netcode stress (4 at a time). Live drive ~10 s.
+Preconditions: `doctor.sh` exits `0`. Time cost: `join_port_button` ~7 s in verify (one ~6 s no-listener wait); `join_port_dedicated` ~5 s in verify and ~5 s × 8 on the full netcode-stress tier (4 at a time). Live drive ~12 s.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_port_button,join_port_dedicated`, or full `tools/verify.sh`. Both tests call `MainMenu._on_join_button_pressed`.
 - **Drive (live).** `bin/launch.sh drives/join_port.gd --display` (## launch: --seed 42). The drive starts dedicated servers on loopback `9786` and `9799`, clicks Join with a blank address, returns to the menu, types `host:abc` and `127.0.0.1:1` and `127.0.0.1:9799`, and clicks Join each time. Snapshots: `default-address`, `joined-default`, `invalid-address`, `join-timeout`, `joined-9799`.
@@ -28,6 +28,6 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `join_port_button` ~4 s in veri
 ## Gotchas
 
 - IPv6 is not accepted. `::1` is an unsupported address, not host `:` and port `1`.
-- The client peer timeout is capped (`set_timeout(8, 800, 3000)`), so the port-1 case fails in about 3 s.
+- The client keeps dialing for 6 s (`set_timeout(8, 800, 3000)` on each attempt, a fresh attempt every 1 s), so the port-1 case fails in about 6 s.
 - The drive binds UDP `9786` and `9799` on loopback. Run one copy at a time, and not beside the two-player pair.
 - This drive clicks Join for one client and checks server seeds and nearby ground. It is not `test_two_player_smoke` and not the `drives/two_player/` Host/Join pair. It does not prove two humans, a synced cut, or a synced sword hit.

@@ -2,13 +2,13 @@
 
 Drive: drives/hud_customize.gd
 
-The in-game menu has a Customize HUD entry. It opens an edit mode over the live touch controls: joystick, attack, run, Buildings, Map, Mode and Scores. Solo play pauses while editing; in multiplayer only the local layout changes. Drag moves a control; the size slider or a pinch resizes it between today’s size and 1.75×. Controls stay on screen and cannot overlap. The Buildings tool column opens above or below to fit. Save writes the layout to user settings on this device (not in world saves). Reset restores the default arc layout. Positions are stored relative to screen size.
+The in-game menu has a Customize HUD entry. It opens an edit mode over the live touch controls: joystick, attack, run, Buildings, Map and Scores. The tool wheel button is placed beside Run and is not a slot yet (#575). Solo play pauses while editing; in multiplayer only the local layout changes. Drag moves a control; the size slider or a pinch resizes it between today’s size and 1.75×. Controls stay on screen and cannot overlap. The Buildings tool column opens above or below to fit. Save writes the layout to user settings on this device (not in world saves). Reset restores the default arc layout. Positions are stored relative to screen size.
 
 ## Sub-features
 
 - `hud-customize-entry` Customize HUD sits in the in-game menu and opens edit mode (the drive opens the menu; headless saves use `-- test_hud_layout_round_trip`).
 - `hud-customize-save` Save and load round-trip in user settings (`-- test_hud_layout_round_trip` in `tests/ui/test_hud_layout.gd`).
-- `hud-customize-clamp` Off-screen positions clamp; overlaps are rejected (`-- test_hud_layout_clamp_overlap`). The edit bar stays inside the viewport on phone and desktop sizes (`-- test_hud_edit_bar_viewport_sizes`).
+- `hud-customize-clamp` Off-screen positions clamp; overlaps are rejected (`-- test_hud_layout_clamp_overlap`). The edit bar stays inside the viewport on phone and desktop sizes (`-- test_hud_edit_bar_viewport_sizes`). While controls move, the bar never flashes to the top inset (`-- test_hud_edit_bar_stable_during_drag`).
 - `hud-customize-reset` Reset clears the saved file and brings back HudToolRow defaults (`-- test_hud_layout_reset`).
 - `hud-customize-edit-guard` In edit mode HUD buttons do not open map, buildings, mode, attack, run, or move the stick (`-- test_hud_layout_edit_blocks_map` and the drive tap on Map).
 

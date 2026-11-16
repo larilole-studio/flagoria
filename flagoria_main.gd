@@ -1,7 +1,7 @@
 extends Node2D
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
-const JoinEnetTimeout = preload("res://Scripts/join_enet_timeout.gd")
+const JoinDial = preload("res://Scripts/join_dial.gd")
 const PORT = 9786
 ## Most cuts in one join message (#354); see _sync_map_params_to_peer.
 const JOIN_CUTS_PER_MESSAGE := 500
@@ -30,6 +30,7 @@ var _join_address := ""
 ## Host and port of the last Join attempt. 0 / "" until one starts.
 var _join_host := ""
 var _join_port := 0
+var _join_dial = JoinDial.new()
 ## Dedicated server only: SIGTERM writes a byte to this file.
 var _dedicated := false
 var _server_quit_path := ""
@@ -120,6 +121,7 @@ func _install_server_quit() -> void:
 
 
 func _process(_delta: float) -> void:
+	_join_dial.service(self)
 	if not _dedicated or _server_shutdown_started or _server_quit_path == "":
 		return
 	if not FileAccess.file_exists(_server_quit_path):
@@ -192,7 +194,7 @@ func _restore_loaded_world() -> int:
 	_saved_player_ready = true
 	var bridges: int = world.replace_bridges(BridgeBuilder.from_changes(loaded.tile_edits, world))
 	var cuts: int = world.restore_object_changes(loaded.object_changes)
-	return cuts + bridges + StructureSaves.restore(loaded.structures, world)  # after cuts: a structure clears its cells
+	return cuts + bridges + StructureSaves.restore(loaded.structures, world) + SoldierSaves.restore(loaded.soldiers, get_node("World/Soldiers"))  # after cuts: a structure clears its cells
 
 
 func _apply_params_to_world(params: MapGenParams) -> void:
@@ -402,36 +404,25 @@ func add_player_joined(port: int = PORT):
 	_join_host = host
 	_join_port = port
 	_join_address = str(parsed["endpoint"])
-	# A fresh peer each attempt: close() then create_client on the same
-	# object fails a second Join after a timeout.
-	enet_peer.close()
-	enet_peer = ENetMultiplayerPeer.new()
-	var err := enet_peer.create_client(host, port)
-	if err != OK:
-		_on_join_failed()
-		return
-	multiplayer.multiplayer_peer = enet_peer
-	_ensure_join_signals()
-	JoinEnetTimeout.apply_dial_timeout(enet_peer)
-	var world = get_node("World/worldMap")
-	world.player_spawned = true
+	_join_dial.begin(self)
 
 
-func _ensure_join_signals() -> void:
-	if not multiplayer.connection_failed.is_connected(_on_connection_failed):
-		multiplayer.connection_failed.connect(_on_connection_failed)
-	if not multiplayer.server_disconnected.is_connected(_on_server_disconnected):
-		multiplayer.server_disconnected.connect(_on_server_disconnected)
-	JoinEnetTimeout.ensure_relax_on_connected(multiplayer, enet_peer)
+func _on_join_connected() -> void:
+	_join_dial.on_connected()
 
 
 func _on_connection_failed() -> void:
+	if _join_dial.defers_failure():
+		return
 	_on_join_failed()
 
 
 func _on_join_failed() -> void:
 	## Close the peer and put the main menu back with "Could not join …" (#348).
+	_join_dial.abandon()
+	_join_dial.set_closing(true)
 	_close_join_peer()
+	_join_dial.set_closing(false)
 	var menu := get_node("CanvasLayer2/MainMenu")
 	menu.show_join_failed(_join_address if _join_address != "" else "localhost")
 
@@ -452,6 +443,7 @@ func _close_join_peer() -> void:
 
 func _on_server_disconnected() -> void:
 	## Host left mid-game: same return as the in-game Main menu button (#348).
+	_join_dial.abandon()
 	leave_to_main_menu()
 
 

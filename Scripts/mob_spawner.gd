@@ -34,10 +34,12 @@ const GLOBAL_CAP := 30  ## rate: ambient cap for the whole world
 const PER_CHUNK_CAP := 1  ## ambient mobs kept in one chunk
 const AMBIENT_DELAY_MS := 45000  ## first tick, and the gap before the next
 const CHUNK := 32  ## cells on a side, the grid generate_chunk draws
-## Constants marked "rate" are the 1x density. `rate` (the host's
+## Constants marked "rate" are the 1x day density. `rate` (the host's
 ## GameSettings.mob_rate) divides CELLS_PER_MOB and multiplies both caps.
 ## PER_PLAYER_CAP scales like per_island (ceili) and GLOBAL_CAP like total
-## (roundi). See ambient_caps.
+## (roundi). The day/night scale does the same again: 1 by day, 2 at night.
+## See ambient_caps. A surplus over the day cap leaves only past
+## DESPAWN_RADIUS, on a later tick, so nothing vanishes on screen.
 
 const GRASS := [TileCatalog.GRASS_A, TileCatalog.GRASS_B, TileCatalog.GRASS_C, TileCatalog.GRASS_D]
 
@@ -74,12 +76,29 @@ static func caps(rate: float) -> Dictionary:
 	}
 
 
-static func ambient_caps(rate: float) -> Dictionary:
-	## Ambient caps at a spawn rate: {per_player, total}.
+static func ambient_caps(rate: float, scale := 1.0) -> Dictionary:
+	## Ambient caps at a spawn rate and clock scale: {per_player, total}.
+	## `scale` 1 is the day hold (and the cycle switched off). Callers that
+	## omit it keep today's caps.
+	var density := rate * scale
 	return {
-		"per_player": maxi(1, ceili(PER_PLAYER_CAP * rate)),
-		"total": maxi(1, roundi(GLOBAL_CAP * rate)),
+		"per_player": maxi(1, ceili(PER_PLAYER_CAP * density)),
+		"total": maxi(1, roundi(GLOBAL_CAP * density)),
 	}
+
+
+static func ambient_scale() -> float:
+	## The shared clock, read the same way on the host and on a joiner.
+	## Only the host applies it, and only inside a tick, not every frame.
+	## Look the node up by name so this file does not name the autoload
+	## at compile time (a --script entry can compile this before autoloads).
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		return 1.0
+	var clock := tree.root.get_node_or_null("DayNight")
+	if clock == null or not clock.has_method("spawn_scale"):
+		return 1.0
+	return float(clock.call("spawn_scale"))
 
 
 static func home_kind(world: TileMap, cell: Vector2i) -> int:
@@ -94,7 +113,7 @@ static func home_kind(world: TileMap, cell: Vector2i) -> int:
 	return -1
 
 
-static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed_value: int, tick: int, rate: float) -> Dictionary:
+static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed_value: int, tick: int, rate: float, scale := 1.0) -> Dictionary:
 	## {spawn: [{name, type, cell}], despawn: [name]} for one ambient tick.
 	## Pure: the same arguments return the same dictionary. No spawn and no
 	## despawn when `player_cells` is empty, so an opening wave with nobody
@@ -102,12 +121,13 @@ static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed
 	## SPAWN_MIN_RADIUS from every player, and within SPAWN_MAX_RADIUS of at
 	## least one. Each eligible chunk contributes its lowest-_rank cell.
 	## Names are mob_a_%d. Despawn is only an unpinned mob past
-	## DESPAWN_RADIUS from every player, never for standing inside the min.
+	## DESPAWN_RADIUS from every player. A lower scale (dawn, or the cycle
+	## off) does not remove a mob still inside that radius.
 	var spawn: Array = []
 	var despawn: Array = []
 	if player_cells.is_empty():
 		return {"spawn": spawn, "despawn": despawn}
-	var cap := ambient_caps(rate)
+	var cap := ambient_caps(rate, scale)
 	var staying: Array = []
 	for item in existing:
 		var cell: Vector2i = item["cell"]
@@ -388,7 +408,7 @@ func run_ambient_tick() -> Dictionary:
 	if _player_since < 0:
 		_player_since = Time.get_ticks_msec()
 	_last_ambient_ms = Time.get_ticks_msec()
-	var plan := plan_tick(world, players, _existing_for_plan(world), _map_seed(), _ambient_tick, _rate())
+	var plan := plan_tick(world, players, _existing_for_plan(world), _map_seed(), _ambient_tick, _rate(), ambient_scale())
 	_ambient_tick += 1
 	for mob_name in plan["despawn"]:
 		var node := get_node_or_null(str(mob_name))

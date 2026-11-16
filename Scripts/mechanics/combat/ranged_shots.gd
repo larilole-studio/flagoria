@@ -5,12 +5,12 @@ extends Node2D
 ## ORIGIN_LIMIT from the server body, a bad direction, or a live cooldown,
 ## then flies from the server body. One hit is applied. Peers only draw the
 ## short line. In-flight shots are not part of the join snapshot.
+## The tool wheel arms the bow (#574). This node does not build a button.
 
 const ORIGIN_LIMIT := 24.0
 const LINE_WIDTH := 2.0
 const LINE_TIME := 0.2
 const LINE_COLOR := Color(1.0, 0.93, 0.2)
-const BOW_SIZE := Vector2(36, 22)
 
 var accepted := 0
 var rejected := 0
@@ -21,11 +21,9 @@ var _lines: Array = []
 
 func _ready() -> void:
 	z_index = 20
-	_ensure_bow()
 
 
 func _process(_delta: float) -> void:
-	_place_bow()
 	if _lines.is_empty():
 		return
 	var now := Time.get_ticks_msec()
@@ -119,10 +117,16 @@ func _is_dead(body: Node) -> bool:
 
 
 func _mobs() -> Array:
+	var out: Array = []
 	var root := get_node_or_null("../Mobs")
 	if root != null and root.has_method("mobs"):
-		return root.mobs()
-	return []
+		out.append_array(root.mobs())
+	var troops := get_node_or_null("../Soldiers")
+	if troops != null:
+		for child in troops.get_children():
+			if child is Mob and child.state != Mob.State.DYING:
+				out.append(child)
+	return out
 
 
 func _players() -> Array:
@@ -134,41 +138,3 @@ func _players() -> Array:
 		if child is CharacterBody2D and child.get_node_or_null("Health") != null:
 			out.append(child)
 	return out
-
-
-func _ensure_bow() -> void:
-	var layer := get_node_or_null("../../CanvasLayer1")
-	if layer == null or layer.get_node_or_null("BowButton") != null:
-		return
-	var button := Button.new()
-	button.name = "BowButton"
-	button.toggle_mode = true
-	button.button_pressed = false
-	button.text = "Bow"
-	button.focus_mode = Control.FOCUS_NONE
-	button.mouse_filter = Control.MOUSE_FILTER_STOP
-	button.custom_minimum_size = BOW_SIZE
-	var run := layer.get_node_or_null("RunButton") as Button
-	if run != null and run.theme != null:
-		button.theme = run.theme
-	layer.add_child(button)
-	_place_bow()
-
-
-func _place_bow() -> void:
-	var button := get_node_or_null("../../CanvasLayer1/BowButton") as Control
-	if button == null:
-		return
-	var run := button.get_parent().get_node_or_null("RunButton") as Control
-	if run == null:
-		return
-	var size := button.size
-	if size.x < 1.0:
-		size = button.get_combined_minimum_size()
-	# Left of Run, which itself sits left of the attack button.
-	var x := run.position.x - 2.0 - size.x
-	var y := run.position.y + (run.size.y - size.y) * 0.5
-	if x < 4.0:
-		x = 4.0
-	button.position = Vector2(roundf(x), roundf(y))
-	button.z_index = 4

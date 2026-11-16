@@ -1,9 +1,10 @@
 extends Node
-## Autoload: gameplay settings saved in user settings. The mob spawn rate the
-## host uses when it places a world's mobs (see MobSpawner.plan), and the
-## tower range, damage and cooldown the host's TowerGuns read.
+## Autoload: gameplay settings saved in user settings. The mob spawn rate is
+## what the host uses when it places a world's mobs (see MobSpawner.plan).
+## Raid tunables drive RaidDirector. Raids stay off until a host turns them on.
+## Tower range, damage and cooldown are what the host's TowerGuns read.
 ##
-## Only the host spawns mobs and only the host ticks tower guns, so only the
+## Only the host spawns mobs, runs raids, and ticks tower guns, so only the
 ## host's saved values matter in a match. A client's file is never the match.
 
 const SECTION := "gameplay"
@@ -25,6 +26,17 @@ const TOWER_COOLDOWN_DEFAULT := 1.5
 const TOWER_COOLDOWN_MIN := 0.5
 const TOWER_COOLDOWN_MAX := 5.0
 const TOWER_COOLDOWN_STEP := 0.1
+## Raid clock. Off until a play-test turns it on (#529).
+const RAID_INTERVAL_DEFAULT := 45.0
+const RAID_INTERVAL_MIN := 15.0
+const RAID_INTERVAL_MAX := 180.0
+const RAID_INTERVAL_STEP := 1.0
+const RAID_GROUP_DEFAULT := 3
+const RAID_GROUP_MIN := 1
+const RAID_GROUP_MAX := 8
+const RAID_RADIUS_DEFAULT := 48
+const RAID_RADIUS_MIN := 16
+const RAID_RADIUS_MAX := 96
 
 ## Tests point this at a scratch file.
 var save_path := "user://game_settings.cfg"
@@ -32,6 +44,10 @@ var mob_rate := MOB_RATE_DEFAULT
 var tower_range := TOWER_RANGE_DEFAULT
 var tower_damage := TOWER_DAMAGE_DEFAULT
 var tower_cooldown := TOWER_COOLDOWN_DEFAULT
+var raids_enabled := false
+var raid_interval_s := RAID_INTERVAL_DEFAULT
+var raid_group := RAID_GROUP_DEFAULT
+var raid_radius_cells := RAID_RADIUS_DEFAULT
 
 
 func _ready() -> void:
@@ -62,12 +78,40 @@ func set_tower_cooldown(value: float, save := true) -> void:
 		save_to_disk()
 
 
+func set_raids_enabled(value: bool, save := true) -> void:
+	raids_enabled = value
+	if save:
+		save_to_disk()
+
+
+func set_raid_interval_s(value: float, save := true) -> void:
+	raid_interval_s = clampf(snappedf(value, RAID_INTERVAL_STEP), RAID_INTERVAL_MIN, RAID_INTERVAL_MAX)
+	if save:
+		save_to_disk()
+
+
+func set_raid_group(value: int, save := true) -> void:
+	raid_group = clampi(value, RAID_GROUP_MIN, RAID_GROUP_MAX)
+	if save:
+		save_to_disk()
+
+
+func set_raid_radius_cells(value: int, save := true) -> void:
+	raid_radius_cells = clampi(value, RAID_RADIUS_MIN, RAID_RADIUS_MAX)
+	if save:
+		save_to_disk()
+
+
 func save_to_disk() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value(SECTION, "mob_rate", mob_rate)
 	cfg.set_value(SECTION, "tower_range", tower_range)
 	cfg.set_value(SECTION, "tower_damage", tower_damage)
 	cfg.set_value(SECTION, "tower_cooldown", tower_cooldown)
+	cfg.set_value(SECTION, "raids_enabled", raids_enabled)
+	cfg.set_value(SECTION, "raid_interval_s", raid_interval_s)
+	cfg.set_value(SECTION, "raid_group", raid_group)
+	cfg.set_value(SECTION, "raid_radius_cells", raid_radius_cells)
 	cfg.save(save_path)
 
 
@@ -77,6 +121,10 @@ func load_from_disk() -> void:
 	tower_range = TOWER_RANGE_DEFAULT
 	tower_damage = TOWER_DAMAGE_DEFAULT
 	tower_cooldown = TOWER_COOLDOWN_DEFAULT
+	raids_enabled = false
+	raid_interval_s = RAID_INTERVAL_DEFAULT
+	raid_group = RAID_GROUP_DEFAULT
+	raid_radius_cells = RAID_RADIUS_DEFAULT
 	var cfg := ConfigFile.new()
 	if cfg.load(save_path) != OK:
 		return
@@ -92,6 +140,18 @@ func load_from_disk() -> void:
 	var wait: Variant = cfg.get_value(SECTION, "tower_cooldown", TOWER_COOLDOWN_DEFAULT)
 	if (typeof(wait) == TYPE_INT or typeof(wait) == TYPE_FLOAT) and is_finite(float(wait)):
 		set_tower_cooldown(float(wait), false)
+	var enabled: Variant = cfg.get_value(SECTION, "raids_enabled", false)
+	if enabled is bool:
+		set_raids_enabled(enabled, false)
+	var interval: Variant = cfg.get_value(SECTION, "raid_interval_s", RAID_INTERVAL_DEFAULT)
+	if (typeof(interval) == TYPE_INT or typeof(interval) == TYPE_FLOAT) and is_finite(float(interval)):
+		set_raid_interval_s(float(interval), false)
+	var group: Variant = cfg.get_value(SECTION, "raid_group", RAID_GROUP_DEFAULT)
+	if typeof(group) == TYPE_INT or typeof(group) == TYPE_FLOAT:
+		set_raid_group(int(group), false)
+	var radius: Variant = cfg.get_value(SECTION, "raid_radius_cells", RAID_RADIUS_DEFAULT)
+	if typeof(radius) == TYPE_INT or typeof(radius) == TYPE_FLOAT:
+		set_raid_radius_cells(int(radius), false)
 
 
 static func rate_label(value: float) -> String:
