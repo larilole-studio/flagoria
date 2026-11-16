@@ -1,6 +1,7 @@
 class_name Soldier
 extends Mob
-## A trained unit that follows its owner or holds position (#553). No combat in this slice.
+## A trained unit that follows its owner or holds position (#553), and fights
+## nearby mobs on the host (#554).
 
 const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
 
@@ -10,6 +11,8 @@ const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
 
 var _hold_pos := Vector2.ZERO
 var spawn_seed := 0
+var _strike_cd := 0.0
+var _hurt_cd := 0.0
 
 
 func setup_soldier(data: Dictionary) -> void:
@@ -40,8 +43,31 @@ func setup_from_save(row: Dictionary) -> void:
 func think(delta: float) -> void:
 	if _world == null:
 		_world = get_node_or_null("../../worldMap") as TileMap
-	if state == State.DYING or state == State.HURT:
+	_timer -= delta
+	_strike_cd = maxf(0.0, _strike_cd - delta)
+	_hurt_cd = maxf(0.0, _hurt_cd - delta)
+	if state == State.DYING:
+		if _timer <= 0.0:
+			queue_free()
 		return
+	_check_swords()
+	if state == State.DYING:
+		return
+	if state == State.HURT:
+		if _timer <= 0.0:
+			_start_idle()
+		return
+	_step_move(delta)
+	_fight_mobs()
+
+
+func take_hit(by_peer: int = 0) -> bool:
+	if by_peer == owner_peer and owner_peer != 0:
+		return false
+	return super.take_hit(by_peer)
+
+
+func _step_move(delta: float) -> void:
 	if order == "hold":
 		global_position = _hold_pos
 		direction = Vector2.ZERO
@@ -63,6 +89,34 @@ func think(delta: float) -> void:
 	if not step(motion, false) and not step(Vector2(motion.x, 0), false):
 		step(Vector2(0, motion.y), false)
 	_hold_pos = global_position
+
+
+func _fight_mobs() -> void:
+	var mob_root := get_node_or_null("../../Mobs")
+	if mob_root == null or not mob_root.has_method("mobs"):
+		return
+	var target: Mob = null
+	var best_d := SoldierStats.ATTACK_RANGE
+	for node in mob_root.mobs():
+		if not node is Mob:
+			continue
+		var mob := node as Mob
+		if mob.state == State.DYING or mob.is_queued_for_deletion():
+			continue
+		var d := position.distance_to(mob.position)
+		if d <= best_d:
+			best_d = d
+			target = mob
+	if target == null:
+		return
+	var my_box := contact_box()
+	var their_box := target.contact_box()
+	if my_box.intersects(their_box) and _strike_cd <= 0.0:
+		if target.take_hit(owner_peer):
+			_strike_cd = SoldierStats.HIT_EVERY
+	if their_box.intersects(my_box) and _hurt_cd <= 0.0:
+		if take_hit(0):
+			_hurt_cd = SoldierStats.HIT_EVERY
 
 
 func set_order(next: String) -> void:
