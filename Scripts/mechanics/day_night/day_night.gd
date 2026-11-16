@@ -50,6 +50,9 @@ var _running := false
 var _following := false
 var _sync_wait := 0.0
 var _modulate: CanvasModulate
+## Peers that connected inside the peer_connected signal. The clock is sent
+## on the next frame, after the host has finished spawning that peer.
+var _pending_peers: Array[int] = []
 
 
 func _ready() -> void:
@@ -69,6 +72,7 @@ func begin(params: MapGenParams, at: float) -> void:
 	_following = false
 	synced = true
 	_sync_wait = 0.0
+	_pending_peers.clear()
 	_apply_tint()
 	_broadcast()
 
@@ -79,6 +83,7 @@ func stop() -> void:
 	synced = false
 	enabled = true
 	elapsed = 0.0
+	_pending_peers.clear()
 	_apply_tint()
 
 
@@ -130,6 +135,7 @@ func _process(delta: float) -> void:
 	if _hosting():
 		_read_switch()
 		tick(delta)
+		_flush_pending()
 		_sync_wait += delta
 		if _sync_wait >= SYNC_SECONDS:
 			_sync_wait = 0.0
@@ -158,8 +164,23 @@ func _read_switch() -> void:
 
 
 func _on_peer_connected(id: int) -> void:
+	## Do not rpc from inside this signal. The host still has to spawn the
+	## peer and send the map on the same callback; a clock message here can
+	## stall that join on a slow host.
 	if _running and _hosting():
-		rpc_id(id, "receive_clock", elapsed, enabled)
+		_pending_peers.append(id)
+
+
+func _flush_pending() -> void:
+	if _pending_peers.is_empty() or not _hosting():
+		return
+	var ids: Array[int] = []
+	ids.assign(_pending_peers)
+	_pending_peers.clear()
+	var connected := multiplayer.get_peers()
+	for id in ids:
+		if connected.has(id):
+			rpc_id(id, "receive_clock", elapsed, enabled)
 
 
 func _broadcast() -> void:
@@ -186,8 +207,15 @@ func receive_clock(at: float, cycle_on: bool) -> void:
 
 
 func _apply_tint() -> void:
-	if _modulate != null:
-		_modulate.color = displayed_tint()
+	## Setting the colour every frame dirties the canvas. Headless hosts that
+	## do that from _process stop polling the network, so a join never finishes.
+	## Day holds one colour for minutes; write only when it changes.
+	if _modulate == null:
+		return
+	var next := displayed_tint()
+	if _modulate.color == next:
+		return
+	_modulate.color = next
 
 
 static func cycle_wrap(seconds: float) -> float:
