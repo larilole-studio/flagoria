@@ -2,7 +2,7 @@
 
 Drive: drives/hud_round_buttons.gd
 
-The match starts with the wood minimap closed and the build list collapsed. Buildings, Map and Mode are round buttons on a quarter arc in the top-right corner, clear of the menu button and the wood counter. Each disc is 18 pixels, with a tap target of at least 24. Buildings opens Plank, Tower and Wall on the same discs in a column underneath; their icons are smaller so the disc and the gold ring stay visible, and each tap target is still at least 24. A second tap, or picking one, collapses the column. The picked tool keeps the gold ring. Map toggles the minimap, and the open panel sits left of the arc so it does not cover a button. Mode toggles attack and interact, and its icon follows the mode. Run sits beside the attack button, smaller than that button, and still holds, latches and follows Shift. Tower and Wall still hide while multiplayer is on. The icons are `assets/ui/hud/icon_buildings.png`, `icon_map.png`, `icon_run.png`, `icon_mode_attack.png` and `icon_mode_interact.png`.
+The match starts with the wood minimap closed and the build list collapsed. Buildings, Map and Mode are round buttons on a quarter arc in the top-right corner, clear of the menu button and the wood counter. Each disc is 18 pixels, with a tap target of at least 24 (`RoundHudStyle` disc 18, tap target 24). Buildings opens Plank, Tower, Castle, Guard post, Barracks and Wall on the same discs in a column underneath; their icons are smaller so the disc and the gold ring stay visible, and each tap target is still at least 24. The column stays closed until Buildings is open (`BuildPlacement._list_open`); tool buttons show only while the list is open. A second tap on Buildings, or picking one, collapses the column. The picked tool keeps the gold ring. Map toggles the minimap, and the open panel sits left of the arc so it does not cover a button. Mode toggles attack and interact, and its icon follows the mode. Run sits beside the attack button, smaller than that button, and still holds, latches and follows Shift. Nothing in the column hides when a peer connects (`BuildToolRow.MP_HIDDEN` is empty). The icons are `assets/ui/hud/icon_buildings.png`, `icon_map.png`, `icon_run.png`, `icon_mode_attack.png` and `icon_mode_interact.png`.
 
 ## Sub-features
 
@@ -12,7 +12,7 @@ The match starts with the wood minimap closed and the build list collapsed. Buil
 
 ## How to get to it (user POV)
 
-- Host a world. The arc is in the top-right and the minimap is closed. Tap Buildings to show Plank, Tower and Wall, tap Map to open the panel, and tap Mode to switch attack and chop. Run is the small button beside attack.
+- Host a world. The arc is in the top-right and the minimap is closed. Tap Buildings to show Plank, Tower, Castle, Guard post, Barracks and Wall, tap Map to open the panel, and tap Mode to switch attack and chop. Run is the small button beside attack.
 
 ## Driving it with verify-flagoria helpers
 
@@ -24,7 +24,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_hud_round_buttons` is abo
 
 ## Gotchas
 
-- Cut has no button. It is the tool while none of Plank, Tower or Wall is selected, and again after leaving interact mode.
+- Cut has no button. It is the tool while none of Plank, Tower, Castle, Guard post, Barracks or Wall is selected, and again after leaving interact mode.
 - Collapse and maximize stay on the wood frame. Collapse hides the panel; Map opens it again.
 - The wood panel sits left of the arc. With the minimap open, Buildings, Map and Mode each lie outside the panel rect. The drive checks that before the minimap and interact shots.
 - The bright ring is the selected state. A darker face alone sits behind the icon and does not read as selected.

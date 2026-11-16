@@ -2,38 +2,37 @@
 
 Drive: not player-facing
 
-Interact-mode build tools (#225 / #273 / #276). Round Plank, Tower and Wall
-buttons sit in the HUD row under the wood counter from the start of the match
-(see [Round HUD buttons](./hud-round-buttons.md)). Cut keeps the
-existing tap, drag and chop behaviour and is the tool when none of those is
-selected. Plank snaps a drag to a horizontal or
-vertical cell run. Tower previews the 3×3 `tower_wood` footprint under the
-finger (see [Build tower](./build-tower.md)). Wall keeps a tip and places a
-connected palisade chain (see [Free-form walls](./free-form-walls.md)). The
-preview greens exactly the cells `commit` will place and shows that wood cost;
-the rest is red. A refusal reason appears when nothing is placeable (including
-an empty wall gap). On release, placement goes through `ConstructionPlacer`
-(`can_place` / `cost` / `place`). Ghost tiles wait on art. Dead-player gating
-stays on `Interaction.player_dead`. While multiplayer is on, Tower and Wall icons are hidden (their peer sync is
-#278). Plank stays visible once bridges sync (#297). If multiplayer starts
-while interact mode is already open with Tower or Wall selected, the picker
-refreshes on the next process tick and resets to Cut; Plank stays selected.
-`update_preview` skips the snap / `can_place` work
+Interact-mode build tools (#225 / #273 / #276). The Buildings column lists Plank,
+Tower, Castle, Guard post, Barracks and Wall on round discs under the wood counter
+(see [Round HUD buttons](./hud-round-buttons.md)). The column stays closed until
+Buildings is open (`BuildPlacement._list_open` starts false; each tool button is
+visible only while the list is open). Cut keeps the existing tap, drag and chop
+behaviour and is the tool when none of those is selected. Plank snaps a drag to a
+horizontal or vertical cell run. Tower, Castle, Guard post and Barracks preview a
+footprint under the finger (see [Build tower](./build-tower.md), [Build castle](./build-castle.md),
+[Build guard post](./build-guard-post.md) and [Build barracks](./build-barracks.md)).
+Wall keeps a tip and places a connected palisade chain (see [Free-form walls](./free-form-walls.md)).
+The preview greens exactly the cells `commit` will place and shows that wood cost;
+the rest is red. A refusal reason appears when nothing is placeable (including an
+empty wall gap). On release, placement goes through `ConstructionPlacer`
+(`can_place` / `cost` / `place`). Ghost tiles wait on art. Dead-player gating stays
+on `Interaction.player_dead`. `BuildToolRow.MP_HIDDEN` is empty, so nothing hides
+when a peer connects; every column tool stays available in multiplayer (#297,
+#497, #498, #527, #528, #556). `update_preview` skips the snap / `can_place` work
 only when the snapped cells, wood count, player position and map revision are
-unchanged, so a wood spend, a walk out of reach, or a map change cannot leave
-a stale green preview. The Cut icon uses the AxeTool sprite padded into
-`art/ui/ui_tool_cut.png`; the Tower icon is `art/ui/ui_tool_tower.png`; the
-Wall icon is `art/ui/ui_tool_wall.png`.
+unchanged, so a wood spend, a walk out of reach, or a map change cannot leave a
+stale green preview. The Cut icon uses the AxeTool sprite padded into
+`art/ui/ui_tool_cut.png`; build-tool icons live under `art/ui/`.
 
 Reach (`Interaction.REACH`) is the length bound for a drag preview; no separate
 run-length cap was added (#380 item 1 left open).
 
 ## Sub-features
 
-- `build-picker` Plank, Tower and Wall buttons are visible from the start of the
-  match, including in combat, and switch `BuildPlacement.tool`. Tower and Wall
-  are hidden while multiplayer is on; Plank stays (#297). Leaving interact
-  resets the tool to Cut.
+- `build-picker` Plank, Tower, Castle, Guard post, Barracks and Wall sit in the
+  Buildings column; the column is hidden until Buildings is open, including in
+  combat, and switches `BuildPlacement.tool`. Nothing is hidden in multiplayer.
+  Leaving interact resets the tool to Cut.
 - `build-plank-snap` a diagonal drag becomes a straight H or V cell run.
 - `build-plank-preview` green cells and cost match what commit places and
   charges; red for the rest of the drag; refusal only when nothing places.
@@ -43,19 +42,21 @@ run-length cap was added (#380 item 1 left open).
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone, offline, or two-player — Plank works in all).
-2. The Plank, Tower and Wall buttons are under the wood count. Tap the mode
-   button to enter interact mode.
+2. Tap Buildings to open the column, then tap the mode button to enter interact
+   mode if needed.
 3. Tap Plank, drag across water next to land; green cells and the wood cost
-   follow the finger (green = what will place). Lift to place. Tower: see
-   [Build tower](./build-tower.md). Wall: see [Free-form walls](./free-form-walls.md).
+   follow the finger (green = what will place). Lift to place. Tower, Castle,
+   Guard post and Barracks: see their feature files. Wall: see
+   [Free-form walls](./free-form-walls.md).
 
 ## Driving it with verify-flagoria helpers
 
 Preconditions: `doctor.sh` exits `0`. Time cost: `test_build_placement_snap_run`
 under 0.05 s in `tools/verify.sh`; `test_build_picker_switches_tool` about 0.3 s;
 `test_build_plank_preview_tint_and_cost` about 0.5 s;
-`test_build_plank_places_and_spends` about 0.5 s; `test_build_cut_mode_unchanged`
-about 0.4 s; `test_build_plank_drag_places` about 0.6 s;
+`test_build_plank_places_and_spends` about 0.5 s;
+`test_build_cut_mode_unchanged` about 0.4 s;
+`test_build_plank_drag_places` about 0.6 s;
 `test_build_preview_matches_commit_short_wood` about 0.2 s;
 `test_build_preview_matches_commit_mid_invalid` about 0.2 s;
 `test_build_preview_cache_invalidates_on_wood` about 0.5 s;
