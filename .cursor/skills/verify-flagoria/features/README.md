@@ -45,6 +45,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Hero in front of walls](./hero-wall-draw.md) — the hero draws over a wall until about two thirds of the body is on the wall.
 - [Tileset and collision](./tileset-and-collision.md) — tile catalog, water and forest walls.
 - [Biomes](./biomes.md) — biome terrain, plants, stones, island and archipelago shaping, biomes on by default, `render_biomes` coverage gate.
+- [Day and night](./day-night.md) — shared 10 minute clock, world tint, Map Settings switch, save and host sync (#558).
 - [Map save files](./map-save.md) — versioned world saves (inputs plus cuts and plank bridges), v1 migration, Save from the in-game menu, saved-maps API.
 - [Object removals save](./object-removals-save.md) — picked flowers and destroyed stones in `world.object_changes` (#198).
 - [Player save](./player-save.md) — save and load position, health, wood, score and charted ground (#197).

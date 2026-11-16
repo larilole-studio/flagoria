@@ -13,7 +13,8 @@ Placed plank bridges fill `world.tile_edits` (see
 [Placed plank bridges](#placed-plank-bridges)). Placed structures and
 free-form walls fill `world.structures` (see
 [Structures and walls](#structures-and-walls)). Player progress fills
-`player` (see [Player progress](#player-progress)).
+`player` (see [Player progress](#player-progress)). The day/night clock fills
+`clock` (see [Day and night](#day-and-night)).
 
 ## Encoding
 
@@ -58,7 +59,8 @@ The JSON inside the gzip, shown with line breaks:
 		"...": "every MapGenParams value"
 	},
 	"world": {"object_changes": {}, "structures": {}, "tile_edits": {}},
-	"player": {}
+	"player": {},
+	"clock": {"elapsed": 0.0}
 }
 ```
 
@@ -74,6 +76,7 @@ The JSON inside the gzip, shown with line breaks:
 | `world.object_changes` | Changed world objects such as felled trees or picked items (#198). |
 | `world.structures` | Placed structures (#42). |
 | `player` | The player's own progress (#197). Empty means the default player. |
+| `clock` | Seconds into the day/night cycle (#558). Missing means the start of day. |
 
 Each `world` section is sparse and keyed by chunk, then by cell:
 `{"<cx>,<cy>": {"<x>,<y>": <entry>}}`. A chunk is a fixed 32 by 32 cells
@@ -236,6 +239,20 @@ way they do in a live match. Held items are not stored; there are none yet.
 | `discovered` | Chunks that already paid discovery points, `"cx,cy"` -> peer id. Kept so the saved score is not paid again for the same chunk. A bad entry is dropped. Missing: no chunk has paid. |
 
 An older save has no `player` object, or `{}`. Both load as the default player: spawn, full health, no wood, no score, nothing charted. The file meaning of an empty section is unchanged, so the version stays 3.
+
+## Day and night
+
+The host's day/night clock (#558) is the `clock` object. The in-game menu's Save writes it, and hosting that file restores `elapsed`. The cycle switch is the params field `day_night_cycle` (on when the field is missing).
+
+```json
+"clock": {"elapsed": 480.0}
+```
+
+| Key | Meaning |
+| --- | --- |
+| `elapsed` | Seconds into the 600 second cycle, from the start of day. Missing, negative, or not a number: 0. |
+
+An older save has no `clock` object. It loads at the start of day with the cycle on. The version stays 3.
 
 ## Saving during play
 
