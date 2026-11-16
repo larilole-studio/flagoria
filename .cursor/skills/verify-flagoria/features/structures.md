@@ -12,7 +12,7 @@ Small hand-drawn structures (guard post, wall piece, camp) are stored as plain t
 
 ## How to get to it (user POV)
 
-- Read or paste a file under `structures/`. In game only `structures/castle.txt` is placed, as the [starting castle](./start-castle.md).
+- Read or paste a file under `structures/`. In game, footprint structures load from `structures/castle.txt`, `structures/tower_wood.txt`, `structures/guard_post.txt` and `structures/barracks.txt` through [Structure placement](./structure-placement.md) and the build picker. The [starting castle](./start-castle.md) uses `castle.txt`.
 
 ## Driving it with verify-flagoria helpers
 
