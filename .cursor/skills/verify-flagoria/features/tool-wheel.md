@@ -2,7 +2,7 @@
 
 Drive: drives/tool_wheel.gd
 
-One button beside Run arms sword, bow or chop (#574). A press shorter than 200 ms with less than 6 px of movement swaps to the previous tool. A longer press, or any drag, opens a half-moon that fans from the button toward the centre of the screen. Dragging up or down highlights a tool. Releasing selects it and closes the wheel. Sword is combat with the bow off, bow is combat with the bow armed, and chop is interact mode. Hold Q and aim with the mouse, the scroll wheel, or up/down, then release. Keys 1, 2 and 3 select sword, bow and chop directly. The button follows Run when a saved HUD layout moves Run. It is not a Customize HUD slot (#575). Sword and chop use the existing mode icons. Bow uses a drawn stand-in until the wheel art (#576).
+One button beside Run arms sword, bow or chop (#574). A press shorter than 200 ms with less than 6 px of movement swaps to the previous tool. A longer press, or any drag, opens a half-moon. The arc opens toward the side of the screen with more room, which is the left of the thumb button, and shortens so every option stays visible. Dragging up or down highlights a tool. Releasing selects it and closes the wheel. Sword is combat with the bow off, bow is combat with the bow armed, and chop is interact mode. Hold Q and aim with the mouse, the scroll wheel, or up/down, then release. Keys 1, 2 and 3 select sword, bow and chop directly. Customize HUD can move and resize the button (#575). Until that slot is saved, the button stays left of Run. Sword and chop use the existing mode icons. Bow uses a drawn stand-in until the wheel art (#576).
 
 ## Sub-features
 
@@ -28,4 +28,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the four headless tests add abo
 - A tap swaps only after some other tool has been armed. Until then sword stays armed.
 - Releasing a hold without leaving the button keeps the current tool. The wheel opened, and the highlight was already that tool.
 - The wheel node has no `_process`. A headless `--server` host does not create it, and `HudToolRow` skips its layout pass there.
-- Customize HUD still edits joystick, attack, Run, Buildings, Map and Scores. The wheel button is placed from Run's position (#575 is the slot for the button itself).
+- Until the wheel slot is saved, the button follows Run. A saved slot stays where Customize HUD put it, and the half-moon still opens fully on screen.

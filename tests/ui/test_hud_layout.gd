@@ -25,7 +25,7 @@ func _test_hud_layout_round_trip() -> int:
 		fail += 1
 	_hud().apply(layer)
 	await process_frame
-	for id in ["joystick", "attack", "run", "buildings", "map", "scores"]:
+	for id in ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]:
 		if _hud().get_entry(id).is_empty():
 			printerr("FAIL hud_layout_round_trip: missing %s after load" % id)
 			fail += 1
@@ -219,6 +219,164 @@ func _test_hud_layout_reset() -> int:
 	if fail == 0:
 		print("PASS test_hud_layout_reset")
 	return fail
+
+
+func _test_hud_layout_wheel_slot() -> int:
+	## Move and resize the wheel, save, reload the same place and scale.
+	## Reset returns the thumb default. The arc from the new spot stays on
+	## screen. ModeButton and BowButton stay gone.
+	## Time cost: about 0.6 s in tools/verify.sh.
+	print("-- test_hud_layout_wheel_slot")
+	var fail := 0
+	var path := "user://test_hud_wheel.cfg"
+	_hud().save_path = path
+	_hud().reset_to_defaults()
+	var scene = await _play_scene()
+	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
+	await process_frame
+	fail += _no_legacy_buttons(scene, "hud_layout_wheel_slot")
+	var before: Rect2 = _hud().control_hit_rect("wheel", layer)
+	if before.size == Vector2.ZERO:
+		printerr("FAIL hud_layout_wheel_slot: wheel button has no rect")
+		fail += 1
+	else:
+		_hud().edit_begin(layer)
+		if not _hud().try_place("wheel", 0.06, 0.42, 1.5, layer):
+			printerr("FAIL hud_layout_wheel_slot: could not move the wheel")
+			fail += 1
+		var moved: Rect2 = _hud().control_hit_rect("wheel", layer)
+		var scale_now: float = _hud().scale_of("wheel", layer)
+		if moved.position.distance_to(before.position) < 8.0:
+			printerr("FAIL hud_layout_wheel_slot: wheel did not move %s" % moved)
+			fail += 1
+		if absf(scale_now - 1.5) > 0.05:
+			printerr("FAIL hud_layout_wheel_slot: scale %s" % scale_now)
+			fail += 1
+		var wheel: ToolWheel = layer.get_node("ToolWheel")
+		wheel._place_options()
+		if not _arc_on_screen(wheel):
+			printerr("FAIL hud_layout_wheel_slot: arc leaves the screen")
+			fail += 1
+		_hud().save_to_disk()
+		var saved_pos := moved.position
+		_hud().edit_end()
+		_hud().forget_memory()
+		_hud().load_from_disk()
+		_hud().apply(layer)
+		await process_frame
+		var again: Rect2 = _hud().control_hit_rect("wheel", layer)
+		var again_s: float = _hud().scale_of("wheel", layer)
+		if again.position.distance_to(saved_pos) > 1.5 or absf(again_s - scale_now) > 0.05:
+			printerr("FAIL hud_layout_wheel_slot: reload pos %s scale %s want %s %s"
+					% [again.position, again_s, saved_pos, scale_now])
+			fail += 1
+		_hud().reset_to_defaults()
+		(layer.get_node("HudToolRow") as HudToolRow)._layout()
+		await process_frame
+		var after: Rect2 = _hud().control_hit_rect("wheel", layer)
+		if after.position.distance_to(before.position) > 8.0:
+			printerr("FAIL hud_layout_wheel_slot: reset %s want %s" % [after.position, before.position])
+			fail += 1
+		if absf(_hud().scale_of("wheel", layer) - 1.0) > 0.05:
+			printerr("FAIL hud_layout_wheel_slot: reset scale %s" % _hud().scale_of("wheel", layer))
+			fail += 1
+		if _hud().uses_custom():
+			printerr("FAIL hud_layout_wheel_slot: reset left a saved layout")
+			fail += 1
+		fail += _no_legacy_buttons(scene, "hud_layout_wheel_slot reset")
+	_hud().edit_end()
+	tree.paused = false
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+	_hud().save_path = "user://hud_layout.cfg"
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_hud_layout_wheel_slot")
+	return fail
+
+
+func _test_hud_layout_legacy_mode() -> int:
+	## A save with a mode slot and no wheel id loads. mode is dropped, the
+	## other controls stay, and the wheel remains on the thumb default.
+	## Time cost: about 0.5 s in tools/verify.sh.
+	print("-- test_hud_layout_legacy_mode")
+	var fail := 0
+	var path := "user://test_hud_legacy_mode.cfg"
+	_hud().reset_to_defaults()
+	var scene = await _play_scene()
+	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
+	await process_frame
+	var cfg := ConfigFile.new()
+	cfg.set_value("hud", "version", 1)
+	cfg.set_value("hud", "attack_x", 0.62)
+	cfg.set_value("hud", "attack_y", 0.35)
+	cfg.set_value("hud", "attack_s", 1.0)
+	cfg.set_value("hud", "mode_x", 0.9)
+	cfg.set_value("hud", "mode_y", 0.08)
+	cfg.set_value("hud", "mode_s", 1.25)
+	cfg.save(path)
+	_hud().save_path = path
+	_hud().load_from_disk()
+	if not _hud().get_entry("wheel").is_empty():
+		printerr("FAIL hud_layout_legacy_mode: mode was copied onto the wheel")
+		fail += 1
+	if _hud().set_entry("mode", {"x": 0.5, "y": 0.5, "s": 1.0}):
+		printerr("FAIL hud_layout_legacy_mode: mode is still a layout id")
+		fail += 1
+	var attack: Dictionary = _hud().get_entry("attack")
+	if absf(float(attack.get("x", -1.0)) - 0.62) > 0.001:
+		printerr("FAIL hud_layout_legacy_mode: attack did not load %s" % attack)
+		fail += 1
+	fail += _no_legacy_buttons(scene, "hud_layout_legacy_mode")
+	_hud().apply(layer)
+	(layer.get_node("HudToolRow") as HudToolRow)._layout()
+	await process_frame
+	var run: Control = layer.get_node("RunButton")
+	var button: Control = layer.get_node("ToolWheel/ToolButton")
+	var gap := run.get_global_rect().position.x - button.get_global_rect().end.x
+	if absf(gap - 2.0) > 2.0 or button.get_global_rect().intersects(run.get_global_rect()):
+		printerr("FAIL hud_layout_legacy_mode: wheel left the thumb slot gap %s" % gap)
+		fail += 1
+	_hud().save_to_disk()
+	var again := ConfigFile.new()
+	if again.load(path) != OK or again.has_section_key("hud", "mode_x"):
+		printerr("FAIL hud_layout_legacy_mode: mode_x still in the save")
+		fail += 1
+	_hud().reset_to_defaults()
+	_hud().edit_end()
+	tree.paused = false
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+	_hud().save_path = "user://hud_layout.cfg"
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_hud_layout_legacy_mode")
+	return fail
+
+
+func _no_legacy_buttons(scene: Node, label: String) -> int:
+	if scene.get_node_or_null("CanvasLayer1/ModeButton") != null \
+			or scene.get_node_or_null("CanvasLayer1/BowButton") != null:
+		printerr("FAIL %s: ModeButton or BowButton is still on the HUD" % label)
+		return 1
+	return 0
+
+
+func _arc_on_screen(wheel: ToolWheel) -> bool:
+	var view := wheel.get_viewport().get_visible_rect()
+	var button := (wheel.get_node("ToolButton") as Control).get_global_rect().get_center()
+	var inward := false
+	for node_name in ToolWheel.NAMES:
+		var opt := wheel.get_node(node_name) as Control
+		var rect := opt.get_global_rect()
+		if rect.size == Vector2.ZERO or not view.encloses(rect):
+			printerr("wheel arc: %s rect %s view %s" % [node_name, rect, view])
+			return false
+		if node_name == "Bow" and rect.get_center().distance_to(view.get_center()) + 4.0 < button.distance_to(view.get_center()):
+			inward = true
+	return inward
 
 
 func _play_scene() -> Node:

@@ -6,8 +6,8 @@ extends Node
 ## the menu button. The wood panel sits left of that arc so an open map never
 ## covers a button. The build tools stack in a column under Buildings while
 ## that list is open. Run sits beside the attack button. The tool wheel sits
-## left of Run. A headless dedicated host builds no wheel and skips this
-## layout pass.
+## left of Run until Customize HUD saves a wheel slot (#575). A headless
+## dedicated host builds no wheel and skips this layout pass.
 
 const ToolWheelScript := preload("res://Scripts/tool_wheel.gd")
 
@@ -181,8 +181,11 @@ func _place_run(layer: Node) -> void:
 
 
 func _place_tool(layer: Node) -> void:
-	## Left of Run, in the attack cluster. A saved layout moves Run and
-	## attack; the wheel button follows Run and is not its own layout id.
+	## Left of Run when the wheel has no saved slot. HudLayout applies a
+	## wheel entry; do not pull that button back beside Run.
+	var layout := get_node_or_null("/root/HudLayout")
+	if layout != null and not layout.get_entry("wheel").is_empty():
+		return
 	var wheel := layer.get_node_or_null("ToolWheel")
 	if wheel == null or not wheel.has_method("place_button"):
 		return
@@ -191,6 +194,10 @@ func _place_tool(layer: Node) -> void:
 	if button == null or run == null:
 		return
 	_pin(button)
+	# The default slot is the unscaled disc. Drop a scale left by Customize HUD.
+	var disc := button as Button
+	if disc != null and absf(disc.size.x - RoundHudStyle.HIT) > 0.5:
+		RoundHudStyle.apply(disc)
 	var run_size := _size_of(run)
 	var button_size := _size_of(button)
 	var x := run.position.x - GAP - button_size.x
