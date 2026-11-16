@@ -147,6 +147,8 @@ SCENARIO_WORST_S = {
     "test_points_scoreboard_two_players": 3.6,
     "test_points_sync": 4.0,
     "test_quit_prompt_on_back": 6.7,
+    "test_raid_off_two_players": 6.2,
+    "test_raid_two_players": 6.7,
     "test_regrow_sync_two_players": 14.4,
     "test_rejoin_sees_every_death": 10.7,
     "test_run_two_players": 7.4,

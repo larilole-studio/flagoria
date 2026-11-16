@@ -1,4 +1,4 @@
-[gd_scene load_steps=37 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=38 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -35,6 +35,7 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/land_score.gd" id="22_land"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building_blocks/generated_buildings.gd" id="23_buildings"]
 [ext_resource type="Script" path="res://Scripts/mechanics/combat/ranged_shots.gd" id="24_ranged"]
+[ext_resource type="Script" path="res://Scripts/mechanics/mobs/raid_director.gd" id="25_raid"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bm55c"]
 radius = 24.0
@@ -245,6 +246,9 @@ script = ExtResource("24_ranged")
 y_sort_enabled = true
 script = ExtResource("8_mobs")
 
+[node name="RaidDirector" type="Node" parent="World"]
+script = ExtResource("25_raid")
+
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World/Mobs"]
 spawn_path = NodePath("..")
 
@@ -370,6 +374,87 @@ value = 2.0
 custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
 text = "2x"
+horizontal_alignment = 2
+
+[node name="RaidsRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Raids"
+
+[node name="RaidsEnabled" type="CheckButton" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+layout_mode = 2
+button_pressed = false
+
+[node name="RaidIntervalRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Interval"
+
+[node name="RaidInterval" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 15.0
+max_value = 180.0
+step = 1.0
+value = 45.0
+
+[node name="RaidIntervalValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "45s"
+horizontal_alignment = 2
+
+[node name="RaidGroupRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Group"
+
+[node name="RaidGroup" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 1.0
+max_value = 8.0
+step = 1.0
+value = 3.0
+
+[node name="RaidGroupValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "3"
+horizontal_alignment = 2
+
+[node name="RaidRadiusRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Radius"
+
+[node name="RaidRadius" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 16.0
+max_value = 96.0
+step = 1.0
+value = 48.0
+
+[node name="RaidRadiusValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "48"
 horizontal_alignment = 2
 
 [node name="QuitLayer" type="CanvasLayer" parent="."]
