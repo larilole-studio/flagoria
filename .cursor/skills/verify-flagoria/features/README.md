@@ -45,6 +45,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Player spawn](./player-spawn.md) — spawn on reachable land, a free spot per player within 64 px, late joiners.
 - [Hero in front of walls](./hero-wall-draw.md) — the hero draws over a wall until about two thirds of the body is on the wall.
 - [Tileset and collision](./tileset-and-collision.md) — tile catalog, water and forest walls.
+- [Sky islands](./sky-islands.md) — open sea is sky, island edges on the coast, clouds off the walkable ground.
 - [Biomes](./biomes.md) — biome terrain, plants, stones, island and archipelago shaping, biomes on by default, `render_biomes` coverage gate.
 - [Map save files](./map-save.md) — versioned world saves (inputs plus cuts and plank bridges), v1 migration, Save from the in-game menu, saved-maps API.
 - [Object removals save](./object-removals-save.md) — picked flowers and destroyed stones in `world.object_changes` (#198).
