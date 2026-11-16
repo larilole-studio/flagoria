@@ -2,8 +2,9 @@ class_name ToolWheel
 extends Control
 ## Hold-to-select sword, bow and chop (#574).
 ## A tap under TAP_MS with no drag swaps to the previous tool. A longer
-## press, or any drag, opens a half-moon that fans from the button toward
-## the centre. Releasing selects the highlighted tool.
+## press, or any drag, opens a half-moon to the left of the button when that
+## arc fits, and otherwise toward the open side of the screen so every
+## option stays visible. Releasing selects the highlighted tool.
 ## A headless --server host never builds this node. It does not run _process.
 
 enum Tool { SWORD, BOW, CHOP }
@@ -33,6 +34,8 @@ var _button: Button
 var _options: Array[Button] = []
 var _bow_icon: Texture2D
 var _face_box: StyleBox
+var _fan_sign := -1.0
+var _fan_radius := ARC_R
 
 
 static func builds_on(args: PackedStringArray, display_name: String) -> bool:
@@ -280,9 +283,9 @@ func _highlight_at(pos: Vector2) -> void:
 	var delta := pos - _button_center()
 	if delta.length() < DRAG_PX:
 		return
-	## theta 0 is up, PI/2 is left, PI is down. The right half snaps to the
-	## nearer end so a thumb moving up or down still lands on the arc.
-	var theta := atan2(-delta.x, -delta.y)
+	## theta 0 is up, PI/2 is along the open side, PI is down. The closed
+	## half snaps to the nearer end so a thumb moving up or down still lands.
+	var theta := atan2(_fan_sign * delta.x, -delta.y)
 	if theta < 0.0:
 		theta = 0.0 if theta > -PI * 0.5 else PI
 	var best := 0
@@ -323,6 +326,7 @@ func _paint_options() -> void:
 func _place_options() -> void:
 	if _button == null:
 		return
+	_layout_fan()
 	var half := RoundHudStyle.HIT * 0.5
 	for i in _options.size():
 		var opt := _options[i]
@@ -330,8 +334,57 @@ func _place_options() -> void:
 
 
 func _option_center(index: int) -> Vector2:
+	return _clamp_center(_raw_center(index, _fan_sign, _fan_radius))
+
+
+func _raw_center(index: int, sign: float, radius: float) -> Vector2:
 	var theta := PI * (float(index) + 0.5) / 3.0
-	return _button_center() + Vector2(-sin(theta), -cos(theta)) * ARC_R
+	return _button_center() + Vector2(sign * sin(theta), -cos(theta)) * radius
+
+
+func _layout_fan() -> void:
+	## Open toward the side with more room, so a button moved to the left
+	## edge still shows the whole half-moon. The default thumb slot has more
+	## room on the left, which keeps today's arc.
+	var view := get_viewport().get_visible_rect().size
+	var center := _button_center()
+	var pad := RoundHudStyle.HIT * 0.5 + 1.0
+	var prefer := -1.0 if center.x - pad >= view.x - center.x - pad else 1.0
+	_fan_sign = prefer
+	_fan_radius = ARC_R
+	if _fan_fits(prefer, ARC_R):
+		return
+	if _fan_fits(-prefer, ARC_R):
+		_fan_sign = -prefer
+		return
+	var lo := 12.0
+	var hi := ARC_R
+	for _step in 6:
+		var mid := (lo + hi) * 0.5
+		if _fan_fits(prefer, mid):
+			lo = mid
+		else:
+			hi = mid
+	_fan_radius = lo
+
+
+func _fan_fits(sign: float, radius: float) -> bool:
+	var view := get_viewport().get_visible_rect()
+	var half := Vector2.ONE * RoundHudStyle.HIT * 0.5
+	for i in 3:
+		var center := _raw_center(i, sign, radius)
+		if not view.encloses(Rect2(center - half, half * 2.0)):
+			return false
+	return true
+
+
+func _clamp_center(center: Vector2) -> Vector2:
+	var view := get_viewport().get_visible_rect().size
+	var half := RoundHudStyle.HIT * 0.5
+	var edge := 1.0
+	return Vector2(
+			clampf(center.x, edge + half, maxf(edge + half, view.x - edge - half)),
+			clampf(center.y, edge + half, maxf(edge + half, view.y - edge - half)))
 
 
 func _button_center() -> Vector2:
@@ -368,7 +421,8 @@ func _draw() -> void:
 	var center := _button_center()
 	for step in 17:
 		var theta := PI * float(step) / 16.0
-		pts.append(center + Vector2(-sin(theta), -cos(theta)) * ARC_R)
+		var at := center + Vector2(_fan_sign * sin(theta), -cos(theta)) * _fan_radius
+		pts.append(_clamp_center(at))
 	draw_polyline(pts, ARC_COLOR, 2.0, true)
 
 
