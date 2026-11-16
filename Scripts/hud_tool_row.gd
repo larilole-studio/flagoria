@@ -27,6 +27,35 @@ const HIT_INSET := {
 }
 
 
+func _ready() -> void:
+	if DisplayServer.get_name() == "headless":
+		set_process(false)
+		call_deferred("_bind_headless_relayout")
+
+
+func _bind_headless_relayout() -> void:
+	var layer := get_parent()
+	if layer == null:
+		return
+	_layout()
+	for node_name in ["BuildingsButton", "MinimapButton", "ModeButton"]:
+		var btn := layer.get_node_or_null(node_name) as BaseButton
+		if btn != null and not btn.toggled.is_connected(_on_headless_relayout):
+			btn.toggled.connect(_on_headless_relayout)
+	var picker := layer.get_node_or_null("BuildPicker") as CanvasItem
+	if picker != null and not picker.visibility_changed.is_connected(_on_headless_relayout):
+		picker.visibility_changed.connect(_on_headless_relayout)
+	var panel := layer.get_node_or_null("MinimapPanel") as CanvasItem
+	if panel != null and not panel.visibility_changed.is_connected(_on_headless_relayout):
+		panel.visibility_changed.connect(_on_headless_relayout)
+	if not get_viewport().size_changed.is_connected(_on_headless_relayout):
+		get_viewport().size_changed.connect(_on_headless_relayout)
+
+
+func _on_headless_relayout(_on: Variant = null) -> void:
+	_layout()
+
+
 func _process(_delta: float) -> void:
 	_layout()
 

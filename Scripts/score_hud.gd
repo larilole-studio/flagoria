@@ -52,3 +52,6 @@ func _on_total_changed(peer_id: int, _total: int, _amount: int, _reason: String)
 
 func _refresh() -> void:
 	text = "%d pts" % (_points.total_of(_peer_id) if _points else 0)
+	var plate := get_parent() as StatusPlateHud
+	if plate != null:
+		plate.reflow()

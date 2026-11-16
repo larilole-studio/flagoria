@@ -56,3 +56,6 @@ func bind(inventory: Inventory) -> void:
 func _on_changed(resource: StringName, count: int) -> void:
 	if resource == Inventory.WOOD:
 		label.text = str(count)
+		var plate := get_parent() as StatusPlateHud
+		if plate != null:
+			plate.reflow()

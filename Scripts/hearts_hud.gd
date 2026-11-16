@@ -87,8 +87,10 @@ func _process(delta: float) -> void:
 
 
 func _fit_pixel_scale() -> void:
-	if get_parent() is StatusPlateHud:
+	var plate := get_parent() as StatusPlateHud
+	if plate != null:
 		scale = Vector2.ONE
+		plate.reflow()
 		return
 	var stretch := get_viewport().get_final_transform().get_scale().x
 	if stretch <= 0.0:

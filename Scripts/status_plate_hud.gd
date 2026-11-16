@@ -40,12 +40,10 @@ func bind_nodes(hearts: Control, score: Label, wood: ResourceHud) -> void:
 		_mount(score)
 		_mount(wood)
 		_mounted = true
-	_layout_children()
+	reflow()
 
 
-func _process(_delta: float) -> void:
-	if _hearts == null:
-		return
+func reflow() -> void:
 	_layout_children()
 
 
@@ -94,3 +92,4 @@ func _fit_pixel_scale() -> void:
 	var k := maxf(roundf(stretch), 1.0) / stretch
 	scale = Vector2(k, k)
 	position = PLATE_POS * k
+	reflow()

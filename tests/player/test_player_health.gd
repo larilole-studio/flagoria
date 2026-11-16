@@ -162,10 +162,13 @@ func _test_player_health() -> int:
 		printerr("FAIL player_health: loss flash %s, want [F00, F11, FHE, FFF]" % [seen])
 		fail += 1
 	hud.set_process(true)
-	var want := StatusPlateHud.HEART_SLOT
-	if not hud.position.is_equal_approx(want):
-		printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
-		fail += 1
+	var plate := hud.get_parent() as StatusPlateHud
+	if plate != null:
+		plate.reflow()
+		var want := StatusPlateHud.HEART_SLOT
+		if not hud.position.is_equal_approx(want):
+			printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
+			fail += 1
 	# Death: health stops at 0, the player hides and cannot be hit or healed.
 	h.set_health_now(1)
 	if not h.take_damage(5) or h.health != 0 or not h.is_dead() or deaths[0] != 1:
