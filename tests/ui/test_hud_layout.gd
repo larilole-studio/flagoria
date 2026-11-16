@@ -136,6 +136,57 @@ func _test_hud_edit_bar_viewport_sizes() -> int:
 	return fail
 
 
+func _test_hud_edit_bar_stable_during_drag() -> int:
+	print("-- test_hud_edit_bar_stable_during_drag")
+	var fail := 0
+	const TOP_INSET := 6.0
+	_hud().reset_to_defaults()
+	var scene = await _play_scene()
+	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
+	var editor := scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
+	var top_bar: Control = editor.get_node("TopBar")
+	var win := scene.get_window()
+	win.size = Vector2i(390, 844)
+	await process_frame
+	await process_frame
+	_hud().edit_begin(layer)
+	editor.show()
+	if editor.has_method("relayout_bar"):
+		await editor.relayout_bar()
+	var view := layer.get_viewport().get_visible_rect()
+	for step in 16:
+		var t := float(step + 1) / 16.0
+		_hud().try_place(
+				"attack", lerpf(0.18, 0.72, t), lerpf(0.28, 0.62, t), lerpf(1.0, 1.45, t), layer)
+		if not editor.has_method("relayout_bar"):
+			printerr("FAIL hud_edit_bar_stable: missing relayout_bar")
+			fail += 1
+			break
+		editor.relayout_bar()
+		for _i in 5:
+			await process_frame
+			if top_bar.get_global_rect().position.y <= TOP_INSET + 0.5:
+				printerr(
+						"FAIL hud_edit_bar_stable: bar at top inset step %d pos=%s"
+						% [step, top_bar.global_position])
+				fail += 1
+		for _i in 8:
+			await process_frame
+		if not editor.has_method("bar_fits_viewport") or not editor.bar_fits_viewport():
+			printerr(
+					"FAIL hud_edit_bar_stable: bar outside view after step %d rect=%s"
+					% [step, top_bar.get_global_rect()])
+			fail += 1
+	editor.close_editor()
+	_hud().edit_end()
+	tree.paused = false
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_hud_edit_bar_stable_during_drag")
+	return fail
+
+
 func _test_hud_layout_reset() -> int:
 	print("-- test_hud_layout_reset")
 	var fail := 0
