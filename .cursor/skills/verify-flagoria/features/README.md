@@ -57,8 +57,8 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
 - [Explored map](./explored-map.md) — wood minimap (collapse, reopen, maximize) and the parchment full map; cells revealed within 10 cells of the hero.
-- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; the starting castle still refuses while multiplayer is on; live path is the build picker.
-- [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for buildables; plank, wooden tower and wall block (through `BuildCosts.buy`); live path is the build picker.
+- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), castle (50), guard post (20), barracks (30), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; only the starting castle refuses while multiplayer is on; live path is the build picker.
+- [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for six buildable kinds (plank, tower, castle, guard post, barracks, wall block) through `BuildCosts.buy`; live path is the build picker.
 - [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
 - [Generated building](./generated-building.md) — host debug key and Map Settings button place one WFC building at the player; clients and a late joiner solve the same seed (#26).
 - [Building merge](./building-merge.md) — full-edge neighbours share a wall; removal re-seals; two-player and late-joiner replay (#27).
