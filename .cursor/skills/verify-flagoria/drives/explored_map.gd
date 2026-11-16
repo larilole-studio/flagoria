@@ -8,6 +8,8 @@ const MAXIMIZE := "CanvasLayer1/MinimapPanel/MaximizeButton"
 const MAP_BUTTON := "CanvasLayer1/MinimapButton"
 const PARCHMENT := "CanvasLayer1/ParchmentMap"
 const CLOSE := "CanvasLayer1/ParchmentMap/CloseButton"
+const ZOOM_IN := "CanvasLayer1/ParchmentMap/ZoomInButton"
+const ZOOM_OUT := "CanvasLayer1/ParchmentMap/ZoomOutButton"
 const WALK := ["ui_right", "ui_left", "ui_up", "ui_down"]
 const ZOOM_PHONE := Vector2i(1080, 2400)
 
@@ -61,6 +63,9 @@ func run() -> void:
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	ok = ok and is_equal_approx(float(parchment.cell_px), float(parchment.DEFAULT_CELL_PX))
 	await snapshot("parchment-zoom-default-phone")
+	await click(ZOOM_IN)
+	ok = ok and parchment.cell_px > parchment.DEFAULT_CELL_PX
+	await snapshot("parchment-zoom-in-phone")
 	for _i in parchment.cell_px - parchment.min_cell_px():
 		await _wheel(parchment, parchment.hero_screen_position(), false)
 	ok = ok and parchment.cell_px == parchment.min_cell_px()
@@ -140,6 +145,9 @@ func run() -> void:
 	await click(MAXIMIZE)
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	ok = ok and _inside(parchment.get_node("CloseButton"))
+	ok = ok and _inside(parchment.get_node("ZoomInButton"))
+	ok = ok and _inside(parchment.get_node("ZoomOutButton"))
+	ok = ok and _inside(parchment.get_node("RecentreButton"))
 	await snapshot("parchment-phone-portrait")
 	await click(CLOSE)
 	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)

@@ -1,0 +1,231 @@
+{
+  "cycle_seconds": 600,
+  "timing": [
+    {
+      "name": "day hold",
+      "seconds": 360,
+      "from": "day",
+      "to": "day",
+      "kind": "hold"
+    },
+    {
+      "name": "day to dusk",
+      "seconds": 15,
+      "from": "day",
+      "to": "dusk",
+      "kind": "ease"
+    },
+    {
+      "name": "dusk hold",
+      "seconds": 30,
+      "from": "dusk",
+      "to": "dusk",
+      "kind": "hold"
+    },
+    {
+      "name": "dusk to night",
+      "seconds": 15,
+      "from": "dusk",
+      "to": "night",
+      "kind": "ease"
+    },
+    {
+      "name": "night hold",
+      "seconds": 120,
+      "from": "night",
+      "to": "night",
+      "kind": "hold"
+    },
+    {
+      "name": "night to dawn",
+      "seconds": 15,
+      "from": "night",
+      "to": "dawn",
+      "kind": "ease"
+    },
+    {
+      "name": "dawn hold",
+      "seconds": 30,
+      "from": "dawn",
+      "to": "dawn",
+      "kind": "hold"
+    },
+    {
+      "name": "dawn to day",
+      "seconds": 15,
+      "from": "dawn",
+      "to": "day",
+      "kind": "ease"
+    }
+  ],
+  "interpolation": {
+    "color_space": "sRGB",
+    "method": "Color.lerp",
+    "ease": "smoothstep",
+    "smoothstep": "t * t * (3 - 2 * t)",
+    "dusk_dawn_split": "15+30+15"
+  },
+  "phases": {
+    "day": {
+      "hex": "#ffffff",
+      "rgb": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "min_channel": 1.0,
+      "luminance_multiplier": 1.0,
+      "icon": "art/day_night/icon_sun_16.png"
+    },
+    "dusk": {
+      "hex": "#eba684",
+      "rgb": [
+        0.922,
+        0.651,
+        0.518
+      ],
+      "min_channel": 0.518,
+      "luminance_multiplier": 0.699,
+      "icon": "art/day_night/icon_dusk_16.png"
+    },
+    "night": {
+      "hex": "#808cc8",
+      "rgb": [
+        0.502,
+        0.549,
+        0.784
+      ],
+      "min_channel": 0.502,
+      "luminance_multiplier": 0.556,
+      "icon": "art/day_night/icon_moon_16.png"
+    },
+    "dawn": {
+      "hex": "#e8b4c8",
+      "rgb": [
+        0.91,
+        0.706,
+        0.784
+      ],
+      "min_channel": 0.706,
+      "luminance_multiplier": 0.755,
+      "icon": "art/day_night/icon_dawn_16.png"
+    }
+  },
+  "hud": {
+    "canvas_layer_untinted": true,
+    "plate": {
+      "width": 120,
+      "height": 24,
+      "nine_patch_margin": 6,
+      "icon_size": 16,
+      "icon_local": [
+        98,
+        4
+      ],
+      "scores_gap": 4
+    },
+    "hide_icon_when_cycle_off": true
+  },
+  "lights": {
+    "texture": "art/day_night/light_radial_smooth_128.png",
+    "texture_size": [
+      128,
+      128
+    ],
+    "falloff": "(1 - d)^2",
+    "color": "#f2b632",
+    "color_name": "gold",
+    "mobile_cap": 16,
+    "energy_day": 0,
+    "sources": {
+      "player": {
+        "radius_px": 64,
+        "texture_scale": 1.0,
+        "energy": 1.1
+      },
+      "castle": {
+        "radius_px": 96,
+        "texture_scale": 1.5,
+        "energy": 1.2
+      },
+      "tower": {
+        "radius_px": 56,
+        "texture_scale": 0.875,
+        "energy": 0.9
+      },
+      "guard_post": {
+        "radius_px": 48,
+        "texture_scale": 0.75,
+        "energy": 0.75
+      }
+    }
+  },
+  "overlays": [
+    {
+      "file": "art/day_night/overlay_torch.png",
+      "size": [
+        16,
+        16
+      ],
+      "targets": [
+        {
+          "tile": "RESPAWN_CAMP_1_1_BLUE",
+          "atlas": [
+            22,
+            4
+          ]
+        },
+        {
+          "tile": "RESPAWN_CAMP_1_1_RED",
+          "atlas": [
+            15,
+            4
+          ]
+        }
+      ],
+      "tint_cancel": "self_modulate = Color(1/r, 1/g, 1/b, 1) each frame, or a canvas-item shader that multiplies COLOR.rgb by the same reciprocal"
+    },
+    {
+      "file": "art/day_night/overlay_watchtower_window.png",
+      "size": [
+        16,
+        16
+      ],
+      "targets": [
+        {
+          "tile": "WATCHTOWER_TOP_BLUE",
+          "atlas": [
+            16,
+            4
+          ]
+        },
+        {
+          "tile": "WATCHTOWER_TOP_RED",
+          "atlas": [
+            17,
+            4
+          ]
+        }
+      ],
+      "local_pixels": [
+        [
+          7,
+          7
+        ],
+        [
+          8,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          8,
+          8
+        ]
+      ],
+      "tint_cancel": "self_modulate = Color(1/r, 1/g, 1/b, 1) each frame, or a canvas-item shader that multiplies COLOR.rgb by the same reciprocal"
+    }
+  ]
+}

@@ -94,6 +94,9 @@ extends Resource
 @export_range(5, 16) var building_width: int = 6
 @export_range(5, 16) var building_height: int = 5
 @export_range(0, 1) var building_style: int = 0
+## Shared day/night cycle (#558). On for a new world. A save that does not
+## name the field loads with the cycle on.
+@export var day_night_cycle: bool = true
 
 
 ## Playable ranges for Random specs (#335): narrower than @export_range where
@@ -139,6 +142,7 @@ const PLAYABLE_RANGES := {
 const RANDOM_SPECS_SKIP := [
 	"chunk_width", "chunk_height", "chunk_refresh_frames",
 	"building_width", "building_height", "building_style",
+	"day_night_cycle",
 ]
 
 

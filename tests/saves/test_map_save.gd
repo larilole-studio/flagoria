@@ -13,6 +13,8 @@ func _test_map_save_round_trip() -> int:
 	for key in defaults.keys():
 		if typeof(defaults[key]) == TYPE_INT:
 			params.set(key, defaults[key] + 3)
+		elif typeof(defaults[key]) == TYPE_BOOL:
+			params.set(key, not bool(defaults[key]))
 		else:
 			params.set(key, defaults[key] + 1.0 / 3.0)
 	var saved = MapSave.save_map(params, "test_round_trip")

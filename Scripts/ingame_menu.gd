@@ -79,7 +79,8 @@ func save_world() -> Dictionary:
 	## received or chose them (Flagoria.world_params), this peer's tree and
 	## bush cuts (world.object_changes), plank bridges (world.tile_edits,
 	## #226), placed structures and walls (world.structures, #42), and this
-	## peer's player state (world.player, #197). {"path", "error"}.
+	## peer's player state (world.player, #197) and the day/night clock
+	## (world.clock_elapsed, #558). {"path", "error"}.
 	var params: MapGenParams = owner.world_params if owner else null
 	var result := {"path": "", "error": "the world has not loaded yet"}
 	if params != null:
@@ -94,7 +95,12 @@ func save_world() -> Dictionary:
 			world.object_changes = world_map.object_changes()
 			world.tile_edits = BridgeBuilder.to_changes(world_map.bridges_for_sync())
 			world.structures = StructureSaves.to_changes(world_map)
+			world.soldiers = SoldierSaves.capture(owner)
 		world.player = PlayerSave.capture(owner)
+		var clock := get_node_or_null("/root/DayNight")
+		if clock != null:
+			world.clock_elapsed = float(clock.elapsed)
+			params.day_night_cycle = bool(clock.enabled)
 		result = get_node("/root/MapGen").save_world(world, save_name)
 	if result["error"] == "":
 		status_label.text = saved_text(result["path"].get_file().get_basename())
