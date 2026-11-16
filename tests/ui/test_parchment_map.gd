@@ -87,6 +87,25 @@ func _test_parchment_map() -> int:
 	var zoom = player.get_node("Camera2D/MapZoom")
 	var factor: float = zoom.factor
 	var before_px: int = parchment.cell_px
+	_tap(parchment.get_node("ZoomInButton"))
+	if parchment.cell_px != before_px + 1:
+		printerr("FAIL parchment_map zoom in %s want %s" % [parchment.cell_px, before_px + 1])
+		fail += 1
+	_tap(parchment.get_node("ZoomOutButton"))
+	if parchment.cell_px != before_px:
+		printerr("FAIL parchment_map zoom out %s want %s" % [parchment.cell_px, before_px])
+		fail += 1
+	parchment.cell_px = parchment.MAX_CELL_PX
+	_tap(parchment.get_node("ZoomInButton"))
+	if parchment.cell_px != parchment.MAX_CELL_PX:
+		printerr("FAIL parchment_map zoom in above max %s" % parchment.cell_px)
+		fail += 1
+	parchment.cell_px = parchment.min_cell_px()
+	_tap(parchment.get_node("ZoomOutButton"))
+	if parchment.cell_px != parchment.min_cell_px():
+		printerr("FAIL parchment_map zoom out below min %s" % parchment.cell_px)
+		fail += 1
+	before_px = parchment.cell_px
 	var focus := Vector2(120, 100)
 	var view: Control = parchment.get_node("MapView")
 	var focus2_pre: Vector2 = focus - view.position
