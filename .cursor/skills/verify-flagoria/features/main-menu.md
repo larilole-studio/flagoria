@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The main menu offers Map Settings, Host, Join (with an address field), Music / Sound effects sliders and a Mob spawns slider, styled by a pixel-art Theme.
+The main menu offers Map Settings, Host, Join (with an address field), Music / Sound effects sliders, a Mob spawns slider, and tower range, damage and cooldown sliders, styled by a pixel-art Theme. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
 
 ## Sub-features
 
