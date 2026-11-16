@@ -103,6 +103,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/MapGenParams.gd` | Map generation parameters resource | stays (shared) |
 | `Scripts/map_gen.gd` | Autoload: active params, save/load hooks | stays (autoload) |
 | `Scripts/mechanics/day_night/day_night.gd` | Host-owned day/night clock, world tint, save elapsed and peer sync | new (#558) |
+| `Scripts/mechanics/day_night/night_lights.gd` | Local night pools on players, castles, towers and guard posts; no netcode, idle on a headless host | new (#560) |
 | `Scripts/map_save.gd` | Versioned save files (gzip of JSON) | stays |
 | `Scripts/world_save_preview.gd` | Cached terrain thumbnails for the saved-worlds list | stays |
 | `Scripts/world_save.gd` | One saved world in memory | stays |
