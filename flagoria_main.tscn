@@ -138,14 +138,6 @@ theme = ExtResource("6_menu")
 text = ""
 script = ExtResource("19_run")
 
-[node name="ModeButton" type="Button" parent="CanvasLayer1"]
-offset_right = 24.0
-offset_bottom = 24.0
-focus_mode = 0
-theme = ExtResource("6_menu")
-toggle_mode = true
-icon_alignment = 1
-
 [node name="HudToolRow" type="Node" parent="CanvasLayer1"]
 script = ExtResource("20_hud_row")
 

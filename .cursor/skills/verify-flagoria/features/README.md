@@ -39,6 +39,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Player health](./player-health.md) — hearts, HUD, regen, death, respawn hold, rejoin, health sync.
 - [Combat and aiming](./combat-and-aiming.md) — swing, 30 px reach, mid-swing hitbox, mouse and touch aim, exact-angle swing, cone, cancel, wall line-of-sight; live `combat_hud` drive.
 - [Ranged bow](./ranged-bow.md) — one bow shot on that aim, host-decided hit, short line; live `ranged_bow` drive.
+- [Tool wheel](./tool-wheel.md) — hold the button beside Run to arm sword, bow or chop; a short tap swaps back (#574).
 - [Mobs](./mobs.md) — seeded placement, spawn rate, wander, chase, contact damage, sword hits, hidden on ungenerated ground, sounds, sync.
 - [Mob band](./mob-band.md) — server spawn and despawn around players, caps, late joiners see the same names.
 - [Night mobs](./night-mobs.md) — ambient caps double at night and ramp at dusk and dawn; extras leave at dawn only out of view (#559).
@@ -53,7 +54,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Player save](./player-save.md) — save and load position, health, wood, score and charted ground (#197).
 - [Map zoom](./map-zoom.md) — local pinch, wheel and Ctrl +/- zoom.
 - [Chopping trees and bushes](./chop-trees-and-bushes.md) — interact-mode chop, tree, pine and bush types, their hit and fall frames, per-type wood and regrow delay, stumps, regrowth (held while a player or mob stands on the stump, one mob-cell set per pass), wood HUD, type checklist.
-- [Chop trees (live drive)](./chop-trees.md) — mode button, tap a tree in reach, two hits, tree hit frames and sounds, stump and wood once.
+- [Chop trees (live drive)](./chop-trees.md) — chop tool, tap a tree in reach, two hits, tree hit frames and sounds, stump and wood once.
 - [Cut sync (two-player)](./cut-sync.md) — host-decided tree and bush cuts, same stump on every peer, wood to the cutter, late joiners get the exact set, sent in parts of at most 500 cuts.
 - [Regrowth sync messages](./regrow-sync.md) — one `apply_regrow_cells` per regrowth tick, applied only when the host (peer 1) sent it.
 - [Tree sprouts](./tree-sprouts.md) — trees sprout on free cells where a biome is below its target tree share, host-decided, one `apply_sprout_cells` per pass, kept in saves and join lists.
@@ -83,12 +84,12 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Main menu](./main-menu.md) — menu theme, Host/Join, volume and mob spawn sliders, letter keyboard.
 - [Saved worlds](./saved-worlds.md) — main-menu list of every save, load, a new world in its own file, delete with a confirm.
 - [In-game menu and quit prompt](./ingame-menu.md) — menu button, Pause panel (Resume, Save, Main menu), quit confirm.
-- [Interact mode](./interact-mode.md) — mode button; Space still swings the sword in interact (chop) mode; aimed attacks stay combat-only (#351).
+- [Interact mode](./interact-mode.md) — chop on the tool wheel; Space still swings the sword in interact mode; aimed attacks stay combat-only (#351).
 - [Points](./points.md) — discovery and mob-kill points, host-owned totals, score HUD.
 - [Points scoreboard](./points-scoreboard.md) — every connected player's total, highest first, from the score row toggle (#509).
 - [Touch controls](./touch-controls.md) — joystick hold, Castle Stone attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
-- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Buildings, Map and Mode on a top-right arc, build tools on discs in a column, map panel clear of the arc, Run beside attack (#480).
+- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Buildings and Map on a top-right arc, build tools on discs in a column, map panel clear of the arc, Run beside attack (#480).
 - [Customize HUD layout](./hud-customize.md) — in-game menu edit mode; drag and resize touch controls; per-device user settings (#492).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
 - [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.

@@ -135,7 +135,7 @@ Start it with `bin/launch.sh drives/<feature>.gd` and read its result from the e
 | `start_game()` | Loads the main scene, clicks Host with a pointer click on the button, prints `VERIFY_READY` once the hero exists. `false` (after `done(false)`) if it does not. |
 | `hero()` | The local hero under `World`, to read its state. |
 | `hold(action, frames)`, `tap(action)` | Press an input action (`ui_left`, `ui_right`, `ui_up`, `ui_down`, `attack`) for some physics frames, or for one. |
-| `toggle_mode()` | Clicks `CanvasLayer1/ModeButton` (combat or interact mode). |
+| `toggle_mode()` | Presses 3 to arm chop, or 1 to arm sword when chop is already armed. |
 | `tap_cell(cell)` | A touch tap at a map cell's screen position. A cell under the HUD (the minimap, the buttons) gets the HUD, as a finger would. |
 | `menu_save()` | Clicks the in-game menu button, then Save. |
 | `click(path)` | A left click at the centre of a `Control` under the main scene. |

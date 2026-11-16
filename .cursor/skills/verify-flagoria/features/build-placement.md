@@ -42,7 +42,7 @@ run-length cap was added (#380 item 1 left open).
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone, offline, or two-player — Plank works in all).
-2. Tap Buildings to open the column, then tap the mode button to enter interact
+2. Tap Buildings to open the column, then select chop on the tool wheel to enter interact
    mode if needed.
 3. Tap Plank, drag across water next to land; green cells and the wood cost
    follow the finger (green = what will place). Lift to place. Tower, Castle,

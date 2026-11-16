@@ -32,7 +32,7 @@ as the auto entries the solver replaces. The picker icon comes from
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone or offline) with at least 10 wood.
-2. Tap the mode button to enter interact mode; the Cut / Plank / Tower picker
+2. Select chop on the tool wheel to enter interact mode; the Cut / Plank / Tower picker
    appears.
 3. Tap Tower, aim at clear land; the 3×3 footprint greens with "10 wood".
    Lift to place. The tower's flag takes the builder's colour.

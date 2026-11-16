@@ -25,7 +25,7 @@ func _test_hud_layout_round_trip() -> int:
 		fail += 1
 	_hud().apply(layer)
 	await process_frame
-	for id in ["joystick", "attack", "run", "buildings", "map", "mode", "scores"]:
+	for id in ["joystick", "attack", "run", "buildings", "map", "scores"]:
 		if _hud().get_entry(id).is_empty():
 			printerr("FAIL hud_layout_round_trip: missing %s after load" % id)
 			fail += 1
@@ -57,14 +57,14 @@ func _test_hud_layout_clamp_overlap() -> int:
 	if rect.position.x < _hud().SIDE - 0.5:
 		printerr("FAIL hud_layout_clamp: attack still off-screen %s" % rect)
 		fail += 1
-	var mode: Dictionary = _hud().get_entry("mode")
-	if mode.is_empty():
-		printerr("FAIL hud_layout_overlap: no mode entry")
+	var map_entry: Dictionary = _hud().get_entry("map")
+	if map_entry.is_empty():
+		printerr("FAIL hud_layout_overlap: no map entry")
 		fail += 1
 	else:
-		var placed: bool = _hud().try_place("attack", float(mode.get("x")), float(mode.get("y")), 1.0, layer)
+		var placed: bool = _hud().try_place("attack", float(map_entry.get("x")), float(map_entry.get("y")), 1.0, layer)
 		if placed:
-			printerr("FAIL hud_layout_overlap: attack overlaps mode")
+			printerr("FAIL hud_layout_overlap: attack overlaps map")
 			fail += 1
 	_hud().reset_to_defaults()
 	_hud().edit_end()
