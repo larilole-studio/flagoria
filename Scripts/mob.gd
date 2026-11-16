@@ -22,6 +22,10 @@ extends Node2D
 ## Sounds: MobSfx (the Sfx child), driven by `state` and `attacks` changes.
 ## Uncharted: on each peer, a mob standing on ground this peer has not generated
 ## yet is hidden (visuals only; behaviour, collision and sync are untouched).
+## Raid: the host's RaidDirector sets a raid cell. Until it is cleared, this
+## mob walks toward that cell without the home-ground leash, stops to damage a
+## free-form wall in reach, and stays pinned so the ambient band keeps it. A
+## player chase still wins until the calm that follows giving up.
 
 enum State { IDLE, WALK, CHASE, HURT, DYING }
 
@@ -37,6 +41,10 @@ const HURT_TIME := 0.4  ## s of hurt row per hit: blink 0,1,0,1 at 10 fps
 const PUFF_TIME := MobCatalog.PUFF_FRAMES / MobCatalog.PUFF_FPS
 const IDLE_TIME := Vector2(1.0, 3.0)  ## seconds, min and max
 const WALK_TIME := Vector2(0.6, 1.6)
+## No raid assigned. Same sentinel as WallBuilder.NO_WALL.
+const RAID_NONE := Vector2i(1 << 20, 0)
+const RAID_REACH := 24.0  ## px: stand and hit a target-city wall this close
+const RAID_HIT_INTERVAL := 1.0  ## s between host_damage_wall calls
 
 @export var mob_type: String = MobCatalog.SLIME
 @export var facing: int = MobCatalog.DOWN
@@ -73,6 +81,12 @@ var hp := 1
 var _struck := {}  ## instance ids of attackers whose current swing already hit
 var _world: TileMap
 var _chart_cell := Vector2i.MAX
+var _raid_cell := RAID_NONE
+var _raid_id := -1
+var _raid_cool := 0.0
+## Free-form cells passed to host_damage_wall, in order. A structure wall is
+## never appended: the raid stops instead of striking it.
+var _raid_strikes: Array[Vector2i] = []
 static var _default_player_box := Rect2()  ## from PLAYER_SCENE, read once
 
 @onready var sprite: Sprite2D = $Sprite2D
@@ -172,6 +186,8 @@ func think(delta: float) -> void:
 		target = near
 		state = State.CHASE
 		_chase(delta)
+	elif _has_raid() and _calm <= 0.0:
+		_step_raid(delta)
 	elif state == State.WALK:
 		if not step(direction * float(MobCatalog.stat(mob_type, "wander_speed")) * delta) or _timer <= 0.0:
 			_start_idle()
@@ -180,8 +196,25 @@ func think(delta: float) -> void:
 
 
 func pinned() -> bool:
-	## Ambient despawn keeps a chasing mob, even past the despawn radius.
-	return state == State.CHASE
+	## Ambient despawn keeps a chasing mob, and a mob that still has a raid
+	## cell, even past the despawn radius.
+	return state == State.CHASE or _raid_cell != RAID_NONE
+
+
+func assign_raid(cell: Vector2i, tower_id: int) -> void:
+	## Host: walk toward `cell` (the target tower's flag) and strike that
+	## city's free-form walls. A chase already in progress is left alone
+	## until it goes calm; the cell stays set.
+	_raid_cell = cell
+	_raid_id = tower_id
+	_raid_cool = 0.0
+
+
+func clear_raid() -> void:
+	_raid_cell = RAID_NONE
+	_raid_id = -1
+	_raid_cool = 0.0
+	_raid_strikes.clear()
 
 
 func players() -> Array:
@@ -378,6 +411,15 @@ func _feet_cell(pos: Vector2, half: Vector2, corner: int) -> Vector2i:
 	## The map cell under corner 0-3 of the feet box at `pos` (top left, top
 	## right, bottom left, bottom right; the box's bottom edge is at pos.y).
 	return _world.local_to_map(pos + Vector2(half.x if corner & 1 else -half.x, 0.0 if corner & 2 else -half.y))
+
+
+func _has_raid() -> bool:
+	return _raid_cell != RAID_NONE
+
+
+func _step_raid(delta: float) -> void:
+	## Host only, from think. The walk and the strike live in RaidStep.
+	RaidStep.step(self, delta)
 
 
 func _start_idle() -> void:
