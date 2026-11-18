@@ -54,6 +54,8 @@ func _run() -> void:
 			shot = arg.trim_prefix("--shot=")
 		elif arg == "--host":
 			host = true
+	if host:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("tower_sync_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
@@ -63,7 +65,6 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		HostListen.arm_host(out)
 		var map_gen = root.get_node("MapGen")
 		var error: String = map_gen.load_map_inputs(save)
 		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:

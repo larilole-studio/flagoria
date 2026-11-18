@@ -60,6 +60,8 @@ func _run() -> void:
 			rate = arg.trim_prefix("--rate=").to_float()
 		elif arg == "--dedicated":
 			dedicated = true
+	if dedicated:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (dedicated and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("dedicated_play_probe: needs --port=N --out=PATH, and --save=PATH with --dedicated")
 		quit(1)
@@ -68,7 +70,6 @@ func _run() -> void:
 	await process_frame
 	var main = current_scene
 	if dedicated:
-		HostListen.arm_host(out)
 		var loaded: Dictionary = MapSave.load_map(save)
 		if rate >= 0.0:
 			root.get_node("GameSettings").set_mob_rate(rate, false)

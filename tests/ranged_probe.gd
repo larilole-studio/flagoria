@@ -52,6 +52,8 @@ func _run() -> void:
 			_seed = arg.trim_prefix("--seed=").to_int()
 		elif arg == "--host":
 			_host = true
+	if _host:
+		HostListen.arm_host(_out)
 	if port == 0 or _out == "" or _seed == 0 or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("ranged_probe: needs --port, --out, --seed and the main scene")
 		quit(1)
@@ -60,7 +62,6 @@ func _run() -> void:
 	await process_frame
 	var main = current_scene
 	if _host:
-		HostListen.arm_host(_out)
 		var params := MapGenParams.make_defaults()
 		params.biome_frequency = 0.0
 		params.altitude_seed = _seed

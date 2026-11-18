@@ -654,8 +654,9 @@ const HOST_ARM_GRACE_MS := 3000
 
 
 static func arm_host(out_path: String) -> void:
-	## Call at the start of a probe host, before create_server. Joiners in
-	## this directory wait for mark_host_listening instead of dialing early.
+	## Write as soon as the host role and --out= path are known—before loading
+	## the main scene—so joiners do not take the no-pending early-dial path
+	## while this process is still booting under CI load.
 	_write_mark(_host_pending_path(out_path))
 
 

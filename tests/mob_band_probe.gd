@@ -54,6 +54,8 @@ func _run() -> void:
 			role = arg.trim_prefix("--role=")
 		elif arg.begins_with("--seed="):
 			seed_value = arg.trim_prefix("--seed=").to_int()
+	if role == "host":
+		HostListen.arm_host(_out)
 	if port == 0 or _out == "" or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("mob_band_probe: needs --port, --out and the main scene")
 		quit(1)
@@ -63,7 +65,6 @@ func _run() -> void:
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if role == "host":
-		HostListen.arm_host(_out)
 		root.get_node("GameSettings").set_mob_rate(1.0, false)
 		if main.setup_server(_params(seed_value), port) != OK:
 			printerr("mob_band_probe: could not host")
