@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a mob-band session. The host sets the ambient delay to 0 and
 ## calls run_ambient_tick once the test drops a .tick file.
 ##   -- --port=N --out=PATH --role=host --seed=11
@@ -53,6 +54,8 @@ func _run() -> void:
 			role = arg.trim_prefix("--role=")
 		elif arg.begins_with("--seed="):
 			seed_value = arg.trim_prefix("--seed=").to_int()
+	if role == "host":
+		HostListen.arm_host(_out)
 	if port == 0 or _out == "" or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("mob_band_probe: needs --port, --out and the main scene")
 		quit(1)
@@ -68,8 +71,9 @@ func _run() -> void:
 			quit(1)
 			return
 		main.add_player(1)
+		HostListen.mark_host_listening(_out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, _out)
 	var deadline := Time.get_ticks_msec() + 45000
 	var next_write := 0
 	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):

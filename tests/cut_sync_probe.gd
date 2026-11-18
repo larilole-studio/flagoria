@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a cut sync session, run as its own headless process by
 ## test_cut_save_late_join (tests/saves/test_cut_save.gd) and
 ## test_cut_sync_two_players (tests/net/test_cut_sync.gd) and
@@ -105,6 +106,8 @@ func _run() -> void:
 			place = arg.trim_prefix("--place=")
 		elif arg == "--host":
 			host = true
+	if host:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("cut_sync_probe: needs --port=N, --out=PATH, --save=PATH with --host, and the main scene")
 		quit(1)
@@ -128,8 +131,9 @@ func _run() -> void:
 				quit(1)
 				return
 		main.add_player(1)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var interaction: Interaction = main.get_node("World/Interaction")
 	if regrow >= 0.0:

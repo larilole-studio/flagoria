@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a multi-peer spawn session, run as its own headless process by
 ## test_spawn_late_join in tests/world/test_spawn.gd.
 ##   -- --port=N --out=PATH              join localhost:N through the Join path
@@ -60,6 +61,8 @@ func _run() -> void:
 			_out = arg.trim_prefix("--out=")
 		elif arg in ["--host", "--dedicated"]:
 			mode = arg.trim_prefix("--")
+	if mode != "join":
+		HostListen.arm_host(_out)
 	if port == 0 or _out == "" or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("late_join_probe: needs --port=N, --out=PATH and the main scene")
 		quit(1)
@@ -74,12 +77,14 @@ func _run() -> void:
 			if node is CharacterBody2D:
 				_picked[str(node.name)] = [node.position.x, node.position.y])
 	if mode == "host":
-		main.setup_server(root.get_node("MapGen").params, port)
-		main.add_player(1)
+		if main.setup_server(root.get_node("MapGen").params, port) == OK:
+			main.add_player(1)
+			HostListen.mark_host_listening(_out)
 	elif mode == "dedicated":
-		main.start_dedicated_server(port)
+		if main.start_dedicated_server(port) == OK:
+			HostListen.mark_host_listening(_out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, _out)
 	var points := main.get_node_or_null("Points") as Points
 	if points:
 		# The kill snapshot must not ride ahead of the map: totals_received

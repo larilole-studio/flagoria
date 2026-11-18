@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of the dedicated cut-and-hit round (tests/net/test_dedicated_play_round.gd).
 ##
 ##   -- --port=N --out=PATH --cells=x,y [--mob=mob_N] [--rate=F] --dedicated --save=SAVE
@@ -59,6 +60,8 @@ func _run() -> void:
 			rate = arg.trim_prefix("--rate=").to_float()
 		elif arg == "--dedicated":
 			dedicated = true
+	if dedicated:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (dedicated and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("dedicated_play_probe: needs --port=N --out=PATH, and --save=PATH with --dedicated")
 		quit(1)
@@ -74,8 +77,9 @@ func _run() -> void:
 			printerr("dedicated_play_probe: could not host %s: %s" % [save, loaded["error"]])
 			quit(1)
 			return
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var cut_done := {}

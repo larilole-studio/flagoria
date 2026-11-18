@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a buildable-castle sync session (#527). Modes place, watch.
 
 
@@ -49,6 +50,8 @@ func _run() -> void:
 		elif arg == "--host":
 			host = true
 	_out = out
+	if host:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("castle_build_sync_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
@@ -65,8 +68,9 @@ func _run() -> void:
 			quit(1)
 			return
 		main.add_player(1)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var deadline := Time.get_ticks_msec() + 90000

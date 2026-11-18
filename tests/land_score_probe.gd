@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a land-score session (#279).
 ## Host: --host --save --port --out. Client: --port --out --mode.
 ## The host scores city land. A ".drop" file hands the host castle to neutral.
@@ -46,6 +47,8 @@ func _run() -> void:
 			out = arg.trim_prefix("--out=")
 		elif arg == "--host":
 			host = true
+	if host:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("land_score_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
@@ -64,8 +67,9 @@ func _run() -> void:
 		main.add_player(1)
 		main.get_node("Discovery").set_physics_process(false)
 		_park_mobs(main)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var checked_client := false
 	var deadline := Time.get_ticks_msec() + 60000

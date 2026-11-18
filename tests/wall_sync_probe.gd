@@ -1,4 +1,5 @@
 extends SceneTree
+const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## One peer of a wall and city sync session (#498).
 ## Host: --host --save --port --out --mode. Client: --port --out --mode [--shot].
 
@@ -57,6 +58,8 @@ func _run() -> void:
 		elif arg == "--host":
 			host = true
 	_out = out
+	if host:
+		HostListen.arm_host(out)
 	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
 		printerr("wall_sync_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
@@ -74,8 +77,9 @@ func _run() -> void:
 			return
 		main.add_player(1)
 		_park_mobs(main)
+		HostListen.mark_host_listening(out)
 	else:
-		main.add_player_joined(port)
+		await HostListen.join_when_host_listening(main, port, out)
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var opened := false

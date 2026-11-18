@@ -643,3 +643,89 @@ func _ui_plays_since(ui, before: Dictionary) -> Dictionary:
 		if ui.plays[event] != before[event]:
 			delta[event] = ui.plays[event] - before[event]
 	return delta
+
+
+## How long a scenario joiner polls for the host's listen mark. The dial
+## itself keeps the in-game unanswered timeout (#348).
+const HOST_LISTEN_WAIT_MS := 20000
+## How long to notice a probe host that is still booting before dialing a
+## server that will never write the mark (an in-process host).
+const HOST_ARM_GRACE_MS := 3000
+
+
+static func arm_host(out_path: String) -> void:
+	## Write as soon as the host role and --out= path are known—before loading
+	## the main scene—so joiners do not take the no-pending early-dial path
+	## while this process is still booting under CI load.
+	_write_mark(_host_pending_path(out_path))
+
+
+static func mark_host_listening(out_path: String) -> void:
+	## Call once this process is past create_server and its solo setup (#547).
+	_write_mark(_host_listen_path(out_path))
+
+
+static func join_when_host_listening(main, port: int, out_path: String) -> void:
+	## Dial after a probe host in this directory has marked, or once when no
+	## probe host arms. A dial nobody answers still fails on that try.
+	var listen := _host_listen_path(out_path)
+	var pending := _host_pending_path(out_path)
+	var until := Time.get_ticks_msec() + HOST_LISTEN_WAIT_MS
+	var grace := Time.get_ticks_msec() + HOST_ARM_GRACE_MS
+	while Time.get_ticks_msec() < until and not FileAccess.file_exists(listen):
+		if FileAccess.file_exists(pending):
+			while Time.get_ticks_msec() < until and not FileAccess.file_exists(listen):
+				await main.get_tree().process_frame
+			break
+		if Time.get_ticks_msec() >= grace:
+			var result := await _dial_and_wait(main, port, 4000)
+			if result == "ok" and not FileAccess.file_exists(pending):
+				return
+			if result == "ok":
+				main._close_join_peer()
+			while Time.get_ticks_msec() < until and not FileAccess.file_exists(listen):
+				await main.get_tree().process_frame
+			break
+		await main.get_tree().process_frame
+	await _dial_and_wait(main, port, 4000)
+
+
+static func _dial_and_wait(main, port: int, budget_ms: int) -> String:
+	var mp = main.multiplayer
+	var state := {"v": ""}
+	var on_ok := func() -> void:
+		if state.v == "":
+			state.v = "ok"
+	var on_bad := func() -> void:
+		if state.v == "":
+			state.v = "fail"
+	mp.connected_to_server.connect(on_ok)
+	mp.connection_failed.connect(on_bad)
+	var menu = main.get_node_or_null("CanvasLayer2/MainMenu")
+	if menu:
+		menu.hide()
+	main.add_player_joined(port)
+	var until := Time.get_ticks_msec() + budget_ms
+	while Time.get_ticks_msec() < until and state.v == "":
+		await main.get_tree().process_frame
+	if mp.connected_to_server.is_connected(on_ok):
+		mp.connected_to_server.disconnect(on_ok)
+	if mp.connection_failed.is_connected(on_bad):
+		mp.connection_failed.disconnect(on_bad)
+	return state.v if state.v != "" else "timeout"
+
+
+static func _write_mark(path: String) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string("1")
+	file.close()
+
+
+static func _host_listen_path(out_path: String) -> String:
+	return out_path.get_base_dir().path_join("host_listening")
+
+
+static func _host_pending_path(out_path: String) -> String:
+	return out_path.get_base_dir().path_join("host_pending")
