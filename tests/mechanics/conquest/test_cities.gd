@@ -273,7 +273,7 @@ func _test_cities_water_does_not_close() -> int:
 	var cities: Cities = t["cities"]
 	_regen(t, 11)
 	var water_cell: Variant = null
-	for cell: Vector2i in world.get_used_cells(0):
+	for cell: Vector2i in world.sea_cells():
 		var p: Array = world.predict_cell(cell)
 		if not world.ground_is_walkable(p[0]):
 			water_cell = cell

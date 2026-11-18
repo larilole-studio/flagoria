@@ -30,7 +30,7 @@ func _test_tile_catalog() -> int:
 		printerr("FAIL tile_catalog: no TileCatalog names found in Scripts/")
 		fail += 1
 	for n in used:
-		if n == "SOURCE_ID" or n == "TILES":
+		if n == "SOURCE_ID" or n == "TILES" or n == "ISLAND_TERRAIN_SET" or n == "ISLAND_TERRAIN":
 			continue
 		if not TileCatalog.TILES.has(n):
 			printerr("FAIL tile_catalog: %s used in %s is missing from TILES" % [n, used[n]])

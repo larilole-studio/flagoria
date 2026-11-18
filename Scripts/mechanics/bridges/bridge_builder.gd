@@ -74,8 +74,8 @@ func replace_from_host(list: Array) -> int:
 		_bridge_cells[cell] = atlas
 		_map.tree_sprouts().touch(cell)
 		_map._predict_cache.erase(cell)
-		if _map.get_cell_source_id(0, cell) != -1:
-			_map.set_cell(0, cell, TileCatalog.SOURCE_ID, atlas)
+		if _map.is_drawn(cell):
+			_map.claim_ground(cell, atlas)
 	_resolve_all()
 	return _bridge_cells.size()
 
@@ -123,7 +123,7 @@ static func _plank_names() -> Dictionary:
 	## Atlas -> TileCatalog name of every plank piece laid on water.
 	var out := {}
 	for tile_name: String in TileCatalog.TILES:
-		if tile_name.begins_with("BRIDGE_PLANK_") and tile_name.ends_with("_WATER"):
+		if tile_name.begins_with("BRIDGE_PLANK_"):
 			out[TileCatalog.TILES[tile_name]["atlas"]] = tile_name
 	return out
 
@@ -169,8 +169,8 @@ func erase_cells(cells: Array[Vector2i]) -> bool:
 		return false
 	for cell in gone:
 		_map._predict_cache.erase(cell)
-		if _map.get_cell_source_id(0, cell) != -1:
-			_map.set_cell(0, cell, TileCatalog.SOURCE_ID, _map.predict_cell(cell)[0])
+		if _map.is_drawn(cell):
+			_map.repaint_ground_cell(cell)
 	_resolve_all()
 	return true
 
@@ -197,7 +197,7 @@ static func bridge_pieces(length: int, horizontal: bool, land_before: bool, land
 			piece += "_TIP_E" if horizontal else "_TIP_S"
 		elif i == 0:
 			piece += "_TIP_W" if horizontal else "_TIP_N"
-		out.append(TileCatalog.TILES["BRIDGE_PLANK_%s_WATER" % piece]["atlas"])
+		out.append(TileCatalog.TILES["BRIDGE_PLANK_%s" % piece]["atlas"])
 	return out
 
 
@@ -212,8 +212,8 @@ func _resolve_all() -> void:
 		if prev == atlas:
 			continue
 		_map._predict_cache.erase(cell)
-		if _map.get_cell_source_id(0, cell) != -1:
-			_map.set_cell(0, cell, TileCatalog.SOURCE_ID, atlas)
+		if _map.is_drawn(cell):
+			_map.claim_ground(cell, atlas)
 
 
 func _piece_at(cell: Vector2i) -> Vector2i:
@@ -287,4 +287,4 @@ static func _piece_from_sides(horizontal: bool, before: String, after: String) -
 		piece += "_TIP_W" if horizontal else "_TIP_N"
 	elif before != "bridge":
 		piece += "_TIP_E" if horizontal else "_TIP_S"
-	return TileCatalog.TILES["BRIDGE_PLANK_%s_WATER" % piece]["atlas"]
+	return TileCatalog.TILES["BRIDGE_PLANK_%s" % piece]["atlas"]

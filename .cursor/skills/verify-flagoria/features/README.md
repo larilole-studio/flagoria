@@ -48,6 +48,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Player spawn](./player-spawn.md) — spawn on reachable land, a free spot per player within 64 px, late joiners.
 - [Hero in front of walls](./hero-wall-draw.md) — the hero draws over a wall until about two thirds of the body is on the wall.
 - [Tileset and collision](./tileset-and-collision.md) — tile catalog, water and forest walls.
+- [Sky islands](./sky-islands.md) — open sea is sky, island edges on the coast, clouds off the walkable ground.
 - [Biomes](./biomes.md) — biome terrain, plants, stones, island and archipelago shaping, biomes on by default, `render_biomes` coverage gate.
 - [Day and night](./day-night.md) — shared 10 minute clock, world tint, Map Settings switch, save and host sync (#558).
 - [Night lights](./night-lights.md) — gold pools on players, castles, towers and guard posts, fading with the clock, capped at 16, drawn locally (#560).

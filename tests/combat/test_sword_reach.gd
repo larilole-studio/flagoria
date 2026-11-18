@@ -95,7 +95,7 @@ func _test_sword_reach_mob() -> int:
 	for x in range(stand.x - 3, stand.x + 4):
 		for y in range(stand.y - 3, stand.y + 4):
 			var c := Vector2i(x, y)
-			world.set_cell(0, c, TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
+			world.claim_ground(c, TileCatalog.GRASS_A)
 			world.erase_cell(1, c)
 	await physics_frame
 	var mobs: Array = scene.get_node("World/Mobs").mobs()

@@ -96,7 +96,7 @@ func _test_bridge_save_round_trip() -> int:
 			printerr("FAIL bridge_save_round_trip: %s after the load: bridge %s, tile %s (want %s), walkable %s"
 					% [c, world.has_bridge(c), world.get_cell_atlas_coords(0, c), pieces[i], walkable])
 			fail += 1
-	if world.has_bridge(past) or world.get_cell_atlas_coords(0, past) != TileCatalog.WATER:
+	if world.has_bridge(past) or not world.is_open_sea(past):
 		printerr("FAIL bridge_save_round_trip: untouched %s is %s, want generated water" % [past, world.get_cell_atlas_coords(0, past)])
 		fail += 1
 	DirAccess.remove_absolute(result["path"])

@@ -117,7 +117,7 @@ func _test_construction_placer_wall() -> int:
 			fail += 1
 	# Water refused.
 	var water_cell := Vector2i(1 << 20, 0)
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		if world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell):
 			water_cell = cell
 			break

@@ -31,9 +31,7 @@ var archipelago_world_extent: int = 0
 var archipelago_island_count: int = 0
 # predict_cell results by cell; cleared when the params change.
 var _predict_cache: Dictionary = {}
-## Tree and bush cuts and regrowth (Scripts/mechanics/trees/tree_cuts.gd).
 var _tree_cuts := TreeCuts.new(self)
-## Picked flowers and destroyed stones (Scripts/world/object_removals.gd).
 var _object_removals := ObjectRemovals.new(self)
 ## Placed plank bridges (Scripts/mechanics/bridges/bridge_builder.gd).
 var _bridges := BridgeBuilder.new(self)
@@ -53,6 +51,7 @@ var regrow_delay: float:
 var play_time: float = 0.0
 ## Altitude shaping (Scripts/world/terrain_shape.gd); reads this map's values.
 var _terrain := TerrainShape.new(self)
+var _sky := SkyIslands.new()
 var ground_chance_a: float = -0.25
 var ground_chance_b: float = 0.25
 var ground_chance_c: float = 0.75
@@ -127,6 +126,7 @@ func apply_map_params(p: MapGenParams) -> void:
 		set(key, working.get(key))
 
 	clear()
+	_sky.clear()
 	_predict_cache.clear()
 	_tree_cuts.clear()
 	_object_removals.clear()
@@ -165,6 +165,7 @@ func _process(delta):
 
 func generate_chunk(position):
 	var tile_pos = local_to_map(position)
+	_sky.paint_ground(self, tile_pos)
 	for x in range(chunk_width):
 		for y in range(chunk_height):
 			var new_x = tile_pos.x - chunk_width / 2 + x
@@ -175,8 +176,6 @@ func generate_chunk(position):
 			var b := biome_at(cell)
 			var alt := cell_altitude(cell, b)
 			var chance = items_chance.get_noise_2d(new_x, new_y)
-
-			set_tile_type_z0(cell, alt, moist, temp, chance, b)
 			set_tile_type_z1(cell, alt, moist, temp, chance, b)
 	var corner := Vector2i(tile_pos.x - chunk_width / 2, tile_pos.y - chunk_height / 2)
 	ground_changed.emit(Rect2i(corner, Vector2i(chunk_width, chunk_height)))
@@ -209,53 +208,18 @@ func biome_at(cell: Vector2i) -> int:
 	return BiomeCatalog.from_noise(biome.get_noise_2d(cell.x, cell.y), biome_edge)
 
 
-func set_tile_type_z0(pos_vec, alt, moist, _temp, chance, biome_id: int = BiomeCatalog.TEMPERATE):
-	if _bridges.has_bridge(pos_vec):
-		set_cell(0, pos_vec, TileCatalog.SOURCE_ID, _bridges.piece(pos_vec))
-		return
-	var tile_vec := _structures.ground_at(pos_vec, ground_tile(alt, moist, chance, biome_id))
-	if tile_vec != TileCatalog.WATER and tile_vec != TileCatalog.SAND \
-			and tile_vec != TileCatalog.SWAMP and tile_vec != TileCatalog.SWAMP_SPECIAL:
-		# ground — record first land tile as spawn hint
-		if spawn_point == Vector2i(0, 0):
-			spawn_point = pos_vec
-
-	set_cell(0, pos_vec, TileCatalog.SOURCE_ID, tile_vec)
-
-
 func ground_tile(alt: float, moist: float, chance: float, biome_id: int = BiomeCatalog.TEMPERATE) -> Vector2i:
-	## Layer-0 tile for one cell. With biomes on, BiomeCatalog.TERRAIN moves the beach
-	## top and swamp moisture threshold per biome; off, Map Settings apply unchanged.
-	var sand_top := sand_max_alt
-	var swamp_special_top := swamp_special_alt
-	var swamp_moist := 0.0
-	if biome_frequency > 0.0:
-		var band := BiomeCatalog.terrain(biome_id, "sand_band")
-		sand_top = maxf(water_max_alt, sand_max_alt + band)
-		swamp_special_top = swamp_special_alt + band
-		swamp_moist = BiomeCatalog.terrain(biome_id, "swamp_moisture")
-	if alt <= water_max_alt:  # water
-		return TileCatalog.WATER
-	if alt < sand_top:  # sand
-		return TileCatalog.SAND
-	if alt > sand_top and moist < swamp_moist:  # swamp
-		if alt < swamp_special_top and chance < 0:
-			return TileCatalog.SWAMP_SPECIAL
-		return TileCatalog.SWAMP
-	return get_random_ground_vec(chance)
+	return _sky.ground_tile(self, alt, moist, chance, biome_id)
 
 
 func get_random_ground_vec(chance):
-	var vec = TileCatalog.GRASS_A
 	if chance < ground_chance_a:
-		vec = TileCatalog.GRASS_A
-	elif chance < ground_chance_b:
-		vec = TileCatalog.GRASS_B
-	elif chance < ground_chance_c:
-		vec = TileCatalog.GRASS_C
-	else:
-		vec = TileCatalog.GRASS_D
-	return vec
+		return TileCatalog.GRASS_A
+	if chance < ground_chance_b:
+		return TileCatalog.GRASS_B
+	if chance < ground_chance_c:
+		return TileCatalog.GRASS_C
+	return TileCatalog.GRASS_D
 
 
 func set_tile_type_z1(pos_vec, alt, moist, _temp, chance, biome_id: int = BiomeCatalog.TEMPERATE):
@@ -275,7 +239,7 @@ func set_tile_type_z1(pos_vec, alt, moist, _temp, chance, biome_id: int = BiomeC
 		return
 	var tile := NO_PLANT
 	# Biomes can widen beaches into the foliage bands; beaches get no plants.
-	if biome_frequency <= 0.0 or get_cell_atlas_coords(0, pos_vec) != TileCatalog.SAND:
+	if biome_frequency <= 0.0 or (get_cell_atlas_coords(0, pos_vec) != TileCatalog.SAND and _sky.logical_ground(self, pos_vec) != TileCatalog.SAND):
 		tile = plant_tile(alt, moist, chance, biome_id)
 	if tile == NO_PLANT:
 		tile = _tree_cuts.sprouts.tile_or(pos_vec, structure_tile(chance, biome_id))
@@ -304,7 +268,7 @@ func predict_cell(cell: Vector2i) -> Array:
 	var chance := items_chance.get_noise_2d(cell.x, cell.y)
 	var b := biome_at(cell)
 	var alt := cell_altitude(cell, b)
-	var ground: Vector2i = _bridges.piece_or(cell, _structures.ground_at(cell, ground_tile(alt, moist, chance, b)))
+	var ground: Vector2i = _bridges.piece_or(cell, _structures.ground_at(cell, _sky.display_ground(self, cell)))
 	var top := NO_PLANT
 	if _structures.has_cell(cell):
 		top = _structures.object_at(cell)
@@ -313,7 +277,7 @@ func predict_cell(cell: Vector2i) -> Array:
 	elif _object_removals.has_removed(cell):
 		top = NO_PLANT
 	elif ground_is_walkable(ground) and not _bridges.has_bridge(cell):
-		if biome_frequency <= 0.0 or ground != TileCatalog.SAND:
+		if biome_frequency <= 0.0 or (ground != TileCatalog.SAND and _sky.logical_ground(self, cell) != TileCatalog.SAND):
 			top = plant_tile(alt, moist, chance, b)
 		if top == NO_PLANT:
 			top = _tree_cuts.sprouts.tile_or(cell, structure_tile(chance, b))
@@ -474,6 +438,23 @@ func ground_is_walkable(atlas: Vector2i) -> bool:
 	return td != null and td.get_collision_polygons_count(0) == 0
 
 
+func is_drawn(cell: Vector2i) -> bool:
+	return _sky.is_drawn(self, cell)
+
+func is_open_sea(cell: Vector2i) -> bool:
+	return _sky.is_open_sea(self, cell)
+
+func repaint_ground_cell(cell: Vector2i) -> void:
+	_predict_cache.erase(cell)
+	_sky.repaint_cell(self, cell)
+
+func sea_cells() -> Array:
+	return _sky.sea_cells()
+
+func claim_ground(cell: Vector2i, atlas: Vector2i) -> void:
+	_sky.claim(self, cell, atlas)
+
+
 func is_walkable_land(cell: Vector2i) -> bool:
 	if get_cell_source_id(0, cell) == -1:
 		return false
@@ -489,7 +470,7 @@ func count_walkable_neighbors(cell: Vector2i) -> int:
 
 func is_clear_ground(cell: Vector2i) -> bool:
 	## Walkable ground with no tree, bush or stones on it; generates the cell's chunk first.
-	if get_cell_source_id(0, cell) == -1:
+	if not is_drawn(cell):
 		generate_chunk(map_to_local(cell))
 	if not is_walkable_land(cell):
 		return false
