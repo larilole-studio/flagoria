@@ -1,6 +1,7 @@
 extends Node2D
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
+const JoinDial = preload("res://Scripts/join_dial.gd")
 const PORT = 9786
 ## Most cuts in one join message (#354); see _sync_map_params_to_peer.
 const JOIN_CUTS_PER_MESSAGE := 500
@@ -29,6 +30,7 @@ var _join_address := ""
 ## Host and port of the last Join attempt. 0 / "" until one starts.
 var _join_host := ""
 var _join_port := 0
+var _join_dial = JoinDial.new()
 ## Dedicated server only: SIGTERM writes a byte to this file.
 var _dedicated := false
 var _server_quit_path := ""
@@ -119,6 +121,7 @@ func _install_server_quit() -> void:
 
 
 func _process(_delta: float) -> void:
+	_join_dial.service(self)
 	if not _dedicated or _server_shutdown_started or _server_quit_path == "":
 		return
 	if not FileAccess.file_exists(_server_quit_path):
@@ -145,7 +148,8 @@ func setup_server(params: MapGenParams, port: int = PORT, with_castle := true) -
 	## Host applies the chosen map params locally, then syncs the full set to
 	## joining peers. With `with_castle` (a host that plays), the host's
 	## starting castle goes next to the spawn while it is still alone, before
-	## the mobs (#271); joining peers receive it with the map (#278).
+	## the mobs (#271). A joining peer receives that castle with the map, and
+	## the host places one for the peer outside the shared spawn (#278).
 	world_params = params.duplicate_params()
 	world_params.ensure_seeds()
 	get_node("/root/MapGen").params = world_params.duplicate_params()
@@ -189,8 +193,8 @@ func _restore_loaded_world() -> int:
 	_saved_player = loaded.player.duplicate(true)
 	_saved_player_ready = true
 	var bridges: int = world.replace_bridges(BridgeBuilder.from_changes(loaded.tile_edits, world))
-	var cuts: int = world.restore_cuts(loaded.object_changes)
-	return cuts + bridges + StructureSaves.restore(loaded.structures, world)  # after cuts: a structure clears its cells
+	var cuts: int = world.restore_object_changes(loaded.object_changes)
+	return cuts + bridges + StructureSaves.restore(loaded.structures, world) + SoldierSaves.restore(loaded.soldiers, get_node("World/Soldiers"))  # after cuts: a structure clears its cells
 
 
 func _apply_params_to_world(params: MapGenParams) -> void:
@@ -278,8 +282,10 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	## same reliable channel, and regrowth through
 	## Interaction.apply_regrow_cells (#298).
 	## The placed structures go too (StructurePlacer.to_sync), so the peer's
-	## castles match the host's from its first frame (#278 join half).
+	## castles match the host's from its first frame, including the castle
+	## add_player just placed for this peer (#278).
 	## Placed plank bridges go too (BridgeBuilder.to_sync, #297).
+	## Free-form walls, cities and on-demand buildings follow (#498, #26).
 	## The cut list goes JOIN_CUTS_PER_MESSAGE cuts at a time (#354): the
 	## first part with the params, the rest in receive_join_cuts right after.
 	if world_params == null:
@@ -287,16 +293,27 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	var player = get_node_or_null("World/" + str(peer_id))
 	var spot: Vector2 = player.position if player else Vector2.INF
 	var world = get_node("World/worldMap")
-	var parts := WorldSave.split_changes(world.cut_changes(), JOIN_CUTS_PER_MESSAGE)
+	var parts := WorldSave.split_changes(world.object_changes(), JOIN_CUTS_PER_MESSAGE)
 	rpc_id(peer_id, "receive_map_params", world_params.to_dict(), spot, parts[0],
-			world.structures_for_sync(), world.bridges_for_sync(), _player_spots())
+			world.structures_for_sync(), world.bridges_for_sync(), _player_spots(),
+			world.resolve_player_spawn())
+	var requests := get_node_or_null("World/StructureRequests")
+	if requests != null:
+		requests.sync_to_peer(peer_id)
+	var cities := get_node_or_null("World/Cities")
+	if cities != null:
+		cities.sync_to_peer(peer_id)
+	var capture := get_node_or_null("World/TowerCapture")
+	if capture != null:
+		capture.sync_to_peer(peer_id)
+	var generated := get_node_or_null("World/GeneratedBuildings"); if generated != null: generated.sync_to_peer(peer_id)
 	for i in range(1, parts.size()):
 		rpc_id(peer_id, "receive_join_cuts", parts[i])
 
 
 @rpc("authority", "reliable", "call_remote")
 func receive_map_params(data: Dictionary, spot: Vector2, cuts: Dictionary, placements: Array,
-		bridges: Array = [], spots: Dictionary = {}) -> void:
+		bridges: Array = [], spots: Dictionary = {}, spawn_cell: Vector2i = Vector2i.ZERO) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return  # only the host sends the map; the rpc mode already refuses others
 	var params = MapGenParams.new()
@@ -304,13 +321,14 @@ func receive_map_params(data: Dictionary, spot: Vector2, cuts: Dictionary, place
 	world_params = params
 	get_node("/root/MapGen").params = params.duplicate_params()
 	_apply_params_to_world(params)
-	get_node("World/worldMap").replace_cuts(cuts)  # the host's set, before the chunks are drawn again
+	get_node("World/worldMap").replace_object_changes(cuts)  # the host's set, before the chunks are drawn again
 	get_node("World/worldMap").replace_structures(placements)  # likewise, before the player is placed
 	get_node("World/worldMap").replace_bridges(bridges)  # plank bridges (#297)
 	_own_spot = spot
 	_apply_player_spots(spots)  # other players' server spots (#352), before any draw
 	_place_own_player()  # or once the player arrives, see _on_world_child_entered
 	var world = get_node("World/worldMap")
+	world.set_meta(&"resolved_spawn", spawn_cell)  # same cell the host planned mobs from
 	world.player_spawned = true
 
 
@@ -331,11 +349,25 @@ func receive_join_cuts(cuts: Dictionary) -> void:
 	## they land before any later cut or regrowth.
 	if multiplayer.get_remote_sender_id() != 1:
 		return  # only the host sends the map; the rpc mode already refuses others
-	get_node("World/worldMap").restore_cuts(cuts)
+	get_node("World/worldMap").restore_object_changes(cuts)
 
 
 func add_player(peer_id):
 	# host / peer spawn
+	var world = get_node("World/worldMap")
+	var origin: Vector2i = world.resolve_player_spawn()
+	var rate: float = get_node("/root/GameSettings").mob_rate
+	var mobs: MobSpawner = get_node("World/Mobs")
+	var opening := world_params != null and mobs.opening_roster(world, origin, world_params.altitude_seed, rate)
+	var anchor: Variant = StartCastle.place_for_peer(world, int(peer_id))
+	if anchor is Vector2i:
+		var requests := get_node_or_null("World/StructureRequests")
+		if requests != null:
+			requests.publish_structure(StartCastle.structure().name, int(peer_id), anchor)
+		# The castle can clear trees inside the mob scan. Replan the opening
+		# set so a joiner's plan matches, before any death or other player.
+		if opening:
+			mobs.spawn_for_world(world, origin, world_params.altitude_seed, rate, false)
 	var player = Player.instantiate()
 	player.name = str(peer_id)
 	print("player added", player.name)
@@ -353,7 +385,6 @@ func add_player(peer_id):
 	# sync; send the server's spot so every peer draws them in place (#352).
 	rpc("receive_player_spots", {str(peer_id): player.position})
 
-	var world = get_node("World/worldMap")
 	world.player_spawned = true
 
 
@@ -373,38 +404,25 @@ func add_player_joined(port: int = PORT):
 	_join_host = host
 	_join_port = port
 	_join_address = str(parsed["endpoint"])
-	# A fresh peer each attempt: close() then create_client on the same
-	# object fails a second Join after a timeout.
-	enet_peer.close()
-	enet_peer = ENetMultiplayerPeer.new()
-	var err := enet_peer.create_client(host, port)
-	if err != OK:
-		_on_join_failed()
-		return
-	multiplayer.multiplayer_peer = enet_peer
-	_ensure_join_signals()
-	# Fail faster than ENet's default when nothing answers (#348 tests).
-	var peer := enet_peer.get_peer(1)
-	if peer != null:
-		peer.set_timeout(8, 800, 3000)
-	var world = get_node("World/worldMap")
-	world.player_spawned = true
+	_join_dial.begin(self)
 
 
-func _ensure_join_signals() -> void:
-	if not multiplayer.connection_failed.is_connected(_on_connection_failed):
-		multiplayer.connection_failed.connect(_on_connection_failed)
-	if not multiplayer.server_disconnected.is_connected(_on_server_disconnected):
-		multiplayer.server_disconnected.connect(_on_server_disconnected)
+func _on_join_connected() -> void:
+	_join_dial.on_connected()
 
 
 func _on_connection_failed() -> void:
+	if _join_dial.defers_failure():
+		return
 	_on_join_failed()
 
 
 func _on_join_failed() -> void:
 	## Close the peer and put the main menu back with "Could not join …" (#348).
+	_join_dial.abandon()
+	_join_dial.set_closing(true)
 	_close_join_peer()
+	_join_dial.set_closing(false)
 	var menu := get_node("CanvasLayer2/MainMenu")
 	menu.show_join_failed(_join_address if _join_address != "" else "localhost")
 
@@ -425,6 +443,7 @@ func _close_join_peer() -> void:
 
 func _on_server_disconnected() -> void:
 	## Host left mid-game: same return as the in-game Main menu button (#348).
+	_join_dial.abandon()
 	leave_to_main_menu()
 
 

@@ -6,7 +6,7 @@ In interact mode the attack button aims one chop sweep. A drag past 6 viewport p
 
 ## Sub-features
 
-- `chop-mode` the `CanvasLayer1/ModeButton` toggles `Interaction.Mode` between `COMBAT` and `INTERACT` (`Scripts/mechanics/interact/interaction.gd`).
+- `chop-mode` chop on the tool wheel sets `Interaction.Mode` to `INTERACT` (`Scripts/mechanics/interact/interaction.gd`). The drive presses 3.
 - `chop-tap` the attack button aims the cone. A drag sets direction and reach. A press shorter than 6 viewport px chops facing the hero at `CHOP_REACH` (240 px). Building still uses `REACH` (80 px). The sword reach stays 30 px.
 - `chop-swing` `ChopAction` (`Scripts/mechanics/trees/chop_action.gd`): the hero faces the tree and `ChopSprite` shows the chop sheet (4 columns, wind-up, swing, impact, recover). Each axe impact emits `chop_hit(cell, hit)` (re-emitted as `Interaction.chop_hit`), and the tree falls `ChopAction.fell_at(2)` = 0.56 s after the first wind-up.
 - `chop-sounds` each impact plays a `tree_chop_01..03` clip (never the same twice in a row) with `leaf_rustle_01`, the last impact adds `tree_crack_01`, and the fall plays `tree_fall_01` then `wood_pickup_01..02` as the wood is added. Slots in `tree.tres`, one `AudioStreamPlayer2D` each on `SFX`, local only (`docs/audio.md`, Chop sounds).
@@ -16,7 +16,7 @@ In interact mode the attack button aims one chop sweep. A drag past 6 viewport p
 
 ## How to get to it (user POV)
 
-- Host or join a world, tap `CanvasLayer1/ModeButton`, then press `CanvasLayer1/TouchScreenButton` and drag.
+- Host or join a world, select chop on the tool wheel, then press `CanvasLayer1/TouchScreenButton` and drag.
 
 ## Driving it with verify-flagoria helpers
 
@@ -29,7 +29,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: headless `-- test_chop_tree_two
 ## Gotchas
 
 - Moving more than 2 px (`MOVE_CANCEL`) or leaving interact mode mid-chop cancels it with no stump and no wood. The hero can still drift after `hold()` releases or settle after spawn; the drive waits 10 still physics frames before each tap and before each one-tree drag. The first chop does not walk. Later steps walk south only when the needed trees are not already in reach.
-- In a two-player game the host decides each cut; a client's fall, pickup, stump and wood wait for the host's answer, one round trip ([Cut sync](./cut-sync.md), #350). The mode button works in every session state (`-- test_interact_in_multiplayer`).
+- In a two-player game the host decides each cut; a client's fall, pickup, stump and wood wait for the host's answer, one round trip ([Cut sync](./cut-sync.md), #350). The tool button works in every session state (`-- test_interact_in_multiplayer`).
 - The tap chops the nearest choppable in reach, which can be a neighbouring bush (1 wood) when the tapped cell itself is not in reach. Tap the tree's own cell while it is in reach (distance 0 wins) and check the cell in `chop_hit`, not only the wood count.
 - Without `--seed` the map is random, and most spawns have no tree in reach (4 of seeds 1-60 do: 22, 48, 49, 58). The drive then fails with `chop: no tree in reach of the hero at ...; launch with the seed above` instead of walking.
 - A tap that starts no chop, or a chop that ends with no stump, is printed with what the game saw (`hero`, distance, `in_reach`, mode, the tap's window position) and tried again, up to 3 taps. In 25 consecutive seed-49 runs every chop started on the first tap.

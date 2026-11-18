@@ -36,30 +36,51 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Join an address with an optional port](./join-port.md) — hostname or IPv4, optional `:port`, default UDP 9786; bad addresses rejected on the menu (#434).
 - [Dedicated server](./dedicated-server.md) — `-- --server` headless host, `--params` generation params only, SIGTERM quit, a client joining it, `test_two_player_smoke` (two headless clients, input walk, server and the other client see the move), optional Docker image.
 - [Dedicated cut-and-hit round](./dedicated-play-round.md) — two Join clients on a dedicated host with no player `1`: one plant cut, one mob killed (#436). Not the listen Host/Join pair.
+- [HUD Direction C](./hud-direction-c.md) — Castle Stone texture HUD, status plate, weapon disc, integer stretch layouts.
 - [Player health](./player-health.md) — hearts, HUD, regen, death, respawn hold, rejoin, health sync.
 - [Combat and aiming](./combat-and-aiming.md) — swing, 30 px reach, mid-swing hitbox, mouse and touch aim, exact-angle swing, cone, cancel, wall line-of-sight; live `combat_hud` drive.
+- [Ranged bow](./ranged-bow.md) — one bow shot on that aim, host-decided hit, short line; live `ranged_bow` drive.
+- [Tool wheel](./tool-wheel.md) — hold the button beside Run to arm sword, bow or chop; a short tap swaps back; Customize HUD can move that button (#574, #575).
 - [Mobs](./mobs.md) — seeded placement, spawn rate, wander, chase, contact damage, sword hits, hidden on ungenerated ground, sounds, sync.
+- [Mob band](./mob-band.md) — server spawn and despawn around players, caps, late joiners see the same names.
+- [Night mobs](./night-mobs.md) — ambient caps double at night and ramp at dusk and dawn; extras leave at dawn only out of view (#559).
+- [Mob raids](./mob-raid.md) — host sends idle mobs at the nearest player city or owned tower; raids stay off until turned on (#529).
 - [Player spawn](./player-spawn.md) — spawn on reachable land, a free spot per player within 64 px, late joiners.
 - [Hero in front of walls](./hero-wall-draw.md) — the hero draws over a wall until about two thirds of the body is on the wall.
 - [Tileset and collision](./tileset-and-collision.md) — tile catalog, water and forest walls.
+- [Sky islands](./sky-islands.md) — open sea is sky, island edges on the coast, clouds off the walkable ground.
 - [Biomes](./biomes.md) — biome terrain, plants, stones, island and archipelago shaping, biomes on by default, `render_biomes` coverage gate.
+- [Day and night](./day-night.md) — shared 10 minute clock, world tint, Map Settings switch, save and host sync (#558).
+- [Night lights](./night-lights.md) — gold pools on players, castles, towers and guard posts, fading with the clock, capped at 16, drawn locally (#560).
 - [Map save files](./map-save.md) — versioned world saves (inputs plus cuts and plank bridges), v1 migration, Save from the in-game menu, saved-maps API.
+- [Object removals save](./object-removals-save.md) — picked flowers and destroyed stones in `world.object_changes` (#198).
 - [Player save](./player-save.md) — save and load position, health, wood, score and charted ground (#197).
 - [Map zoom](./map-zoom.md) — local pinch, wheel and Ctrl +/- zoom.
 - [Chopping trees and bushes](./chop-trees-and-bushes.md) — interact-mode chop, tree, pine and bush types, their hit and fall frames, per-type wood and regrow delay, stumps, regrowth (held while a player or mob stands on the stump, one mob-cell set per pass), wood HUD, type checklist.
-- [Chop trees (live drive)](./chop-trees.md) — mode button, tap a tree in reach, two hits, tree hit frames and sounds, stump and wood once.
+- [Chop trees (live drive)](./chop-trees.md) — chop tool, tap a tree in reach, two hits, tree hit frames and sounds, stump and wood once.
 - [Cut sync (two-player)](./cut-sync.md) — host-decided tree and bush cuts, same stump on every peer, wood to the cutter, late joiners get the exact set, sent in parts of at most 500 cuts.
 - [Regrowth sync messages](./regrow-sync.md) — one `apply_regrow_cells` per regrowth tick, applied only when the host (peer 1) sent it.
 - [Tree sprouts](./tree-sprouts.md) — trees sprout on free cells where a biome is below its target tree share, host-decided, one `apply_sprout_cells` per pass, kept in saves and join lists.
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
 - [Explored map](./explored-map.md) — wood minimap (collapse, reopen, maximize) and the parchment full map; cells revealed within 10 cells of the hero.
-- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood or while multiplayer is on; live path is the build picker.
-- [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for buildables; plank, wooden tower and wall block (through `BuildCosts.buy`); live path is the build picker.
-- [Build placement](./build-placement.md)
-- [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297). — interact-mode Cut/Plank/Tower/Wall picker, H/V-snapped plank and wall drag, tower footprint preview, green/red preview and wood cost; places through ConstructionPlacer (#225 / #273 / #276).
-- [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag, host-alone (#273).
-- [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block, host-alone (#276).
+- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), castle (50), guard post (20), barracks (30), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; only the starting castle refuses while multiplayer is on; live path is the build picker.
+- [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for six buildable kinds (plank, tower, castle, guard post, barracks, wall block) through `BuildCosts.buy`; live path is the build picker.
+- [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
+- [Generated building](./generated-building.md) — host debug key and Map Settings button place one WFC building at the player; clients and a late joiner solve the same seed (#26).
+- [Building merge](./building-merge.md) — full-edge neighbours share a wall; removal re-seals; two-player and late-joiner replay (#27).
+- [Build placement](./build-placement.md) — interact-mode Buildings column (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; H/V-snapped plank and wall drag, footprint previews, green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
+- [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297).
+- [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag; multiplayer asks the host (#273, #497).
+- [Build castle](./build-castle.md) — extra `castle.txt` for 50 wood with rotation, save/reload and multiplayer sync (#527).
+- [Build guard post](./build-guard-post.md) — `guard_post.txt` for 20 wood from the build picker, save/reload and multiplayer sync (#528).
+- [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
+- [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
+- [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bow hits from other peers land; multiplayer hp sync (#554).
+- [Soldier vs peer](./soldier-vs-peer.md) — trained soldiers on Follow or Hold strike living enemy players; owner is never a target; health sync (#555).
+- [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
+- [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
+- [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
 - [Wall and tower junctions](./wall-junctions.md) — mask pieces, collar overlays on stone, tower ring with the team flag, far corner flips when a loop closes.
 - [Walls and bridges](./walls-and-bridges.md) — wall solver, plank bridges (live via build picker); free-form walls via [Free-form walls](./free-form-walls.md).
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).
@@ -67,17 +88,24 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Main menu](./main-menu.md) — menu theme, Host/Join, volume and mob spawn sliders, letter keyboard.
 - [Saved worlds](./saved-worlds.md) — main-menu list of every save, load, a new world in its own file, delete with a confirm.
 - [In-game menu and quit prompt](./ingame-menu.md) — menu button, Pause panel (Resume, Save, Main menu), quit confirm.
-- [Interact mode](./interact-mode.md) — mode button; Space still swings the sword in interact (chop) mode; aimed attacks stay combat-only (#351).
+- [Interact mode](./interact-mode.md) — chop on the tool wheel; Space still swings the sword in interact mode; aimed attacks stay combat-only (#351).
 - [Points](./points.md) — discovery and mob-kill points, host-owned totals, score HUD.
+- [Points scoreboard](./points-scoreboard.md) — every connected player's total, highest first, from the score row toggle (#509).
 - [Touch controls](./touch-controls.md) — joystick hold, Castle Stone attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
-- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Buildings, Map and Mode on a top-right arc, build tools on discs in a column, map panel clear of the arc, Run beside attack (#480).
+- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Buildings and Map on a top-right arc, build tools on discs in a column, map panel clear of the arc, Run beside attack (#480).
+- [Customize HUD layout](./hud-customize.md) — in-game menu edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
-- [Structure placement](./structure-placement.md) — place a structure file at an anchor cell, refusal reasons, kept on redraw, a placed stump does not regrow; placed by a host still alone, sent to joining peers.
+- [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.
 - [Starting castle](./start-castle.md) — each player's castle next to the spawn, player starts outside the gate; placed by the host while alone, sent to joining peers.
-- [Cities](./cities.md) — closed wall loop around a flag tower makes a city; tint + minimap; capture transfers; host alone (#277).
-- [Tower capture](./tower-capture.md) — flag towers taken by a lone other side or mobs standing by the flag for 5 s, defenders pause, empty drains, contested freezes; host alone only.
-- [Flags held points](./flags-held-points.md) — 1 point per owned flag tower every 5 s (`flags_held`); host alone (#275).
+- [Cities](./cities.md) — closed wall loop around a flag tower makes a city; tint + minimap; capture transfers; the host decides in multiplayer (#277, #498).
+- [Tower capture](./tower-capture.md) — flag towers taken by a lone other side or mobs standing by the flag for 5 s; the host decides, peers receive owner and progress (#274, #497).
+- [Defense towers](./defense-towers.md) — a player-owned flag tower shoots the nearest other living player in range; the host applies damage and a short tracer (#37).
+- [Flags held points](./flags-held-points.md) — 1 point per owned flag tower every 5 s (`flags_held`); the host awards, peers share the totals (#275, #497). The live timer is off while land score is on.
+- [Land score](./land-score.md) — score is interior city cells inside an owned flag's range; the host sets it, the scoreboard shows it, a tap draws the ring (#279).
+- [Conquest sync](./conquest-sync.md) — host-owned tower placement, capture progress and flag points in multiplayer; a late joiner matches (#497).
+- [Walls and cities sync](./walls-cities-sync.md) — host-owned wall chains and cities; a late joiner matches free-form walls, auto junctions and city keys (#498).
+- [Castle sync](./castle-sync.md) — the host places each peer's starting castle and every peer, including a late joiner, sees the same castles and owners (#278).
 - [Hero sprites](./hero-sprites.md) — layered hero sheet generator, checked by the generator smoke.
 - [App icon](./app-icon.md) — icon generator and wiring, checked by the generator smoke.
 

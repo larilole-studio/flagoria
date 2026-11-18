@@ -49,7 +49,7 @@ func run() -> void:
 		done(false)
 		return
 	for c in rest:
-		if map.has_bridge(c) or map.get_cell_atlas_coords(0, c) != TileCatalog.WATER:
+		if map.has_bridge(c) or not map.is_open_sea(c):
 			printerr("bridge_joins: removed %s stayed %s bridge %s" % [c, map.get_cell_atlas_coords(0, c), map.has_bridge(c)])
 			done(false)
 			return
@@ -100,7 +100,7 @@ func run() -> void:
 		done(false)
 		return
 	for c in vrest:
-		if map.has_bridge(c) or map.get_cell_atlas_coords(0, c) != TileCatalog.WATER:
+		if map.has_bridge(c) or not map.is_open_sea(c):
 			printerr("bridge_joins: vertical removed %s stayed %s bridge %s" % [c, map.get_cell_atlas_coords(0, c), map.has_bridge(c)])
 			done(false)
 			return
@@ -186,7 +186,7 @@ func _search_gap(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2i]:
 			if blocked.has(w):
 				hits_avoid = true
 				break
-			if map.get_cell_source_id(0, w) == -1 or map.predict_cell(w)[0] != TileCatalog.WATER \
+			if not map.is_drawn(w) or map.predict_cell(w)[0] != TileCatalog.WATER \
 					or map.has_bridge(w):
 				break
 			run.append(w)
@@ -227,7 +227,7 @@ func _search_column(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2
 		var stopped := false
 		for i in range(1, 9):
 			var w: Vector2i = cell + step * i
-			if blocked.has(w) or map.get_cell_source_id(0, w) == -1 \
+			if blocked.has(w) or not map.is_drawn(w) \
 					or map.predict_cell(w)[0] != TileCatalog.WATER or map.has_bridge(w):
 				stopped = true
 				break
@@ -235,7 +235,7 @@ func _search_column(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2
 		if run.size() < 4:
 			continue
 		var far: Vector2i = run[run.size() - 1] + step
-		if map.get_cell_source_id(0, far) == -1 or blocked.has(far) or (stopped and blocked.has(far)):
+		if not map.is_drawn(far) or blocked.has(far) or (stopped and blocked.has(far)):
 			continue
 		var landed := _land(map, far)
 		if best.is_empty() or (landed and not best_landed) or (landed == best_landed and run.size() < best.size()):
@@ -247,7 +247,7 @@ func _search_column(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2
 
 
 func _land(map: TileMap, cell: Vector2i) -> bool:
-	return map.get_cell_source_id(0, cell) != -1 and not map.has_bridge(cell) \
+	return map.is_drawn(cell) and not map.has_bridge(cell) \
 			and map.ground_is_walkable(map.predict_cell(cell)[0])
 
 
@@ -286,7 +286,7 @@ func _key(map: TileMap, cell: Vector2i) -> String:
 		return ""
 	var atlas: Vector2i = map.get_cell_atlas_coords(0, cell)
 	for tile_name: String in TileCatalog.TILES:
-		if tile_name.begins_with("BRIDGE_PLANK_") and tile_name.ends_with("_WATER") \
-				and TileCatalog.TILES[tile_name]["atlas"] == atlas:
-			return tile_name.trim_prefix("BRIDGE_PLANK_").trim_suffix("_WATER")
+		if tile_name.begins_with("BRIDGE_PLANK_") and TileCatalog.TILES[tile_name]["atlas"] == atlas:
+			var key := tile_name.trim_prefix("BRIDGE_PLANK_")
+			return key.trim_suffix("_WATER")
 	return ""

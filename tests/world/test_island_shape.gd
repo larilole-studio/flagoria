@@ -37,7 +37,7 @@ func _test_island_falloff() -> int:
 	for x in range(-32, 32):
 		for y in range(-32, 32):
 			var cell := Vector2i(x, y)
-			var water: bool = world.get_cell_atlas_coords(0, cell) == Vector2i(5, 6)
+			var water: bool = world.is_open_sea(cell)
 			if Vector2(cell).length() >= 30.0 and not water:
 				printerr("FAIL island_falloff: land at %s beyond 1.5 radii" % cell)
 				fail += 1

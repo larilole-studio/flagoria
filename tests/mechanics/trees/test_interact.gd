@@ -3,10 +3,8 @@ extends "res://tests/helpers/test_helpers.gd"
 
 
 func _test_interact_mode_toggle() -> int:
-	## The HUD mode button's drawn disc matches the menu button. Its tap
-	## target is larger, and it stays just left of the menu. It switches
-	## between combat (the default) and interact mode and shows the current
-	## mode's icon.
+	## Chop on the tool wheel is interact mode. Sword is combat. The old
+	## mode button is gone. Time cost: about 0.3 s in tools/verify.sh.
 	print("-- test_interact_mode_toggle")
 	var fail := 0
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -16,31 +14,23 @@ func _test_interact_mode_toggle() -> int:
 	scene.get_node("CanvasLayer1").show()
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
-	var button: Button = scene.get_node("CanvasLayer1/ModeButton")
-	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu").menu_button.get_global_rect()
-	if interaction.mode != Interaction.Mode.COMBAT or button.icon != Interaction.ICONS[Interaction.Mode.COMBAT]:
-		printerr("FAIL interact_mode_toggle: does not start in combat mode with its icon")
+	var wheel: ToolWheel = scene.get_node("CanvasLayer1/ToolWheel")
+	var button: Button = wheel.get_node("ToolButton")
+	if scene.get_node_or_null("CanvasLayer1/ModeButton") != null:
+		printerr("FAIL interact_mode_toggle: ModeButton is still on the HUD")
 		fail += 1
-	var rect := button.get_global_rect()
-	var box := button.get_theme_stylebox("normal") as StyleBoxFlat
-	var disc := button.size
-	if box != null:
-		disc = button.size + Vector2(
-				box.expand_margin_left + box.expand_margin_right,
-				box.expand_margin_top + box.expand_margin_bottom)
-	if box == null or disc != menu_rect.size or rect.size.x <= menu_rect.size.x \
-			or rect.intersects(menu_rect) or rect.end.x > menu_rect.position.x \
-			or not interaction.player.get_node("Camera2D/MapZoom").starts_on_hud(rect.get_center()):
-		printerr("FAIL interact_mode_toggle: mode button at %s disc %s, menu button at %s" % [rect, disc, menu_rect])
+	if interaction.mode != Interaction.Mode.COMBAT or not str(button.icon.resource_path).ends_with("icon_mode_attack.png"):
+		printerr("FAIL interact_mode_toggle: does not start in combat mode with the sword icon")
 		fail += 1
-	button.pressed.emit()
-	if interaction.mode != Interaction.Mode.INTERACT or button.icon != Interaction.ICONS[Interaction.Mode.INTERACT] \
-			or not button.button_pressed:
-		printerr("FAIL interact_mode_toggle: the button did not switch to interact mode")
+	wheel.select(ToolWheel.Tool.CHOP)
+	if interaction.mode != Interaction.Mode.INTERACT \
+			or not str(button.icon.resource_path).ends_with("icon_mode_interact.png"):
+		printerr("FAIL interact_mode_toggle: chop did not switch to interact mode")
 		fail += 1
-	button.pressed.emit()
-	if interaction.mode != Interaction.Mode.COMBAT or button.icon != Interaction.ICONS[Interaction.Mode.COMBAT]:
-		printerr("FAIL interact_mode_toggle: the button did not switch back to combat mode")
+	wheel.select(ToolWheel.Tool.SWORD)
+	if interaction.mode != Interaction.Mode.COMBAT \
+			or not str(button.icon.resource_path).ends_with("icon_mode_attack.png"):
+		printerr("FAIL interact_mode_toggle: sword did not switch back to combat mode")
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -154,7 +144,7 @@ func _test_interact_cut_trees() -> int:
 			or not world.has_tree(Vector2i(10, 6)):
 		printerr("FAIL interact_cut_trees: trees left after the drag %s" % [left])
 		fail += 1
-	var hud: ResourceHud = scene.get_node("CanvasLayer1/ResourceHud")
+	var hud: ResourceHud = _hud_on_canvas(scene, "ResourceHud") as ResourceHud
 	if inventory.count_of(Inventory.WOOD) != want_wood or hud.label.text != str(want_wood):
 		printerr("FAIL interact_cut_trees: wood %s, HUD '%s' after cutting %s trees and a bush, want %s"
 				% [inventory.count_of(Inventory.WOOD), hud.label.text, want_cut.size(), want_wood])
@@ -208,7 +198,7 @@ func _test_interact_cut_trees() -> int:
 func _test_interact_in_multiplayer() -> int:
 	## Interact mode works in every session state (#223): offline a tap cuts,
 	## and hosting alone, hosting with a peer, connecting and connected as a
-	## client the mode button shows, is enabled and interact mode stays on.
+	## client the tool button shows, is enabled and interact mode stays on.
 	## The cuts themselves go through the host there; test_cut_sync_two_players
 	## (tests/net/test_cut_sync.gd) plays those across real processes.
 	print("-- test_interact_in_multiplayer")
@@ -236,7 +226,7 @@ func _test_interact_in_multiplayer() -> int:
 	scene.get_node("World").add_child(player)
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
-	var button: Button = scene.get_node("CanvasLayer1/ModeButton")
+	var button: Button = scene.get_node("CanvasLayer1/ToolWheel/ToolButton")
 	var inventory: Inventory = scene.get_node("Inventory")
 	var vp: Viewport = scene.get_viewport()
 	var at := func(cell: Vector2) -> Vector2:  # cell units (0.5 = centre) to viewport px

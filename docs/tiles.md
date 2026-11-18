@@ -2,8 +2,8 @@
 
 The map uses the in-house Flagoria tileset v3.1 (Solaria replacement, #97 / #100). All tiles are 16×16 px. Atlas coordinates are `(column, row)` in 16 px cells.
 
-- Atlas: `art/flagoria/flagoria_tiles_v3.png`, 448×304 px, 28×19 cells. Rows 15-18 hold the wood pieces; the plank bridge cells (columns 8-15) are named, the railed bridge cells (columns 16-23) are not named yet.
-- TileSet: `art/flagoria/flagoria_tiles_v3.tres`, one `TileSetAtlasSource` (source id `0`) with 242 named cells, one physics layer, and terrain set `0` (Match Corners and Sides) with terrain `0` "Island".
+- Atlas: `art/flagoria/flagoria_tiles_v4.png`, 448×304 px, 28×19 cells (same grid as v3; every v3 cell is pixel-identical). Rows 15-18 hold the wood pieces; the plank bridge cells (columns 8-15) are named, the railed bridge cells (columns 16-23) are not named yet. Rows 3-4 and 6 hold the eight structure finals (#499).
+- TileSet: `art/flagoria/flagoria_tiles_v3.tres`, one `TileSetAtlasSource` (source id `0`) with the v4 atlas texture, 296+ named cells, one physics layer, and terrain set `0` (Match Corners and Sides) with terrain `0` "Island".
 - Names: `Scripts/tile_catalog.gd` (`TileCatalog`) is the only place that maps names to source id and atlas coords. Credits: `art/flagoria/CREDITS.md`.
 
 ## Where tiles are referenced
@@ -12,7 +12,7 @@ The map uses the in-house Flagoria tileset v3.1 (Solaria replacement, #97 / #100
 |---|---|
 | `flagoria_main.tscn` | `World/worldMap` uses `art/flagoria/flagoria_tiles_v3.tres` as its `tile_set`. |
 | `tilemap_dynamic.tscn` | Uses the same TileSet. No scene or script loads this file. Its embedded script places tiles through `TileCatalog`. |
-| `Scripts/TileMap.gd` | Places tiles in `set_tile_type_z0`, `get_random_ground_vec` and `set_tile_type_z1` by name, e.g. `set_cell(layer, cell, TileCatalog.SOURCE_ID, TileCatalog.WATER)`. |
+| `Scripts/TileMap.gd` | Chunk drawing. Ground paint is `Scripts/world/sky_islands.gd`: open sea stays an empty cell, land goes through `set_cells_terrain_connect`, then each land cell is set to its grass, inland sand, inland swamp or island-edge piece. |
 | `Scripts/footsteps.gd` | Maps the cell under the player to a footstep surface through `TileCatalog.TILES`. |
 | `tools/audio_check.gd`, `tools/render_biomes.gd` | Use `TileCatalog` names. |
 | `tests/world/test_map_characterization.gd` and other tests | Pinned characterization data and a few fixtures compare against the raw coordinates of the map fill tiles below, on purpose: a cell move must fail them. |
@@ -23,8 +23,8 @@ The first 11 names kept their cells when the Solaria atlas was replaced. STONES 
 
 | Name | Purpose | Layer | Cell | Size | Collision |
 |---|---|---|---|---|---|
-| WATER | Sea, `alt <= water_max_alt` | 0 | (5, 6) | 1×1 | Full square (blocks movement) |
-| SAND | Beach, between water and land | 0 | (5, 4) | 1×1 | None |
+| WATER | Logical sea (`alt <= water_max_alt`). The cell is left empty so the sky clear colour shows; this tile is the invisible collision on the sea layer | sea layer | (5, 6) | 1×1 | Full square (blocks movement) |
+| SAND | Inland beach. A sand cell that touches sky is an island-edge piece instead | 0 | (5, 4) | 1×1 | None |
 | SWAMP | Low land with `moist < 0` | 0 | (14, 7) | 1×1 | None |
 | SWAMP_SPECIAL | Swamp below `swamp_special_alt` with `chance < 0` | 0 | (27, 7) | 1×1 | None |
 | GRASS_A | Land, `chance < ground_chance_a` | 0 | (5, 0) | 1×1 | None |
@@ -44,7 +44,7 @@ With Solaria, TREE was 3×3 cells and BUSH 1×2. Both are now 1×1, so they draw
 
 ## Island terrain
 
-`ISLAND_BLOB_<mask>` pieces for the "Island" terrain. The mask is the sum of the land neighbours: N 1, NE 2, E 4, SE 8, S 16, SW 32, W 64, NW 128. A corner bit counts only when both of its sides are land. Islands are flat top-down, with no cliffs or undersides. Paint with `set_cells_terrain_connect(cells, TileCatalog.ISLAND_TERRAIN_SET, TileCatalog.ISLAND_TERRAIN)`. The base piece has probability 1.0. Its `_W1`-`_W3` variants have 0.4 (0.25 on the one-tile necks, masks 17 and 68). Mask 255 also accepts GRASS_A-D. "Same outline" lists the older edge tile that matches a piece.
+`ISLAND_BLOB_<mask>` pieces for the "Island" terrain. The mask is the sum of the land neighbours: N 1, NE 2, E 4, SE 8, S 16, SW 32, W 64, NW 128. A corner bit counts only when both of its sides are land. Islands are flat top-down, with no cliffs or undersides. `Scripts/world/sky_islands.gd` paints a chunk with `set_cells_terrain_connect(0, cells, TileCatalog.ISLAND_TERRAIN_SET, TileCatalog.ISLAND_TERRAIN)`, then writes the deterministic tile: an edge piece where any neighbour is sea, otherwise grass, sand or swamp. The edge pick uses the weights below (a hash of the cell, so every peer matches). Mask 255 also accepts GRASS_A-D. "Same outline" lists the older edge tile that matches a piece. Clouds are a later layer and never sit on a walkable cell.
 
 | Mask | Open sides | Base piece | Variants | Same outline |
 |---|---|---|---|---|
@@ -166,7 +166,7 @@ Older single edge tiles, kept for hand-placed maps.
 
 Plank bridges sit on layer 0, the ground layer, in place of water. They have no collision, so the hero walks on them, and they are not a mob home. `TileMap.build_bridge(from, to)` (`Scripts/mechanics/bridges/bridge_builder.gd`) lays one straight run over generated water. Each placed cell then takes its `_WATER` piece from the planks and walkable ground beside it, and every placed cell is solved again, including after `erase_cells`. Plain `H` / `V` continues the deck, so two runs that meet have no end cap on the shared side. `START` / `END` / `SINGLE` (the rope and tying) appear only on a side that touches walkable ground. `TIP_*` appears only on a side of open water, and it is the unfinished plank end, not a shore joint. The longer straight run keeps its axis when a shorter branch meets it. `bridge_pieces` is that same choice for one run with no other plank beside it. Placed bridges stay when a chunk is drawn again and are cleared by a new map.
 
-H runs west to east, V runs north to south. `START` has a land joint on the west (H) or north (V) end, `END` on the east or south end, `SINGLE` on both. `TIP_x` is an unfinished end that points to x. The `_WATER` pieces have water baked in and are the ones placed today. The plain pieces have a transparent background for sky shores. `BROKEN` pieces are art only: nothing places them yet.
+H runs west to east, V runs north to south. `START` has a land joint on the west (H) or north (V) end, `END` on the east or south end, `SINGLE` on both. `TIP_x` is an unfinished end that points to x. Placed bridges use the plain pieces, which have a transparent background, because the sea is sky. A save that still names a `_WATER` piece loads that piece. `BROKEN` pieces are art only: nothing places them yet.
 
 | Name | Cell |
 |---|---|

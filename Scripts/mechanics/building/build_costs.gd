@@ -4,22 +4,28 @@ extends RefCounted
 ## spend, then place. The shared construction placement module (#296) is
 ## calls buy; the placement UI (#225) talks only to that module. Tests also
 ## call buy directly for the cost table.
-## Wood is local to each game (Inventory). Plank bridges sync between peers
-## (#297), so buy allows planks while multiplayer is on: the host decides the
-## placement and charges the placer. Towers, walls and the starting castle
-## still refuse while multiplayer is on (structure/wall sync is #278).
+## Wood is local to each game (Inventory). Planks (#297), towers (#497),
+## castles (#527) and walls (#498) are allowed while multiplayer is on: the
+## host decides and the placer is charged. The starting castle still refuses.
 
 const PLANK := &"plank"
 const WALL_BLOCK := &"wall_block"
 const TOWER := &"tower"
+const CASTLE := &"castle"
+const GUARD_POST := &"guard_post"
+const BARRACKS := &"barracks"
 const START_CASTLE := &"start_castle"
 
 ## Kind -> wood for one unit: a plank is one bridge cell, a wall block one
-## wall cell, a tower one tower. The starting castle each player gets is free.
+## wall cell, a tower one tower, a castle one extra castle (#527). The
+## starting castle each player gets is free.
 const WOOD := {
 	PLANK: 1,
 	WALL_BLOCK: 2,
 	TOWER: 10,
+	CASTLE: 50,
+	GUARD_POST: 20,
+	BARRACKS: 30,
 	START_CASTLE: 0,
 }
 ## Share of the cost given back when a build is removed. Nothing removes a
@@ -48,18 +54,20 @@ static func refund(kind: StringName, units := 1) -> int:
 	return floori(cost(kind, units) * REFUND_SHARE) if WOOD.has(kind) else 0
 
 
-## Kinds that stay host-alone until their own peer sync lands (#278).
+## Kinds that stay host-alone. Towers (#497), castles (#527) and walls (#498)
+## are requested on StructureRequests. The starting castle is still placed by
+## the host alone.
 const HOST_ALONE := {
-	WALL_BLOCK: true,
-	TOWER: true,
 	START_CASTLE: true,
 }
 
 
 static func refusal(inventory: Inventory, kind: StringName, units := 1) -> String:
 	## Why buying `units` of `kind` is refused before placing; "" when it may
-	## go ahead. Planks are allowed in multiplayer (#297); other kinds still
-	## refuse while peers are connected.
+	## go ahead. Planks (#297), towers (#497), castles (#527) and walls (#498)
+	## are allowed in
+	## multiplayer. The starting castle still refuses while peers are connected
+	## (BuildCosts.START_CASTLE via place_start_castle, not the build picker).
 	if not WOOD.has(kind):
 		return UNKNOWN_KIND
 	if HOST_ALONE.has(kind) and Interaction.multiplayer_on(inventory.multiplayer):

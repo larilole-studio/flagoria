@@ -273,7 +273,7 @@ func _test_cities_water_does_not_close() -> int:
 	var cities: Cities = t["cities"]
 	_regen(t, 11)
 	var water_cell: Variant = null
-	for cell: Vector2i in world.get_used_cells(0):
+	for cell: Vector2i in world.sea_cells():
 		var p: Array = world.predict_cell(cell)
 		if not world.ground_is_walkable(p[0]):
 			water_cell = cell
@@ -331,11 +331,11 @@ func _test_cities_water_does_not_close() -> int:
 	return fail
 
 
-func _test_cities_off_in_multiplayer() -> int:
-	## While multiplayer is on the city list is cleared and stays empty.
-	## Time cost: ~0.3 s alone.
-	print("-- test_cities_off_in_multiplayer")
-	var t := _setup_guard_post("cities_off_in_multiplayer")
+func _test_cities_client_keeps_list() -> int:
+	## A client does not rebuild or clear. The host snapshot stays until a
+	## newer one arrives. Time cost: ~0.3 s alone.
+	print("-- test_cities_client_keeps_list")
+	var t := _setup_guard_post("cities_client_keeps_list")
 	if t.is_empty():
 		return 1
 	var fail := 0
@@ -343,7 +343,7 @@ func _test_cities_off_in_multiplayer() -> int:
 	var id: int = t["id"]
 	cities.rebuild()
 	if not cities.cities.has(id):
-		printerr("FAIL cities_off_in_multiplayer: no city offline")
+		printerr("FAIL cities_client_keeps_list: no city offline")
 		fail += 1
 	var path: NodePath = cities.get_path()
 	var api := SceneMultiplayer.new()
@@ -352,8 +352,8 @@ func _test_cities_off_in_multiplayer() -> int:
 	peer.create_client("127.0.0.1", _free_udp_port())
 	api.multiplayer_peer = peer
 	cities.tick()
-	if not cities.cities.is_empty():
-		printerr("FAIL cities_off_in_multiplayer: cities remained %s" % [cities.cities.keys()])
+	if not cities.cities.has(id):
+		printerr("FAIL cities_client_keeps_list: client tick cleared %s" % [cities.cities.keys()])
 		fail += 1
 	peer.close()
 	set_multiplayer(null, path)

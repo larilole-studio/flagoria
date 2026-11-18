@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-A parsed structure file can be placed on the generated map at an anchor cell. `StructurePlacer` (`Scripts/mechanics/structures/structure_placer.gd`, owned by `Scripts/TileMap.gd`) checks the footprint, writes the ground and object cells, picks wall and gate pieces with `WallSolver`, sets the team flag, and records the placement so `generate_chunk` draws it again after a redraw. Only a host that is still alone places; callers in game are the [starting castle](./start-castle.md) and the buildable wooden tower (#273 / [build-tower](./build-tower.md)). A peer that joins gets the host's placements with the map (`receive_map_params`, after the cuts) and draws them before its player is placed; placements made after a join do not reach peers yet (rest of #278).
+A parsed structure file can be placed on the generated map at an anchor cell. `StructurePlacer` (`Scripts/mechanics/structures/structure_placer.gd`, owned by `Scripts/TileMap.gd`) checks the footprint, writes the ground and object cells, picks wall and gate pieces with `WallSolver`, sets the team flag, and records the placement so `generate_chunk` draws it again after a redraw. In-game structure files are `structures/castle.txt`, `structures/tower_wood.txt`, `structures/guard_post.txt` and `structures/barracks.txt` (`construction_placer.gd` loads them by name). The [starting castle](./start-castle.md) is placed by the host directly while alone. Every other footprint structure a player builds in multiplayer goes through `StructureRequests` on the host (#497, #527, #528, #556). A peer that joins gets the host's placements with the map (`receive_map_params`, after the cuts) and draws them before its player is placed. A castle the host places for a joining peer is sent to peers already connected and is in the list a later peer receives (#278). Free-form walls use the same request pipeline (#498).
 
 ## Sub-features
 
@@ -14,7 +14,7 @@ A parsed structure file can be placed on the generated map at an anchor cell. `S
 
 ## How to get to it (user POV)
 
-- Through the [starting castle](./start-castle.md) on spawn, and through interact-mode Tower in the build picker (#273 / [build-tower](./build-tower.md)).
+- Through the [starting castle](./start-castle.md) on spawn, and through the Buildings column for tower, castle, guard post and barracks (see [Build tower](./build-tower.md), [Build castle](./build-castle.md), [Build guard post](./build-guard-post.md), [Build barracks](./build-barracks.md)).
 
 ## Driving it with verify-flagoria helpers
 

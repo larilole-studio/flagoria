@@ -47,7 +47,7 @@ func _test_build_picker_switches_tool() -> int:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
-	if picker == null or picker.get_child_count() != 3 or not picker.visible:
+	if picker == null or picker.get_child_count() != 6 or not picker.visible:
 		printerr("FAIL build_picker_switches_tool: picker %s children %s"
 				% [picker, picker.get_child_count() if picker else null])
 		fail += 1
@@ -555,8 +555,8 @@ func _test_build_preview_cache_invalidates_on_wood() -> int:
 
 func _test_build_picker_hides_on_multiplayer_start() -> int:
 	## Host alone in interact + Plank: when multiplayer turns on, the picker
-	## refreshes without a mode change. Plank stays (bridge sync #297); Tower
-	## and Wall hide. With Plank selected the tool stays Plank.
+	## refreshes without a mode change. Plank (#297) and Tower (#497) stay;
+	## Wall hides. With Plank selected the tool stays Plank.
 	## Time cost: about 0.4 s in tools/verify.sh (~2.1 s alone with
 	## --only=build_picker_hides_on_multiplayer_start).
 	print("-- test_build_picker_hides_on_multiplayer_start")
@@ -589,8 +589,8 @@ func _test_build_picker_hides_on_multiplayer_start() -> int:
 		if plank_btn == null or not plank_btn.visible:
 			printerr("FAIL picker_hides_on_multiplayer_start: Plank should stay visible in MP")
 			fail += 1
-		if tower_btn == null or tower_btn.visible or wall_btn == null or wall_btn.visible:
-			printerr("FAIL picker_hides_on_multiplayer_start: Tower/Wall should hide in MP")
+		if tower_btn == null or not tower_btn.visible or wall_btn == null or not wall_btn.visible:
+			printerr("FAIL picker_hides_on_multiplayer_start: Tower and Wall should stay visible")
 			fail += 1
 		if interaction.build.tool != BuildPlacement.Tool.PLANK:
 			printerr("FAIL picker_hides_on_multiplayer_start: tool %s want Plank"

@@ -15,7 +15,7 @@ const STATUS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinStatus"
 func _test_join_port_button() -> int:
 	## Button presses for blank, bare hosts, explicit ports, rejected forms,
 	## and one no-listener port-1 timeout. No second process. Time cost:
-	## ~4 s in verify (the port-1 wait is the ENet timeout, about 3 s).
+	## ~7 s in verify (the port-1 wait is the 6 s dial budget).
 	print("-- test_join_port_button")
 	var fail := 0
 	if JoinAddress.DEFAULT_PORT != Main.PORT:
@@ -175,7 +175,7 @@ func _test_join_port_dedicated() -> int:
 	## 127.0.0.1:port and localhost:port. Each client gets a World player and
 	## the server spawns no player 1. An invalid address on the same menu
 	## does not block the following join. Time cost: ~8 s in verify, and
-	## ~8 s x 20 in netcode stress (one scenario, 4 at a time).
+	## ~8 s x 8 on the full netcode-stress tier (one scenario, 4 at a time).
 	print("-- test_join_port_dedicated")
 	await process_frame
 	var port := _free_udp_port()

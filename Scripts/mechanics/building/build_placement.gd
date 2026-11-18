@@ -4,11 +4,11 @@ extends RefCounted
 ## Plank / Tower / Wall buttons. Cut is the tool when none is selected. H/V-snapped
 ## plank and wall drag, single-anchor tower preview,
 ## green/red preview and wood cost. Placement goes only through
-## ConstructionPlacer (planks through Interaction.place_planks so multiplayer
-## asks the host, #297). Preview green cells and cost match exactly what
+## ConstructionPlacer (planks, towers and walls ask the host in multiplayer,
+## #297 / #497 / #498). Preview green cells and cost match exactly what
 ## commit places and charges. Wall keeps a persistent tip while selected (#276).
 
-enum Tool { CUT, PLANK, TOWER, WALL }
+enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS }
 
 const VALID_TINT := Color(0.2, 0.85, 0.3, 0.42)
 const INVALID_TINT := Color(0.92, 0.22, 0.18, 0.48)
@@ -16,24 +16,8 @@ const COST_COLOR := Color(0.98, 0.95, 0.88, 1.0)
 const REASON_COLOR := Color(1.0, 0.75, 0.55, 1.0)
 const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 
-const TOOL_ICONS := {
-	Tool.CUT: preload("res://art/ui/ui_tool_cut.png"),
-	Tool.PLANK: preload("res://art/ui/ui_tool_plank.png"),
-	Tool.TOWER: preload("res://art/ui/ui_tool_tower.png"),
-	Tool.WALL: preload("res://art/ui/ui_tool_wall.png"),
-}
-const TOOL_TIPS := {
-	Tool.CUT: "Cut", Tool.PLANK: "Plank", Tool.TOWER: "Tower", Tool.WALL: "Wall",
-}
-const BUTTON_NAMES := {
-	Tool.PLANK: "PlankButton", Tool.TOWER: "TowerButton", Tool.WALL: "WallButton",
-}
 const BUILDINGS_ICON := preload("res://assets/ui/hud/icon_buildings.png")
-## Opaque tool art. Narrower than the disc so the circle and the gold ring show.
-const COLUMN_ICON := 12
-## Tools that stay host-alone until their own peer sync (#278). Plank is
-## shown in multiplayer once bridges sync (#297).
-const MP_HIDDEN := [Tool.TOWER, Tool.WALL]
+const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
 
 var tool := Tool.CUT
 var cells: Array[Vector2i] = []  ## snapped run or tower footprint under the finger
@@ -59,9 +43,17 @@ var _has_wall_tip := false
 var _snap_wood := -1
 var _snap_player_pos := Vector2(INF, INF)
 var _snap_map_rev := -1
+var _snap_rotation := -1
 var _map_rev := 0
 ## Last multiplayer_on seen; Interaction polls and calls on_multiplayer_changed.
 var _mp_was_on := false
+var _rotate := BuildPlacementRotate.new()
+
+var footprint_rotation: int:
+	get:
+		return _rotate.quarter_turns
+	set(value):
+		_rotate.quarter_turns = posmod(value, 4)
 
 
 func setup(interaction: Interaction) -> void:
@@ -75,10 +67,19 @@ func setup(interaction: Interaction) -> void:
 	_refresh_picker_visible()
 
 
+static func is_footprint_tool(value: Tool) -> bool:
+	return BuildToolRow.is_footprint(value)
+
+
+func tracks_pointer() -> bool:
+	return BuildToolRow.tracks_pointer(tool)
+
+
 func set_tool(value: Tool) -> void:
 	if tool == Tool.WALL and value != Tool.WALL:
 		_has_wall_tip = false
 	tool = value
+	_rotate.reset()
 	clear_preview()
 	for t in _buttons:
 		var button: Button = _buttons[t]
@@ -100,6 +101,20 @@ func clear_preview() -> void:
 	_snap_wood = -1
 	_snap_player_pos = Vector2(INF, INF)
 	_snap_map_rev = -1
+	_snap_rotation = -1
+	_refresh_rotate_visible()
+
+
+func rotate_footprint() -> void:
+	## Turn the footprint preview 90° clockwise (#493).
+	if not is_footprint_tool(tool):
+		return
+	_rotate.step_cw()
+	_snap_valid = false
+	if cost_viewport != Vector2.ZERO:
+		var inventory := _inventory()
+		if inventory != null:
+			update_preview(cost_viewport, cost_viewport)
 
 
 static func snap_run(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
@@ -134,8 +149,8 @@ func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 		clear_preview()
 		return
 	cost_viewport = end_viewport
-	if tool == Tool.TOWER:
-		_update_tower_preview(end_viewport, inventory)
+	if BuildToolRow.is_footprint(tool):
+		_update_footprint_preview(end_viewport, inventory, BuildToolRow.footprint_kind(tool))
 		return
 	if tool == Tool.WALL:
 		_update_wall_preview(start_viewport, end_viewport, inventory)
@@ -164,8 +179,8 @@ func commit() -> bool:
 		clear_preview()
 		return false
 	var ok := false
-	if tool == Tool.TOWER:
-		ok = _commit_tower(inventory)
+	if BuildToolRow.is_footprint(tool):
+		ok = _commit_footprint(inventory, BuildToolRow.footprint_kind(tool))
 	elif tool == Tool.PLANK:
 		ok = _commit_plank(inventory)
 	elif tool == Tool.WALL:
@@ -190,6 +205,9 @@ func draw_preview(ci: CanvasItem) -> void:
 		var center: Vector2 = ci.to_local(_interaction.cell_center(cells[i]))
 		var rect := Rect2(center - half, half * 2.0)
 		ci.draw_rect(rect, VALID_TINT if cell_ok[i] else INVALID_TINT)
+	if is_footprint_tool(tool) and _snap_valid and cells.size() > 0:
+		var mark: Vector2 = ci.to_local(_interaction.cell_center(_snap_from))
+		_FootprintOrientation.draw_at(ci, mark, _rotate.quarter_turns)
 	var anchor: Vector2 = ci.to_local(_interaction.to_world(cost_viewport)) + Vector2(8, -12)
 	var font: Font = ThemeDB.fallback_font
 	var font_size := 10
@@ -206,6 +224,8 @@ func draw_preview(ci: CanvasItem) -> void:
 func on_mode_changed(mode: Interaction.Mode) -> void:
 	if mode != Interaction.Mode.INTERACT:
 		set_tool(Tool.CUT)
+	else:
+		_refresh_rotate_visible()
 	_mp_was_on = Interaction.multiplayer_on(_interaction.multiplayer) if _interaction else false
 	_refresh_picker_visible()
 
@@ -246,14 +266,14 @@ func _update_plank_preview(start_viewport: Vector2, end_viewport: Vector2, inven
 		reasons = []
 
 
-func _update_tower_preview(end_viewport: Vector2, inventory: Inventory) -> void:
-	## Footprint of the anchor under the finger. All green and cost 10 when
-	## commit will place; all red with reasons otherwise.
+func _update_footprint_preview(end_viewport: Vector2, inventory: Inventory, kind: StringName) -> void:
+	## Footprint of the anchor under the finger. All green and the kind's cost
+	## when commit will place; all red with reasons otherwise.
 	var anchor := _cell_at(end_viewport)
 	if _preview_inputs_unchanged(anchor, anchor, inventory):
 		return
 	_remember_preview_inputs(anchor, anchor, inventory)
-	cells = _placer.tower_footprint(anchor)
+	cells = _placer.footprint_of(kind, anchor, _rotate.quarter_turns)
 	cell_ok.clear()
 	var one: Array[Vector2i] = [anchor]
 	var placeable := false
@@ -261,19 +281,20 @@ func _update_tower_preview(end_viewport: Vector2, inventory: Inventory) -> void:
 	if cells.is_empty():
 		reasons.append(ConstructionPlacer.EMPTY_CELLS)
 	elif not _interaction.in_reach(anchor):
-		var why := _placer.can_place(BuildCosts.TOWER, one, inventory)
+		var why := _placer.can_place(kind, one, inventory, _rotate.quarter_turns)
 		if why.is_empty():
 			reasons.append("out of reach")
 		else:
 			reasons = why
 	else:
-		var why := _placer.can_place(BuildCosts.TOWER, one, inventory)
+		var why := _placer.can_place(kind, one, inventory, _rotate.quarter_turns)
 		placeable = why.is_empty()
 		if not placeable:
 			reasons = why
 	for _i in cells.size():
 		cell_ok.append(placeable)
-	cost = _placer.cost(BuildCosts.TOWER, one) if placeable else 0
+	cost = _placer.cost(kind, one) if placeable else 0
+	_position_rotate_button(end_viewport)
 
 
 func _commit_plank(inventory: Inventory) -> bool:
@@ -287,17 +308,16 @@ func _commit_plank(inventory: Inventory) -> bool:
 	return not placeable.is_empty() and _interaction.place_planks(placeable)
 
 
-func _commit_tower(inventory: Inventory) -> bool:
-	## Place on the preview's anchor (centre of the footprint's first cell set
-	## via _snap_from). Green preview means can_place already passed.
+func _commit_footprint(inventory: Inventory, kind: StringName) -> bool:
 	var anchor := _snap_from
 	if not _interaction.in_reach(anchor):
 		return false
-	var one: Array[Vector2i] = [anchor]
-	return _placer.place(BuildCosts.TOWER, one, inventory)
+	return _placer.place(kind, [anchor], inventory, _rotate.quarter_turns)
 
 
 func _on_buildings_toggled(on: bool) -> void:
+	if HudLayoutVisual.blocks_hud_actions():
+		_buildings.set_pressed_no_signal(false); return
 	_list_open = on
 	_refresh_picker_visible()
 
@@ -314,8 +334,8 @@ func _ensure_picker() -> void:
 		_buildings.toggle_mode = true
 		_buildings.theme = theme
 		_buildings.tooltip_text = "Buildings"
-		_buildings.icon = BUILDINGS_ICON
-		RoundHudStyle.apply(_buildings)
+		_buildings.icon = null
+		RoundHudStyle.apply_build(_buildings)
 		_buildings.toggled.connect(_on_buildings_toggled)
 		hud.add_child(_buildings)
 	_picker = hud.get_node_or_null("BuildPicker") as Control
@@ -324,80 +344,27 @@ func _ensure_picker() -> void:
 		_picker.name = "BuildPicker"
 		_picker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hud.add_child(_picker)
-	for child in _picker.get_children():
-		child.queue_free()
-	_buttons.clear()
-	for t in [Tool.PLANK, Tool.TOWER, Tool.WALL]:
-		var button := Button.new()
-		button.name = BUTTON_NAMES[t]
-		button.toggle_mode = true
-		button.theme = theme
-		button.icon = TOOL_ICONS[t] as Texture2D
-		button.tooltip_text = TOOL_TIPS[t] as String
-		RoundHudStyle.apply(button, RoundHudStyle.HIT, RoundHudStyle.SIZE, COLUMN_ICON)
-		var captured: Tool = t
-		button.pressed.connect(func() -> void: set_tool(captured))
-		_picker.add_child(button)
-		_buttons[t] = button
-	_picker.reset_size()
+	BuildToolRow.populate_picker(_picker, theme, _buttons, set_tool)
+	_rotate.ensure(hud, theme)
+	_rotate.connect_pressed(rotate_footprint)
 
 
 func _refresh_picker_visible() -> void:
-	## Column stays hidden until Buildings is open. Tower and Wall also hide
-	## in multiplayer; Plank stays once the list is open.
+	## Column stays hidden until Buildings is open. Plank, Tower and Wall
+	## stay once the list is open (#498).
 	if _picker == null or _interaction == null:
 		return
 	var mp := Interaction.multiplayer_on(_interaction.multiplayer)
-	if mp and tool in MP_HIDDEN:
+	if mp and tool in BuildToolRow.MP_HIDDEN:
 		set_tool(Tool.CUT)
 		return
 	_picker.visible = true
 	for t in _buttons:
-		(_buttons[t] as Button).visible = _list_open and not (mp and t in MP_HIDDEN)
-
+		(_buttons[t] as Button).visible = _list_open and not (mp and t in BuildToolRow.MP_HIDDEN)
 
 
 func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
-	## Cells the Wall tool would try to place for this gesture. First placement
-	## (no tip): the tapped cell, or an H/V snap of the drag — ConstructionPlacer
-	## still requires that cell to 4-touch a tower, castle or wall. With a tip:
-	## a single 4-neighbour on tap, or an H/V run that starts on the neighbour
-	## of the tip toward the finger. Empty when the gesture is a diagonal step
-	## off the tip or does not touch it (gap).
-	var empty: Array[Vector2i] = []
-	if not has_tip:
-		if from_cell == to_cell:
-			var one: Array[Vector2i] = [to_cell]
-			return one
-		return snap_run(from_cell, to_cell)
-	var delta := to_cell - tip
-	if delta == Vector2i.ZERO:
-		return empty
-	var neighbours := {
-		tip + Vector2i.LEFT: true, tip + Vector2i.RIGHT: true,
-		tip + Vector2i.UP: true, tip + Vector2i.DOWN: true,
-	}
-	if from_cell == to_cell:
-		if not neighbours.has(to_cell):
-			return empty
-		var adj: Array[Vector2i] = [to_cell]
-		return adj
-	var horizontal := absi(delta.x) >= absi(delta.y)
-	if horizontal and delta.x == 0:
-		return empty
-	if not horizontal and delta.y == 0:
-		return empty
-	# Diagonal-only off the tip (both axes non-zero and equal length intent):
-	# snap still yields a straight run, but the first step must 4-touch tip.
-	var step := Vector2i(
-		(1 if delta.x > 0 else -1) if horizontal else 0,
-		0 if horizontal else (1 if delta.y > 0 else -1),
-	)
-	var start := tip + step
-	var end := Vector2i(to_cell.x, tip.y) if horizontal else Vector2i(tip.x, to_cell.y)
-	if start == tip:
-		return empty
-	return snap_run(start, end)
+	return BuildToolRow.wall_segment(tip, has_tip, from_cell, to_cell)
 
 
 func _update_wall_preview(start_viewport: Vector2, end_viewport: Vector2, inventory: Inventory) -> void:
@@ -481,6 +448,8 @@ func _on_ground_changed(_cells: Rect2i) -> void:
 func _preview_inputs_unchanged(from_cell: Vector2i, to_cell: Vector2i, inventory: Inventory) -> bool:
 	if not _snap_valid or from_cell != _snap_from or to_cell != _snap_to:
 		return false
+	if _rotate.quarter_turns != _snap_rotation:
+		return false
 	if inventory.count_of(Inventory.WOOD) != _snap_wood:
 		return false
 	if _map_rev != _snap_map_rev:
@@ -493,6 +462,20 @@ func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory:
 	_snap_from = from_cell
 	_snap_to = to_cell
 	_snap_valid = true
+	_snap_rotation = _rotate.quarter_turns
 	_snap_wood = inventory.count_of(Inventory.WOOD)
 	_snap_player_pos = _interaction.player.global_position if _interaction.player else Vector2(INF, INF)
 	_snap_map_rev = _map_rev
+
+
+func _refresh_rotate_visible() -> void:
+	if _interaction == null:
+		return
+	var show := _interaction.mode == Interaction.Mode.INTERACT and is_footprint_tool(tool) \
+			and not cells.is_empty()
+	_rotate.set_visible(show)
+
+
+func _position_rotate_button(viewport_pos: Vector2) -> void:
+	_refresh_rotate_visible()
+	_rotate.position_at(viewport_pos)

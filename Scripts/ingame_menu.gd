@@ -17,15 +17,22 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var panel: Control = $Pause
 @onready var resume_button: Button = $Pause/Panel/Margin/VBox/Resume
 @onready var save_button: Button = $Pause/Panel/Margin/VBox/Save
+@onready var customize_hud_button: Button = $Pause/Panel/Margin/VBox/CustomizeHud
+@onready var map_settings_button: Button = $Pause/Panel/Margin/VBox/MapSettings
 @onready var main_menu_button: Button = $Pause/Panel/Margin/VBox/MainMenu
 @onready var status_label: Label = $Pause/Panel/Margin/VBox/Status
+@onready var hud_layout_edit: Control = $HudLayoutEdit
 
 
 func _ready() -> void:
-	fit_icon_button(menu_button)
+	menu_button.icon = null
+	menu_button.text = ""
+	RoundHudStyle.apply_menu(menu_button)
 	menu_button.pressed.connect(open)
 	resume_button.pressed.connect(close)
 	save_button.pressed.connect(save_world)
+	customize_hud_button.pressed.connect(_on_customize_hud_pressed)
+	map_settings_button.pressed.connect(_on_map_settings_pressed)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 
 
@@ -45,7 +52,15 @@ func is_open() -> bool:
 func open() -> void:
 	panel.show()
 	menu_button.hide()
+	map_settings_button.visible = multiplayer.is_server()
 	resume_button.grab_focus()
+
+
+func _on_map_settings_pressed() -> void:
+	close()
+	var menu := get_node_or_null("/root/Flagoria/CanvasLayer2/MainMenu")
+	if menu != null and menu.has_method("open_settings_over_match"):
+		menu.open_settings_over_match()
 
 
 func close() -> void:
@@ -66,7 +81,8 @@ func save_world() -> Dictionary:
 	## received or chose them (Flagoria.world_params), this peer's tree and
 	## bush cuts (world.object_changes), plank bridges (world.tile_edits,
 	## #226), placed structures and walls (world.structures, #42), and this
-	## peer's player state (world.player, #197). {"path", "error"}.
+	## peer's player state (world.player, #197) and the day/night clock
+	## (world.clock_elapsed, #558). {"path", "error"}.
 	var params: MapGenParams = owner.world_params if owner else null
 	var result := {"path": "", "error": "the world has not loaded yet"}
 	if params != null:
@@ -78,10 +94,15 @@ func save_world() -> Dictionary:
 		var world := WorldSave.new(params)
 		var world_map := owner.get_node_or_null("World/worldMap")
 		if world_map:
-			world.object_changes = world_map.cut_changes()
+			world.object_changes = world_map.object_changes()
 			world.tile_edits = BridgeBuilder.to_changes(world_map.bridges_for_sync())
 			world.structures = StructureSaves.to_changes(world_map)
+			world.soldiers = SoldierSaves.capture(owner)
 		world.player = PlayerSave.capture(owner)
+		var clock := get_node_or_null("/root/DayNight")
+		if clock != null:
+			world.clock_elapsed = float(clock.elapsed)
+			params.day_night_cycle = bool(clock.enabled)
 		result = get_node("/root/MapGen").save_world(world, save_name)
 	if result["error"] == "":
 		status_label.text = saved_text(result["path"].get_file().get_basename())
@@ -111,6 +132,11 @@ static func unused_save_name(base: String) -> String:
 		save_name = "%s %d" % [base, n]
 		n += 1
 	return save_name
+
+
+func _on_customize_hud_pressed() -> void:
+	if hud_layout_edit != null and hud_layout_edit.has_method("open"):
+		await hud_layout_edit.open()
 
 
 func _on_main_menu_pressed() -> void:

@@ -2,6 +2,7 @@ extends PanelContainer
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
 const WorldsSaveList = preload("res://Scripts/worlds_save_list.gd")
+const WorldSavePreview = preload("res://Scripts/world_save_preview.gd")
 
 @onready var main_menu = $"."
 @onready var address_entry = $MarginContainer/VBoxContainer/AddressEntry
@@ -13,8 +14,22 @@ const WorldsSaveList = preload("res://Scripts/worlds_save_list.gd")
 @onready var sfx_value: Label = $MarginContainer/VBoxContainer/SFXVolumeRow/SFXValue
 @onready var mob_rate: HSlider = $MarginContainer/VBoxContainer/MobRateRow/MobRate
 @onready var mob_rate_value: Label = $MarginContainer/VBoxContainer/MobRateRow/MobRateValue
+@onready var tower_range: HSlider = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRange
+@onready var tower_range_value: Label = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRangeValue
+@onready var tower_damage: HSlider = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamage
+@onready var tower_damage_value: Label = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamageValue
+@onready var tower_cooldown: HSlider = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldown
+@onready var tower_cooldown_value: Label = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldownValue
+@onready var raids_enabled: CheckButton = $MarginContainer/VBoxContainer/RaidsRow/RaidsEnabled
+@onready var raid_interval: HSlider = $MarginContainer/VBoxContainer/RaidIntervalRow/RaidInterval
+@onready var raid_interval_value: Label = $MarginContainer/VBoxContainer/RaidIntervalRow/RaidIntervalValue
+@onready var raid_group: HSlider = $MarginContainer/VBoxContainer/RaidGroupRow/RaidGroup
+@onready var raid_group_value: Label = $MarginContainer/VBoxContainer/RaidGroupRow/RaidGroupValue
+@onready var raid_radius: HSlider = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadius
+@onready var raid_radius_value: Label = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadiusValue
 
 var admin_panel: PanelContainer
+var _settings_over_match := false
 
 signal new_server_created
 signal new_player_added
@@ -46,6 +61,59 @@ func _ready() -> void:
 	mob_rate.value_changed.connect(func(v: float) -> void:
 		game.set_mob_rate(v)
 		mob_rate_value.text = game.rate_label(game.mob_rate))
+	# Tower guns read these on the host. A client's saved values are not the match.
+	tower_range.min_value = game.TOWER_RANGE_MIN
+	tower_range.max_value = game.TOWER_RANGE_MAX
+	tower_range.step = game.TOWER_RANGE_STEP
+	tower_range.value = game.tower_range
+	tower_range_value.text = game.px_label(game.tower_range)
+	tower_range.value_changed.connect(func(v: float) -> void:
+		game.set_tower_range(v)
+		tower_range_value.text = game.px_label(game.tower_range))
+	tower_damage.min_value = game.TOWER_DAMAGE_MIN
+	tower_damage.max_value = game.TOWER_DAMAGE_MAX
+	tower_damage.step = 1
+	tower_damage.value = game.tower_damage
+	tower_damage_value.text = str(game.tower_damage)
+	tower_damage.value_changed.connect(func(v: float) -> void:
+		game.set_tower_damage(v)
+		tower_damage_value.text = str(game.tower_damage))
+	tower_cooldown.min_value = game.TOWER_COOLDOWN_MIN
+	tower_cooldown.max_value = game.TOWER_COOLDOWN_MAX
+	tower_cooldown.step = game.TOWER_COOLDOWN_STEP
+	tower_cooldown.value = game.tower_cooldown
+	tower_cooldown_value.text = game.seconds_label(game.tower_cooldown)
+	tower_cooldown.value_changed.connect(func(v: float) -> void:
+		game.set_tower_cooldown(v)
+		tower_cooldown_value.text = game.seconds_label(game.tower_cooldown))
+	# Raids stay off until the host turns them on. The sliders are the
+	# interval, the group size and the target radius (#529).
+	raids_enabled.button_pressed = game.raids_enabled
+	raids_enabled.toggled.connect(func(on: bool) -> void: game.set_raids_enabled(on))
+	raid_interval.min_value = game.RAID_INTERVAL_MIN
+	raid_interval.max_value = game.RAID_INTERVAL_MAX
+	raid_interval.step = game.RAID_INTERVAL_STEP
+	raid_interval.value = game.raid_interval_s
+	raid_interval_value.text = _seconds(game.raid_interval_s)
+	raid_interval.value_changed.connect(func(v: float) -> void:
+		game.set_raid_interval_s(v)
+		raid_interval_value.text = _seconds(game.raid_interval_s))
+	raid_group.min_value = game.RAID_GROUP_MIN
+	raid_group.max_value = game.RAID_GROUP_MAX
+	raid_group.step = 1.0
+	raid_group.value = game.raid_group
+	raid_group_value.text = str(game.raid_group)
+	raid_group.value_changed.connect(func(v: float) -> void:
+		game.set_raid_group(int(round(v)))
+		raid_group_value.text = str(game.raid_group))
+	raid_radius.min_value = game.RAID_RADIUS_MIN
+	raid_radius.max_value = game.RAID_RADIUS_MAX
+	raid_radius.step = 1.0
+	raid_radius.value = game.raid_radius_cells
+	raid_radius_value.text = str(game.raid_radius_cells)
+	raid_radius.value_changed.connect(func(v: float) -> void:
+		game.set_raid_radius_cells(int(round(v)))
+		raid_radius_value.text = str(game.raid_radius_cells))
 	# The join address is typed on the in-game letter keyboard, not the OS one.
 	var keyboard: NumberPad = preload("res://number_pad.tscn").instantiate()
 	keyboard.name = "LetterKeyboard"
@@ -62,6 +130,10 @@ func _ready() -> void:
 
 static func percent(v: float) -> String:
 	return "%d%%" % roundi(v * 100.0)
+
+
+static func _seconds(v: float) -> String:
+	return "%ds" % roundi(v)
 
 
 func _unhandled_input(_event):
@@ -169,6 +241,8 @@ func _worlds_panel() -> PanelContainer:
 	var list := WorldsSaveList.new()
 	list.name = "List"
 	list.auto_height = true
+	list.fixed_icon_size = WorldSavePreview.ICON_SIZE
+	list.icon_mode = ItemList.ICON_MODE_LEFT
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 	var buttons := HBoxContainer.new()
@@ -225,11 +299,14 @@ func _world_button(parent: Node, node_name: String, handler: Callable) -> Button
 func _refresh_worlds() -> void:
 	var list := _worlds_list()
 	list.clear()
+	list.fixed_icon_size = WorldSavePreview.ICON_SIZE
 	for row in MapSave.list_saves():
 		var when: Dictionary = Time.get_datetime_dict_from_unix_time(int(row["modified"]))
 		var stamp := "%04d-%02d-%02d %02d:%02d" % [when["year"], when["month"], when["day"], when["hour"], when["minute"]]
 		list.add_item("%s  %s" % [row["name"], stamp])
-		list.set_item_metadata(list.item_count - 1, row["name"])
+		var i := list.item_count - 1
+		list.set_item_icon(i, WorldSavePreview.icon_for(get_tree(), str(row["path"]), str(row["name"])))
+		list.set_item_metadata(i, row["name"])
 
 
 func _selected_world() -> String:
@@ -341,6 +418,19 @@ func _on_worlds_back_pressed() -> void:
 	main_menu.show()
 
 
+func open_settings_over_match() -> void:
+	## Host, during a match: the same Map Settings panel, without leaving the
+	## world. Host stays disabled so it cannot start a second server.
+	if admin_panel == null or not admin_panel.is_inside_tree():
+		return
+	_settings_over_match = true
+	admin_panel.load_from_params(get_node("/root/MapGen").params)
+	var start := admin_panel.get_node_or_null("Margin/VBox/Buttons2/Start") as Button
+	if start != null:
+		start.disabled = true
+	admin_panel.show()
+
+
 func _on_map_settings_pressed() -> void:
 	main_menu.hide()
 	if admin_panel == null:
@@ -353,6 +443,14 @@ func _on_map_settings_pressed() -> void:
 
 
 func _on_admin_closed() -> void:
+	var start: Button = null
+	if admin_panel != null:
+		start = admin_panel.get_node_or_null("Margin/VBox/Buttons2/Start") as Button
+	if start != null:
+		start.disabled = false
+	if _settings_over_match:
+		_settings_over_match = false
+		return
 	main_menu.show()
 
 

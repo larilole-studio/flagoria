@@ -13,7 +13,8 @@ Placed plank bridges fill `world.tile_edits` (see
 [Placed plank bridges](#placed-plank-bridges)). Placed structures and
 free-form walls fill `world.structures` (see
 [Structures and walls](#structures-and-walls)). Player progress fills
-`player` (see [Player progress](#player-progress)).
+`player` (see [Player progress](#player-progress)). The day/night clock fills
+`clock` (see [Day and night](#day-and-night)).
 
 ## Encoding
 
@@ -58,7 +59,8 @@ The JSON inside the gzip, shown with line breaks:
 		"...": "every MapGenParams value"
 	},
 	"world": {"object_changes": {}, "structures": {}, "tile_edits": {}},
-	"player": {}
+	"player": {},
+	"clock": {"elapsed": 0.0}
 }
 ```
 
@@ -73,7 +75,9 @@ The JSON inside the gzip, shown with line breaks:
 | `world.tile_edits` | Changed tiles (#41). |
 | `world.object_changes` | Changed world objects such as felled trees or picked items (#198). |
 | `world.structures` | Placed structures (#42). |
+| `world.soldiers` | Living trained soldiers (#553). Optional array on format version 3; missing means none. |
 | `player` | The player's own progress (#197). Empty means the default player. |
+| `clock` | Seconds into the day/night cycle (#558). Missing means the start of day. |
 
 Each `world` section is sparse and keyed by chunk, then by cell:
 `{"<cx>,<cy>": {"<x>,<y>": <entry>}}`. A chunk is a fixed 32 by 32 cells
@@ -94,8 +98,8 @@ modified time. Load hosts that file. Host, and New world, start a match whose
 saves go in a new file, so an existing save is not replaced. Save writes that
 match's file again. A file already in the folder is listed as it is; opening
 the list does not rewrite it. Rename changes the file name through the same
-inline confirm pattern as delete (`MapSave.rename_save`). A terrain preview is
-still #40.
+inline confirm pattern as delete (`MapSave.rename_save`). Each row shows a
+cached terrain preview from the generation inputs (`Scripts/world_save_preview.gd`).
 
 ## Cut trees and bushes
 
@@ -135,6 +139,24 @@ the same pass as the cuts; a sprout is dropped on a load when the map no
 longer grows that tree on that cell. Joining peers get them in the same cut
 list.
 
+## Picked flowers and destroyed stones
+
+A cell where a flower was picked up, or walkable stones were destroyed, is a
+`world.object_changes` entry:
+
+```json
+"world": {"object_changes": {"0,0": {"14,12": {"removed": true}}}}
+```
+
+| Key | Meaning |
+| --- | --- |
+| `removed` | The flower or stones that were on the cell are gone for good until the params change. |
+
+`ObjectRemovals.to_changes` writes the entries and `ObjectRemovals.restore`
+reads them back with the cuts. On a load, an entry is dropped when the map no
+longer generates a flower or stones on that cell. Entries with `cut` or
+`sprout` belong to tree and bush cuts. Defeated mobs are not stored.
+
 ## Placed plank bridges
 
 A plank bridge cell (#226) is a `world.tile_edits` entry on its cell, naming
@@ -171,7 +193,9 @@ free-form palisade wall cell (#276) is an entry on its cell:
 | `structure` | The shipped structure file, by name (`res://structures/<name>.txt`). |
 | `owner` | The owning peer id, `0` for a neutral tower or `-1` for one the mobs took (#274). The flag colour follows it. |
 | `order` | Placement order, so placement ids come back the same. |
+| `rotation` | Optional quarter turns clockwise (0–3) for a footprint structure placed in a rotated orientation (#493). Omitted when zero. |
 | `wall` | `palisade`: a free-form wall cell. Its piece is solved again on load. |
+| `hp` | Optional remaining hits on a free-form wall (1 or 2). Omitted means full health (#35). |
 
 `StructureSaves.to_changes` writes the entries and `StructureSaves.restore`
 reads them back, placements first so the walls join the structure walls.
@@ -217,6 +241,20 @@ way they do in a live match. Held items are not stored; there are none yet.
 
 An older save has no `player` object, or `{}`. Both load as the default player: spawn, full health, no wood, no score, nothing charted. The file meaning of an empty section is unchanged, so the version stays 3.
 
+## Day and night
+
+The host's day/night clock (#558) is the `clock` object. The in-game menu's Save writes it, and hosting that file restores `elapsed`. The cycle switch is the params field `day_night_cycle` (on when the field is missing).
+
+```json
+"clock": {"elapsed": 480.0}
+```
+
+| Key | Meaning |
+| --- | --- |
+| `elapsed` | Seconds into the 600 second cycle, from the start of day. Missing, negative, or not a number: 0. |
+
+An older save has no `clock` object. It loads at the start of day with the cycle on. The version stays 3.
+
 ## Saving during play
 
 **Save** in the in-game menu writes the world being played, named after the
@@ -226,8 +264,8 @@ so the player can resume or leave. The file is the version 3 gzip above. It
 holds the generation inputs, this peer's tree and bush cuts, plank bridges,
 placed structures and walls, and this peer's player state (position, health,
 wood, score, charted ground). A second save of that same file keeps `created`
-and refreshes `updated`. The rest of the object changes (#198: picked items,
-destroyed objects, cleared mobs) are not saved yet.
+and refreshes `updated`, and the picked flowers and destroyed stones in
+`world.object_changes`. Defeated mobs are not saved.
 
 The new bytes are not written into the existing file. They go to
 `<name>.json.tmp` beside it. That file is closed, then kept only when

@@ -31,12 +31,12 @@ func _test_chunk_refresh_frames() -> int:
 		world.count = 0
 		for i in range(frames - 1):
 			world._process(0.0)
-		if world.get_cell_source_id(0, far_cell) != -1:
+		if world.is_drawn(far_cell):
 			printerr("FAIL chunk_refresh_frames=%s generated before frame %s" % [frames, frames])
 			fail += 1
 			continue
 		world._process(0.0)
-		if world.get_cell_source_id(0, far_cell) == -1:
+		if not world.is_drawn(far_cell):
 			printerr("FAIL chunk_refresh_frames=%s not generated on frame %s" % [frames, frames])
 			fail += 1
 			continue

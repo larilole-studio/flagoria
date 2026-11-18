@@ -8,7 +8,10 @@ const MAXIMIZE := "CanvasLayer1/MinimapPanel/MaximizeButton"
 const MAP_BUTTON := "CanvasLayer1/MinimapButton"
 const PARCHMENT := "CanvasLayer1/ParchmentMap"
 const CLOSE := "CanvasLayer1/ParchmentMap/CloseButton"
+const ZOOM_IN := "CanvasLayer1/ParchmentMap/ZoomInButton"
+const ZOOM_OUT := "CanvasLayer1/ParchmentMap/ZoomOutButton"
 const WALK := ["ui_right", "ui_left", "ui_up", "ui_down"]
+const ZOOM_PHONE := Vector2i(1080, 2400)
 
 
 func run() -> void:
@@ -51,6 +54,39 @@ func run() -> void:
 	print("explored_map: pan %s -> %s" % [pan_before, parchment.pan])
 	ok = ok and parchment.pan.distance_to(pan_before) >= 10.0
 	await snapshot("panned-landscape")
+
+	step("parchment-zoom")
+	ok = ok and await _resize(ZOOM_PHONE.x, ZOOM_PHONE.y)
+	parchment.cell_px = parchment.DEFAULT_CELL_PX
+	parchment.pan = Vector2.ZERO
+	await process_frame
+	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
+	ok = ok and is_equal_approx(float(parchment.cell_px), float(parchment.DEFAULT_CELL_PX))
+	await snapshot("parchment-zoom-default-phone")
+	await click(ZOOM_IN)
+	ok = ok and parchment.cell_px > parchment.DEFAULT_CELL_PX
+	await snapshot("parchment-zoom-in-phone")
+	for _i in parchment.cell_px - parchment.min_cell_px():
+		await _wheel(parchment, parchment.hero_screen_position(), false)
+	ok = ok and parchment.cell_px == parchment.min_cell_px()
+	ok = ok and parchment.explored_fully_visible()
+	await snapshot("parchment-zoom-min-phone")
+	ok = ok and parchment.cell_px < parchment.DEFAULT_CELL_PX
+	var anchor_before := parchment.map_pixel_at_view(parchment.hero_view_focus()) / float(parchment.cell_px)
+	for _i in parchment.MAX_CELL_PX - parchment.cell_px:
+		await _wheel(parchment, parchment.hero_screen_position(), true)
+	ok = ok and parchment.cell_px == parchment.MAX_CELL_PX
+	var anchor_after := parchment.map_pixel_at_view(parchment.hero_view_focus()) / float(parchment.cell_px)
+	ok = ok and anchor_before.distance_to(anchor_after) < 0.05
+	await snapshot("parchment-zoom-max-phone")
+	await _drag(PARCHMENT, Vector2(40, 30))
+	await click("CanvasLayer1/ParchmentMap/RecentreButton")
+	ok = ok and parchment.pan == Vector2.ZERO and parchment.cell_px == parchment.MAX_CELL_PX
+	await snapshot("parchment-recentred-phone")
+	print("explored_map: zoom default %s min %s max %s px %s visible %s window %s"
+			% [parchment.DEFAULT_CELL_PX, parchment.min_cell_px(), parchment.MAX_CELL_PX,
+			parchment.cell_px, parchment.explored_fully_visible(), DisplayServer.window_get_size()])
+	await _resize(1280, 720)
 
 	step("input-blocked")
 	var stuck := hero().position
@@ -96,7 +132,8 @@ func run() -> void:
 	print("explored_map: phone landscape window %s panel %s" % [DisplayServer.window_get_size(), panel.visible])
 
 	step("phone-portrait")
-	ok = ok and await _resize(360, 640)
+	if not await _resize(360, 640):
+		await _resize(1280, 720)
 	ok = ok and _inside(panel) and _inside(panel.get_node("CollapseButton")) and _inside(panel.get_node("MaximizeButton"))
 	await snapshot("open-phone-portrait")
 	await click(COLLAPSE)
@@ -108,6 +145,9 @@ func run() -> void:
 	await click(MAXIMIZE)
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	ok = ok and _inside(parchment.get_node("CloseButton"))
+	ok = ok and _inside(parchment.get_node("ZoomInButton"))
+	ok = ok and _inside(parchment.get_node("ZoomOutButton"))
+	ok = ok and _inside(parchment.get_node("RecentreButton"))
 	await snapshot("parchment-phone-portrait")
 	await click(CLOSE)
 	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
@@ -148,14 +188,25 @@ func _drag(path: String, delta: Vector2) -> void:
 
 
 func _resize(width: int, height: int) -> bool:
-	root.size = Vector2i(width, height)
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(Vector2i(width, height))
-	for _i in 10:
+	root.size = Vector2i(width, height)
+	ProjectSettings.set_setting("display/window/size/viewport_width", width)
+	ProjectSettings.set_setting("display/window/size/viewport_height", height)
+	for _i in 15:
 		await process_frame
 	var got := DisplayServer.window_get_size()
 	print("explored_map: window %s (asked %dx%d)" % [got, width, height])
 	return got.x == width and got.y == height
+
+
+func _wheel(parchment: ParchmentMap, at: Vector2, up: bool) -> void:
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_WHEEL_UP if up else MOUSE_BUTTON_WHEEL_DOWN
+	press.pressed = true
+	press.position = at
+	parchment._gui_input(press)
+	await process_frame
 
 
 func _inside(control: Control) -> bool:

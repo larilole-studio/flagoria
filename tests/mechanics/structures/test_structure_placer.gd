@@ -22,9 +22,11 @@ func _footprint(s: Structure, anchor_cell: Vector2i) -> Dictionary:
 func _find_anchor(world, s: Structure, want: Callable) -> Variant:
 	## The first drawn anchor cell near the origin whose footprint passes
 	## `want` (called with the footprint's predicted cells), or null.
-	for cell: Vector2i in world.get_used_cells(0):
+	var anchors: Array = world.get_used_cells(0)
+	anchors.append_array(world.sea_cells())
+	for cell: Vector2i in anchors:
 		var cells: Array = _footprint(s, cell).keys()
-		if cells.all(func(c): return world.get_cell_source_id(0, c) != -1) and want.call(cells):
+		if cells.all(func(c): return world.is_drawn(c)) and want.call(cells):
 			return cell
 	return null
 

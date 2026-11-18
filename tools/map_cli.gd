@@ -22,8 +22,9 @@ const LEGEND := {
 
 
 static func tile_names() -> Dictionary:
-	## Atlas coords -> tile type name. The four grass variants are one type.
-	return {
+	## Atlas coords -> tile type name. The four grass variants and every island
+	## edge piece are one type. Empty sea is named by the caller.
+	var out := {
 		TileCatalog.WATER: "water", TileCatalog.SAND: "sand", TileCatalog.SWAMP: "swamp",
 		TileCatalog.SWAMP_SPECIAL: "swamp_special", TileCatalog.GRASS_A: "grass",
 		TileCatalog.GRASS_B: "grass", TileCatalog.GRASS_C: "grass", TileCatalog.GRASS_D: "grass",
@@ -32,6 +33,10 @@ static func tile_names() -> Dictionary:
 		TileCatalog.TREE_BUSHY: "bushy_tree", TileCatalog.TREE_BIRCH_BOTTOM: "birch",
 		TileCatalog.TREE_BIRCH_TOP: "birch",
 	}
+	for tile_name in TileCatalog.TILES:
+		if str(tile_name).begins_with("ISLAND_BLOB_"):
+			out[TileCatalog.TILES[tile_name]["atlas"]] = "grass"
+	return out
 
 
 static func parse(args: PackedStringArray) -> Dictionary:
@@ -87,7 +92,10 @@ static func generate(world: Node, params: MapGenParams) -> Array:
 			var top: Vector2i = world.get_cell_atlas_coords(1, cell)
 			if top == Vector2i(-1, -1):
 				top = world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell)
-			var ground: String = names.get(world.get_cell_atlas_coords(0, cell), "unknown")
+			var atlas: Vector2i = world.get_cell_atlas_coords(0, cell)
+			var ground: String = names.get(atlas, "unknown")
+			if atlas == Vector2i(-1, -1) and world.is_open_sea(cell):
+				ground = "water"
 			row.append([ground, names.get(top, "unknown") if top != Vector2i(-1, -1) else ""])
 		rows.append(row)
 	return rows

@@ -12,7 +12,8 @@ func _test_build_cost_table() -> int:
 	var want := {
 		[BuildCosts.PLANK, 1]: [1, 0], [BuildCosts.PLANK, 4]: [4, 2],
 		[BuildCosts.WALL_BLOCK, 1]: [2, 1], [BuildCosts.WALL_BLOCK, 3]: [6, 3],
-		[BuildCosts.TOWER, 1]: [10, 5], [BuildCosts.START_CASTLE, 1]: [0, 0],
+		[BuildCosts.TOWER, 1]: [10, 5], [BuildCosts.CASTLE, 1]: [50, 25],
+		[BuildCosts.START_CASTLE, 1]: [0, 0],
 		[&"moat", 1]: [-1, 0],
 	}
 	for k in want:
@@ -59,7 +60,7 @@ func _test_build_costs_buy() -> int:
 	## planks and still 2 wood. With 3 wood it lays the planks and leaves 0.
 	## A placement the writer refuses (planks already there) spends nothing.
 	## The starting castle is bought with no wood. While multiplayer is on,
-	## buy refuses and spends nothing (wood is not synced yet, #278).
+	## a wall buy spends and writes; the starting castle still refuses.
 	print("-- test_build_costs_buy")
 	var fail := 0
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -70,7 +71,7 @@ func _test_build_costs_buy() -> int:
 	for s in [11, 42, 7, 1, 99]:
 		world.apply_map_params(_spawn_params(s, 0.0))
 		world.generate_chunk(Vector2(0, 0))
-		for cell in world.get_used_cells(0):
+		for cell in world.sea_cells():
 			if range(3).all(func(i: int) -> bool: return world.predict_cell(cell + Vector2i(i, 0))[0] == TileCatalog.WATER):
 				start = cell
 				break
@@ -117,11 +118,19 @@ func _test_build_costs_buy() -> int:
 		set_multiplayer(api, scene.get_path())
 		inventory.add(Inventory.WOOD, 10)
 		var called := [false]
-		why = BuildCosts.buy(inventory, BuildCosts.TOWER, 1, func() -> bool:
+		why = BuildCosts.buy(inventory, BuildCosts.START_CASTLE, 1, func() -> bool:
 			called[0] = true
 			return true)
 		if why != BuildCosts.MULTIPLAYER_ON or called[0] or inventory.count_of(Inventory.WOOD) != 10:
-			printerr("FAIL build_costs_buy: multiplayer on gave '%s', placed %s, %d wood"
+			printerr("FAIL build_costs_buy: castle multiplayer on gave '%s', placed %s, %d wood"
+					% [why, called[0], inventory.count_of(Inventory.WOOD)])
+			fail += 1
+		called[0] = false
+		why = BuildCosts.buy(inventory, BuildCosts.WALL_BLOCK, 1, func() -> bool:
+			called[0] = true
+			return true)
+		if why != "" or not called[0] or inventory.count_of(Inventory.WOOD) != 8:
+			printerr("FAIL build_costs_buy: wall multiplayer on gave '%s', placed %s, %d wood"
 					% [why, called[0], inventory.count_of(Inventory.WOOD)])
 			fail += 1
 		api.multiplayer_peer = null

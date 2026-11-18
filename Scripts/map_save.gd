@@ -111,7 +111,7 @@ static func _to_json(data: Dictionary, world: WorldSave) -> String:
 	# One compact line. format and format_version stay first so the document
 	# is identifiable after it is uncompressed.
 	return (
-		'{"format":"%s","format_version":%d,"game_version":%s,"created":%d,"updated":%d,"params":{%s},"world":%s,"player":%s}'
+		'{"format":"%s","format_version":%d,"game_version":%s,"created":%d,"updated":%d,"params":{%s},"world":%s,"player":%s,"clock":%s}'
 		% [
 			FORMAT_ID,
 			FORMAT_VERSION,
@@ -121,6 +121,7 @@ static func _to_json(data: Dictionary, world: WorldSave) -> String:
 			",".join(lines),
 			JSON.stringify(world.world_to_dict(), "", true),
 			JSON.stringify(world.player, "", true),
+			JSON.stringify(world.clock_to_dict(), "", true),
 		]
 	)
 
@@ -178,6 +179,8 @@ static func load_world(path: String) -> Dictionary:
 		return failed.call("%s has no params section" % path)
 	if not parsed["world"] is Dictionary or not parsed["player"] is Dictionary:
 		return failed.call("%s has a world or player section that is not an object" % path)
+	if parsed.has("clock") and not parsed["clock"] is Dictionary:
+		return failed.call("%s clock is not an object" % path)
 	if typeof(parsed.get("game_version")) != TYPE_STRING:
 		return failed.call("%s game_version is not a string" % path)
 	if not _is_unix_time(parsed.get("created")):
@@ -209,6 +212,7 @@ static func load_world(path: String) -> Dictionary:
 	if section_error != "":
 		return failed.call("%s: %s" % [path, section_error])
 	world.player = parsed["player"]
+	world.clock_from_variant(parsed.get("clock", {}))
 	world.game_version = parsed["game_version"]
 	world.created = int(parsed["created"])
 	world.updated = int(parsed["updated"])
@@ -281,7 +285,10 @@ static func rename_save(save_name: String, new_name: String, dir: String = SAVE_
 	if FileAccess.file_exists(new_path):
 		return "a map save named %s already exists" % clean
 	var err := DirAccess.rename_absolute(path, new_path)
-	return "" if err == OK else "cannot rename %s to %s (error %s)" % [save_name, clean, err]
+	if err != OK:
+		return "cannot rename %s to %s (error %s)" % [save_name, clean, err]
+	WorldSavePreview.rename_save(save_name, clean)
+	return ""
 
 
 static func delete_save(save_name: String, dir: String = SAVE_DIR) -> String:
@@ -293,7 +300,10 @@ static func delete_save(save_name: String, dir: String = SAVE_DIR) -> String:
 	if not FileAccess.file_exists(path):
 		return "no map save named %s" % save_name
 	var err := DirAccess.remove_absolute(path)
-	return "" if err == OK else "cannot delete %s (error %s)" % [save_name, err]
+	if err != OK:
+		return "cannot delete %s (error %s)" % [save_name, err]
+	WorldSavePreview.remove(save_name)
+	return ""
 
 
 static func _bad_name_error(save_name: String) -> String:

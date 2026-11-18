@@ -5,8 +5,8 @@ extends "res://tests/helpers/test_helpers.gd"
 func _test_join_fail_no_host() -> int:
 	## Join a free UDP port with nothing listening: within the ENet timeout
 	## the main menu is back, the HUD is hidden, and JoinStatus shows
-	## "Could not join …". Time cost: ~1–3 s in verify (client peer timeout
-	## max 3 s; ~2 s alone with --only= plus boot).
+	## "Could not join …". Time cost: ~6 s in verify (the dial budget is 6 s;
+	## ~8 s alone with --only= plus boot).
 	print("-- test_join_fail_no_host")
 	var fail := 0
 	await process_frame
@@ -55,7 +55,9 @@ func _test_join_fail_no_host() -> int:
 func _test_join_fail_host_quits() -> int:
 	## A client whose host process exits lands back on the main menu. Runs
 	## tests/join_fail_probe.gd in its own process (leave reloads the current
-	## scene). Time cost: ~3–6 s in verify (~8 s alone with --only=).
+	## scene). The probe dials after the server log says it is listening, so
+	## a slow boot does not burn the unanswered-join timeout. Time cost:
+	## ~6–8 s in verify (~12 s alone with --only=).
 	print("-- test_join_fail_host_quits")
 	var port := _free_udp_port()
 	if port == 0:

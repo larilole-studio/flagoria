@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Headless check: this Godot 4.7 project imports, opens, and every GDScript parses.
 #
-# Uses --headless, --editor, --quit, and --check-only (only with --script),
-# all present in Godot 4.7.2 --help.
+# Uses --headless, --editor, --quit, and --script, all present in Godot 4.7.2
+# --help. Parsing every GDScript is one process (tools/parse_scripts.gd).
 # --editor --quit exits 0 even when a script fails to parse, and shutdown prints
 # benign RID-leak ERROR lines. This script treats those leaks as non-fatal and
 # fails on parse/load errors instead.
@@ -176,34 +176,25 @@ fi
 rm -f "${load_log}"
 echo "Project load: ok"
 
-echo "== Parse GDScript (--check-only, one file at a time) =="
-fail=0
-found=0
-while IFS= read -r f; do
-  found=1
-  rel="res://${f#./}"
-  echo "-- ${rel}"
-  slog="$(mktemp -p "${verify_tmp}")"
-  set +e
-  "$GODOT" --headless --path "$ROOT" --check-only --script "${rel}" >"${slog}" 2>&1
-  status=$?
-  set -e
-  cat "${slog}"
-  if [[ "${status}" -ne 0 ]] || log_has_project_error "${slog}"; then
-    echo "error: parse failed for ${rel} (exit ${status})" >&2
-    fail=1
-  fi
-  rm -f "${slog}"
-done < <(find . -type f -name '*.gd' -not -path './.git/*' -not -path './.godot/*' | sort)
-
-if [[ "${found}" -eq 0 ]]; then
+echo "== Parse GDScript (one process, tools/parse_scripts.gd) =="
+parse_list="$(mktemp -p "${verify_tmp}")"
+find . -type f -name '*.gd' -not -path './.git/*' -not -path './.godot/*' | sort >"${parse_list}"
+if [[ ! -s "${parse_list}" ]]; then
   echo "error: no GDScript files found" >&2
   exit 1
 fi
-if [[ "${fail}" -ne 0 ]]; then
+parse_log="$(mktemp -p "${verify_tmp}")"
+set +e
+"$GODOT" --headless --path "$ROOT" --script res://tools/parse_scripts.gd -- --list="${parse_list}" >"${parse_log}" 2>&1
+parse_status=$?
+set -e
+cat "${parse_log}"
+if [[ "${parse_status}" -ne 0 ]] || log_has_project_error "${parse_log}" || ! grep -q 'Script parse: ok' "${parse_log}"; then
+  echo "error: project failed to parse (exit ${parse_status})" >&2
+  rm -f "${parse_log}" "${parse_list}"
   exit 1
 fi
-
+rm -f "${parse_log}" "${parse_list}"
 echo "Script parse: ok"
 
 # ---------------------------------------------------------------------------
@@ -217,6 +208,15 @@ if ! python3 "$ROOT/tools/test_lint.py"; then
   exit 1
 fi
 echo "Test registry lint: ok"
+
+echo "== Stress scenario lint (tools/stress_scenario_lint.py) =="
+# Fast, no Godot. Bare sleeps and unseeded randomness in stress scenarios.
+python3 "$ROOT/tools/stress_scenario_lint.py" --self-test
+if ! python3 "$ROOT/tools/stress_scenario_lint.py"; then
+  echo "error: stress scenario lint failed (see above)" >&2
+  exit 1
+fi
+echo "Stress scenario lint: ok"
 
 echo "== Tests (godot --headless --script res://tests/run_tests.gd) =="
 test_log="$(mktemp -p "${verify_tmp}")"

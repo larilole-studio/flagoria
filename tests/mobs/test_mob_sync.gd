@@ -36,7 +36,10 @@ func _test_mobs_sync_to_peer() -> int:
 		var params: MapGenParams = scene.world_params
 		if plan.is_empty() and params != null and params.altitude_seed != 0:
 			plan = MobSpawner.plan(world, world.resolve_player_spawn(), params.altitude_seed, host_rate)
-		if not plan.is_empty() and mobs_node.mobs().size() >= plan.size():
+		# The host may still be replacing the opening set after the castle
+		# clears trees. Wait until this peer's mobs are that plan, not the
+		# first packet of the previous set.
+		if not plan.is_empty() and _roster_matches(mobs_node, world, plan):
 			break
 		await process_frame
 	var mobs: Array = mobs_node.mobs()
@@ -79,6 +82,19 @@ func _test_mobs_sync_to_peer() -> int:
 	return fail
 
 
+func _roster_matches(mobs_node: MobSpawner, world, plan: Array) -> bool:
+	if mobs_node.mobs().size() != plan.size():
+		return false
+	for i in plan.size():
+		var m: Mob = mobs_node.get_node_or_null("mob_%d" % i)
+		if m == null or m.mob_type != plan[i]["type"]:
+			return false
+		var at: Vector2 = world.map_to_local(plan[i]["cell"])
+		if m.position.distance_to(at) > Mob.WANDER_RADIUS + 1.0:
+			return false
+	return true
+
+
 func _test_mob_hidden_on_uncharted() -> int:
 	## A mob is drawn only where this peer has generated the ground under it:
 	## visible on a loaded tile, hidden on an unloaded one, visible again once
@@ -102,7 +118,7 @@ func _test_mob_hidden_on_uncharted() -> int:
 	var far_mob: Mob = add_mob.call(far, false)
 	var boss: Mob = add_mob.call(far + Vector2i(2, 0), true)
 	var fail := 0
-	if world.get_cell_source_id(0, far) != -1 or world.get_cell_source_id(0, Vector2i.ZERO) == -1:
+	if world.is_drawn(far) or not world.is_drawn(Vector2i.ZERO):
 		printerr("FAIL mob_hidden_on_uncharted setup: far tile loaded or near tile missing")
 		scene.queue_free()
 		return 1
@@ -167,16 +183,16 @@ func _test_mob_shown_when_ground_drawn() -> int:
 	var fail := 0
 	for i in 3:
 		await process_frame
-	if mob.visible or world.get_cell_source_id(0, mob_cell) != -1:
+	if mob.visible or world.is_drawn(mob_cell):
 		printerr("FAIL mob_shown_when_ground_drawn setup: mob visible %s, its tile loaded %s"
-				% [mob.visible, world.get_cell_source_id(0, mob_cell) != -1])
+				% [mob.visible, world.is_drawn(mob_cell)])
 		fail += 1
 	else:
 		player.position = world.map_to_local(mob_cell + Vector2i(1, 0))  # respawned beside it
 		var drawn_at := -1
 		for f in world.chunk_refresh_frames * 3:
 			await process_frame
-			if world.get_cell_source_id(0, mob_cell) != -1:
+			if world.is_drawn(mob_cell):
 				drawn_at = f
 				break
 		if drawn_at < 0:

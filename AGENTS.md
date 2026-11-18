@@ -37,6 +37,8 @@ State the intended change or tracking purpose in one sentence.
 
 Describe one concern. State what is included and what is out of scope. Link related issues instead of copying their scope.
 
+Keep each issue to one shippable vertical slice. When a spec has future slices with no immediate owner, file each of them as its own issue when the parent is created, and link them, instead of leaving them as unchecked items inside the parent. Never open an issue that bundles a slice about to be delivered with unowned future slices. This keeps milestones from accumulating open scope that nobody is working on.
+
 ### Done when
 
 List executable completion checks. Each check identifies an actor, an action, and an observable pass condition. Avoid criteria such as "works correctly" without a defined result.
@@ -46,6 +48,11 @@ Use the task issue form when available. Issues created through the API, CLI, or 
 This format applies to all new issues, including roadmap and epic trackers. A new tracker links its tasks and defines completion as acceptance of the included tasks, with deferred scope stated explicitly.
 
 Do not automatically rewrite historical issues to match this format.
+
+## Roadmap and issues
+
+- Milestones are the default way to group issues. Open an umbrella or epic issue only for work that spans more than one milestone, or for dependent pieces that share one rationale (for example the weapon building-block system, or the dedicated-server epic #17). Never open an umbrella whose checklist mirrors a single milestone; the milestone already is that list.
+- Close an issue when its delivered v1 slice ships. Any future slice without an owner becomes its own linked issue, filed at creation or when scope shifts, and never stays behind as an unchecked item in the parent.
 
 ## Issue triage labels
 
@@ -124,6 +131,12 @@ low
 - Merges require these four checks to pass on the current pull request head: `Load project and parse scripts`, `Privacy and size check`, `Netcode stress`, and `Gameplay drives`. Review threads must be resolved. Gameplay pull requests also require the contributor's own feature drive run and reviewed screenshot evidence, as described above. These requirements do not replace the approval rules under Human in the loop.
 - Roadmap and epic trackers follow [docs/issue-trackers.md](docs/issue-trackers.md).
 
+## Writing netcode stress scenarios
+
+A scenario that `tools/stress_netcode.py` runs must be deterministic. Fix the world seed. Do not time it with `await _wait`, `OS.delay_msec`, or `await create_timer`. Wait until an explicit host or peer state is true, and put a bounded timeout on that wait. Each run has a time budget (`--timeout`, default 60 s). The job stops at the first run that fails: it names the scenario, the run index, and the time, and it does not finish the rest of the matrix.
+
+One flaky run otherwise fails only after every scenario has finished, which costs about 30 minutes of CI. `tools/stress_scenario_lint.py` runs inside `tools/verify.sh` and rejects a bare sleep or an unseeded random call in a stress scenario or the probe it launches. It does not follow other helpers. Picking a free UDP port may stay random. A live screenshot drive that is not the stress run may keep a short settle; that function stays in `tools/stress_scenario_lint_allow.txt`, and new scenarios do not go on that list.
+
 ## Known mistakes and the rules that prevent them
 
 Mistakes that have cost time in this repository before. "Enforced by" says what catches each one. "Review" means nothing automatic catches it yet, so the rule is only as strong as the person following it.
@@ -140,6 +153,7 @@ Mistakes that have cost time in this repository before. "Enforced by" says what 
 | A stacked PR still showing its parent's commits, or still targeting the parent branch, after the parent merged | After the parent merges: `gh pr edit <child> --base main`, then on the child branch `git fetch origin && git merge origin/main`, resolve, and push. Merged branches are not deleted automatically here, so GitHub does not retarget the child for you. Say in the child's description which PR it stacks on. | Review. |
 | Rebasing a branch with an open PR and force-pushing it (review threads lose context, other worktrees break) | Bring the branch up to date by merging `origin/main` into it and pushing normally. Force-push only with the maintainer's approval (see below). | Review. |
 | A PR that leaks an email address, a local path or an attribution, or that runs far over the size cap without saying why | Follow the privacy rule and the size rule above, and fill in `.github/pull_request_template.md` (including the `Size:` line). Run `python3 tools/pr_hygiene.py --base origin/main --title "…" --body-file body.md` before opening the PR. False positive: add an entry to `.github/pr-hygiene-allow.txt` (format in the header of `tools/pr_hygiene.py`). | The `pr-hygiene` workflow fails on email addresses, local paths, and over-cap PRs with no `## Why this is large` section or `Size justification:` line. Attribution phrases, the PR author's login and a missing `Size:` line are warnings only. Names: review. |
+| A flaky netcode stress run fails the job only after the whole matrix (about 30 minutes) | Stress scenarios are deterministic: fixed seed, no sleep-based timing, wait on explicit state with a bounded timeout. The job stops at the first failed run. Each run has a 60 s budget. See [Writing netcode stress scenarios](#writing-netcode-stress-scenarios). | `tools/stress_scenario_lint.py` in `tools/verify.sh`. The job is `tools/stress_netcode.py`. |
 
 ## Human in the loop
 

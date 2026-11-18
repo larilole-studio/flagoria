@@ -42,7 +42,7 @@ static func top_can_hold(map: _WorldMap, top: Vector2i) -> bool:
 		ground = map.ground_tile(alt, moist, chance, b)
 	if not map.ground_is_walkable(ground):
 		return false
-	if map.biome_frequency > 0.0 and ground == TileCatalog.SAND:
+	if map.biome_frequency > 0.0 and (ground == TileCatalog.SAND or map._sky.logical_ground(map, top) == TileCatalog.SAND):
 		return false
 	var b := map.biome_at(top)
 	var alt := map.cell_altitude(top, b)

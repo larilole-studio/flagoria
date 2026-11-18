@@ -31,12 +31,11 @@ The in-game menu button (top-right corner of the HUD) shows
 with a 1 px ink shadow like the theme's labels. The button is an 18 px
 square (48 screen px at 1280x720) using the theme's button styles.
 
-## Mode button
+## Tool button
 
-The mode button, just left of the menu button and the same 18 px square,
-switches between combat and interact mode. It shows the current mode:
-`ui_mode_combat.png` (a sword) or `ui_mode_interact.png` (an axe), 11x11
-icons in the menu icon's style, and looks pressed in interact mode.
+The tool wheel button sits left of Run. Sword and chop use the HUD icons
+`assets/ui/hud/icon_mode_attack.png` and `icon_mode_interact.png`. Bow art
+is still a shape drawn by the wheel.
 
 ## Resource counter
 
@@ -72,8 +71,9 @@ the panel again. The frame PNG is unchanged.
 The parchment (`Scripts/parchment_map.gd`) fills the viewport. It is old
 paper, not a second wood frame: `#e7d7b1` with a `#cbb98a` dither, a
 `#8a5a32` edge and the same ink. Explored cells use the panel's map colours.
-Unexplored cells stay that paper fog. A drag pans the sheet, the cross
-recentres on the hero, and the X closes it.
+Unexplored cells stay that paper fog. Wheel and pinch zoom the sheet in
+integer pixel steps; a drag pans, the cross recentres on the hero, and the X
+closes it.
 
 ## Touch controls
 

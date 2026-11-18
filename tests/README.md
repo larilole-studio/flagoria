@@ -6,7 +6,7 @@
 
 - `tests/<area>/test_<topic>.gd`: tests grouped by area or mechanic, for example `tests/ui/test_map_zoom.gd`. The runner finds every `tests/**/test_*.gd` file on its own; nothing lists them.
 - `tests/helpers/test_helpers.gd`: shared helpers (`_pre_biome_defaults`, `_free_udp_port`, `_walls_from_rows` and the others). Every test file starts with `extends "res://tests/helpers/test_helpers.gd"`. Inside a test file, `root`, `process_frame`, `physics_frame`, `paused`, `create_timer()` and `set_multiplayer()` work as they do on the `SceneTree`.
-- `tests/run_tests.gd`: the runner, plus `smoke_true` and `discovery_messages`, which check the runner itself.
+- `tests/run_tests.gd`: the runner, plus `discovery_messages`, which checks that a misnamed or indented test is reported and that `--only=` points at that warning.
 - `tests/*_probe.gd`: scripts that tests start as separate Godot processes. `tests/fixtures/` and `tests/golden/` hold the data tests compare against.
 
 ## Adding a test
@@ -38,7 +38,11 @@ python3 tools/stress_netcode.py -j 1                           # one run at a ti
 python3 tools/stress_netcode.py --list
 ```
 
-CI sets N from `tools/play_review_paths.py` (skipped when not gameplay; 5 or 20 runs per scenario — see `.cursor/skills/verify-flagoria/ci-netcode-stress.md`). `.github/workflows/play-review.yml` runs stress for gameplay pull requests and gameplay pushes to main. `.github/workflows/play-review-label.yml` adds `needs-play-review` when a pull request touches gameplay: player, mobs, scenes, HUD and menus, touch input, netcode, map generation parameters and saved worlds (`Scripts/map_gen.gd`, `Scripts/MapGenParams.gd`, `Scripts/map_save.gd`), or the `[input]` section of `project.godot`. The path list is in `tools/play_review_paths.py` (`--self-test` checks it).
+### Writing netcode stress scenarios
+
+A scenario must be deterministic. Fix the world seed. Do not time it with `await _wait`, `OS.delay_msec`, or `await create_timer`; wait on explicit host or peer state with a bounded timeout. Each run is killed after `--timeout` seconds (default 60). The job stops at the first failed run and names the scenario, the run index, and the time, instead of finishing every scenario first. One flaky run used to cost about 30 minutes of CI. `tools/stress_scenario_lint.py` (in `tools/verify.sh`) rejects a bare sleep or unseeded randomness in a scenario or its probe. Legacy call sites live in `tools/stress_scenario_lint_allow.txt`; do not add new scenarios there. The same rules are in [AGENTS.md](../AGENTS.md#writing-netcode-stress-scenarios).
+
+CI sets N from `tools/play_review_paths.py` (skipped when the change is not gameplay and does not touch the stress runner, the stress lint, `tests/net/`, or a `tests/*_probe.gd` probe; otherwise 4 or 8 runs per scenario — see `.cursor/skills/verify-flagoria/ci-netcode-stress.md`). `.github/workflows/play-review.yml` runs stress for those pull requests and for gameplay pushes to main. `.github/workflows/play-review-label.yml` adds `needs-play-review` when a pull request touches gameplay: player, mobs, scenes, HUD and menus, touch input, netcode, map generation parameters and saved worlds (`Scripts/map_gen.gd`, `Scripts/MapGenParams.gd`, `Scripts/map_save.gd`), or the `[input]` section of `project.godot`. The path list is in `tools/play_review_paths.py` (`--self-test` checks it).
 
 ## Gameplay drives and the `needs-drive` label
 

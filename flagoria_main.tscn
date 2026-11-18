@@ -1,13 +1,17 @@
-[gd_scene load_steps=31 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=41 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
-[ext_resource type="Texture2D" uid="uid://cfqsv7a48sfy3" path="res://art/ui/touch/ui_joystick_base.png" id="3_stick_base"]
-[ext_resource type="Texture2D" uid="uid://4s0d44qgx601" path="res://art/ui/touch/ui_joystick_knob.png" id="3_stick_knob"]
-[ext_resource type="Texture2D" uid="uid://bxg4ah68coqie" path="res://art/ui/touch/ui_joystick_knob_active.png" id="3_stick_knob_on"]
-[ext_resource type="Texture2D" uid="uid://jp6ls4b2ll4" path="res://art/ui/touch/ui_attack_idle.png" id="3_attack_idle"]
-[ext_resource type="Texture2D" uid="uid://dl5tgn6b0syk7" path="res://art/ui/touch/ui_attack_pressed.png" id="3_attack_down"]
-[ext_resource type="Texture2D" uid="uid://c6xsqfbrqc2b2" path="res://art/ui/touch/ui_attack_aim.png" id="3_attack_aim"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_joystick_base.png" id="3_stick_base"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_joystick_base_disabled.png" id="3_stick_base_off"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_joystick_knob.png" id="3_stick_knob"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_joystick_knob_active.png" id="3_stick_knob_on"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_joystick_knob_disabled.png" id="3_stick_knob_off"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_attack_idle.png" id="3_attack_idle"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_attack_pressed.png" id="3_attack_down"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_attack_aim.png" id="3_attack_aim"]
+[ext_resource type="Texture2D" path="res://art/ui/hud_c/ui_attack_disabled.png" id="3_attack_off"]
+[ext_resource type="Script" path="res://Scripts/status_plate_hud.gd" id="3_status_plate"]
 [ext_resource type="TileSet" path="res://art/flagoria/flagoria_tiles_v3.tres" id="4_tiles"]
 [ext_resource type="Script" path="res://Scripts/MainMenu.gd" id="5_u0yu1"]
 [ext_resource type="Theme" path="res://art/ui/main_menu_theme.tres" id="6_menu"]
@@ -19,6 +23,8 @@
 [ext_resource type="PackedScene" path="res://quit_prompt.tscn" id="10_quit_prompt"]
 [ext_resource type="Script" path="res://Scripts/points.gd" id="10_points"]
 [ext_resource type="Script" path="res://Scripts/score_hud.gd" id="11_score_hud"]
+[ext_resource type="Script" path="res://Scripts/scoreboard_panel.gd" id="11_scoreboard"]
+[ext_resource type="Script" path="res://Scripts/scoreboard_toggle.gd" id="11_score_toggle"]
 [ext_resource type="Script" path="res://Scripts/discovery_points.gd" id="12_discovery"]
 [ext_resource type="Script" path="res://Scripts/inventory.gd" id="13_inventory"]
 [ext_resource type="Script" path="res://Scripts/resource_hud.gd" id="14_resource_hud"]
@@ -29,6 +35,13 @@
 [ext_resource type="Script" path="res://Scripts/minimap_panel.gd" id="16_minimap"]
 [ext_resource type="Script" path="res://Scripts/mechanics/run/run_control.gd" id="19_run"]
 [ext_resource type="Script" path="res://Scripts/hud_tool_row.gd" id="20_hud_row"]
+[ext_resource type="Script" path="res://Scripts/mechanics/building/structure_requests.gd" id="21_requests"]
+[ext_resource type="Script" path="res://Scripts/mechanics/conquest/land_score.gd" id="22_land"]
+[ext_resource type="Script" path="res://Scripts/mechanics/defense/tower_guns.gd" id="23_tower_guns"]
+[ext_resource type="Script" path="res://Scripts/mechanics/building_blocks/generated_buildings.gd" id="23_buildings"]
+[ext_resource type="Script" path="res://Scripts/mechanics/combat/ranged_shots.gd" id="24_ranged"]
+[ext_resource type="Script" path="res://Scripts/mechanics/mobs/raid_director.gd" id="25_raid"]
+[ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier_requests.gd" id="26_soldiers"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bm55c"]
 radius = 24.0
@@ -44,20 +57,32 @@ z_index = 4
 position = Vector2(77, 201)
 script = ExtResource("2_54anv")
 border = ExtResource("3_stick_base")
+border_disabled = ExtResource("3_stick_base_off")
 stick = ExtResource("3_stick_knob")
 stick_active = ExtResource("3_stick_knob_on")
+stick_disabled = ExtResource("3_stick_knob_off")
 radius = Vector2(12, 12)
 boundary = 20
 start_radius = 28.0
 
 [node name="TouchScreenButton" type="TouchScreenButton" parent="CanvasLayer1" groups=["attack_button"]]
-position = Vector2(378, 182)
+position = Vector2(428, 218)
 texture_normal = ExtResource("3_attack_idle")
 shape = SubResource("CircleShape2D_bm55c")
 script = ExtResource("7_vw8yj")
 texture_idle = ExtResource("3_attack_idle")
 texture_down = ExtResource("3_attack_down")
 texture_aim = ExtResource("3_attack_aim")
+texture_disabled = ExtResource("3_attack_off")
+
+[node name="StatusPlate" type="PanelContainer" parent="CanvasLayer1"]
+visible = false
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 112.0
+offset_bottom = 36.0
+mouse_filter = 2
+script = ExtResource("3_status_plate")
 
 [node name="HeartsHud" type="Control" parent="CanvasLayer1"]
 visible = false
@@ -82,6 +107,25 @@ mouse_filter = 2
 theme = ExtResource("6_menu")
 text = "0 pts"
 script = ExtResource("11_score_hud")
+
+[node name="ScoreboardToggle" type="Button" parent="CanvasLayer1"]
+visible = false
+offset_left = 4.0
+offset_top = 15.0
+offset_right = 28.0
+offset_bottom = 39.0
+focus_mode = 0
+script = ExtResource("11_score_toggle")
+
+[node name="ScoreboardPanel" type="Control" parent="CanvasLayer1"]
+visible = false
+layout_mode = 3
+offset_left = 4.0
+offset_top = 30.0
+offset_right = 112.0
+offset_bottom = 72.0
+mouse_filter = 0
+script = ExtResource("11_scoreboard")
 
 [node name="ResourceHud" type="HBoxContainer" parent="CanvasLayer1"]
 visible = false
@@ -110,14 +154,6 @@ mouse_filter = 0
 theme = ExtResource("6_menu")
 text = ""
 script = ExtResource("19_run")
-
-[node name="ModeButton" type="Button" parent="CanvasLayer1"]
-offset_right = 24.0
-offset_bottom = 24.0
-focus_mode = 0
-theme = ExtResource("6_menu")
-toggle_mode = true
-icon_alignment = 1
 
 [node name="HudToolRow" type="Node" parent="CanvasLayer1"]
 script = ExtResource("20_hud_row")
@@ -185,20 +221,53 @@ layer_6/y_sort_enabled = false
 layer_6/y_sort_origin = 0
 layer_6/z_index = 5
 layer_6/tile_data = PackedInt32Array()
+layer_7/name = "buildings"
+layer_7/enabled = true
+layer_7/modulate = Color(1, 1, 1, 1)
+layer_7/y_sort_enabled = false
+layer_7/y_sort_origin = 0
+layer_7/z_index = 0
+layer_7/tile_data = PackedInt32Array()
 script = ExtResource("7_n5hto")
 
 [node name="Interaction" type="Node2D" parent="World"]
 script = ExtResource("15_interaction")
 
+[node name="StructureRequests" type="Node" parent="World"]
+script = ExtResource("21_requests")
+
 [node name="TowerCapture" type="Node2D" parent="World"]
 script = ExtResource("16_tower_capture")
+
+[node name="TowerGuns" type="Node2D" parent="World"]
+script = ExtResource("23_tower_guns")
 
 [node name="Cities" type="Node2D" parent="World"]
 script = ExtResource("17_cities")
 
+[node name="LandScore" type="Node2D" parent="World"]
+script = ExtResource("22_land")
+
+[node name="GeneratedBuildings" type="Node" parent="World"]
+script = ExtResource("23_buildings")
+
+[node name="RangedShots" type="Node2D" parent="World"]
+z_index = 20
+script = ExtResource("24_ranged")
+
 [node name="Mobs" type="Node2D" parent="World"]
 y_sort_enabled = true
 script = ExtResource("8_mobs")
+
+[node name="Soldiers" type="Node2D" parent="World"]
+y_sort_enabled = true
+script = ExtResource("26_soldiers")
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World/Soldiers"]
+spawn_path = NodePath("..")
+
+[node name="RaidDirector" type="Node" parent="World"]
+script = ExtResource("25_raid")
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World/Mobs"]
 spawn_path = NodePath("..")
@@ -223,9 +292,12 @@ custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_bottom = 3
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer"]
 layout_mode = 2
+theme_override_constants/separation = 2
 
 [node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -325,6 +397,156 @@ value = 2.0
 custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
 text = "2x"
+horizontal_alignment = 2
+
+[node name="TowerRangeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+text = "Tower range"
+
+[node name="TowerRange" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 32.0
+max_value = 160.0
+step = 8.0
+value = 80.0
+
+[node name="TowerRangeValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "80 px"
+horizontal_alignment = 2
+
+[node name="TowerDamageRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+text = "Tower damage"
+
+[node name="TowerDamage" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 1.0
+max_value = 3.0
+step = 1.0
+value = 1.0
+
+[node name="TowerDamageValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "1"
+horizontal_alignment = 2
+
+[node name="TowerCooldownRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+text = "Tower cooldown"
+
+[node name="TowerCooldown" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 0.5
+max_value = 5.0
+step = 0.1
+value = 1.5
+
+[node name="TowerCooldownValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+custom_minimum_size = Vector2(48, 0)
+layout_mode = 2
+text = "1.5 s"
+horizontal_alignment = 2
+
+[node name="RaidsRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Raids"
+
+[node name="RaidsEnabled" type="CheckButton" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+layout_mode = 2
+button_pressed = false
+
+[node name="RaidIntervalRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Interval"
+
+[node name="RaidInterval" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 15.0
+max_value = 180.0
+step = 1.0
+value = 45.0
+
+[node name="RaidIntervalValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "45s"
+horizontal_alignment = 2
+
+[node name="RaidGroupRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Group"
+
+[node name="RaidGroup" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 1.0
+max_value = 8.0
+step = 1.0
+value = 3.0
+
+[node name="RaidGroupValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "3"
+horizontal_alignment = 2
+
+[node name="RaidRadiusRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+text = "Radius"
+
+[node name="RaidRadius" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+min_value = 16.0
+max_value = 96.0
+step = 1.0
+value = 48.0
+
+[node name="RaidRadiusValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+custom_minimum_size = Vector2(36, 0)
+layout_mode = 2
+text = "48"
 horizontal_alignment = 2
 
 [node name="QuitLayer" type="CanvasLayer" parent="."]

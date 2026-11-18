@@ -12,7 +12,6 @@ extends Button
 const TAP_FRAMES := 12
 ## Run acceleration and the speed cap, as a multiple of the walk values.
 const SPEED_SCALE := 2.0
-const RUN_ICON_TEX := preload("res://assets/ui/hud/icon_run.png")
 
 var latched := false
 var held := false
@@ -25,7 +24,6 @@ func _ready() -> void:
 	text = ""
 	tooltip_text = "Hold to run, or tap to keep running"
 	_fit()
-	icon = RUN_ICON_TEX
 	button_down.connect(_on_down)
 	button_up.connect(_on_up)
 
@@ -47,11 +45,15 @@ func speed_scale() -> float:
 
 
 func _on_down() -> void:
+	if HudLayoutVisual.blocks_hud_actions():
+		return
 	held = true
 	_down_frame = Engine.get_process_frames()
 
 
 func _on_up() -> void:
+	if HudLayoutVisual.blocks_hud_actions():
+		return
 	if not held:
 		return
 	var frames := Engine.get_process_frames() - _down_frame
@@ -65,7 +67,7 @@ func _on_up() -> void:
 
 func _fit() -> void:
 	## Smaller than the attack button; the run icon sits inside the disc.
-	RoundHudStyle.apply(self, RoundHudStyle.RUN_HIT, RoundHudStyle.RUN_SIZE, RoundHudStyle.RUN_ICON)
+	RoundHudStyle.apply_run(self)
 	reset_size()
 
 

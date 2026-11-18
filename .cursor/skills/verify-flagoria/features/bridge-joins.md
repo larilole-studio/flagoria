@@ -3,7 +3,7 @@
 Drive: drives/bridge_joins.gd
 
 Separately placed plank runs that share a side become one deck (#416).
-`BridgeBuilder` picks each cell's `_WATER` piece from the planks and walkable
+`BridgeBuilder` picks each cell's plain plank piece from the planks and walkable
 ground beside it, then solves every placed cell again after a placement or a
 removal. Plain `H` / `V` runs through the interior, including the cell that
 used to end an earlier placement. `START`, `END` and `SINGLE` (the rope and

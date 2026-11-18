@@ -39,8 +39,8 @@ func _test_touch_controls_look() -> int:
 		e.position = pos
 		vp.push_input(e, true)
 
-	if c.distance_to(Vector2(398, 202)) > 0.5:
-		printerr("FAIL touch_controls_look attack button centre %s, want (398, 202)" % c)
+	if c.distance_to(Vector2(448, 238)) > 0.5:
+		printerr("FAIL touch_controls_look attack button centre %s, want (448, 238)" % c)
 		fail += 1
 	var steps := [
 		["idle", func(): pass, button.texture_idle],

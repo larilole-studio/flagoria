@@ -9,7 +9,6 @@ const HERO := {
 	"Down": preload("res://art/ui/map/ui_map_marker_hero_down.png"),
 	"Left": preload("res://art/ui/map/ui_map_marker_hero_left.png"),
 }
-const MAP_ICON := preload("res://assets/ui/hud/icon_map.png")
 const MARGIN := 4.0  ## art pixels from the right edge
 const TOP := 28.0  ## art pixels from the top; the arc slides the panel to its left
 const WINDOW := Rect2i(4, 16, 216, 124)  ## map window inside the frame
@@ -136,7 +135,7 @@ func _add_header_buttons() -> void:
 	_map_button.name = "MinimapButton"
 	_map_button.toggle_mode = true
 	_map_button.theme = load("res://art/ui/main_menu_theme.tres")
-	_map_button.icon = MAP_ICON
+	_map_button.icon = null
 	_map_button.tooltip_text = "Minimap"
 	RoundHudStyle.apply(_map_button)
 	_map_button.pressed.connect(_on_map_button)
@@ -147,17 +146,17 @@ func _add_header_buttons() -> void:
 	layer.add_child.call_deferred(_map_button)
 	layer.add_child.call_deferred(parchment)
 
-
 func _on_map_button() -> void:
-	## Opens the wood panel, or closes it. A press while the parchment is up
-	## puts the parchment away and leaves the panel closed.
+	## Toggles the wood panel; closes parchment first when it is open.
+	if HudLayoutVisual.blocks_hud_actions():
+		_map_button.set_pressed_no_signal(false)
+		return
 	if parchment != null and parchment.is_open():
 		parchment.hide_map()
 		shown = false
 	else:
 		shown = not shown
 	apply_chrome()
-
 
 func _header_button(node_name: String, glyph: int, at: Vector2) -> MapWoodButton:
 	var button := MapWoodButton.new()
@@ -194,6 +193,7 @@ func apply_chrome() -> void:
 	visible = shown and playing and not map_open
 	if _map_button:
 		_map_button.set_pressed_no_signal(visible)
+		RoundHudStyle.refresh_toggle(_map_button)
 
 
 func tick() -> void:
@@ -408,7 +408,7 @@ func _draw_map() -> void:
 	paint_city_walls(_view, top_left, WINDOW.size)
 
 
-func paint_city_walls(target: CanvasItem, top_left: Vector2i, window_size: Vector2i) -> void:
+func paint_city_walls(target: CanvasItem, top_left: Vector2i, window_size: Vector2i, cell_px: int = CELL_PX) -> void:
 	## Owner-coloured city wall cells over an explored window (#277).
 	var cities: Cities = get_node_or_null(WORLD_PATH + "/Cities")
 	if cities == null or cities.cities.is_empty():
@@ -425,11 +425,11 @@ func paint_city_walls(target: CanvasItem, top_left: Vector2i, window_size: Vecto
 		for cell: Vector2i in cities.cities[id]["walls"]:
 			if not explored.is_explored(cell):
 				continue
-			var local := (cell - top_left) * CELL_PX
-			if local.x < -CELL_PX or local.y < -CELL_PX \
+			var local := (cell - top_left) * cell_px
+			if local.x < -cell_px or local.y < -cell_px \
 					or local.x >= window_size.x or local.y >= window_size.y:
 				continue
-			target.draw_rect(Rect2(Vector2(local), Vector2(CELL_PX, CELL_PX)), colour)
+			target.draw_rect(Rect2(Vector2(local), Vector2(cell_px, cell_px)), colour)
 
 
 func _on_ground_changed(cells: Rect2i) -> void:

@@ -7,7 +7,7 @@ func _test_construction_placer_plank() -> int:
 	## wood per cell. Too little wood places and spends nothing. Land, an
 	## existing plank, a bent run and a floating water cell (no land or plank
 	## next to it) are refused with a reason. While multiplayer is on, planks
-	## still place (bridge sync #297); towers/walls stay refused. Time cost:
+	## still place (bridge sync #297). Time cost:
 	## about 0.4 s in tools/verify.sh (~2.0 s alone with
 	## --only=construction_placer_plank, against ~1.7 s runner start-up).
 	print("-- test_construction_placer_plank")
@@ -85,7 +85,7 @@ func _test_construction_placer_plank() -> int:
 		fail += 1
 	# Bent L-shape refused (not a straight H/V run).
 	var bent: Array[Vector2i] = []
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		var a: Vector2i = cell
 		var b: Vector2i = cell + Vector2i.RIGHT
 		var c: Vector2i = cell + Vector2i.RIGHT + Vector2i.DOWN
@@ -106,7 +106,7 @@ func _test_construction_placer_plank() -> int:
 			fail += 1
 	# Floating water: a water cell with no land or plank neighbour.
 	var floating := Vector2i(1 << 20, 0)
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		if world.predict_cell(cell)[0] != TileCatalog.WATER or world.has_bridge(cell):
 			continue
 		if ConstructionPlacer._neighbours(cell).any(func(n: Vector2i) -> bool:

@@ -138,7 +138,7 @@ func _spawn_session(mode: String, joiners: int) -> int:
 				if seen_pos != null and seen_pos.is_equal_approx(Vector2.ZERO) and not (at[id] as Vector2).is_equal_approx(Vector2.ZERO):
 					printerr("FAIL spawn_late_join %s %s: peer %s still sees %s at (0, 0), its owner has %s" % [mode, stage, s.get("id"), id, at[id]])
 					bad += 1
-				elif seen == null or not (seen_pos as Vector2).is_equal_approx(at[id]):
+				elif seen == null or (seen_pos as Vector2).distance_to(at[id]) > settle:
 					printerr("FAIL spawn_late_join %s %s: peer %s sees %s at %s, its owner has %s" % [mode, stage, s.get("id"), id, seen, at[id]])
 					bad += 1
 		if bad == 0:
@@ -161,7 +161,10 @@ func _spawn_session(mode: String, joiners: int) -> int:
 			var s: Dictionary = read.call(i)
 			for id in owned:
 				var seen = s.get("players", {}).get(id)
-				if seen == null or not Vector2(seen["pos"][0], seen["pos"][1]).is_equal_approx(owned[id]):
+				# The owner's body can sit about 2 px off the cell centre when a
+				# wall is above it. Copies catch up a frame later, so the match
+				# is the same settle as the spot check, not an exact vector.
+				if seen == null or Vector2(seen["pos"][0], seen["pos"][1]).distance_to(owned[id]) > settle:
 					return false
 		return true
 	# synced for 300 ms in a row: a copy that matched once, while its owner
@@ -302,6 +305,11 @@ func _respawn_follow_case(label: String, death: Vector2, spawn: Vector2, walk: V
 	server_root.add_child(s_world)
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
+	# This scene is only the owner's network peer. The land counter is not
+	# what the respawn timing measures.
+	var land: Node = scene.get_node_or_null("World/LandScore")
+	if land != null:
+		land.set_physics_process(false)
 	var smp := SceneMultiplayer.new()
 	var cmp := SceneMultiplayer.new()
 	set_multiplayer(smp, server_root.get_path())
@@ -611,6 +619,21 @@ func _sword_on(player: Node2D, mob: Mob) -> void:
 	var blade: Node2D = player.get_node("weapon/sword/CollisionShape2D")
 	player.position += mob.hurt_box.global_position - blade.global_position
 	player.velocity = Vector2.ZERO
+
+
+func _hud_on_canvas(scene: Node, node_name: String) -> Node:
+	## Status widgets may sit under StatusPlate after the local player binds HUD.
+	var layer := scene.get_node_or_null("CanvasLayer1")
+	if layer != null:
+		var direct := layer.get_node_or_null(node_name)
+		if direct != null:
+			return direct
+		var plate := layer.get_node_or_null("StatusPlate")
+		if plate != null:
+			var nested := plate.get_node_or_null(node_name)
+			if nested != null:
+				return nested
+	return scene.find_child(node_name, true, false)
 
 
 func _ui_plays_since(ui, before: Dictionary) -> Dictionary:

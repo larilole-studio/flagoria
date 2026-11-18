@@ -5,13 +5,13 @@ Drive: not player-facing
 Shared placement for every buildable (#296). `ConstructionPlacer`
 (`Scripts/mechanics/building/construction_placer.gd`) checks a kind on a list
 of cells, reports the wood cost, and places through `BuildCosts.buy` into the
-kind's writer. Registered kinds: the plank bridge (a straight water run that
-touches land or an existing plank, written by `TileMap.build_bridge` /
-`BridgeBuilder`), the wooden tower (#273: one land anchor, 3×3
-`tower_wood` through `StructurePlacer`), and free-form wall blocks (#276:
-land cells, 2 wood each, written by `TileMap.place_wall_cells` /
-`WallBuilder`).
-The placement UI (#225) only talks to this module.
+kind's writer. Registered kinds (`ConstructionPlacer.KINDS`): plank bridge (a straight water
+run that touches land or an existing plank, written by `TileMap.build_bridge` /
+`BridgeBuilder`), wooden tower (#273: `tower_wood` through `StructurePlacer`),
+extra castle (#527: `castle`), guard post (#528: `guard_post`), barracks (#556:
+`barracks`), and free-form wall blocks (#276: land cells, 2 wood each, written
+by `TileMap.place_wall_cells` / `WallBuilder`). The placement UI (#225) only
+talks to this module.
 
 Refusal reasons (each at most once): `empty cells`, `unknown kind`,
 `wrong ground`, `occupied`, `not straight`, `not adjacent`, `not enough wood`,
@@ -19,8 +19,9 @@ Refusal reasons (each at most once): `empty cells`, `unknown kind`,
 `not adjacent` (2026-11-02: no floating planks).
 
 Plank bridges sync between peers (#297): `can_place` / `place` allow planks
-while multiplayer is on. Towers and walls still refuse with `multiplayer on`
-until #278.
+while multiplayer is on. Towers, extra castles, guard posts, barracks and wall
+blocks ask the host through `StructureRequests.REQUEST_KINDS` (#497, #498, #527,
+#528, #556) and do not refuse with `multiplayer on`.
 
 ## Sub-features
 
@@ -32,12 +33,14 @@ until #278.
   a structure is `occupied`: nothing is written, no wood is spent, and the
   host's `write_plank` for a peer's request refuses it too (#380 item 2).
 - `construction-tower` a clear land anchor places `tower_wood` for 10 wood,
-  owned by the local peer; water, an overlapping structure/player/mob, short
-  wood and multiplayer on are refused and spend nothing (#273).
+  owned by the local peer; water, an overlapping structure/player/mob and short
+  wood are refused and spend nothing (#273). A connecting client does not
+  write or spend; the host places it (#497).
 - `construction-wall` a clear land cell or straight H/V run that 4-touches an
   existing wall, tower or castle places palisade pieces for 2 wood each; water,
   occupied (structure/wall/player/mob/tree/bush), bent, floating (not adjacent),
-  short wood and multiplayer on are refused and spend nothing (#276).
+  and short wood are refused and spend nothing. A connecting client does not
+  get `multiplayer on`; the host places the run (#498).
 - `build-spend-failed` when spend refuses after the check, `BuildCosts.buy`
   returns `spend failed` and never calls the writer (#380 item 3).
 - `construction-atomic-spend` `ConstructionPlacer.place` leaves no written

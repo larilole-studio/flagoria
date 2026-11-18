@@ -47,8 +47,8 @@ func _cell_vp(interaction: Interaction, world, cell: Vector2i) -> Vector2:
 
 
 func _test_build_picker_includes_tower() -> int:
-	## The row shows Plank / Tower / Wall; Tower hides while multiplayer
-	## is on (Plank stays, #297). Time cost: about 0.35 s in tools/verify.sh
+	## The row shows Plank / Tower / Wall. Tower stays visible in multiplayer
+	## (#497); Plank stays (#297). Time cost: about 0.35 s in tools/verify.sh
 	## (~2.0 s alone with --only=build_picker_includes_tower).
 	print("-- test_build_picker_includes_tower")
 	var fail := 0
@@ -58,7 +58,7 @@ func _test_build_picker_includes_tower() -> int:
 	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	await process_frame
-	if picker == null or picker.get_child_count() < 3:
+	if picker == null or picker.get_child_count() < 4:
 		printerr("FAIL build_picker_includes_tower: picker child count %s"
 				% [picker.get_child_count() if picker else null])
 		fail += 1
@@ -82,14 +82,18 @@ func _test_build_picker_includes_tower() -> int:
 		await process_frame
 		var tower_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.TOWER)
 		var plank_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.PLANK)
-		if tower_btn == null or tower_btn.visible:
-			printerr("FAIL build_picker_includes_tower: MP should hide Tower")
+		var wall_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.WALL)
+		if tower_btn == null or not tower_btn.visible:
+			printerr("FAIL build_picker_includes_tower: MP should show Tower")
+			fail += 1
+		if wall_btn == null or not wall_btn.visible:
+			printerr("FAIL build_picker_includes_tower: MP should show Wall")
 			fail += 1
 		if plank_btn == null or not plank_btn.visible:
 			printerr("FAIL build_picker_includes_tower: MP should keep Plank visible")
 			fail += 1
-		if interaction.build.tool == BuildPlacement.Tool.TOWER:
-			printerr("FAIL build_picker_includes_tower: MP left tool on Tower")
+		if interaction.build.tool != BuildPlacement.Tool.TOWER:
+			printerr("FAIL build_picker_includes_tower: MP cleared the Tower tool")
 			fail += 1
 		api.multiplayer_peer = null
 		peer.close()
@@ -269,7 +273,7 @@ func _test_construction_tower_cached() -> int:
 		return 1
 	var placer := ConstructionPlacer.new(world)
 	var foot := placer.tower_footprint(anchor)
-	var cached: Structure = placer.get("_tower")
+	var cached: Structure = placer.get("_named").get(BuildCosts.TOWER)
 	if cached == null:
 		printerr("FAIL construction_tower_cached: footprint did not cache the tower")
 		fail += 1
@@ -280,13 +284,13 @@ func _test_construction_tower_cached() -> int:
 			var cells: Array[Vector2i] = [at]
 			placer.tower_footprint(at)
 			placer.can_place_geometry(BuildCosts.TOWER, cells)
-			if placer.get("_tower") != cached:
+			if placer.get("_named").get(BuildCosts.TOWER) != cached:
 				printerr("FAIL construction_tower_cached: anchor change replaced the cached tower")
 				fail += 1
 		var inventory: Inventory = scene.get_node("Inventory")
 		inventory.add(Inventory.WOOD, 10)
 		var one: Array[Vector2i] = [anchor]
-		if not placer.place(BuildCosts.TOWER, one, inventory) or placer.get("_tower") != cached \
+		if not placer.place(BuildCosts.TOWER, one, inventory) or placer.get("_named").get(BuildCosts.TOWER) != cached \
 				or inventory.count_of(Inventory.WOOD) != 0:
 			printerr("FAIL construction_tower_cached: placement did not reuse the cached tower")
 			fail += 1

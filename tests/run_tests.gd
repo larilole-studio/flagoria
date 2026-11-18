@@ -94,6 +94,10 @@ func _run() -> void:
 	var script_errors := _ScriptErrorCount.new()
 	OS.add_logger(script_errors)
 	for test_name in picked:
+		paused = false
+		var layout := root.get_node_or_null("HudLayout")
+		if layout != null and layout.has_method("edit_end"):
+			layout.edit_end()
 		var before := script_errors.count()
 		var result = await (owners[test_name] as Object).call(test_name)
 		# Let nodes the test queued for freeing leave the tree, so the next
@@ -198,16 +202,6 @@ func _filter_tests(names: Array[String], wanted: PackedStringArray, skipped: Dic
 		if test_name in keys:
 			picked.append(test_name)
 	return picked
-
-
-func _test_smoke_true() -> int:
-	## Trivial sanity check that the headless runner executes and reports.
-	print("-- test_smoke_true")
-	if true:
-		print("PASS test_smoke_true")
-		return 0
-	printerr("FAIL test_smoke_true")
-	return 1
 
 
 func _test_discovery_messages() -> int:

@@ -36,15 +36,13 @@ func _test_minimap_panel_in_scene() -> int:
 	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
 	map_button.pressed.emit()
 	var rect: Rect2 = panel.get_global_rect()
-	var mode_rect: Rect2 = scene.get_node("CanvasLayer1/ModeButton").get_global_rect()
 	var map_rect: Rect2 = map_button.get_global_rect()
 	var buildings_rect: Rect2 = scene.get_node("CanvasLayer1/BuildingsButton").get_global_rect()
 	var attack: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
 	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
 	var view_w: float = scene.get_viewport().get_visible_rect().size.x
-	var arc_left := minf(mode_rect.position.x, minf(map_rect.position.x, buildings_rect.position.x))
-	var covers := rect.intersects(mode_rect) or rect.intersects(map_rect) \
-			or rect.intersects(buildings_rect) or rect.intersects(attack_rect)
+	var arc_left := minf(map_rect.position.x, buildings_rect.position.x)
+	var covers := rect.intersects(map_rect) or rect.intersects(buildings_rect) or rect.intersects(attack_rect)
 	var beside := rect.end.x <= arc_left + 1.0 and rect.end.x >= arc_left - 4.0
 	if not panel.visible or covers or not beside or rect.position.x < 0.0 or rect.end.x > view_w + 1.0 \
 			or rect.size.round() != (Vector2(224, 144) * panel.scale).round():
@@ -184,6 +182,11 @@ func _test_explored_map() -> int:
 	map.clear()
 	if map.explored_count() != 0 or map.is_explored(Vector2i.ZERO):
 		printerr("FAIL explored_map clear")
+		fail += 1
+	map.reveal(Vector2i(4, -3))
+	var rect := map.explored_rect()
+	if rect.position != Vector2i(-6, -13) or rect.size != Vector2i(21, 21):
+		printerr("FAIL explored_map explored_rect %s" % [rect])
 		fail += 1
 	if fail == 0:
 		print("PASS test_explored_map")

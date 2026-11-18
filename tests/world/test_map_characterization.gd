@@ -9,16 +9,16 @@ func _test_map_characterization() -> int:
 
 	# cell -> [layer0 atlas, layer1 atlas]  (Vector2i(-1,-1) = empty)
 	var expected := {
-		Vector2i(-16, -16): [Vector2i(5, 6), Vector2i(-1, -1)],
-		Vector2i(12, 6): [Vector2i(5, 4), Vector2i(-1, -1)],
-		Vector2i(13, 6): [Vector2i(5, 1), Vector2i(-1, -1)],
+		Vector2i(-16, -16): [Vector2i(-1, -1), Vector2i(-1, -1)],
+		Vector2i(12, 6): [Vector2i(18, 9), Vector2i(-1, -1)],
+		Vector2i(13, 6): [Vector2i(22, 13), Vector2i(-1, -1)],
 		Vector2i(14, 6): [Vector2i(5, 0), Vector2i(-1, -1)],
 		Vector2i(14, 11): [Vector2i(6, 0), Vector2i(-1, -1)],
 		Vector2i(14, 7): [Vector2i(5, 1), Vector2i(7, 3)],
-		Vector2i(0, 0): [Vector2i(5, 6), Vector2i(-1, -1)],
-		Vector2i(8, -8): [Vector2i(5, 6), Vector2i(-1, -1)],
-		Vector2i(-8, 8): [Vector2i(5, 6), Vector2i(-1, -1)],
-		Vector2i(15, 15): [Vector2i(5, 4), Vector2i(-1, -1)],
+		Vector2i(0, 0): [Vector2i(-1, -1), Vector2i(-1, -1)],
+		Vector2i(8, -8): [Vector2i(-1, -1), Vector2i(-1, -1)],
+		Vector2i(-8, 8): [Vector2i(-1, -1), Vector2i(-1, -1)],
+		Vector2i(15, 15): [Vector2i(20, 8), Vector2i(-1, -1)],
 		Vector2i(15, 6): [Vector2i(6, 0), Vector2i(7, 3)],
 	}
 
