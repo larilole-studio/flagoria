@@ -85,7 +85,7 @@ func _test_construction_placer_plank() -> int:
 		fail += 1
 	# Bent L-shape refused (not a straight H/V run).
 	var bent: Array[Vector2i] = []
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		var a: Vector2i = cell
 		var b: Vector2i = cell + Vector2i.RIGHT
 		var c: Vector2i = cell + Vector2i.RIGHT + Vector2i.DOWN
@@ -106,7 +106,7 @@ func _test_construction_placer_plank() -> int:
 			fail += 1
 	# Floating water: a water cell with no land or plank neighbour.
 	var floating := Vector2i(1 << 20, 0)
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		if world.predict_cell(cell)[0] != TileCatalog.WATER or world.has_bridge(cell):
 			continue
 		if ConstructionPlacer._neighbours(cell).any(func(n: Vector2i) -> bool:

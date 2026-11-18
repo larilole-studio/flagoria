@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier.gd" id="1_soldier"]
+[ext_resource type="Script" path="res://Scripts/mob_sfx.gd" id="2_sfx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
+size = Vector2(12, 10)
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_soldier"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:facing")
+properties/1/spawn = true
+properties/1/replication_mode = 2
+properties/2/path = NodePath(".:state")
+properties/2/spawn = true
+properties/2/replication_mode = 2
+properties/3/path = NodePath(".:order")
+properties/3/spawn = true
+properties/3/replication_mode = 2
+properties/4/path = NodePath(".:hp")
+properties/4/spawn = true
+properties/4/replication_mode = 2
+
+[node name="Soldier" type="Node2D"]
+texture_filter = 1
+script = ExtResource("1_soldier")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(0, -8)
+hframes = 8
+vframes = 16
+
+[node name="Puff" type="Sprite2D" parent="."]
+visible = false
+texture_filter = 1
+position = Vector2(0, -8)
+hframes = 4
+
+[node name="HurtBox" type="Area2D" parent="."]
+position = Vector2(0, -4)
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtBox"]
+shape = SubResource("RectangleShape2D_hurt")
+
+[node name="Sfx" type="Node2D" parent="."]
+script = ExtResource("2_sfx")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_soldier")

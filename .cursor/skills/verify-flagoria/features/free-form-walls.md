@@ -40,7 +40,7 @@ to the host (#498). Preview green cells and cost match exactly what
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone or offline) with wood.
-2. Tap the mode button to enter interact mode; the Cut / Plank / Tower / Wall
+2. Select chop on the tool wheel to enter interact mode; the Cut / Plank / Tower / Wall
    picker appears.
 3. Tap Wall, tap clear land that 4-touches the castle, a tower or a wall.
    The tip stays. Tap a 4-neighbour or drag a straight run next to the tip;

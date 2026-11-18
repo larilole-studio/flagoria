@@ -26,10 +26,15 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if get_parent() is StatusPlateHud:
+		return
 	follow_hearts()
 
 
 func follow_hearts() -> void:
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
+	if plate != null and plate.is_visible_in_tree():
+		return
 	var hearts := get_node_or_null("../HeartsHud") as Control
 	if hearts == null:
 		return
@@ -51,3 +56,6 @@ func bind(inventory: Inventory) -> void:
 func _on_changed(resource: StringName, count: int) -> void:
 	if resource == Inventory.WOOD:
 		label.text = str(count)
+		var plate := get_parent() as StatusPlateHud
+		if plate != null:
+			plate.reflow()

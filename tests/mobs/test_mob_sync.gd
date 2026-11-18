@@ -118,7 +118,7 @@ func _test_mob_hidden_on_uncharted() -> int:
 	var far_mob: Mob = add_mob.call(far, false)
 	var boss: Mob = add_mob.call(far + Vector2i(2, 0), true)
 	var fail := 0
-	if world.get_cell_source_id(0, far) != -1 or world.get_cell_source_id(0, Vector2i.ZERO) == -1:
+	if world.is_drawn(far) or not world.is_drawn(Vector2i.ZERO):
 		printerr("FAIL mob_hidden_on_uncharted setup: far tile loaded or near tile missing")
 		scene.queue_free()
 		return 1
@@ -183,16 +183,16 @@ func _test_mob_shown_when_ground_drawn() -> int:
 	var fail := 0
 	for i in 3:
 		await process_frame
-	if mob.visible or world.get_cell_source_id(0, mob_cell) != -1:
+	if mob.visible or world.is_drawn(mob_cell):
 		printerr("FAIL mob_shown_when_ground_drawn setup: mob visible %s, its tile loaded %s"
-				% [mob.visible, world.get_cell_source_id(0, mob_cell) != -1])
+				% [mob.visible, world.is_drawn(mob_cell)])
 		fail += 1
 	else:
 		player.position = world.map_to_local(mob_cell + Vector2i(1, 0))  # respawned beside it
 		var drawn_at := -1
 		for f in world.chunk_refresh_frames * 3:
 			await process_frame
-			if world.get_cell_source_id(0, mob_cell) != -1:
+			if world.is_drawn(mob_cell):
 				drawn_at = f
 				break
 		if drawn_at < 0:

@@ -142,10 +142,11 @@ func _fire(main: Node, world: Node) -> void:
 	_fired = token
 	var me := world.get_node_or_null(str(_id)) as CharacterBody2D
 	var target := world.get_node_or_null("1") as Node2D
-	var button := main.get_node_or_null("CanvasLayer1/BowButton") as BaseButton
-	if me == null or target == null or button == null or not me.is_multiplayer_authority():
+	var wheel := main.get_node_or_null("CanvasLayer1/ToolWheel")
+	if me == null or target == null or wheel == null or not wheel.has_method("select") \
+			or not me.is_multiplayer_authority():
 		return
-	button.button_pressed = true
+	wheel.select(ToolWheel.Tool.BOW)
 	var toward := target.global_position - me.global_position
 	var dir: Vector2 = toward if token != "away" else -toward
 	if dir.length_squared() < 1.0:

@@ -13,6 +13,8 @@ func _test_map_save_round_trip() -> int:
 	for key in defaults.keys():
 		if typeof(defaults[key]) == TYPE_INT:
 			params.set(key, defaults[key] + 3)
+		elif typeof(defaults[key]) == TYPE_BOOL:
+			params.set(key, not bool(defaults[key]))
 		else:
 			params.set(key, defaults[key] + 1.0 / 3.0)
 	var saved = MapSave.save_map(params, "test_round_trip")
@@ -58,13 +60,15 @@ func _test_map_save_round_trip() -> int:
 	world.generate_chunk(Vector2(0, 0))
 	for cell in world.get_used_cells(0):
 		cells[cell] = [world.get_cell_atlas_coords(0, cell), world.get_cell_atlas_coords(1, cell)]
+	for cell in world.sea_cells():
+		cells[cell] = [Vector2i(-1, -1), world.get_cell_atlas_coords(1, cell)]
 	world.apply_map_params(reloaded)
 	world.generate_chunk(Vector2(0, 0))
 	var mismatched := 0
 	for cell in cells.keys():
 		if cells[cell] != [world.get_cell_atlas_coords(0, cell), world.get_cell_atlas_coords(1, cell)]:
 			mismatched += 1
-	if cells.size() == 0 or mismatched > 0 or world.get_used_cells(0).size() != cells.size():
+	if cells.size() == 0 or mismatched > 0 or world.get_used_cells(0).size() + world.sea_cells().size() != cells.size():
 		printerr("FAIL map_save_round_trip regenerated chunk: %s of %s cells differ" % [mismatched, cells.size()])
 		fail += 1
 	scene.queue_free()

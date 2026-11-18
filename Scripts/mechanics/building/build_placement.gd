@@ -8,7 +8,7 @@ extends RefCounted
 ## #297 / #497 / #498). Preview green cells and cost match exactly what
 ## commit places and charges. Wall keeps a persistent tip while selected (#276).
 
-enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL }
+enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS }
 
 const VALID_TINT := Color(0.2, 0.85, 0.3, 0.42)
 const INVALID_TINT := Color(0.92, 0.22, 0.18, 0.48)
@@ -16,34 +16,8 @@ const COST_COLOR := Color(0.98, 0.95, 0.88, 1.0)
 const REASON_COLOR := Color(1.0, 0.75, 0.55, 1.0)
 const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 
-const TOOL_ICONS := {
-	Tool.CUT: preload("res://art/ui/ui_tool_cut.png"),
-	Tool.PLANK: preload("res://art/ui/ui_tool_plank.png"),
-	Tool.TOWER: preload("res://art/ui/ui_tool_tower.png"),
-	Tool.CASTLE: preload("res://art/ui/ui_tool_castle.png"),
-	Tool.GUARD: preload("res://art/ui/ui_tool_guard.png"),
-	Tool.WALL: preload("res://art/ui/ui_tool_wall.png"),
-}
-const FOOTPRINT_KIND := {
-	Tool.TOWER: BuildCosts.TOWER,
-	Tool.CASTLE: BuildCosts.CASTLE,
-	Tool.GUARD: BuildCosts.GUARD_POST,
-}
-const TOOL_TIPS := {
-	Tool.CUT: "Cut", Tool.PLANK: "Plank", Tool.TOWER: "Tower", Tool.CASTLE: "Castle",
-	Tool.GUARD: "Guard post", Tool.WALL: "Wall",
-}
-const BUTTON_NAMES := {
-	Tool.PLANK: "PlankButton", Tool.TOWER: "TowerButton", Tool.CASTLE: "CastleButton",
-	Tool.GUARD: "GuardButton", Tool.WALL: "WallButton",
-}
 const BUILDINGS_ICON := preload("res://assets/ui/hud/icon_buildings.png")
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
-## Opaque tool art. Narrower than the disc so the circle and the gold ring show.
-const COLUMN_ICON := 12
-## Nothing stays hidden once its request exists. Plank (#297), Tower (#497)
-## and Wall (#498) stay visible. An empty list hides nothing.
-const MP_HIDDEN: Array = []
 
 var tool := Tool.CUT
 var cells: Array[Vector2i] = []  ## snapped run or tower footprint under the finger
@@ -94,7 +68,11 @@ func setup(interaction: Interaction) -> void:
 
 
 static func is_footprint_tool(value: Tool) -> bool:
-	return FOOTPRINT_KIND.has(value)
+	return BuildToolRow.is_footprint(value)
+
+
+func tracks_pointer() -> bool:
+	return BuildToolRow.tracks_pointer(tool)
 
 
 func set_tool(value: Tool) -> void:
@@ -171,8 +149,8 @@ func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 		clear_preview()
 		return
 	cost_viewport = end_viewport
-	if FOOTPRINT_KIND.has(tool):
-		_update_footprint_preview(end_viewport, inventory, FOOTPRINT_KIND[tool])
+	if BuildToolRow.is_footprint(tool):
+		_update_footprint_preview(end_viewport, inventory, BuildToolRow.footprint_kind(tool))
 		return
 	if tool == Tool.WALL:
 		_update_wall_preview(start_viewport, end_viewport, inventory)
@@ -201,8 +179,8 @@ func commit() -> bool:
 		clear_preview()
 		return false
 	var ok := false
-	if FOOTPRINT_KIND.has(tool):
-		ok = _commit_footprint(inventory, FOOTPRINT_KIND[tool])
+	if BuildToolRow.is_footprint(tool):
+		ok = _commit_footprint(inventory, BuildToolRow.footprint_kind(tool))
 	elif tool == Tool.PLANK:
 		ok = _commit_plank(inventory)
 	elif tool == Tool.WALL:
@@ -356,8 +334,8 @@ func _ensure_picker() -> void:
 		_buildings.toggle_mode = true
 		_buildings.theme = theme
 		_buildings.tooltip_text = "Buildings"
-		_buildings.icon = BUILDINGS_ICON
-		RoundHudStyle.apply(_buildings)
+		_buildings.icon = null
+		RoundHudStyle.apply_build(_buildings)
 		_buildings.toggled.connect(_on_buildings_toggled)
 		hud.add_child(_buildings)
 	_picker = hud.get_node_or_null("BuildPicker") as Control
@@ -366,22 +344,7 @@ func _ensure_picker() -> void:
 		_picker.name = "BuildPicker"
 		_picker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hud.add_child(_picker)
-	for child in _picker.get_children():
-		child.queue_free()
-	_buttons.clear()
-	for t in [Tool.PLANK, Tool.TOWER, Tool.CASTLE, Tool.GUARD, Tool.WALL]:
-		var button := Button.new()
-		button.name = BUTTON_NAMES[t]
-		button.toggle_mode = true
-		button.theme = theme
-		button.icon = TOOL_ICONS[t] as Texture2D
-		button.tooltip_text = TOOL_TIPS[t] as String
-		RoundHudStyle.apply(button, RoundHudStyle.HIT, RoundHudStyle.SIZE, COLUMN_ICON)
-		var captured: Tool = t
-		button.pressed.connect(func() -> void: set_tool(captured))
-		_picker.add_child(button)
-		_buttons[t] = button
-	_picker.reset_size()
+	BuildToolRow.populate_picker(_picker, theme, _buttons, set_tool)
 	_rotate.ensure(hud, theme)
 	_rotate.connect_pressed(rotate_footprint)
 
@@ -392,56 +355,16 @@ func _refresh_picker_visible() -> void:
 	if _picker == null or _interaction == null:
 		return
 	var mp := Interaction.multiplayer_on(_interaction.multiplayer)
-	if mp and tool in MP_HIDDEN:
+	if mp and tool in BuildToolRow.MP_HIDDEN:
 		set_tool(Tool.CUT)
 		return
 	_picker.visible = true
 	for t in _buttons:
-		(_buttons[t] as Button).visible = _list_open and not (mp and t in MP_HIDDEN)
-
+		(_buttons[t] as Button).visible = _list_open and not (mp and t in BuildToolRow.MP_HIDDEN)
 
 
 func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
-	## Cells the Wall tool would try to place for this gesture. First placement
-	## (no tip): the tapped cell, or an H/V snap of the drag — ConstructionPlacer
-	## still requires that cell to 4-touch a tower, castle or wall. With a tip:
-	## a single 4-neighbour on tap, or an H/V run that starts on the neighbour
-	## of the tip toward the finger. Empty when the gesture is a diagonal step
-	## off the tip or does not touch it (gap).
-	var empty: Array[Vector2i] = []
-	if not has_tip:
-		if from_cell == to_cell:
-			var one: Array[Vector2i] = [to_cell]
-			return one
-		return snap_run(from_cell, to_cell)
-	var delta := to_cell - tip
-	if delta == Vector2i.ZERO:
-		return empty
-	var neighbours := {
-		tip + Vector2i.LEFT: true, tip + Vector2i.RIGHT: true,
-		tip + Vector2i.UP: true, tip + Vector2i.DOWN: true,
-	}
-	if from_cell == to_cell:
-		if not neighbours.has(to_cell):
-			return empty
-		var adj: Array[Vector2i] = [to_cell]
-		return adj
-	var horizontal := absi(delta.x) >= absi(delta.y)
-	if horizontal and delta.x == 0:
-		return empty
-	if not horizontal and delta.y == 0:
-		return empty
-	# Diagonal-only off the tip (both axes non-zero and equal length intent):
-	# snap still yields a straight run, but the first step must 4-touch tip.
-	var step := Vector2i(
-		(1 if delta.x > 0 else -1) if horizontal else 0,
-		0 if horizontal else (1 if delta.y > 0 else -1),
-	)
-	var start := tip + step
-	var end := Vector2i(to_cell.x, tip.y) if horizontal else Vector2i(tip.x, to_cell.y)
-	if start == tip:
-		return empty
-	return snap_run(start, end)
+	return BuildToolRow.wall_segment(tip, has_tip, from_cell, to_cell)
 
 
 func _update_wall_preview(start_viewport: Vector2, end_viewport: Vector2, inventory: Inventory) -> void:

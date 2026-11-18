@@ -40,13 +40,7 @@ const SPROUTS_PER_MESSAGE := 500
 const DRAG_START := 6.0  ## viewport px a touch moves before it is a range, not a tap
 ## The invisible alternative tile a chop swaps in (kept in ChopAction).
 const HIDDEN_ALT := ChopAction.HIDDEN_ALT
-const BUTTON_PATH := "/root/Flagoria/CanvasLayer1/ModeButton"
 const INVENTORY_PATH := "/root/Flagoria/Inventory"
-const ICONS := {
-	Mode.COMBAT: preload("res://assets/ui/hud/icon_mode_attack.png"),
-	Mode.INTERACT: preload("res://assets/ui/hud/icon_mode_interact.png"),
-}
-const TOOLTIPS := {Mode.COMBAT: "Combat mode", Mode.INTERACT: "Interact mode"}
 const LINE_COLOR := Color(0.949, 0.918, 0.945, 0.9)
 const FILL_COLOR := Color(0.949, 0.918, 0.945, 0.18)
 
@@ -96,37 +90,20 @@ func _ready() -> void:
 	_chop.chop_hit.connect(chop_hit.emit)
 	world_map.plants_regrown.connect(_on_plants_regrown)
 	world_map.trees_sprouted.connect(_on_trees_sprouted)
-	var button := get_node_or_null(BUTTON_PATH) as Button
-	if button:
-		RoundHudStyle.apply(button)
-		button.pressed.connect(toggle_mode)
-	_refresh_button()
 
 
 func bind(local_player: Node2D) -> void:
 	player = local_player
 
 
-func toggle_mode() -> void:
-	if HudLayoutVisual.blocks_hud_actions():
-		return
-	set_mode(Mode.INTERACT if mode == Mode.COMBAT else Mode.COMBAT)
-
-
 func set_mode(value: Mode) -> void:
 	mode = value
 	_cancel()
 	build.on_mode_changed(mode)
-	_refresh_button()
 	mode_changed.emit(mode)
-
-
-func _refresh_button() -> void:
-	var button := get_node_or_null(BUTTON_PATH) as Button
-	if button:
-		button.icon = ICONS[mode]
-		button.tooltip_text = TOOLTIPS[mode]
-		button.set_pressed_no_signal(mode == Mode.INTERACT)
+	var wheel := get_node_or_null("/root/Flagoria/CanvasLayer1/ToolWheel")
+	if wheel != null and wheel.has_method("follow_mode"):
+		wheel.follow_mode(mode)
 
 
 static func multiplayer_on(api: MultiplayerAPI) -> bool:
@@ -146,7 +123,7 @@ func _process(delta: float) -> void:
 	if mode == Mode.INTERACT:
 		# Keep the build preview honest while the finger is held still: wood,
 		# reach (player walked) or the map can change without a new drag event.
-		if _touch != -1 and build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+		if _touch != -1 and build.tracks_pointer():
 			build.update_preview(_start, _end)
 		queue_redraw()
 
@@ -171,7 +148,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cancel()  # a second finger: a pinch, not a selection
 		elif event.index == _touch:
 			_end = event.position
-			if build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+			if build.tracks_pointer():
 				build.update_preview(_start, _end)
 				build.commit()
 			elif _dragging:
@@ -184,7 +161,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_end = event.position
 		if _start.distance_to(_end) > DRAG_START:
 			_dragging = true
-		if build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+		if build.tracks_pointer():
 			build.update_preview(_start, _end)
 
 
@@ -504,7 +481,7 @@ func receive_yields(cell: Vector2i, yields: Dictionary) -> void:
 func _draw() -> void:
 	if mode != Mode.INTERACT or player == null:
 		return
-	if build.tool in [BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.WALL]:
+	if build.tracks_pointer():
 		build.draw_preview(self)
 	elif _stick.dragging:
 		var sweep := chop_sweep()

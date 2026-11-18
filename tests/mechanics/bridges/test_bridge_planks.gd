@@ -15,7 +15,7 @@ func _test_bridge_planks() -> int:
 	root.add_child(scene)
 	var world = scene.get_node("World/worldMap")
 	var piece := func(n: String) -> Vector2i:
-		return TileCatalog.TILES["BRIDGE_PLANK_%s_WATER" % n]["atlas"]
+		return TileCatalog.TILES["BRIDGE_PLANK_%s" % n]["atlas"]
 	var want := {
 		[3, true, true, true]: ["H_START", "H", "H_END"],
 		[1, true, true, true]: ["H_SINGLE"],
@@ -103,7 +103,7 @@ func _test_bridge_planks() -> int:
 	player.queue_free()
 	world.apply_map_params(_spawn_params(seed_value, 0.0))
 	world.generate_chunk(Vector2(0, 0))
-	if world.get_cell_atlas_coords(0, run_start) != TileCatalog.WATER:
+	if world.get_cell_atlas_coords(0, run_start) != Vector2i(-1, -1) or not world.is_open_sea(run_start):
 		printerr("FAIL bridge_planks: a new map kept the bridge at %s" % run_start)
 		fail += 1
 	scene.queue_free()
@@ -169,7 +169,7 @@ func _test_bridge_joins() -> int:
 				printerr("FAIL bridge_joins: branch %s want V_TIP_S" % branch_key)
 				fail += 1
 			if not world._bridges.erase_cells(branch) or world.has_bridge(plus[3]) \
-					or world.get_cell_atlas_coords(0, plus[3]) != TileCatalog.WATER:
+					or not world.is_open_sea(plus[3]):
 				printerr("FAIL bridge_joins: branch erase left %s" % _plank_key(world.get_cell_atlas_coords(0, plus[3])))
 				fail += 1
 			fail += _keys_match(world, row, alone, "plus after branch erase")
@@ -218,7 +218,7 @@ func _test_bridge_joins() -> int:
 		fail += 1
 	fail += _keys_match(world, first, _joined_keys(3, true, true, false), "removed")
 	for c in rest:
-		if world.has_bridge(c) or world.get_cell_atlas_coords(0, c) != TileCatalog.WATER:
+		if world.has_bridge(c) or not world.is_open_sea(c):
 			printerr("FAIL bridge_joins: removed %s is %s bridge %s" % [c, world.get_cell_atlas_coords(0, c), world.has_bridge(c)])
 			fail += 1
 	if not world.build_bridge(rest[0], rest[rest.size() - 1]):
@@ -230,7 +230,7 @@ func _test_bridge_joins() -> int:
 		printerr("FAIL bridge_joins: middle erase failed")
 		fail += 1
 	if _plank_key(world._bridges.piece(gap[1])) != "H_TIP_E" or world.has_bridge(gap[2]) \
-			or world.get_cell_atlas_coords(0, gap[2]) != TileCatalog.WATER:
+			or not world.is_open_sea(gap[2]):
 		printerr("FAIL bridge_joins: gap at the old end left %s / %s"
 				% [_plank_key(world._bridges.piece(gap[1])), world.get_cell_atlas_coords(0, gap[2])])
 		fail += 1
@@ -269,7 +269,7 @@ func _test_bridge_joins() -> int:
 			else:
 				fail += _keys_match(world, vfirst, _joined_keys(3, false, true, false), "vertical removed")
 				for c in vrest:
-					if world.has_bridge(c) or world.get_cell_atlas_coords(0, c) != TileCatalog.WATER:
+					if world.has_bridge(c) or not world.is_open_sea(c):
 						printerr("FAIL bridge_joins: vertical removed %s is %s bridge %s"
 								% [c, world.get_cell_atlas_coords(0, c), world.has_bridge(c)])
 						fail += 1
@@ -288,9 +288,9 @@ func _test_bridge_joins() -> int:
 
 func _plank_key(atlas: Vector2i) -> String:
 	for tile_name: String in TileCatalog.TILES:
-		if tile_name.begins_with("BRIDGE_PLANK_") and tile_name.ends_with("_WATER") \
-				and TileCatalog.TILES[tile_name]["atlas"] == atlas:
-			return tile_name.trim_prefix("BRIDGE_PLANK_").trim_suffix("_WATER")
+		if tile_name.begins_with("BRIDGE_PLANK_") and TileCatalog.TILES[tile_name]["atlas"] == atlas:
+			var key := tile_name.trim_prefix("BRIDGE_PLANK_")
+			return key.trim_suffix("_WATER")
 	return ""
 
 
@@ -346,7 +346,7 @@ func _gap_between_land(world, step: Vector2i, min_n: int, max_n: int, avoid: Arr
 			if blocked.has(w):
 				hits_avoid = true
 				break
-			if world.get_cell_source_id(0, w) == -1 or world.predict_cell(w)[0] != TileCatalog.WATER \
+			if not world.is_drawn(w) or world.predict_cell(w)[0] != TileCatalog.WATER \
 					or world.has_bridge(w):
 				break
 			run.append(w)
@@ -376,7 +376,7 @@ func _column_from_land(world, step: Vector2i, min_n: int, max_n: int, avoid: Arr
 		var stopped := false
 		for i in range(1, max_n + 1):
 			var w: Vector2i = cell + step * i
-			if blocked.has(w) or world.get_cell_source_id(0, w) == -1 \
+			if blocked.has(w) or not world.is_drawn(w) \
 					or world.predict_cell(w)[0] != TileCatalog.WATER or world.has_bridge(w):
 				stopped = true
 				break
@@ -386,7 +386,7 @@ func _column_from_land(world, step: Vector2i, min_n: int, max_n: int, avoid: Arr
 		var far: Vector2i = run[run.size() - 1] + step
 		if stopped and blocked.has(far):
 			continue
-		if world.get_cell_source_id(0, far) == -1 or blocked.has(far):
+		if not world.is_drawn(far) or blocked.has(far):
 			continue
 		var landed := _walkable_ground(world, far)
 		if best.is_empty() or (landed and not best_landed) or (landed == best_landed and run.size() < best.size()):
@@ -402,15 +402,15 @@ func _walkable_ground(world, cell: Vector2i) -> bool:
 func _open_plus(world) -> Array[Vector2i]:
 	## Three water cells west to east, plus the water cell south of the middle,
 	## whose south side is not walkable ground. Empty when the chunk has none.
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		var row := [cell, cell + Vector2i.RIGHT, cell + Vector2i(2, 0)]
 		var south: Vector2i = row[1] + Vector2i.DOWN
 		var open := true
 		for w in row:
-			if world.get_cell_source_id(0, w) == -1 or world.predict_cell(w)[0] != TileCatalog.WATER:
+			if not world.is_drawn(w) or world.predict_cell(w)[0] != TileCatalog.WATER:
 				open = false
 				break
-		if not open or world.get_cell_source_id(0, south) == -1 \
+		if not open or not world.is_drawn(south) \
 				or world.predict_cell(south)[0] != TileCatalog.WATER:
 			continue
 		var past: Vector2i = south + Vector2i.DOWN
@@ -428,7 +428,7 @@ func _floating_water(world, gap: Array[Vector2i], plus: Array[Vector2i]) -> Vect
 	## places so the continuation does not turn it into a supported cell.
 	var land := func(c: Vector2i) -> bool:
 		return not world.has_bridge(c) and world.ground_is_walkable(world.predict_cell(c)[0])
-	for cell in world.get_used_cells(0):
+	for cell in world.sea_cells():
 		if world.predict_cell(cell)[0] != TileCatalog.WATER or world.has_bridge(cell):
 			continue
 		if _near(cell, gap) or _near(cell, plus):

@@ -54,12 +54,12 @@ func _test_points_hud_in_scene() -> int:
 	var me: int = scene.multiplayer.get_unique_id()
 	scene.add_player(me)
 	await process_frame
-	var hud: ScoreHud = scene.get_node("CanvasLayer1/ScoreHud")
-	var hearts: Control = scene.get_node("CanvasLayer1/HeartsHud")
+	var hud: ScoreHud = scene.find_child("ScoreHud", true, false) as ScoreHud
+	var hearts: Control = scene.find_child("HeartsHud", true, false) as Control
 	if not hud.visible or hud.text != "0 pts":
 		printerr("FAIL points_hud_in_scene counter visible %s, text '%s'" % [hud.visible, hud.text])
 		fail += 1
-	if hud.position.y < hearts.position.y + hearts.size.y * hearts.scale.y or hud.scale != hearts.scale:
+	if hud.position.x < hearts.position.x + hearts.size.x - 1.0 or hud.scale != hearts.scale:
 		printerr("FAIL points_hud_in_scene counter at %s x%s, hearts at %s size %s x%s"
 				% [hud.position, hud.scale, hearts.position, hearts.size, hearts.scale])
 		fail += 1
@@ -402,7 +402,7 @@ func _test_points_mob_kill() -> int:
 	## on a dying mob pay nothing, and a hit with no known player pays no one.
 	print("-- test_points_mob_kill")
 	var fail := 0
-	var want_values := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10}
+	var want_values := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10, MobCatalog.SOLDIER: 10}
 	if Points.MOB_KILL_POINTS != want_values or Points.MOB_KILL_POINTS.size() != MobCatalog.names().size():
 		printerr("FAIL points_mob_kill values %s for types %s" % [Points.MOB_KILL_POINTS, MobCatalog.names()])
 		fail += 1

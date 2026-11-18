@@ -22,16 +22,12 @@ var input = Vector2.ZERO
 @onready var sword_shape: CollisionShape2D = $weapon/sword/CollisionShape2D
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 
-const HUD_PATH := "/root/Flagoria/CanvasLayer1/HeartsHud"
-const SCORE_HUD_PATH := "/root/Flagoria/CanvasLayer1/ScoreHud"
-const SCOREBOARD_PATH := "/root/Flagoria/CanvasLayer1/ScoreboardPanel"
-const SCOREBOARD_TOGGLE_PATH := "/root/Flagoria/CanvasLayer1/ScoreboardToggle"
+const HUD_LAYER_PATH := "/root/Flagoria/CanvasLayer1"
 const POINTS_PATH := "/root/Flagoria/Points"
-const RESOURCE_HUD_PATH := "/root/Flagoria/CanvasLayer1/ResourceHud"
 const INVENTORY_PATH := "/root/Flagoria/Inventory"
 const INTERACTION_PATH := "/root/Flagoria/World/Interaction"
 const MAP_PATH := "/root/Flagoria/World/worldMap"
-const BOW_BUTTON_PATH := "/root/Flagoria/CanvasLayer1/BowButton"
+const TOOL_WHEEL_PATH := "/root/Flagoria/CanvasLayer1/ToolWheel"
 const RANGED_PATH := "/root/Flagoria/World/RangedShots"
 ## Walk frame is 16 px, centred on Sprite2D at (0, -8), so the body runs from
 ## the feet (this node's origin) up 16 px. Wall caps sit at z 2 through 5.
@@ -97,28 +93,45 @@ func _ready():
 	var aim := AttackAimScript.new()  # local mouse aim; only the attack is sent
 	aim.name = "AttackAim"
 	add_child(aim)
-	var hud = get_node_or_null(HUD_PATH)
+	var hud := _hud_node("HeartsHud")
 	if hud:
 		hud.bind(health)
-	var score_hud = get_node_or_null(SCORE_HUD_PATH)
+	var score_hud := _hud_node("ScoreHud") as ScoreHud
 	var points = get_node_or_null(POINTS_PATH)
 	if score_hud and points:
 		score_hud.bind(points, str(name).to_int())
-	var scoreboard = get_node_or_null(SCOREBOARD_PATH)
-	var score_toggle = get_node_or_null(SCOREBOARD_TOGGLE_PATH)
+	var resource_hud := _hud_node("ResourceHud") as ResourceHud
+	var inventory = get_node_or_null(INVENTORY_PATH)
+	if resource_hud and inventory:
+		resource_hud.bind(inventory)
+	var plate := _hud_node("StatusPlate") as StatusPlateHud
+	if plate != null and hud != null and score_hud != null and resource_hud != null:
+		plate.show()
+		plate.bind_nodes(hud, score_hud, resource_hud)
+	var scoreboard := _hud_node("ScoreboardPanel") as ScoreboardPanel
+	var score_toggle := _hud_node("ScoreboardToggle") as ScoreboardToggle
 	if scoreboard and points:
 		scoreboard.bind(points, str(name).to_int())
 	if score_toggle:
 		score_toggle.show()
-	var resource_hud = get_node_or_null(RESOURCE_HUD_PATH)
-	var inventory = get_node_or_null(INVENTORY_PATH)
-	if resource_hud and inventory:
-		resource_hud.bind(inventory)
 	var interaction = get_node_or_null(INTERACTION_PATH)
 	if interaction:
 		interaction.bind(self)
 
 var _wall_atlases: Dictionary = {}
+
+
+func _hud_node(node_name: String) -> Node:
+	var layer := get_node_or_null(HUD_LAYER_PATH)
+	if layer == null:
+		return null
+	var node := layer.get_node_or_null(node_name)
+	if node != null:
+		return node
+	var plate := layer.get_node_or_null("StatusPlate") as StatusPlateHud
+	if plate != null:
+		return plate.get_node_or_null(node_name)
+	return null
 
 
 func _process(_delta):
@@ -224,7 +237,7 @@ func _unhandled_input(event):
 		attack_animation.rpc()
 
 func attack_toward(direction: String, angle := NAN):
-	## An aimed attack (AttackAim). The bow toggle sends one shot and does
+	## An aimed attack (AttackAim). The bow tool sends one shot and does
 	## not swing. The sword path is the same call as before.
 	if _bow_armed():
 		var shots := get_node_or_null(RANGED_PATH)
@@ -235,8 +248,8 @@ func attack_toward(direction: String, angle := NAN):
 
 
 func _bow_armed() -> bool:
-	var button := get_node_or_null(BOW_BUTTON_PATH) as BaseButton
-	return button != null and button.button_pressed
+	var wheel := get_node_or_null(TOOL_WHEEL_PATH)
+	return wheel != null and wheel.has_method("bow_armed") and bool(wheel.bow_armed())
 
 
 func _bow_aim(direction: String, angle: float) -> Vector2:

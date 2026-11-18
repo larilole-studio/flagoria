@@ -210,7 +210,7 @@ func _grow_back(cell: Vector2i) -> bool:
 func _redraw(cell: Vector2i) -> bool:
 	## Draw `cell`'s foliage again from the map; true when it is drawn.
 	_map._predict_cache.erase(cell)
-	if _map.get_cell_source_id(0, cell) == -1:
+	if not _map.is_drawn(cell):
 		return false  # not drawn yet: generate_chunk draws the plant
 	_map.erase_cell(1, cell)
 	_map.erase_cell(_map.GROUND_DECOR_LAYER, cell)

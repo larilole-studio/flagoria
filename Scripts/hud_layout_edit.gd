@@ -5,7 +5,7 @@ extends Control
 const LAYER_PATH := "/root/Flagoria/CanvasLayer1"
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
-const CONTROL_IDS := ["joystick", "attack", "run", "buildings", "map", "mode", "scores"]
+const CONTROL_IDS := ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]
 const BAR_EDGE_INSET := 6.0
 const BAR_PAD := 2.0
 const SELECTED_LABEL_MIN_WIDE := 120.0
@@ -74,7 +74,15 @@ func relayout_bar() -> void:
 
 
 func close_editor() -> void:
+	var layer := _layer()
 	_hl().edit_end()
+	if layer != null:
+		var row := layer.get_node_or_null("HudToolRow") as HudToolRow
+		if row != null:
+			if _hl().uses_custom():
+				_hl().apply(layer)
+			else:
+				row.restore_defaults(layer)
 	_set_pause(false)
 	hide()
 	var menu := get_parent()
@@ -173,22 +181,40 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 		Vector2(BAR_EDGE_INSET, maxf(floor_y, bottom_y)),
 		Vector2(BAR_EDGE_INSET, BAR_EDGE_INSET),
 	])
-	var best_pos := candidates[0]
+	if joy.size != Vector2.ZERO:
+		var above_joy := joy.position.y - sz.y - BAR_EDGE_INSET
+		if above_joy >= BAR_EDGE_INSET:
+			candidates.append(Vector2(BAR_EDGE_INSET, above_joy))
+	var bar_size := _top_bar.size
+	var best_pos := _clamp_bar_position(candidates[0], bar_size, view)
 	var best_score := INF
 	var zero_pos: Variant = null
 	for pos in candidates:
-		_top_bar.global_position = _clamp_bar_position(pos, _top_bar.size, view)
-		await get_tree().process_frame
-		var score := _bar_overlap_score(layer)
+		var clamped := _clamp_bar_position(pos, bar_size, view)
+		var score := _bar_overlap_score(layer, Rect2(clamped, bar_size))
 		if score == 0.0:
-			zero_pos = _top_bar.global_position
+			zero_pos = clamped
 			break
 		if score < best_score:
 			best_score = score
-			best_pos = _top_bar.global_position
+			best_pos = clamped
 	if zero_pos != null:
 		best_pos = zero_pos
-	_top_bar.global_position = _clamp_bar_position(best_pos, _top_bar.size, view)
+	if best_score > 0.0:
+		var joy_rect: Rect2 = _hl().control_visual_rect("joystick", layer)
+		var scores_rect: Rect2 = _hl().control_visual_rect("scores", layer)
+		var clear_y := BAR_EDGE_INSET
+		if scores_rect.size != Vector2.ZERO:
+			clear_y = maxf(clear_y, scores_rect.end.y + BAR_EDGE_INSET)
+		if joy_rect.size != Vector2.ZERO:
+			clear_y = minf(clear_y, joy_rect.position.y - bar_size.y - BAR_EDGE_INSET)
+		var clear_x := BAR_EDGE_INSET
+		if scores_rect.size != Vector2.ZERO \
+				and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(scores_rect):
+			clear_x = scores_rect.end.x + BAR_EDGE_INSET
+		best_pos = _clamp_bar_position(Vector2(clear_x, clear_y), bar_size, view)
+		best_score = _bar_overlap_score(layer, Rect2(best_pos, bar_size))
+	_top_bar.global_position = _clamp_bar_position(best_pos, bar_size, view)
 	await get_tree().process_frame
 	_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
 
@@ -227,19 +253,19 @@ func _clamp_bar_position(pos: Vector2, bar_size: Vector2, view: Vector2) -> Vect
 	return pos
 
 
-func _bar_overlap_score(layer: CanvasLayer) -> float:
-	var bar := _top_bar.get_global_rect().grow(BAR_PAD)
+func _bar_overlap_score(layer: CanvasLayer, bar: Rect2) -> float:
+	var grown := bar.grow(BAR_PAD)
 	var area := 0.0
 	for id in CONTROL_IDS:
 		var rect: Rect2 = _hl().control_visual_rect(id, layer)
 		if rect.size == Vector2.ZERO:
 			continue
-		var hit: Rect2 = bar.intersection(rect)
+		var hit: Rect2 = grown.intersection(rect)
 		if hit.size != Vector2.ZERO:
 			area += hit.size.x * hit.size.y
 	if _selected != "":
 		var sel: Rect2 = _hl().control_visual_rect(_selected, layer)
-		if sel.size != Vector2.ZERO and bar.intersects(sel):
+		if sel.size != Vector2.ZERO and grown.intersects(sel):
 			area += 1000000.0
 	return area
 
@@ -345,14 +371,14 @@ func _on_reset() -> void:
 	_hl().reset_to_defaults()
 	var row := layer.get_node_or_null("HudToolRow") as HudToolRow
 	if row != null:
-		row._layout()
+		row.restore_defaults(layer)
 	_hl().edit_begin(layer)
 	_set_pause(_should_pause_game())
 	_selected = ""
 	_drag_id = ""
 	_size_slider.editable = false
 	_selected_label.text = "Default layout restored · tap a control"
-	_relayout_edit_bar(layer)
+	call_deferred("relayout_bar")
 
 
 func _on_done() -> void:
@@ -377,9 +403,9 @@ func _pick_control(pos: Vector2, layer: CanvasLayer) -> String:
 
 
 func _process(_delta: float) -> void:
-	if visible:
+	if visible and DisplayServer.get_name() != "headless":
 		queue_redraw()
-	if _relayout_bar_queued and visible:
+	if _relayout_bar_queued and visible and DisplayServer.get_name() != "headless":
 		_relayout_bar_queued = false
 		var layer := _layer()
 		if layer != null:

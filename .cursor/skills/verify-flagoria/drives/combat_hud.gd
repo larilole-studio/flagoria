@@ -23,8 +23,8 @@ func run() -> void:
 		return
 	var ok := true
 	step("hud")
-	var hearts := current_scene.get_node(HEARTS)
-	var score: Label = current_scene.get_node(SCORE)
+	var hearts := current_scene.find_child("HeartsHud", true, false)
+	var score: Label = current_scene.find_child("ScoreHud", true, false) as Label
 	var points: Points = current_scene.get_node("Points")
 	var shown := await wait_until(func() -> bool:
 		return score.text == "%d pts" % points.total_of(1), 2.0)

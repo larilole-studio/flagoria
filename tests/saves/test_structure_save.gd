@@ -252,3 +252,81 @@ func _test_guard_post_save_round_trip() -> int:
 	if fail == 0:
 		print("PASS test_guard_post_save_round_trip")
 	return fail
+
+
+func _barracks_anchor(world, quarter_turns: int) -> Variant:
+	var s: Structure = StructurePlacer.load_named("barracks")
+	if s == null:
+		return null
+	s = Structure.rotated(s, quarter_turns)
+	for r in range(6, 48):
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r:
+					continue
+				var cell: Vector2i = world.spawn_point + Vector2i(dx, dy)
+				var foot: Array = StructurePlacer.footprint(s, cell).keys()
+				if foot.all(func(c): return world.predicted_clear(c) and not world._structures.has_cell(c)):
+					return cell
+	return null
+
+
+func _test_barracks_save_round_trip() -> int:
+	## A rotated barracks survives save and reload; not a flag tower.
+	## Time cost: about 0.5 s.
+	print("-- test_barracks_save_round_trip")
+	var fail := 0
+	var scene = load("res://flagoria_main.tscn").instantiate()
+	root.add_child(scene)
+	scene.get_node("CanvasLayer2/MainMenu").hide()
+	var world = scene.get_node("World/worldMap")
+	world.set_process(false)
+	var params := _spawn_params(7, 0.0)
+	params.ensure_seeds()
+	scene.world_params = params
+	scene._apply_params_to_world(params)
+	if not world.place_start_castle(1):
+		printerr("FAIL barracks_save_round_trip: no starting castle")
+		scene.queue_free()
+		return 1
+	var anchor: Variant = _barracks_anchor(world, 1)
+	if anchor == null:
+		printerr("FAIL barracks_save_round_trip: no barracks spot")
+		scene.queue_free()
+		return 1
+	var barracks := StructurePlacer.load_named("barracks")
+	var place_id: int = world.place_structure(barracks, anchor, 1, 1)
+	if place_id <= 0:
+		printerr("FAIL barracks_save_round_trip: could not place")
+		fail += 1
+	elif world._structures.towers().has(place_id):
+		printerr("FAIL barracks_save_round_trip: barracks listed as tower")
+		fail += 1
+	var want: Array = world.structures_for_sync()
+	var result: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
+	if result["error"] != "":
+		printerr("FAIL barracks_save_round_trip: save %s" % result["error"])
+		fail += 1
+	else:
+		var map_gen = root.get_node("MapGen")
+		map_gen.load_map_inputs(result["path"])
+		scene.world_params = map_gen.params.duplicate_params()
+		scene._apply_params_to_world(scene.world_params)
+		var restored: int = scene._restore_loaded_world()
+		StructureSaves.adopt_start_castle(world, 1)
+		if restored != want.size() or str(world.structures_for_sync()) != str(want):
+			printerr("FAIL barracks_save_round_trip: restored %d got %s want %s"
+					% [restored, world.structures_for_sync(), want])
+			fail += 1
+		for id in world.placed_structures():
+			if str(world.placed_structures()[id].get("name")) == "barracks":
+				if world._structures.towers().has(id):
+					printerr("FAIL barracks_save_round_trip: restored barracks is a tower")
+					fail += 1
+				break
+		DirAccess.remove_absolute(result["path"])
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_barracks_save_round_trip")
+	return fail

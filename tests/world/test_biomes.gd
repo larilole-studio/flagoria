@@ -106,10 +106,10 @@ func _test_biome_terrain() -> int:
 
 	# Biomes off: whole chunks (ground, foliage, flowers) match the pinned output.
 	var pinned := [
-		[false, Vector2i(0, 0), "889d3ec826e36c7d1785deb1c6df496073fcf76cfc8f919b9c725db178d94a85"],
-		[false, Vector2i(3000, -1500), "943071931c6c2264f5d5b0fbe4423363c2f6881646a833056134df4ae9da7e6c"],
-		[true, Vector2i(0, 0), "84d0e789cb2058f807eb9b3fb877ad73a57ce660fe08cebb570d04dc82503687"],
-		[true, Vector2i(3000, -1500), "15f85b7289577e289ab2b5686e0789d6dbe2b1f66f8e7b4d37c2658dba49f5c8"],
+		[false, Vector2i(0, 0), "4a7103339044da353bf128a570a6b8506d097f1291be80fbda00ceb437033b3b"],
+		[false, Vector2i(3000, -1500), "6a6838e851abf7d653106c9b7139b4a80e1f1bd535e29cf476c3a89124e8d326"],
+		[true, Vector2i(0, 0), "9762504699b26ebed58581bc9567a45e9d7f4f983d90f465840154fda30a4acd"],
+		[true, Vector2i(3000, -1500), "271a429d29307df3a81247140b55603b1cd6dc53d6098a6db5d8abdda2a953e8"],
 	]
 	for pin in pinned:
 		world.apply_map_params(_biome_terrain_params(pin[0]))
@@ -183,7 +183,15 @@ func _test_biome_terrain() -> int:
 			var b: int = world.biome_at(cell)
 			var want: Vector2i = world.ground_tile(world.cell_altitude(cell, b),
 				world.moisture.get_noise_2d(x, y), world.items_chance.get_noise_2d(x, y), b)
-			if world.get_cell_atlas_coords(0, cell) != want:
+			var got: Vector2i = world.get_cell_atlas_coords(0, cell)
+			if want == TileCatalog.WATER:
+				if world.get_cell_source_id(0, cell) != -1 or not world.is_open_sea(cell):
+					mismatched += 1
+			elif world._sky.touches_sky(world, cell):
+				if got == TileCatalog.SAND or got == TileCatalog.SWAMP \
+						or got == TileCatalog.SWAMP_SPECIAL or got == TileCatalog.WATER:
+					mismatched += 1
+			elif got != want:
 				mismatched += 1
 	if mismatched > 0:
 		printerr("FAIL biome_terrain: %s generated cells differ from ground_tile" % mismatched)
@@ -349,7 +357,8 @@ func _test_biome_plants() -> int:
 		for y in range(probe.y - 48, probe.y + 48):
 			var cell := Vector2i(x, y)
 			var want: Vector2i = NONE
-			if world.is_walkable_land(cell) and world.get_cell_atlas_coords(0, cell) != TileCatalog.SAND:
+			if world.is_walkable_land(cell) and world.get_cell_atlas_coords(0, cell) != TileCatalog.SAND \
+					and world._sky.logical_ground(world, cell) != TileCatalog.SAND:
 				var b: int = world.biome_at(cell)
 				want = world.plant_tile(world.cell_altitude(cell, b),
 					world.moisture.get_noise_2d(x, y), world.items_chance.get_noise_2d(x, y), b)

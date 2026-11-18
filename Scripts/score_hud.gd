@@ -17,10 +17,15 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if get_parent() is StatusPlateHud:
+		return
 	follow_hearts()
 
 
 func follow_hearts() -> void:
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
+	if plate != null and plate.visible:
+		return
 	var hearts := get_node_or_null("../HeartsHud") as Control
 	if hearts == null:
 		return
@@ -47,3 +52,6 @@ func _on_total_changed(peer_id: int, _total: int, _amount: int, _reason: String)
 
 func _refresh() -> void:
 	text = "%d pts" % (_points.total_of(_peer_id) if _points else 0)
+	var plate := get_parent() as StatusPlateHud
+	if plate != null:
+		plate.reflow()

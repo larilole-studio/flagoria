@@ -19,7 +19,7 @@ extends SceneTree
 
 const MAIN := "res://flagoria_main.tscn"
 const HOST_BUTTON := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/HostButton"
-const MODE_BUTTON := "CanvasLayer1/ModeButton"
+const TOOL_BUTTON := "CanvasLayer1/ToolWheel/ToolButton"
 const MENU_BUTTON := "CanvasLayer1/InGameMenu/MenuButton"
 const MENU_PANEL := "CanvasLayer1/InGameMenu/Pause"
 const SAVE_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/Save"
@@ -96,9 +96,24 @@ func tap(action: String) -> void:
 	await hold(action, 1)
 
 
-## Clicks the mode button, as a player does to switch combat and interact mode.
+## Selects chop, or sword when chop is already armed. Keys 3 and 1 are the
+## wheel's direct shortcuts, the same as a player pressing them.
 func toggle_mode() -> void:
-	await click(MODE_BUTTON)
+	var interaction: Node = current_scene.get_node(INTERACTION)
+	var code := KEY_1 if int(interaction.mode) == 1 else KEY_3
+	await tap_key(code)
+
+
+## Presses and releases a physical key, as a player does.
+func tap_key(keycode: Key) -> void:
+	for pressed in [true, false]:
+		var event := InputEventKey.new()
+		event.physical_keycode = keycode
+		event.keycode = keycode
+		event.pressed = pressed
+		Input.parse_input_event(event)
+		await process_frame
+		await process_frame
 
 
 ## A touch tap on a map cell, at the screen position World/worldMap and the

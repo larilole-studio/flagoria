@@ -2,7 +2,7 @@ name: play-review
 
 # Netcode stress (tools/stress_netcode.py) for gameplay pull requests,
 # gameplay pushes to main, and changes to the stress runner, the stress
-# lint, tests/net, or a tests/*_probe.gd file. Skipped vs 5 vs 20 runs: see
+# lint, tests/net, or a tests/*_probe.gd file. Skipped vs LIGHT_RUNS vs FULL_RUNS: see
 # tools/play_review_paths.py (FULL_RUNS, LIGHT_RUNS, stress_tier) and
 # .cursor/skills/verify-flagoria/ci-netcode-stress.md — do not restate tier
 # rules here. pull_request uses read-only contents and no secrets (fork-safe).

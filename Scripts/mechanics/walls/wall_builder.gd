@@ -211,7 +211,7 @@ func _union() -> Dictionary:
 func _paint_free(cell: Vector2i) -> void:
 	_map.forget_cut(cell)
 	_map._predict_cache.erase(cell)
-	if _map.get_cell_source_id(0, cell) == -1:
+	if not _map.is_drawn(cell):
 		return
 	_map.erase_cell(1, cell)
 	_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)

@@ -14,6 +14,19 @@ const WorldSavePreview = preload("res://Scripts/world_save_preview.gd")
 @onready var sfx_value: Label = $MarginContainer/VBoxContainer/SFXVolumeRow/SFXValue
 @onready var mob_rate: HSlider = $MarginContainer/VBoxContainer/MobRateRow/MobRate
 @onready var mob_rate_value: Label = $MarginContainer/VBoxContainer/MobRateRow/MobRateValue
+@onready var tower_range: HSlider = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRange
+@onready var tower_range_value: Label = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRangeValue
+@onready var tower_damage: HSlider = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamage
+@onready var tower_damage_value: Label = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamageValue
+@onready var tower_cooldown: HSlider = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldown
+@onready var tower_cooldown_value: Label = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldownValue
+@onready var raids_enabled: CheckButton = $MarginContainer/VBoxContainer/RaidsRow/RaidsEnabled
+@onready var raid_interval: HSlider = $MarginContainer/VBoxContainer/RaidIntervalRow/RaidInterval
+@onready var raid_interval_value: Label = $MarginContainer/VBoxContainer/RaidIntervalRow/RaidIntervalValue
+@onready var raid_group: HSlider = $MarginContainer/VBoxContainer/RaidGroupRow/RaidGroup
+@onready var raid_group_value: Label = $MarginContainer/VBoxContainer/RaidGroupRow/RaidGroupValue
+@onready var raid_radius: HSlider = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadius
+@onready var raid_radius_value: Label = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadiusValue
 
 var admin_panel: PanelContainer
 var _settings_over_match := false
@@ -48,6 +61,59 @@ func _ready() -> void:
 	mob_rate.value_changed.connect(func(v: float) -> void:
 		game.set_mob_rate(v)
 		mob_rate_value.text = game.rate_label(game.mob_rate))
+	# Tower guns read these on the host. A client's saved values are not the match.
+	tower_range.min_value = game.TOWER_RANGE_MIN
+	tower_range.max_value = game.TOWER_RANGE_MAX
+	tower_range.step = game.TOWER_RANGE_STEP
+	tower_range.value = game.tower_range
+	tower_range_value.text = game.px_label(game.tower_range)
+	tower_range.value_changed.connect(func(v: float) -> void:
+		game.set_tower_range(v)
+		tower_range_value.text = game.px_label(game.tower_range))
+	tower_damage.min_value = game.TOWER_DAMAGE_MIN
+	tower_damage.max_value = game.TOWER_DAMAGE_MAX
+	tower_damage.step = 1
+	tower_damage.value = game.tower_damage
+	tower_damage_value.text = str(game.tower_damage)
+	tower_damage.value_changed.connect(func(v: float) -> void:
+		game.set_tower_damage(v)
+		tower_damage_value.text = str(game.tower_damage))
+	tower_cooldown.min_value = game.TOWER_COOLDOWN_MIN
+	tower_cooldown.max_value = game.TOWER_COOLDOWN_MAX
+	tower_cooldown.step = game.TOWER_COOLDOWN_STEP
+	tower_cooldown.value = game.tower_cooldown
+	tower_cooldown_value.text = game.seconds_label(game.tower_cooldown)
+	tower_cooldown.value_changed.connect(func(v: float) -> void:
+		game.set_tower_cooldown(v)
+		tower_cooldown_value.text = game.seconds_label(game.tower_cooldown))
+	# Raids stay off until the host turns them on. The sliders are the
+	# interval, the group size and the target radius (#529).
+	raids_enabled.button_pressed = game.raids_enabled
+	raids_enabled.toggled.connect(func(on: bool) -> void: game.set_raids_enabled(on))
+	raid_interval.min_value = game.RAID_INTERVAL_MIN
+	raid_interval.max_value = game.RAID_INTERVAL_MAX
+	raid_interval.step = game.RAID_INTERVAL_STEP
+	raid_interval.value = game.raid_interval_s
+	raid_interval_value.text = _seconds(game.raid_interval_s)
+	raid_interval.value_changed.connect(func(v: float) -> void:
+		game.set_raid_interval_s(v)
+		raid_interval_value.text = _seconds(game.raid_interval_s))
+	raid_group.min_value = game.RAID_GROUP_MIN
+	raid_group.max_value = game.RAID_GROUP_MAX
+	raid_group.step = 1.0
+	raid_group.value = game.raid_group
+	raid_group_value.text = str(game.raid_group)
+	raid_group.value_changed.connect(func(v: float) -> void:
+		game.set_raid_group(int(round(v)))
+		raid_group_value.text = str(game.raid_group))
+	raid_radius.min_value = game.RAID_RADIUS_MIN
+	raid_radius.max_value = game.RAID_RADIUS_MAX
+	raid_radius.step = 1.0
+	raid_radius.value = game.raid_radius_cells
+	raid_radius_value.text = str(game.raid_radius_cells)
+	raid_radius.value_changed.connect(func(v: float) -> void:
+		game.set_raid_radius_cells(int(round(v)))
+		raid_radius_value.text = str(game.raid_radius_cells))
 	# The join address is typed on the in-game letter keyboard, not the OS one.
 	var keyboard: NumberPad = preload("res://number_pad.tscn").instantiate()
 	keyboard.name = "LetterKeyboard"
@@ -64,6 +130,10 @@ func _ready() -> void:
 
 static func percent(v: float) -> String:
 	return "%d%%" % roundi(v * 100.0)
+
+
+static func _seconds(v: float) -> String:
+	return "%ds" % roundi(v)
 
 
 func _unhandled_input(_event):

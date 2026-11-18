@@ -1,9 +1,6 @@
 class_name GeneratedBuildings
 extends Node
-## Host-only on-demand building (#26). A debug key and the Map Settings button
-## place one footprint at the local player. The host sends the seed, size,
-## style and cell; every peer runs WfcBuildingConstraints and paints the same
-## tiles on layer 7. Neighbour blending is #27 and is not done here.
+## Host-only on-demand building (#26). Neighbour blending (#27).
 
 ## Own layer. generate_chunk rewrites layers 0 and 1, so pieces cannot live there.
 const LAYER := 7
@@ -59,12 +56,10 @@ static func tile_name_for(piece_id: String, style: int) -> String:
 static func layout_cells(width: int, height: int, seed_value: int, style: int) -> Array:
 	## One cell dict per footprint cell, or empty when the solve fails.
 	## Two calls with the same arguments return the same tiles.
-	var solved := WfcBuildingConstraints.solve_building(
-			width, height, mix_seed(seed_value, style))
-	if not solved.ok:
+	var grid := layout_grid(width, height, seed_value, style)
+	if grid.is_empty():
 		return []
 	var out: Array = []
-	var grid: Array = solved.grid
 	for y in grid.size():
 		var row: Array = grid[y]
 		for x in row.size():
@@ -76,6 +71,14 @@ static func layout_cells(width: int, height: int, seed_value: int, style: int) -
 				"tile": tile_name_for(piece_id, style),
 			})
 	return out
+
+
+static func layout_grid(width: int, height: int, seed_value: int, style: int) -> Array:
+	var solved := WfcBuildingConstraints.solve_building(
+			width, height, mix_seed(seed_value, style))
+	if not solved.ok:
+		return []
+	return solved.grid
 
 
 func _ready() -> void:
@@ -93,6 +96,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key.keycode != DEBUG_KEY and key.physical_keycode != DEBUG_KEY:
 		return
 	if not _is_host():
+		return
+	if key.shift_pressed:
+		if remove_at_player():
+			get_viewport().set_input_as_handled()
 		return
 	if generate_at_player():
 		get_viewport().set_input_as_handled()
@@ -116,17 +123,12 @@ func generate_at_player() -> bool:
 
 
 func generate(origin: Vector2i, width: int, height: int, seed_value: int, style: int) -> bool:
-	## Host only. Solves, paints, then tells connected peers to solve the same
-	## record. A client call does nothing and returns false.
+	## Host only. Overlap refuses. Full-edge touch merges with the lowest-index neighbour.
 	if not _is_host():
 		return false
 	width = clampi(width, 4, 16)
 	height = clampi(height, 4, 16)
 	style = clampi(style, 0, STYLE_COUNT - 1)
-	var solved := WfcBuildingConstraints.solve_building(
-			width, height, mix_seed(seed_value, style))
-	if not solved.ok:
-		return false
 	var record := {
 		"seed": int(seed_value),
 		"width": width,
@@ -135,14 +137,41 @@ func generate(origin: Vector2i, width: int, height: int, seed_value: int, style:
 		"x": origin.x,
 		"y": origin.y,
 	}
-	_grids[_key(record)] = solved.grid
+	for existing in _records:
+		if BuildingMerge.rectangles_overlap(existing, record):
+			return false
 	if _has_record(record):
-		_paint_record(record)
 		return true
+	if not WfcBuildingConstraints.solve_building(
+			width, height, mix_seed(seed_value, style)).ok:
+		return false
 	_records.append(record)
-	_paint_record(record)
-	_broadcast(record)
+	_rebuild_from_records()
+	_broadcast_all()
 	return true
+
+
+func remove_at(index: int) -> bool:
+	if not _is_host():
+		return false
+	if index < 0 or index >= _records.size():
+		return false
+	_records.remove_at(index)
+	_rebuild_from_records()
+	_broadcast_all()
+	return true
+
+
+func remove_at_player() -> bool:
+	if not _is_host():
+		return false
+	var map := _map()
+	var body := _local_player()
+	if map == null or body == null:
+		return false
+	var cell := map.local_to_map(map.to_local(body.global_position))
+	var index := _record_covering(cell)
+	return remove_at(index) if index >= 0 else false
 
 
 func sync_to_peer(peer_id: int) -> void:
@@ -199,44 +228,68 @@ func ensure_layer(map: TileMap) -> void:
 func receive_generated_building(record: Dictionary) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
-	_apply_record(record)
+	var stored := _stored_record(record)
+	if not _has_record(stored):
+		_records.append(stored)
+	_rebuild_from_records()
 
 
 @rpc("authority", "reliable", "call_remote")
 func receive_generated_buildings(records: Array) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
+	_repainting = true
+	for cell in _pieces.keys():
+		var map := _map()
+		if map != null:
+			map.erase_cell(LAYER, cell)
+	_pieces.clear()
+	_grids.clear()
+	_records.clear()
 	for record in records:
 		if record is Dictionary:
-			_apply_record(record)
+			_records.append(_stored_record(record))
+	_rebuild_from_records()
+	_repainting = false
 
 
-func _apply_record(record: Dictionary) -> void:
-	var stored := {
-		"seed": int(record.get("seed", 0)),
-		"width": int(record.get("width", 0)),
-		"height": int(record.get("height", 0)),
-		"style": int(record.get("style", 0)),
-		"x": int(record.get("x", 0)),
-		"y": int(record.get("y", 0)),
-	}
-	if not _has_record(stored):
-		_records.append(stored)
-	_paint_record(stored)
+func _rebuild_from_records() -> void:
+	_grids.clear()
+	for i in _records.size():
+		var record := _records[i]
+		var grid: Array = _layout_for(record)
+		var merge_idx := BuildingMerge.find_merge_neighbour(_records, record, i)
+		if merge_idx >= 0:
+			var earlier := _records[merge_idx]
+			var earlier_grid: Array = _grids.get(_key(earlier), _layout_for(earlier))
+			var merged := BuildingMerge.merge_grids(earlier, earlier_grid, record, grid)
+			if merged.get("ok", false):
+				_grids[_key(earlier)] = merged.earlier_grid
+				grid = merged.later_grid
+		_grids[_key(record)] = grid
+	_rebuild_paint()
+
+
+func _rebuild_paint() -> void:
+	var map := _map()
+	ensure_layer(map)
+	for cell in _pieces.keys():
+		map.erase_cell(LAYER, cell)
+	_pieces.clear()
+	for record in _records:
+		_paint_record(record)
+
+
+func _layout_for(record: Dictionary) -> Array:
+	return layout_grid(int(record.width), int(record.height), int(record.seed), int(record.style))
 
 
 func _paint_record(record: Dictionary) -> void:
 	var key := _key(record)
 	var grid: Array = _grids.get(key, [])
 	if grid.is_empty():
-		var solved := WfcBuildingConstraints.solve_building(
-				int(record.width), int(record.height),
-				mix_seed(int(record.seed), int(record.style)))
-		if not solved.ok:
-			push_warning("GeneratedBuildings: solve failed for %s" % key)
-			return
-		grid = solved.grid
-		_grids[key] = grid
+		push_warning("GeneratedBuildings: no grid for %s" % key)
+		return
 	var map := _map()
 	ensure_layer(map)
 	var origin := Vector2i(int(record.x), int(record.y))
@@ -271,7 +324,7 @@ func _clear_cover(map: TileMap, cell: Vector2i, piece_id: String) -> void:
 	map.erase_cell(1, cell)
 	map.erase_cell(map.GROUND_DECOR_LAYER, cell)
 	if WALKABLE.has(piece_id) and not map.is_walkable_land(cell):
-		map.set_cell(0, cell, TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
+		map.claim_ground(cell, TileCatalog.GRASS_A)
 
 
 func _clear_door_exit(map: TileMap, door: Vector2i, x: int, y: int, width: int, height: int) -> void:
@@ -293,7 +346,7 @@ func _clear_door_exit(map: TileMap, door: Vector2i, x: int, y: int, width: int, 
 		map.erase_cell(1, cell)
 		map.erase_cell(map.GROUND_DECOR_LAYER, cell)
 		if not map.is_walkable_land(cell):
-			map.set_cell(0, cell, TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
+			map.claim_ground(cell, TileCatalog.GRASS_A)
 
 
 func _solid_alternative(map: TileMap, atlas: Vector2i) -> int:
@@ -333,13 +386,13 @@ func _on_ground_changed(_rect: Rect2i) -> void:
 	_repainting = false
 
 
-func _broadcast(record: Dictionary) -> void:
+func _broadcast_all() -> void:
 	var peer := multiplayer.multiplayer_peer
 	if peer == null or peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
 		return
 	if not multiplayer.is_server():
 		return
-	receive_generated_building.rpc(record)
+	receive_generated_buildings.rpc(_records.duplicate(true))
 
 
 func _has_record(record: Dictionary) -> bool:
@@ -348,6 +401,27 @@ func _has_record(record: Dictionary) -> bool:
 		if _key(existing) == want:
 			return true
 	return false
+
+
+func _stored_record(record: Dictionary) -> Dictionary:
+	return {
+		"seed": int(record.get("seed", 0)),
+		"width": int(record.get("width", 0)),
+		"height": int(record.get("height", 0)),
+		"style": int(record.get("style", 0)),
+		"x": int(record.get("x", 0)),
+		"y": int(record.get("y", 0)),
+	}
+
+
+func _record_covering(cell: Vector2i) -> int:
+	for i in _records.size():
+		var record := _records[i]
+		var origin := Vector2i(int(record.x), int(record.y))
+		var rect := Rect2i(origin, Vector2i(int(record.width), int(record.height)))
+		if rect.has_point(cell):
+			return i
+	return -1
 
 
 func _key(record: Dictionary) -> String:

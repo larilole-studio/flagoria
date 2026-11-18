@@ -121,8 +121,13 @@ func panel_height() -> float:
 
 
 func follow_hud_row() -> void:
+	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
 	var hearts := get_node_or_null("../HeartsHud") as Control
+	if hearts == null and plate != null:
+		hearts = plate.get_node_or_null("HeartsHud") as Control
 	var score := get_node_or_null("../ScoreHud") as Control
+	if score == null and plate != null:
+		score = plate.get_node_or_null("ScoreHud") as Control
 	var toggle := get_node_or_null("../ScoreboardToggle") as Control
 	if score == null:
 		return

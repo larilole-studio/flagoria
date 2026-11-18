@@ -107,7 +107,7 @@ func _test_points_discovery_two_players() -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var points: Points = scene.get_node("Points")
-	var hud: ScoreHud = scene.get_node("CanvasLayer1/ScoreHud")
+	var hud: ScoreHud = _hud_on_canvas(scene, "ScoreHud") as ScoreHud
 	var land: LandScore = scene.get_node("World/LandScore")
 	scene.add_player_joined(port)
 	var fail := 0
