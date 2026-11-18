@@ -21,8 +21,8 @@ func run() -> void:
 				and not _plank().visible
 	, 5.0)
 	step("match-start")
-	ok = ok and _cluster_ok(panel) and _icon_is(buildings, "icon_buildings.png") \
-			and _icon_is(current_scene.get_node(MAP_BUTTON), "icon_map.png") \
+	ok = ok and _cluster_ok(panel) and _disc_is(buildings, "ui_disc_build") \
+			and _disc_is(current_scene.get_node(MAP_BUTTON), "ui_disc_map") \
 			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_attack.png")
 	await snapshot("match-start")
 	print("hud round: start panel %s tool %s" % [panel.visible, interaction.build.tool])
@@ -51,9 +51,9 @@ func run() -> void:
 	step("minimap")
 	await click(MAP_BUTTON)
 	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
-	ok = ok and _arc_outside(panel)
+	ok = ok and _column_outside(panel)
 	await snapshot("minimap")
-	print("hud round: minimap panel %s clear %s" % [panel.visible, _arc_outside(panel)])
+	print("hud round: minimap panel %s clear %s" % [panel.visible, _column_outside(panel)])
 
 	step("interact")
 	var before := interaction.mode
@@ -61,7 +61,7 @@ func run() -> void:
 	var switched: bool = interaction.mode != before and interaction.mode == Interaction.Mode.INTERACT \
 			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_interact.png") \
 			and interaction.build.tool == BuildPlacement.Tool.PLANK
-	ok = ok and _arc_outside(panel)
+	ok = ok and _column_outside(panel)
 	await snapshot("interact")
 	await toggle_mode()
 	var back: bool = interaction.mode == before and interaction.build.tool == BuildPlacement.Tool.CUT \
@@ -88,8 +88,8 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 	if panel.visible or not _round(map_button) or not _round(buildings):
 		printerr("hud round: start buttons map %s buildings %s" % [map_button.size, buildings.size])
 		return false
-	if run.icon == null or not str(run.icon.resource_path).ends_with("icon_run.png"):
-		printerr("hud round: Run icon %s" % run.icon)
+	if not _disc_is(run, "ui_disc_run"):
+		printerr("hud round: Run disc")
 		return false
 	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
 	var run_rect := run.get_global_rect()
@@ -98,8 +98,8 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 		return false
 	var map_c := map_button.get_global_rect().get_center()
 	var build_c := buildings.get_global_rect().get_center()
-	if build_c.x > map_c.x or build_c.y <= map_c.y:
-		printerr("hud round: arc map %s buildings %s" % [map_c, build_c])
+	if absf(map_c.x - build_c.x) > 2.0 or not (map_c.y + 2.0 < build_c.y):
+		printerr("hud round: column map %s buildings %s" % [map_c, build_c])
 		return false
 	return true
 
@@ -119,15 +119,14 @@ func _column_ok() -> bool:
 		if rect.position.y < previous or absf(rect.position.x - left) > 1.0:
 			printerr("hud round: %s not stacked at %s" % [button.name, rect])
 			return false
-		if not _round(button) or button.get_theme_constant("icon_max_width") >= int(RoundHudStyle.SIZE):
-			printerr("hud round: %s icon covers the disc (width %s)"
-					% [button.name, button.get_theme_constant("icon_max_width")])
+		if not _round(button):
+			printerr("hud round: %s disc" % button.name)
 			return false
 		previous = rect.end.y + 1.0
 	return any
 
 
-func _arc_outside(panel: Control) -> bool:
+func _column_outside(panel: Control) -> bool:
 	var panel_rect := panel.get_global_rect()
 	for path in [BUILDINGS, MAP_BUTTON]:
 		var button := current_scene.get_node(path) as Control
@@ -137,23 +136,28 @@ func _arc_outside(panel: Control) -> bool:
 	return true
 
 
-func _icon_is(button: Button, file_name: String) -> bool:
-	return button.icon != null and str(button.icon.resource_path).ends_with(file_name)
+func _icon_is(button: Control, file_name: String) -> bool:
+	var icon: Texture2D = button.get("icon")
+	return icon != null and str(icon.resource_path).ends_with(file_name)
 
 
-func _round(button: Button) -> bool:
-	var box := button.get_theme_stylebox("normal") as StyleBoxFlat
-	if box == null or box.border_width_left != 1:
+func _disc_is(button: Button, stem: String) -> bool:
+	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
+	return box != null and box.texture != null and stem in str(box.texture.resource_path)
+
+
+func _round(button: Button, hit := RoundHudStyle.HIT) -> bool:
+	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
+	if box == null or box.texture == null:
 		return false
-	var disc := button.size + Vector2(
-			box.expand_margin_left + box.expand_margin_right,
-			box.expand_margin_top + box.expand_margin_bottom)
-	return absf(button.size.x - button.size.y) <= 1.0 and is_equal_approx(button.size.x, RoundHudStyle.HIT) \
-			and is_equal_approx(disc.x, RoundHudStyle.SIZE) \
-			and box.corner_radius_top_left >= int(RoundHudStyle.SIZE * 0.4)
+	return absf(button.size.x - button.size.y) <= 1.0 and is_equal_approx(button.size.x, hit)
 
 
 func _selected(button: Button) -> bool:
-	var box := button.get_theme_stylebox("pressed") as StyleBoxFlat
-	return button.button_pressed and box != null and box.border_width_left >= 2 \
-			and box.border_color.r > RoundHudStyle.INK.r + 0.4
+	if not button.button_pressed:
+		return false
+	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
+	if box == null or box.texture == null:
+		return false
+	var path := str(box.texture.resource_path)
+	return "_selected" in path or "_pressed" in path

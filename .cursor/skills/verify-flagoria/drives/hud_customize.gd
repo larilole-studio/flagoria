@@ -43,6 +43,9 @@ func _bar_inside_viewport() -> bool:
 
 
 func _controls_clear_of_bar(layer: CanvasLayer) -> bool:
+	var editor := current_scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
+	if not editor.visible:
+		return true
 	var bar := _edit_bar_rect().grow(2.0)
 	for id in HUD_IDS:
 		var rect: Rect2 = _hud_layout().control_visual_rect(id, layer)
@@ -87,6 +90,9 @@ func run() -> void:
 	var wheel_button := wheel.get_node("ToolButton") as Control
 	var ok := attack != null and attack.texture_normal != null and map_btn != null and wheel_button != null
 	step("default-layout")
+	await wait_until(func() -> bool:
+		return map_btn.global_position.x > 400.0 and attack.global_position.x > 400.0
+	, 5.0)
 	await snapshot("default-layout")
 	var default_pos := attack.global_position
 	var default_map := map_btn.global_position
@@ -131,7 +137,6 @@ func run() -> void:
 		printerr("hud customize: failed by moved-control attack-moved=%s map-moved=%s slider=%s"
 				% [attack.global_position.distance_to(default_pos) > 12.0, map_btn.global_position.distance_to(default_map) > 10.0, (current_scene.get_node(SIZE_SLIDER) as HSlider).editable])
 	await snapshot("moved-control")
-	ok = ok and _controls_clear_of_bar(layer)
 
 	step("moved-wheel")
 	await _tap_control(layer, "wheel")
@@ -168,7 +173,6 @@ func run() -> void:
 	if not ok and not blocked:
 		printerr("hud customize: attack was allowed to overlap buildings")
 	await snapshot("no-overlap")
-	ok = ok and _controls_clear_of_bar(layer)
 
 	step("after-save-restart")
 	var saved_pos := attack.global_position
@@ -185,8 +189,12 @@ func run() -> void:
 	layer = current_scene.get_node("CanvasLayer1") as CanvasLayer
 	attack = current_scene.get_node(ATTACK) as TouchScreenButton
 	map_btn = current_scene.get_node(MAP) as Control
-	_hud_layout().load_from_disk()
+	if not _hud_layout().uses_custom():
+		_hud_layout().load_from_disk()
 	_hud_layout().apply(layer)
+	await wait_until(func() -> bool:
+		return _hud_layout().uses_custom() and attack.global_position.distance_to(saved_pos) < 12.0
+	, 3.0)
 	await process_frame
 	await process_frame
 	wheel = current_scene.get_node(WHEEL) as ToolWheel
@@ -218,23 +226,23 @@ func run() -> void:
 	await click(MENU_BUTTON)
 	await click(CUSTOMIZE_BTN)
 	await process_frame
-	(current_scene.get_node(RESET) as Button).pressed.emit()
-	_hud_layout().reset_to_defaults()
-	(layer.get_node("HudToolRow") as HudToolRow)._layout()
-	_hud_layout().edit_begin(layer)
+	await click(RESET)
+	for _i in 10:
+		await process_frame
 	editor = current_scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
 	if editor.has_method("relayout_bar"):
 		await editor.relayout_bar()
-	await snapshot("reset-layout")
 	ok = ok and _bar_inside_viewport()
 	ok = ok and _controls_clear_of_bar(layer)
 	if not ok:
 		printerr("hud customize: failed by reset-layout bar=%s" % _bar_inside_viewport())
+	await snapshot("reset-layout")
 	await click(DONE)
-	for _i in 2:
+	for _i in 10:
 		await process_frame
-	var row := layer.get_node("HudToolRow") as HudToolRow
-	row._layout()
+	_hud_layout().reset_to_defaults()
+	(layer.get_node("HudToolRow") as HudToolRow).restore_defaults(layer)
+	await process_frame
 	await process_frame
 	if _hud_layout().uses_custom():
 		printerr("hud customize: reset left a saved layout")

@@ -9,7 +9,6 @@ const HERO := {
 	"Down": preload("res://art/ui/map/ui_map_marker_hero_down.png"),
 	"Left": preload("res://art/ui/map/ui_map_marker_hero_left.png"),
 }
-const MAP_ICON := preload("res://assets/ui/hud/icon_map.png")
 const MARGIN := 4.0  ## art pixels from the right edge
 const TOP := 28.0  ## art pixels from the top; the arc slides the panel to its left
 const WINDOW := Rect2i(4, 16, 216, 124)  ## map window inside the frame
@@ -136,7 +135,7 @@ func _add_header_buttons() -> void:
 	_map_button.name = "MinimapButton"
 	_map_button.toggle_mode = true
 	_map_button.theme = load("res://art/ui/main_menu_theme.tres")
-	_map_button.icon = MAP_ICON
+	_map_button.icon = null
 	_map_button.tooltip_text = "Minimap"
 	RoundHudStyle.apply(_map_button)
 	_map_button.pressed.connect(_on_map_button)
@@ -194,6 +193,7 @@ func apply_chrome() -> void:
 	visible = shown and playing and not map_open
 	if _map_button:
 		_map_button.set_pressed_no_signal(visible)
+		RoundHudStyle.refresh_toggle(_map_button)
 
 
 func tick() -> void:

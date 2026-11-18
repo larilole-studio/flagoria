@@ -133,7 +133,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/explored_map.gd` | Explored cells per chunk | stays |
 | `Scripts/minimap_panel.gd` | In-play explored map panel; starts closed and sits left of the arc (#450, #480) | stays |
 | `Scripts/round_hud_style.gd` | Circle style, selected ring and tap target for the HUD buttons | stays (#450, #480) |
-| `Scripts/hud_tool_row.gd` | Places the top-right arc, keeps the minimap left of it, puts Run beside attack, and the tool wheel left of Run | stays (#450, #480, #574) |
+| `Scripts/hud_tool_row.gd` | Direction C column, status plate, event-driven layout, tool wheel beside Run | stays (#450, #480, #492, #574) |
 | `Scripts/map_wood_button.gd` | Wood header button shared by the panel and the parchment | stays |
 | `Scripts/parchment_map.gd` | Full-screen parchment of explored ground | stays |
 | `Scripts/hearts_hud.gd` | Hearts row | stays |
@@ -146,6 +146,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/number_pad.gd` | Touch keys for number fields | stays |
 | `Scripts/ingame_menu.gd` | In-game menu, Save, Customize HUD | stays |
 | `Scripts/hud_layout.gd` | Per-device touch HUD positions in user settings, including the tool wheel | stays (#492, #575) |
+| `Scripts/hud_layout_defaults.gd` | HUD layout save/load, capture, and reset helpers | stays (#492) |
 | `Scripts/hud_layout_edit.gd` | Customize HUD edit overlay | stays (#492) |
 | `Scripts/hud_layout_visual.gd` | HUD control visual rects for edit overlap | stays (#492) |
 | `Scripts/quit_prompt.gd` | Quit prompt | stays |

@@ -270,19 +270,15 @@ func _run_world(peer: Node) -> Node2D:
 
 
 func _run_icon_ok(button: Button) -> bool:
-	var tex := button.icon
-	return tex != null and tex.get_width() == 32 and tex.get_height() == 32 \
-			and str(tex.resource_path).ends_with("icon_run.png") \
-			and button.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST \
-			and button.get_theme_constant("icon_max_width") == RoundHudStyle.RUN_ICON
+	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
+	return box != null and box.texture != null and "ui_disc_run" in str(box.texture.resource_path) \
+			and is_equal_approx(button.size.x, RoundHudStyle.RUN_HIT)
 
 
 func _run_on(button: Button) -> bool:
-	var box := button.get_theme_stylebox("pressed") as StyleBoxFlat
-	if box == null or box.border_width_left < 2:
-		return false
-	return box.border_color.r > RoundHudStyle.INK.r + 0.4 \
-			and box.bg_color.get_luminance() > RoundHudStyle.FACE.get_luminance() + 0.15
+	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
+	return button.button_pressed and box != null and box.texture != null \
+			and "ui_disc_run_pressed" in str(box.texture.resource_path)
 
 
 func _gap(a: Rect2, b: Rect2) -> float:

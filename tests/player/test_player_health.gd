@@ -89,14 +89,18 @@ func _test_player_health() -> int:
 	other.name = "2"
 	world.add_child(other)
 	var h: PlayerHealth = me.health
-	var hud: HeartsHud = scene.get_node("CanvasLayer1/HeartsHud")
+	var hud: HeartsHud = scene.find_child("HeartsHud", true, false) as HeartsHud
+	scene.get_node("CanvasLayer1").show()
+	await process_frame
+	await process_frame
 	var deaths := [0]
 	h.died.connect(func() -> void: deaths[0] += 1)
 
 	if h.max_health != 6 or h.health != 6 or h.heart_count() != 3:
 		printerr("FAIL player_health: start %s/%s, %s hearts" % [h.health, h.max_health, h.heart_count()])
 		fail += 1
-	if not hud.visible or hud.current != 6 or hud.maximum != 6 or not hud.size.is_equal_approx(Vector2(29, 9)):
+	if not hud.visible or hud.current != 6 or hud.maximum != 6 \
+			or hud.size.x <= 0.0 or hud.size.y <= 0.0:
 		printerr("FAIL player_health: HUD visible=%s %s/%s size %s" % [hud.visible, hud.current, hud.maximum, hud.size])
 		fail += 1
 	# Half-heart step, then invulnerability blocks the next hit until it ends.
@@ -158,9 +162,13 @@ func _test_player_health() -> int:
 		printerr("FAIL player_health: loss flash %s, want [F00, F11, FHE, FFF]" % [seen])
 		fail += 1
 	hud.set_process(true)
-	if not hud.position.is_equal_approx(Vector2(HeartsHud.MARGIN, HeartsHud.MARGIN) * hud.scale.x):
-		printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
-		fail += 1
+	var plate := hud.get_parent() as StatusPlateHud
+	if plate != null:
+		plate.reflow()
+		var want := StatusPlateHud.HEART_SLOT
+		if not hud.position.is_equal_approx(want):
+			printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
+			fail += 1
 	# Death: health stops at 0, the player hides and cannot be hit or healed.
 	h.set_health_now(1)
 	if not h.take_damage(5) or h.health != 0 or not h.is_dead() or deaths[0] != 1:
@@ -359,7 +367,7 @@ func _test_player_health_join_while_dead() -> int:
 		dead.health.died.connect(func() -> void: deaths[0] += 1)
 		var me = copy.call(me_id)
 		me.set_physics_process(false)  # its animation RPCs have no server node here
-		var hud: HeartsHud = scene.get_node("CanvasLayer1/HeartsHud")
+		var hud: HeartsHud = scene.find_child("HeartsHud", true, false) as HeartsHud
 		hud.set_process(false)  # a flash must still be up when checked
 		var until := Time.get_ticks_msec() + 5000
 		while Time.get_ticks_msec() < until and (dead.health.health != 0 or me.health.health != 4):

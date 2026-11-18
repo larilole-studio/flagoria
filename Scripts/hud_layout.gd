@@ -7,8 +7,8 @@ extends Node
 
 const SECTION := "hud"
 const SAVE_VERSION := 1
-const SIDE := 4.0
-const GAP := 2.0
+const SIDE := 12.0
+const GAP := 4.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
@@ -31,7 +31,7 @@ var _draft: Dictionary = {}  ## during edit; mirrors _saved until changed
 
 
 func _ready() -> void:
-	load_from_disk()
+	HudLayoutDefaults.load_from_disk(self)
 
 
 func uses_custom() -> bool:
@@ -131,50 +131,17 @@ func entry_write(id: String, entry: Dictionary, layer: CanvasLayer) -> bool:
 
 
 func save_to_disk() -> void:
-	if _editing:
-		_saved = _draft.duplicate(true)
-	var cfg := ConfigFile.new()
-	cfg.set_value(SECTION, "version", SAVE_VERSION)
-	for id in IDS:
-		if _saved.has(id):
-			var e: Dictionary = _saved[id]
-			cfg.set_value(SECTION, id + "_x", e.get("x", 0.0))
-			cfg.set_value(SECTION, id + "_y", e.get("y", 0.0))
-			cfg.set_value(SECTION, id + "_s", e.get("s", 1.0))
-	cfg.save(save_path)
-	_draft = _saved.duplicate(true)
+	HudLayoutDefaults.save_to_disk(self)
 
 
 func load_from_disk() -> void:
-	_saved.clear()
-	var cfg := ConfigFile.new()
-	if cfg.load(save_path) != OK:
-		return
-	if int(cfg.get_value(SECTION, "version", 0)) != SAVE_VERSION:
-		return
-	# Skip a missing id. mode_* stays unread so it cannot place the wheel (#575).
-	for id in IDS:
-		if not cfg.has_section_key(SECTION, id + "_x"):
-			continue
-		var xv: Variant = _finite(cfg.get_value(SECTION, id + "_x"))
-		var yv: Variant = _finite(cfg.get_value(SECTION, id + "_y", 0.0))
-		var sv: Variant = _finite(cfg.get_value(SECTION, id + "_s", 1.0))
-		if xv == null or yv == null or sv == null:
-			continue
-		var x: float = xv
-		var y: float = yv
-		var s: float = sv
-		s = clampf(s, SCALE_MIN, SCALE_MAX)
-		if x < 0.0 or x > 1.0 or y < 0.0 or y > 1.0:
-			continue
-		_saved[id] = {"x": x, "y": y, "s": s}
+	HudLayoutDefaults.load_from_disk(self)
 
 
 func reset() -> void:
 	_saved.clear()
 	_draft.clear()
-	if FileAccess.file_exists(save_path):
-		DirAccess.remove_absolute(save_path)
+	HudLayoutDefaults.remove_save_file(self)
 
 
 func reset_to_defaults() -> void:
@@ -182,8 +149,8 @@ func reset_to_defaults() -> void:
 	_draft.clear()
 	_editing = false
 	_edit_exclusion = Rect2()
-	if FileAccess.file_exists(save_path):
-		DirAccess.remove_absolute(save_path)
+	HudLayoutDefaults.remove_save_file(self)
+	HudLayoutDefaults.flush_touch_defaults()
 
 
 func forget_memory() -> void:
@@ -199,7 +166,7 @@ func capture_into_draft(layer: CanvasLayer) -> void:
 
 
 func scale_of(id: String, layer: CanvasLayer) -> float:
-	return _scale_of(id, layer)
+	return HudLayoutDefaults.scale_of(id, layer, PATHS)
 
 
 func apply(layer: CanvasLayer) -> void:
@@ -409,21 +376,26 @@ func _apply_attack(btn: TouchScreenButton, pos: Vector2, s: float) -> void:
 
 
 func _apply_run(button: Button, pos: Vector2, s: float) -> void:
-	var hit := RoundHudStyle.RUN_HIT * s
-	var disc := RoundHudStyle.RUN_SIZE * s
-	RoundHudStyle.apply(button, hit, disc, RoundHudStyle.RUN_ICON)
+	RoundHudStyle.apply_run(button, RoundHudStyle.RUN_HIT * s, RoundHudStyle.RUN_SIZE * s)
 	button.position = pos
 
 
 func _apply_round(button: Button, pos: Vector2, s: float, _is_run := false) -> void:
-	var hit := RoundHudStyle.HIT * s
-	var disc := RoundHudStyle.SIZE * s
-	var icon := RoundHudStyle.ICON
 	if button.get_script() != null and str(button.get_script().resource_path).ends_with("run_control.gd"):
-		hit = RoundHudStyle.RUN_HIT * s
-		disc = RoundHudStyle.RUN_SIZE * s
-		icon = RoundHudStyle.RUN_ICON
-	RoundHudStyle.apply(button, hit, disc, icon)
+		_apply_run(button, pos, s)
+		return
+	if button.name == "ScoreboardToggle":
+		RoundHudStyle.apply_scores(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	elif button.name == "BuildingsButton":
+		RoundHudStyle.apply_build(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	elif button.name == "ModeButton":
+		var mode := Interaction.Mode.COMBAT
+		var world := button.get_node_or_null("/root/Flagoria/World/Interaction") as Interaction
+		if world != null:
+			mode = world.mode
+		RoundHudStyle.apply_mode(button, mode, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	else:
+		RoundHudStyle.apply(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	button.position = pos
 
 
@@ -462,38 +434,4 @@ static func _finite(value: Variant, fallback = null):
 
 ## Capture the default layout after HudToolRow runs (for tests and first save).
 func capture_from_layer(layer: CanvasLayer) -> Dictionary:
-	var out := {}
-	var view := layer.get_viewport().get_visible_rect().size
-	for id in IDS:
-		var rect := control_hit_rect(id, layer)
-		if rect.size == Vector2.ZERO and id == "scores" and view.x > 0.0 and view.y > 0.0:
-			var toggle := layer.get_node_or_null(PATHS["scores"]) as Control
-			if toggle != null:
-				rect = Rect2(layer.global_position + toggle.position, Vector2(RoundHudStyle.HIT, RoundHudStyle.HIT))
-		if rect.size == Vector2.ZERO:
-			continue
-		out[id] = {
-			"x": clampf(rect.position.x / view.x, 0.0, 1.0),
-			"y": clampf(rect.position.y / view.y, 0.0, 1.0),
-			"s": _scale_of(id, layer),
-		}
-	return out
-
-
-func _scale_of(id: String, layer: CanvasLayer) -> float:
-	var node := layer.get_node_or_null(PATHS[id])
-	if node == null:
-		return 1.0
-	match id:
-		"joystick":
-			return (node as Node2D).scale.x
-		"attack":
-			return (node as TouchScreenButton).scale.x
-		_:
-			var c := node as Control
-			if c == null or c.size.x <= 0.0:
-				return 1.0
-			if id == "run":
-				return c.size.x / RoundHudStyle.RUN_HIT
-			return c.size.x / RoundHudStyle.HIT
-	return 1.0
+	return HudLayoutDefaults.capture_from_layer(self, layer)

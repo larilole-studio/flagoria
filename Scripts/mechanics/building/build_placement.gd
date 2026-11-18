@@ -334,8 +334,8 @@ func _ensure_picker() -> void:
 		_buildings.toggle_mode = true
 		_buildings.theme = theme
 		_buildings.tooltip_text = "Buildings"
-		_buildings.icon = BUILDINGS_ICON
-		RoundHudStyle.apply(_buildings)
+		_buildings.icon = null
+		RoundHudStyle.apply_build(_buildings)
 		_buildings.toggled.connect(_on_buildings_toggled)
 		hud.add_child(_buildings)
 	_picker = hud.get_node_or_null("BuildPicker") as Control

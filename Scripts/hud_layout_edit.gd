@@ -74,7 +74,15 @@ func relayout_bar() -> void:
 
 
 func close_editor() -> void:
+	var layer := _layer()
 	_hl().edit_end()
+	if layer != null:
+		var row := layer.get_node_or_null("HudToolRow") as HudToolRow
+		if row != null:
+			if _hl().uses_custom():
+				_hl().apply(layer)
+			else:
+				row.restore_defaults(layer)
 	_set_pause(false)
 	hide()
 	var menu := get_parent()
@@ -173,6 +181,10 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 		Vector2(BAR_EDGE_INSET, maxf(floor_y, bottom_y)),
 		Vector2(BAR_EDGE_INSET, BAR_EDGE_INSET),
 	])
+	if joy.size != Vector2.ZERO:
+		var above_joy := joy.position.y - sz.y - BAR_EDGE_INSET
+		if above_joy >= BAR_EDGE_INSET:
+			candidates.append(Vector2(BAR_EDGE_INSET, above_joy))
 	var bar_size := _top_bar.size
 	var best_pos := _clamp_bar_position(candidates[0], bar_size, view)
 	var best_score := INF
@@ -188,6 +200,20 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 			best_pos = clamped
 	if zero_pos != null:
 		best_pos = zero_pos
+	if best_score > 0.0:
+		var joy_rect: Rect2 = _hl().control_visual_rect("joystick", layer)
+		var scores_rect: Rect2 = _hl().control_visual_rect("scores", layer)
+		var clear_y := BAR_EDGE_INSET
+		if scores_rect.size != Vector2.ZERO:
+			clear_y = maxf(clear_y, scores_rect.end.y + BAR_EDGE_INSET)
+		if joy_rect.size != Vector2.ZERO:
+			clear_y = minf(clear_y, joy_rect.position.y - bar_size.y - BAR_EDGE_INSET)
+		var clear_x := BAR_EDGE_INSET
+		if scores_rect.size != Vector2.ZERO \
+				and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(scores_rect):
+			clear_x = scores_rect.end.x + BAR_EDGE_INSET
+		best_pos = _clamp_bar_position(Vector2(clear_x, clear_y), bar_size, view)
+		best_score = _bar_overlap_score(layer, Rect2(best_pos, bar_size))
 	_top_bar.global_position = _clamp_bar_position(best_pos, bar_size, view)
 	await get_tree().process_frame
 	_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
@@ -345,14 +371,14 @@ func _on_reset() -> void:
 	_hl().reset_to_defaults()
 	var row := layer.get_node_or_null("HudToolRow") as HudToolRow
 	if row != null:
-		row._layout()
+		row.restore_defaults(layer)
 	_hl().edit_begin(layer)
 	_set_pause(_should_pause_game())
 	_selected = ""
 	_drag_id = ""
 	_size_slider.editable = false
 	_selected_label.text = "Default layout restored · tap a control"
-	_relayout_edit_bar(layer)
+	call_deferred("relayout_bar")
 
 
 func _on_done() -> void:

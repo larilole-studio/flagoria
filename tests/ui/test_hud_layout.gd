@@ -50,7 +50,7 @@ func _test_hud_layout_clamp_overlap() -> int:
 	await process_frame
 	_hud().edit_begin(layer)
 	var view := layer.get_viewport().get_visible_rect().size
-	if not _hud().try_place("attack", -0.5, 0.5, 1.0, layer):
+	if not _hud().try_place("attack", -0.5, 0.05, 1.0, layer):
 		printerr("FAIL hud_layout_clamp: clamped place failed")
 		fail += 1
 	var rect: Rect2 = _hud().control_hit_rect("attack", layer)

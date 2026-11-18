@@ -25,7 +25,9 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 
 
 func _ready() -> void:
-	fit_icon_button(menu_button)
+	menu_button.icon = null
+	menu_button.text = ""
+	RoundHudStyle.apply_menu(menu_button)
 	menu_button.pressed.connect(open)
 	resume_button.pressed.connect(close)
 	save_button.pressed.connect(save_world)

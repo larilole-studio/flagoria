@@ -144,7 +144,7 @@ func _test_interact_cut_trees() -> int:
 			or not world.has_tree(Vector2i(10, 6)):
 		printerr("FAIL interact_cut_trees: trees left after the drag %s" % [left])
 		fail += 1
-	var hud: ResourceHud = scene.get_node("CanvasLayer1/ResourceHud")
+	var hud: ResourceHud = _hud_on_canvas(scene, "ResourceHud") as ResourceHud
 	if inventory.count_of(Inventory.WOOD) != want_wood or hud.label.text != str(want_wood):
 		printerr("FAIL interact_cut_trees: wood %s, HUD '%s' after cutting %s trees and a bush, want %s"
 				% [inventory.count_of(Inventory.WOOD), hud.label.text, want_cut.size(), want_wood])
