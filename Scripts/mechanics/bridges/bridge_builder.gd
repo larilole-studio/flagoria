@@ -30,6 +30,7 @@ func has_bridge(cell: Vector2i) -> bool:
 func set_cell(cell: Vector2i, atlas: Vector2i) -> void:
 	## Record a piece at `cell` with no adjacency checks (TileMap.set_bridge_cell).
 	_bridge_cells[cell] = atlas
+	_map.invalidate_painted_cell(cell)
 
 
 func piece(cell: Vector2i) -> Vector2i:

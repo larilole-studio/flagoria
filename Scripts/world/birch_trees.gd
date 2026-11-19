@@ -77,7 +77,7 @@ static func clear_top(map: _WorldMap, bottom: Vector2i) -> void:
 	var top := top_cell(bottom)
 	map.erase_cell(1, top)
 	map.erase_cell(map.GROUND_DECOR_LAYER, top)
-	map._predict_cache.erase(top)
+	map.invalidate_painted_cell(top)
 
 
 static func is_tree_tile(atlas: Vector2i) -> bool:

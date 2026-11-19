@@ -35,6 +35,7 @@ var _buttons: Dictionary = {}  ## Tool -> Button
 var _snap_from := Vector2i.ZERO
 var _snap_to := Vector2i.ZERO
 var _snap_valid := false
+var _snap_frame := 0
 ## Last placed wall cell while the Wall tool stays selected; cleared on leave.
 var _wall_tip := Vector2i.ZERO
 var _has_wall_tip := false
@@ -463,6 +464,9 @@ func _preview_inputs_unchanged(from_cell: Vector2i, to_cell: Vector2i, inventory
 		return false
 	if inventory.count_of(Inventory.WOOD) != _snap_wood:
 		return false
+	# Other actors can enter a footprint without changing any tiles.
+	if Engine.get_process_frames() - _snap_frame >= _interaction.world_map.chunk_refresh_frames:
+		return false
 	if _map_rev != _snap_map_rev:
 		return false
 	var pos := _interaction.player.global_position if _interaction.player else Vector2(INF, INF)
@@ -473,6 +477,7 @@ func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory:
 	_snap_from = from_cell
 	_snap_to = to_cell
 	_snap_valid = true
+	_snap_frame = Engine.get_process_frames()
 	_snap_rotation = _rotate.quarter_turns
 	_snap_wood = inventory.count_of(Inventory.WOOD)
 	_snap_player_pos = _interaction.player.global_position if _interaction.player else Vector2(INF, INF)
