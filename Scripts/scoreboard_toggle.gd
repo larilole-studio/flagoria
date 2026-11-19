@@ -47,6 +47,7 @@ func _follow_score() -> void:
 		scale = Vector2(k, k)
 		var inset := Vector2(4, 4)
 		position = HudToolRow.LAYOUT["scores"] - inset * k
+		position.x = ceilf(plate.get_global_rect().end.x) + GAP
 		set_anchors_preset(Control.PRESET_TOP_LEFT)
 	else:
 		var score := _status_sibling("ScoreHud") as Control

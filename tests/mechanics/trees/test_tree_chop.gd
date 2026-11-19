@@ -262,7 +262,8 @@ func _test_chop_sweep_bounds_and_cancel() -> int:
 		return interaction.get_canvas_transform() * world.to_global(cell * 16.0)
 	var button: Node = scene.get_node("CanvasLayer1/TouchScreenButton")
 	var tap := func(pos: Vector2) -> void:
-		_chop_toward(vp, interaction, player, button, interaction.to_world(pos))
+		# Drag past the cap so viewport transform rounding cannot shorten the reach.
+		_chop_toward(vp, interaction, player, button, interaction.to_world(pos), Interaction.CHOP_REACH + 1.0)
 	# Inside the boundary, outside it, and off to the side.
 	if not interaction.chop_in_reach(edge) or interaction.chop_in_reach(past) \
 			or player.global_position.distance_to(interaction.cell_center(edge)) > 240.0 \

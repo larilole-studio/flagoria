@@ -497,22 +497,20 @@ func _test_new_param_needs_no_ui_code() -> int:
 	return fail
 
 func _test_map_settings_bottom_buttons_visible() -> int:
-	## At the project viewport (480x270, window override 1280x720), the button
+	## At 1280x720 (480x270 logical viewport), the button
 	## rows pinned below the scroll area — including Back / Host — sit fully
 	## inside the visible rect (#217). Time cost: ~0.2 s in verify.
 	print("-- test_map_settings_bottom_buttons_visible")
+	var previous_size := root.size
+	root.size = Vector2i(1280, 720)
 	var panel = load("res://map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	for i in 5:
 		await process_frame
 	var vp: Rect2 = root.get_visible_rect()
 	var fail := 0
-	# Design size matching the 1280x720 window override with canvas_items stretch.
-	if not is_equal_approx(vp.size.x, 480.0) or not is_equal_approx(vp.size.y, 270.0):
-		printerr(
-			"FAIL map_settings_bottom_buttons_visible: viewport %s want 480x270 (1280x720 stretch)"
-			% vp.size
-		)
+	if not vp.size.is_equal_approx(Vector2(480, 270)):
+		printerr("FAIL map_settings_bottom_buttons_visible: viewport %s want 480x270" % vp.size)
 		fail += 1
 	for row_name in ["Buttons", "ButtonsDefaults", "Buttons2"]:
 		var row: Control = panel.find_child(row_name, true, false)
@@ -541,6 +539,7 @@ func _test_map_settings_bottom_buttons_visible() -> int:
 			)
 			fail += 1
 	panel.queue_free()
+	root.size = previous_size
 	if fail == 0:
 		print("PASS test_map_settings_bottom_buttons_visible viewport=%s" % vp.size)
 	return fail

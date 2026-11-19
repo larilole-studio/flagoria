@@ -8,13 +8,14 @@ extends Node
 
 const ToolWheelScript := preload("res://Scripts/tool_wheel.gd")
 
+const CANVAS_SIZE := Vector2(480, 270)
 const GAP := 4.0
 const WHEEL_GAP := 2.0
 const SIDE := 12.0
 const LAYOUT := {
 	"menu": Vector2(444, 12),
-	"map": Vector2(444, 68),
-	"build": Vector2(444, 96),
+	"map": Vector2(444, 52),
+	"build": Vector2(444, 88),
 	"scores": Vector2(116, 12),
 	"attack": Vector2(428, 218),
 	"run": Vector2(392, 222),
@@ -61,9 +62,10 @@ func _bind_relayout() -> void:
 	var picker := layer.get_node_or_null("BuildPicker") as CanvasItem
 	if picker != null and not picker.visibility_changed.is_connected(_on_relayout):
 		picker.visibility_changed.connect(_on_relayout)
-	var panel := layer.get_node_or_null("MinimapPanel") as CanvasItem
-	if panel != null and not panel.visibility_changed.is_connected(_on_relayout):
-		panel.visibility_changed.connect(_on_relayout)
+	for node_name in ["MinimapPanel", "ScoreboardPanel"]:
+		var panel := layer.get_node_or_null(node_name) as CanvasItem
+		if panel != null and not panel.visibility_changed.is_connected(_on_relayout):
+			panel.visibility_changed.connect(_on_relayout)
 	if not get_viewport().size_changed.is_connected(_on_relayout):
 		get_viewport().size_changed.connect(_on_relayout)
 
@@ -83,7 +85,6 @@ func _layout() -> void:
 	var layout := get_node_or_null("/root/HudLayout")
 	if layout != null and layout.layout_active():
 		layout.apply(layer)
-		_place_tool(layer)
 		return
 	_restore_touch_defaults(layer)
 
@@ -95,8 +96,9 @@ func _restore_touch_defaults(layer: Node) -> void:
 	_place_combat(layer)
 	_place_attack(layer)
 	_place_joystick(layer)
-	_place_panel(layer)
 	_place_tool(layer)
+	_place_buildings(layer)
+	_place_panel(layer)
 
 
 func _place_menu(layer: Node) -> void:
@@ -125,7 +127,6 @@ func _place_column(layer: Node) -> void:
 		RoundHudStyle.apply_build(buildings)
 		_set_art(buildings, "build")
 		buildings.z_index = 2
-		_place_buildings(layer, buildings)
 
 
 static func hud_child(layer: Node, node_name: String) -> Node:
@@ -172,7 +173,7 @@ func _place_attack(layer: Node) -> void:
 	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
 	if attack == null:
 		return
-	attack.position = LAYOUT["attack"]
+	attack.position = LAYOUT["attack"] + _edge_offset()
 	attack.scale = Vector2.ONE
 	if attack.shape is CircleShape2D:
 		(attack.shape as CircleShape2D).radius = 24.0
@@ -181,34 +182,81 @@ func _place_attack(layer: Node) -> void:
 func _place_joystick(layer: Node) -> void:
 	var stick := layer.get_node_or_null("player_joystick") as Node2D
 	if stick != null:
-		stick.position = LAYOUT["joystick"]
+		stick.position = Vector2(LAYOUT["joystick"]) + Vector2(0, _edge_offset().y)
 		stick.scale = Vector2.ONE
 
 
-func _place_buildings(layer: Node, buildings: Control) -> void:
-	if buildings == null:
-		return
+func _place_buildings(layer: Node, custom := false) -> void:
+	var buildings := layer.get_node_or_null("BuildingsButton") as Control
 	var picker := layer.get_node_or_null("BuildPicker") as Control
-	if picker == null:
+	if buildings == null or picker == null:
+		return
+	var buttons: Array[Control] = []
+	for child in picker.get_children():
+		if child is Control and child.visible and not child.is_queued_for_deletion():
+			buttons.append(child)
+	if buttons.is_empty():
 		return
 	_pin(picker)
 	picker.position = Vector2.ZERO
 	picker.z_index = 2
-	var top := buildings.position.y + _size_of(buildings).y + GAP
-	var x := buildings.position.x
-	var y := top
-	for child in picker.get_children():
-		var button := child as Control
-		if button == null or button.is_queued_for_deletion() or not button.visible:
+	var hit := RoundHudStyle.HIT
+	var step := int(hit + GAP)
+	var view := get_viewport().get_visible_rect()
+	var right := floori(view.end.x - GAP - hit)
+	# Keep the picker in the upper HUD, clear of the default thumb controls.
+	var bottom := floori(minf(view.end.y, LAYOUT["attack"].y - 4.0) - GAP - hit)
+	var left_of_buildings := floori(buildings.position.x - GAP - hit)
+	var top := clampi(roundi(buildings.position.y), int(GAP), bottom)
+	var blocked := _picker_obstacles(layer, custom)
+	var next := 0
+	# Start alongside Buildings, then wrap left. Use the rest of the upper
+	# HUD if a custom layout puts Buildings against the left or bottom edge.
+	var columns := range(left_of_buildings, int(GAP) - 1, -step)
+	columns.append_array(range(right, maxi(left_of_buildings + 1, int(GAP) - 1), -step))
+	var row_bands := [range(top, bottom + 1, step), range(top - step, int(GAP) - 1, -step)]
+	for rows in row_bands:
+		for x in columns:
+			for y in rows:
+				var button := buttons[next]
+				var rect := Rect2(Vector2(x, y), _size_of(button))
+				if not view.encloses(rect) or blocked.any(func(other: Rect2) -> bool: return rect.intersects(other)):
+					continue
+				_pin(button)
+				button.position = rect.position
+				button.z_index = 3
+				blocked.append(rect.grow(GAP))
+				next += 1
+				if next == buttons.size():
+					return
+
+
+func _picker_obstacles(layer: Node, custom: bool) -> Array[Rect2]:
+	var blocked: Array[Rect2] = []
+	var layout := get_node("/root/HudLayout")
+	for id in layout.IDS:
+		var control := layer.get_node_or_null(NodePath(layout.PATHS[id])) as CanvasItem
+		if control == null or not control.is_visible_in_tree():
 			continue
-		_pin(button)
-		var size := _size_of(button)
-		button.position = Vector2(roundf(x), roundf(y))
-		button.z_index = 3
-		y += size.y + GAP
+		var rect: Rect2 = layout.control_hit_rect(id, layer)
+		if control is TouchScreenButton and control.shape != null:
+			var shape_rect: Rect2 = control.shape.get_rect()
+			if control.shape_centered and control.texture_normal != null:
+				shape_rect.position += control.texture_normal.get_size() * 0.5
+			rect = rect.merge(control.global_transform * shape_rect)
+		if rect.has_area():
+			blocked.append(rect)
+	var paths := ["InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel"]
+	if custom:
+		paths.append("MinimapPanel")
+	for path in paths:
+		var control := layer.get_node_or_null(path) as Control
+		if control != null and control.visible:
+			blocked.append(control.get_global_rect())
+	return blocked
 
 
-func _place_panel(layer: Node) -> void:
+func _place_panel(layer: Node, avoid_picker := true) -> void:
 	var panel := layer.get_node_or_null("MinimapPanel") as Control
 	if panel == null or panel.size.x <= 0.0:
 		return
@@ -219,7 +267,7 @@ func _place_panel(layer: Node) -> void:
 	for node_name in ["MinimapButton", "BuildingsButton"]:
 		arc_left = minf(arc_left, _left_of(layer.get_node_or_null(node_name) as Control))
 	var picker := layer.get_node_or_null("BuildPicker") as Control
-	if picker != null:
+	if avoid_picker and picker != null:
 		for child in picker.get_children():
 			var column := child as Control
 			if column != null and column.visible and not column.is_queued_for_deletion():
@@ -236,11 +284,12 @@ func _place_panel(layer: Node) -> void:
 	if x < SIDE:
 		x = SIDE
 	panel.position = Vector2(roundf(x), roundf(y))
-	var plate := layer.get_node_or_null("StatusPlate") as Control
-	if plate != null and plate.visible and panel.get_global_rect().intersects(plate.get_global_rect()):
-		var dropped := plate.get_global_rect().end.y + GAP
-		if dropped + height <= limit:
-			panel.position.y = roundf(dropped)
+	for node_name in ["StatusPlate", "ScoreboardToggle"]:
+		var control := layer.get_node_or_null(node_name) as Control
+		if control != null and control.visible and panel.get_global_rect().intersects(control.get_global_rect()):
+			var dropped := ceilf(control.get_global_rect().end.y + GAP)
+			if dropped + height <= limit:
+				panel.position.y = dropped
 
 
 func _place_tool(layer: Node) -> void:
@@ -274,6 +323,15 @@ func _set_art(control: Control, id: String) -> void:
 		return
 	var inset: Vector2 = HIT_INSET.get(id, Vector2.ZERO)
 	control.position = LAYOUT[id] - inset
+	if id != "scores":
+		var offset := _edge_offset()
+		control.position.x += offset.x
+		if id == "run":
+			control.position.y += offset.y
+
+
+func _edge_offset() -> Vector2:
+	return (get_viewport().get_visible_rect().size - CANVAS_SIZE).max(Vector2.ZERO)
 
 
 func _size_of(control: Control) -> Vector2:
@@ -290,8 +348,10 @@ func _left_of(control: Control) -> float:
 	return rect.position.x
 
 
-func place_panel_only(layer: Node) -> void:
-	_place_panel(layer)
+func place_custom_popups(layer: Node) -> void:
+	_place_tool(layer)
+	_place_panel(layer, false)
+	_place_buildings(layer, true)
 
 
 func _pin(control: Control) -> void:
