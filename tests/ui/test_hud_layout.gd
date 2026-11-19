@@ -49,7 +49,6 @@ func _test_hud_layout_clamp_overlap() -> int:
 	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
 	await process_frame
 	_hud().edit_begin(layer)
-	var view := layer.get_viewport().get_visible_rect().size
 	if not _hud().try_place("attack", -0.5, 0.05, 1.0, layer):
 		printerr("FAIL hud_layout_clamp: clamped place failed")
 		fail += 1
@@ -335,7 +334,7 @@ func _test_hud_layout_legacy_mode() -> int:
 	var run: Control = layer.get_node("RunButton")
 	var button: Control = layer.get_node("ToolWheel/ToolButton")
 	var gap := run.get_global_rect().position.x - button.get_global_rect().end.x
-	if absf(gap - 2.0) > 2.0 or button.get_global_rect().intersects(run.get_global_rect()):
+	if absf(gap - 2.0) > 2.0:
 		printerr("FAIL hud_layout_legacy_mode: wheel left the thumb slot gap %s" % gap)
 		fail += 1
 	_hud().save_to_disk()

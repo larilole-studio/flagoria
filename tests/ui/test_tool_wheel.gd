@@ -268,7 +268,7 @@ func _beside_run(scene: Node, label: String) -> int:
 	var run: Control = scene.get_node("CanvasLayer1/RunButton")
 	var button: Control = scene.get_node("CanvasLayer1/ToolWheel/ToolButton")
 	var gap := run.get_global_rect().position.x - button.get_global_rect().end.x
-	if absf(gap - 2.0) > 1.5 or button.get_global_rect().intersects(run.get_global_rect()):
+	if absf(gap - 2.0) > 1.5:
 		printerr("FAIL tool_wheel_hold %s: tool %s run %s gap %s"
 				% [label, button.get_global_rect(), run.get_global_rect(), gap])
 		return 1

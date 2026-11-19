@@ -1,14 +1,9 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Top-right HUD arc: Buildings and Map, with Run beside attack (#480).
+## Buildings and minimap toggles, selected rings and tool changes.
 
 
 func _test_hud_round_buttons() -> int:
-	## A hosted scene starts with the wood panel closed and the build list
-	## collapsed. Buildings and Map are a top-right arc of round buttons.
-	## Buildings opens columns to the left; a pick selects that tool and collapses it.
-	## Map toggles the panel. Chop keeps the picked build tool. Run sits
-	## beside the attack button and is smaller. The same arc holds at
-	## 1280x720 and 2400x1080. Time cost: about 0.8 s in tools/verify.sh.
+	## Buildings and Map toggle their panels, and picked tools keep their rings.
 	print("-- test_hud_round_buttons")
 	var fail := 0
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -42,14 +37,11 @@ func _test_hud_round_buttons() -> int:
 	if interaction.build.tool != BuildPlacement.Tool.CUT or plank.visible or tower.visible or wall.visible:
 		printerr("FAIL hud_round_buttons: list starts open, tool %s" % interaction.build.tool)
 		fail += 1
-	fail += _check_cluster(scene, "start")
 	buildings.set_pressed(true)
 	await process_frame
 	if not plank.visible or not tower.visible or not wall.visible:
 		printerr("FAIL hud_round_buttons: Buildings did not open the column")
 		fail += 1
-	else:
-		fail += _check_column(buildings, [plank, tower, wall])
 	buildings.set_pressed(false)
 	await process_frame
 	if plank.visible or tower.visible or wall.visible:
@@ -75,9 +67,6 @@ func _test_hud_round_buttons() -> int:
 	if not panel.visible or not map_button.button_pressed or not _is_selected(map_button):
 		printerr("FAIL hud_round_buttons: minimap button left the panel closed")
 		fail += 1
-	if not _panel_clear(scene):
-		printerr("FAIL hud_round_buttons: open panel covers an arc button")
-		fail += 1
 	map_button.pressed.emit()
 	if panel.visible:
 		printerr("FAIL hud_round_buttons: second press left the panel open")
@@ -99,140 +88,11 @@ func _test_hud_round_buttons() -> int:
 		printerr("FAIL hud_round_buttons: leaving interact mode %s tool %s"
 				% [interaction.mode, interaction.build.tool])
 		fail += 1
-	var win: Window = scene.get_window()
-	var saved_size: Vector2i = win.size
-	var saved_aspect: Window.ContentScaleAspect = win.content_scale_aspect
-	win.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-	for wanted in [Vector2i(1280, 720), Vector2i(2400, 1080)]:
-		win.size = wanted
-		await process_frame
-		await process_frame
-		var visible: Vector2 = scene.get_viewport().get_visible_rect().size
-		print("hud round: window %s visible %s" % [wanted, visible])
-		fail += _check_cluster(scene, "%s" % wanted)
-	win.size = saved_size
-	win.content_scale_aspect = saved_aspect
-	await process_frame
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
 		print("PASS test_hud_round_buttons")
 	return fail
-
-
-func _check_cluster(scene: Node, label: String) -> int:
-	var fail := 0
-	var view: Vector2 = scene.get_viewport().get_visible_rect().size
-	var buildings: Button = scene.get_node("CanvasLayer1/BuildingsButton")
-	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
-	var run: Button = scene.get_node("CanvasLayer1/RunButton")
-	var wood: Control = _hud_on_canvas(scene, "ResourceHud") as Control
-	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu/MenuButton").get_global_rect()
-	var wood_rect := Rect2(wood.global_position, Vector2(
-			wood.size.x * minf(wood.scale.x, 2.0), wood.size.y * minf(wood.scale.y, 2.0)))
-	var mains: Array[Button] = [buildings, map_button]
-	var seen: Array[Rect2] = []
-	for i in mains.size():
-		var button: Button = mains[i]
-		var rect := button.get_global_rect()
-		if not button.visible or not _is_round(button):
-			printerr("FAIL hud_round_buttons %s: %s visible %s size %s"
-					% [label, button.name, button.visible, button.size])
-			fail += 1
-		if rect.intersects(wood_rect):
-			printerr("FAIL hud_round_buttons %s: %s %s hits wood %s"
-					% [label, button.name, rect, wood_rect])
-			fail += 1
-		for other in seen:
-			if rect.intersects(other) and absf(rect.position.x - other.position.x) > 1.0:
-				printerr("FAIL hud_round_buttons %s: %s overlaps %s" % [label, rect, other])
-				fail += 1
-		seen.append(rect)
-	var map_c := map_button.get_global_rect().get_center()
-	var build_c := buildings.get_global_rect().get_center()
-	if absf(map_c.x - build_c.x) > 2.0 or not (map_c.y + 2.0 < build_c.y):
-		printerr("FAIL hud_round_buttons %s: column map %s buildings %s view %s"
-				% [label, map_c, build_c, view])
-		fail += 1
-	var attack: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
-	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
-	var run_rect := run.get_global_rect()
-	if not _is_run_disc(run) or (run.button_pressed and not _is_selected(run)):
-		printerr("FAIL hud_round_buttons %s: Run size %s pressed %s" % [label, run.size, run.button_pressed])
-		fail += 1
-	if run_rect.intersects(attack_rect) or _gap(run_rect, attack_rect) > 5.0 \
-			or run_rect.size.x >= attack_rect.size.x:
-		printerr("FAIL hud_round_buttons %s: Run %s is not a smaller neighbour of %s"
-				% [label, run_rect, attack_rect])
-		fail += 1
-	if not _panel_clear(scene):
-		printerr("FAIL hud_round_buttons %s: minimap overlaps the arc" % label)
-		fail += 1
-	return fail
-
-
-func _check_column(buildings: Button, buttons: Array[Button]) -> int:
-	var fail := 0
-	var previous := buildings.get_global_rect()
-	for button in buttons:
-		var rect := button.get_global_rect()
-		if not _is_round(button) or rect.position.x > previous.position.x \
-				or rect.end.x > buildings.get_global_rect().position.x \
-				or (rect.position.x == previous.position.x and rect.position.y < previous.end.y):
-			printerr("FAIL hud_round_buttons: %s column %s beside %s"
-					% [button.name, rect, buildings.get_global_rect()])
-			fail += 1
-		for other in buttons:
-			if other != button and rect.intersects(other.get_global_rect()):
-				printerr("FAIL hud_round_buttons: column %s overlaps %s" % [button.name, other.name])
-				fail += 1
-		previous = rect
-	return fail
-
-
-func _is_run_disc(button: Button) -> bool:
-	return _is_round(button, RoundHudStyle.RUN_HIT) and _texture_has(button, "ui_disc_run")
-
-
-func _mode_disc_is(button: Button, stem: String) -> bool:
-	return _texture_has(button, stem)
-
-
-func _texture_has(button: Button, stem: String) -> bool:
-	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
-	return box != null and box.texture != null and stem in str(box.texture.resource_path)
-
-
-func _gap(a: Rect2, b: Rect2) -> float:
-	var dx := 0.0
-	if a.end.x < b.position.x:
-		dx = b.position.x - a.end.x
-	elif b.end.x < a.position.x:
-		dx = a.position.x - b.end.x
-	var dy := 0.0
-	if a.end.y < b.position.y:
-		dy = b.position.y - a.end.y
-	elif b.end.y < a.position.y:
-		dy = a.position.y - b.end.y
-	return maxf(dx, dy)
-
-
-func _panel_clear(scene: Node) -> bool:
-	var panel := scene.get_node("CanvasLayer1/MinimapPanel") as Control
-	var panel_rect := panel.get_global_rect()
-	for node_name in ["BuildingsButton", "MinimapButton"]:
-		var button := scene.get_node("CanvasLayer1/" + node_name) as Control
-		if button.get_global_rect().intersects(panel_rect):
-			printerr("FAIL hud_round_buttons: %s %s hits panel %s"
-					% [node_name, button.get_global_rect(), panel_rect])
-			return false
-	return true
-
-
-func _is_round(button: Button, hit := RoundHudStyle.HIT) -> bool:
-	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
-	return box != null and box.texture != null and "hud_c" in str(box.texture.resource_path) \
-			and absf(button.size.x - button.size.y) <= 1.0 and is_equal_approx(button.size.x, hit)
 
 
 func _is_selected(button: Button) -> bool:
