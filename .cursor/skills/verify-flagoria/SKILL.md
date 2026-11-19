@@ -218,12 +218,12 @@ All under `.cursor/skills/verify-flagoria/bin/` (executable):
 | `collect-evidence.sh` | Copy a run's `game.log` and `user://` to `artifacts/out/runs/<run-id>/`; write `summary.txt` |
 | `cleanup.sh` | Stop recorded PIDs by exact PID; collect each run's evidence; remove `.run/` |
 | `run_lib.sh` | Sourced by the others: Godot lookup, run dirs, `.run/pids` |
-| `check-map.sh` | Lint the feature map, no Godot: every feature file indexed and carries a `Drive:` line, every cited `test_<name>` exists, every test cited; `--gameplay --changed-files` for gameplay PRs |
+| `check-map.sh` | Lint the feature map, no Godot: feature entries, relative Markdown links, drive coverage and test citations; `--gameplay --changed-files` for gameplay PRs |
 
-Drives started with `launch.sh` live in `drives/` (`drives/wait.gd`: start a game, then `idle()`; `drives/smoke.gd`: start a game, walk right, check the hero moved; `drives/chop_trees.gd`: chop one tree with a tap, then save, see `features/chop-trees.md`; `drives/combat_hud.gd`: HUD, a plain and an aimed touch swing, the in-game menu blocking an aim, see `features/combat-and-aiming.md`). The two-launch pair is in `drives/two_player/`, outside the glob `verify-drive.yml` runs alone.
+Drives started with `launch.sh` live in `drives/` (`drives/wait.gd`: start a game, then `idle()`; `drives/smoke.gd`: start a game, walk right, check the hero moved; `drives/chop_trees.gd`: aim a chop sweep with Attack, then save, see [Chop trees](features/chop-trees.md); `drives/combat_hud.gd`: HUD, a plain and an aimed touch swing, the in-game menu blocking an aim, see `features/combat-and-aiming.md`). The two-launch pair is in `drives/two_player/`, outside the glob `verify-drive.yml` runs alone.
 
 ## Feature map
 
-Every feature file under `features/` (except `README.md`) carries a `Drive:` line under its title: `Drive: drives/<name>.gd` when a drive covers it (that drive must call `snapshot("<screen>")`), or `Drive: not player-facing`. `bin/check-map.sh` enforces this. CI runs `check-map.sh --self-test` and the full `check-map.sh` inside the required `tools/verify.sh` job only. On gameplay pull requests, contributors can also run `check-map.sh --gameplay --changed-files` locally to fail fast when a changed or added feature file lacks the line.
+Every feature file under `features/` (except `README.md`) carries a `Drive:` line under its title: `Drive: drives/<name>.gd` when a drive covers it (that drive must call `snapshot("<screen>")`), or `Drive: not player-facing`. `bin/check-map.sh` enforces this. Document extra scripts with an `Also driven by:` line or an inline drive path. CI selects the primary `Drive:` and skips nested scripts. CI runs `check-map.sh --self-test` and the full `check-map.sh` inside the required `tools/verify.sh` job only. On gameplay pull requests, contributors can also run `check-map.sh --gameplay --changed-files` locally to fail fast when a changed or added feature file lacks the line.
 
 Index: [`features/README.md`](features/README.md).
