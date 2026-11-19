@@ -10,6 +10,7 @@ var _out := ""
 var _target := Vector2i(1 << 20, 0)
 var _phase_done := ""
 var _saw_hp2 := false
+var _break_done := false
 
 
 class _ErrorLog extends Logger:
@@ -84,13 +85,12 @@ func _run() -> void:
 			break
 		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
 		var ready := main.world_params != null and me != null
-		if host and _target.x != 1 << 20 and world._walls.hp(_target) == 2:
-			_saw_hp2 = true
-		if not host and work == "idle" and ready and phase in ["work", "watch"]:
+		if not host and work == "idle" and ready and phase == "work":
 			work = "busy"
 			_place_error = await _prepare_break(main, world, me)
-			if phase == "work":
+			if _place_error == "":
 				_phase_done = await _break_sequence(main, world, me)
+				_break_done = _phase_done == ""
 			work = "done"
 		if Time.get_ticks_msec() >= next_write:
 			_write(out, main, world, me)
@@ -134,32 +134,28 @@ func _break_sequence(main, world, me: Node2D) -> String:
 	me.global_position = interaction.cell_center(spot + Vector2i(0, 1))
 	if not await _until(func() -> bool: return _host_sees(me), 5000):
 		return "could not stand south"
-	await _swing(me, "Down", 0.0)  # away from the wall to the south
-	await _until_frames(15)
-	if world._walls.hp(spot) != WallBuilder.MAX_HP:
-		return "far swing dropped hp"
-	me.global_position = interaction.cell_center(spot + Vector2i(0, 1))
-	await _swing(me, "Up", 0.0)
-	if not await _until(func() -> bool: return world._walls.hp(spot) == 2, 8000):
-		return "first hit hp want 2 got %d" % world._walls.hp(spot)
-	_saw_hp2 = true
-	await _until_frames(25)
-	await _swing(me, "Up", 0.0)
-	await _until_frames(20)
-	await _swing(me, "Up", 0.0)
-	if not await _until(func() -> bool: return not world.has_wall(spot), 5000):
-		return "wall still present after break"
+	if not await _swing(me, "Down", PI / 2.0) or _wall_hp(world, spot) != 3:
+		return "away swing did not finish with hp 3"
+	for hp in [2, 1, -1]:
+		if not await _swing(me, "Up", -PI / 2.0):
+			return "swing did not finish"
+		if not await _until(func() -> bool: return _wall_hp(world, spot) == hp, 5000):
+			return "wall hp want %d got %d" % [hp, _wall_hp(world, spot)]
+		if hp == 2:
+			_saw_hp2 = true
 	return ""
 
 
-func _swing(me: Node2D, direction: String, angle: float) -> void:
-	if me.has_method("attack_animation"):
-		me.attack_animation.rpc(direction, angle)
-	var until := Time.get_ticks_msec() + 3000
-	while Time.get_ticks_msec() < until and me.isAttacking:
-		await process_frame
-	for _i in 5:
-		await process_frame
+func _swing(me: Node2D, direction: String, angle: float) -> bool:
+	me.attack_animation.rpc(direction, angle)
+	return await _until(func() -> bool: return not me.isAttacking, 3000)
+
+
+func _wall_hp(world, cell: Vector2i) -> int:
+	if not world.has_wall(cell):
+		return -1
+	var entry: Dictionary = StructureSaves.to_changes(world).get(WorldSave.chunk_key(cell), {}).get(WorldSave.cell_key(cell), {})
+	return int(entry.get("hp", 3))
 
 
 func _spawn_touch(world) -> Vector2i:
@@ -171,7 +167,7 @@ func _spawn_touch(world) -> Vector2i:
 				if maxi(absi(dx), absi(dy)) != r:
 					continue
 				var cell := spawn + Vector2i(dx, dy)
-				if world.has_wall(cell) or world._structures.has_cell(cell):
+				if world.has_wall(cell):
 					continue
 				if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
 					continue
@@ -202,7 +198,7 @@ func _castle_touch(world) -> Vector2i:
 	for dy in range(-8, 9):
 		for dx in range(-8, 9):
 			var cell := anchor + Vector2i(dx, dy)
-			if world.has_wall(cell) or world._structures.has_cell(cell):
+			if world.has_wall(cell):
 				continue
 			if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
 				continue
@@ -235,11 +231,6 @@ func _until(cond: Callable, ms: int) -> bool:
 	return cond.call()
 
 
-func _until_frames(n: int) -> void:
-	for _i in n:
-		await process_frame
-
-
 func _park_mobs(main) -> void:
 	for node in main.get_node("World/Mobs").get_children():
 		if node is Mob:
@@ -249,25 +240,18 @@ func _park_mobs(main) -> void:
 func _write(out: String, main, world, me: Node2D) -> void:
 	if out == "":
 		return
-	var walls: Array = []
-	var damaged: Array = []
+	var walls := {}
 	if main != null and main.world_params != null:
-		var cells: Array = world._walls._wall_cells.keys()
-		cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-			return a.x < b.x or (a.x == b.x and a.y < b.y))
-		for cell: Vector2i in cells:
-			var piece := WallBuilder._atlas_wall_name(world._walls.piece(cell))
-			var paint := WallBuilder._atlas_wall_name(world.get_cell_atlas_coords(1, cell))
-			var hp: int = world._walls.hp(cell)
-			walls.append([cell.x, cell.y, piece, paint, hp])
-			if hp < WallBuilder.MAX_HP:
-				damaged.append([cell.x, cell.y, hp])
-			if hp == 2:
-				_saw_hp2 = true
-		if _target.x == 1 << 20 and not walls.is_empty():
-			_target = Vector2i(int(walls[0][0]), int(walls[0][1]))
-		if _target.x != 1 << 20:
-			damaged.append([_target.x, _target.y, world._walls.hp(_target) if world.has_wall(_target) else -1])
+		for chunk: Dictionary in StructureSaves.to_changes(world).values():
+			for key: String in chunk:
+				var entry: Dictionary = chunk[key]
+				if not entry.has("wall"):
+					continue
+				var cell: Vector2i = WorldSave.parse_cell(key)
+				var hp := int(entry.get("hp", 3))
+				var atlas: Vector2i = world.get_cell_atlas_coords(1, cell)
+				walls[key] = [hp, atlas.x, atlas.y]
+				_saw_hp2 = _saw_hp2 or hp == 2
 	var peers := {}
 	var world_root: Node = main.get_node_or_null("World") if main != null else null
 	if world_root != null:
@@ -283,9 +267,9 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		"place_error": _place_error,
 		"phase_done": _phase_done,
 		"saw_hp2": _saw_hp2,
-		"target": [_target.x, _target.y],
+		"target": WorldSave.cell_key(_target),
+		"break_done": _break_done,
 		"walls": walls,
-		"damaged": damaged,
 		"peers": peers,
 		"errors": _errors.snapshot(),
 	}))

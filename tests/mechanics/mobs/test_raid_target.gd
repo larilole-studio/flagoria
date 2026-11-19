@@ -4,11 +4,6 @@ extends "res://tests/helpers/test_helpers.gd"
 
 
 const SEED := 11
-## One cell of air between the tower ring and the palisade, so a side solves
-## as PALISADE_H or PALISADE_V. A tight 5x5 touches the tower and becomes a T.
-const RING := 7
-const TOWER_AT := Vector2i(3, 4)
-const CENTRE := Vector2i(3, 3)
 
 
 func _test_raid_target() -> int:
@@ -41,26 +36,19 @@ func _test_raid_target() -> int:
 		for x in range(-2, 3):
 			world.generate_chunk(world.map_to_local(Vector2i(x * 32, y * 32)))
 	var tower: Structure = StructurePlacer.load_named("tower_wood")
-	var spots := _ring_spots(world, tower)
-	if spots.size() < 2:
-		printerr("FAIL raid_target: need two ring spots, found %d" % spots.size())
+	# Fixed seed-11 fixtures: two cities, then three isolated towers.
+	var near := _place_ring(world, cities, tower, Vector2i(23, -33))
+	var far := _place_ring(world, cities, tower, Vector2i(62, 49))
+	var owned: int = world.place_structure(tower, Vector2i(-47, -51), 1)
+	var neutral: int = world.place_structure(tower, Vector2i(-33, -39), StructurePlacer.OWNER_NEUTRAL)
+	var mobs: int = world.place_structure(tower, Vector2i(-32, -36), StructurePlacer.OWNER_MOBS)
+	if near <= 0 or far <= 0 or owned <= 0 or neutral <= 0 or mobs <= 0:
+		printerr("FAIL raid_target: could not place seed-11 fixtures")
 		fail += 1
 	else:
-		var pair := _ring_pair(spots)
-		var near: Dictionary = _place_ring(world, cities, tower, pair[0], 1)
-		var far: Dictionary = _place_ring(world, cities, tower, pair[1], 1)
-		if near.is_empty() or far.is_empty():
-			printerr("FAIL raid_target: ring place failed")
-			fail += 1
-		else:
-			var extras := _place_extras(world, tower, near["flag"], far["flag"])
-			if extras.is_empty():
-				printerr("FAIL raid_target: could not place owned, neutral and mob towers")
-				fail += 1
-			else:
-				fail += _targets(game, director, near, far, extras)
-				fail += _clock_and_hp(game, director, world, cities, near)
-				fail += _auto_wall(world, near)
+		fail += _targets(game, director, near, far, owned)
+		fail += _clock_and_hp(game, director, world, near)
+		fail += _auto_wall(world)
 	scene.queue_free()
 	_restore(game, saved)
 	if fail == 0:
@@ -105,54 +93,31 @@ func _settings(game) -> int:
 	return fail
 
 
-func _targets(game, director: RaidDirector, near: Dictionary, far: Dictionary, extras: Dictionary) -> int:
+func _targets(game, director: RaidDirector, near: int, far: int, owned: int) -> int:
 	var fail := 0
-	var origin: Vector2i = extras["origin"]
-	var d_near := _dist(origin, near["flag"])
-	var d_far := _dist(origin, far["flag"])
-	var d_tower := _dist(origin, extras["tower"])
-	var d_neutral := _dist(origin, extras["neutral"])
-	var d_mobs := _dist(origin, extras["mobs"])
-	if not (d_near < d_far and d_far <= 96 and d_tower >= 17 and d_tower < d_near \
-			and d_neutral < d_tower and d_mobs < d_tower):
-		printerr("FAIL raid_target: distances near=%d far=%d tower=%d neutral=%d mobs=%d" % [
-			d_near, d_far, d_tower, d_neutral, d_mobs])
-		return 1
-	# No city in range: the owned tower, not the closer neutral or mob tower.
-	game.set_raid_radius_cells(d_tower, false)
-	var tower_only: Dictionary = director.choose_target(origin)
-	if int(tower_only.get("id", -1)) != int(extras["tower_id"]):
-		printerr("FAIL raid_target: tower fallback %s want %s" % [tower_only, extras["tower_id"]])
-		fail += 1
-	# Cutoff: radius stops short of that tower. Ignored owners stay ignored.
-	game.set_raid_radius_cells(d_tower - 1, false)
-	if not director.choose_target(origin).is_empty():
-		printerr("FAIL raid_target: radius cutoff still returned %s" % director.choose_target(origin))
-		fail += 1
-	# Both cities in range: the nearer one, not the closer tower.
-	game.set_raid_radius_cells(d_far, false)
-	var first: Dictionary = director.choose_target(origin)
-	var second: Dictionary = director.choose_target(origin)
-	if int(first.get("id", -1)) != int(near["id"]) or first != second:
-		printerr("FAIL raid_target: nearer city %s then %s want %s" % [first, second, near["id"]])
-		fail += 1
-	var flipped: Vector2i = far["flag"]
-	game.set_raid_radius_cells(maxi(_dist(flipped, near["flag"]), 16), false)
-	var other: Dictionary = director.choose_target(flipped)
-	if int(other.get("id", -1)) != int(far["id"]):
-		printerr("FAIL raid_target: other city %s want %s" % [other, far["id"]])
-		fail += 1
+	var origin := Vector2i(-30, -40)
+	var cases := [
+		[origin, 17, {"id": owned, "cell": Vector2i(-47, -52)}],
+		[origin, 16, {}],
+		[origin, 95, {"id": near, "cell": Vector2i(26, -30)}],
+		[Vector2i(65, 52), 82, {"id": far, "cell": Vector2i(65, 52)}],
+	]
+	for row in cases:
+		game.set_raid_radius_cells(row[1], false)
+		var target := director.choose_target(row[0])
+		var repeated := director.choose_target(row[0])
+		if target != row[2] or repeated != row[2]:
+			printerr("FAIL raid_target: radius %d from %s got %s then %s, want %s"
+					% [row[1], row[0], target, repeated, row[2]])
+			fail += 1
 	return fail
 
 
-func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Dictionary) -> int:
+func _clock_and_hp(game, director: RaidDirector, world, near: int) -> int:
 	var fail := 0
-	var outside := _outside(world, near)
-	if outside.is_empty():
-		printerr("FAIL raid_target: no straight palisade to strike")
-		return 1
-	var stand: Vector2i = outside["stand"]
-	var wall: Vector2i = outside["wall"]
+	var flag := Vector2i(26, -30)
+	var wall := Vector2i(26, -33)
+	var stand := Vector2i(26, -34)
 	var before := StructureSaves.to_changes(world)
 	var mobs: Array[Mob] = []
 	for i in 6:
@@ -161,7 +126,7 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 	game.set_raid_group(3, false)
 	game.set_raid_interval_s(45, false)
 	game.set_raid_radius_cells(96, false)
-	mobs[0].assign_raid(near["flag"], int(near["id"]))
+	mobs[0].assign_raid(flag, near)
 	director.advance(90.0)
 	if mobs[0].pinned() or StructureSaves.to_changes(world) != before:
 		printerr("FAIL raid_target: disabling raids did not clear the assignment and leave walls intact")
@@ -174,7 +139,7 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 	director.advance(1.0)
 	var names := _assigned_names(mobs)
 	if names.size() != 3:
-		printerr("FAIL raid_target: group assigned %s" % names)
+		printerr("FAIL raid_target: group assigned %s" % [names])
 		fail += 1
 	for mob in mobs:
 		mob.clear_raid()
@@ -189,7 +154,7 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 		mob.clear_raid()
 	var striker := mobs[0]
 	striker.global_position = world.to_global(world.map_to_local(stand))
-	striker.assign_raid(near["flag"], int(near["id"]))
+	striker.assign_raid(flag, near)
 	striker.think(1.0)
 	var chunk := WorldSave.chunk_key(wall)
 	var cell := WorldSave.cell_key(wall)
@@ -197,53 +162,27 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 	var hit: Dictionary = after.get(chunk, {}).get(cell, {})
 	if hit.get("hp") != 2:
 		printerr("FAIL raid_target: palisade took no damage")
-		fail += 1
+		return fail + 1
 	after[chunk][cell] = before[chunk][cell]
 	if after != before:
 		printerr("FAIL raid_target: strike also changed other structures")
 		fail += 1
-	cities.rebuild()
 	return fail
 
 
-func _auto_wall(world, near: Dictionary) -> int:
+func _auto_wall(world) -> int:
 	if not world.place_start_castle(1):
 		printerr("FAIL raid_target: no starting castle")
 		return 1
-	var wall := Vector2i.ZERO
-	var found := false
-	for cell: Vector2i in world._structures.auto_cells():
-		if world.has_wall(cell):
-			continue
-		var tile_name := WallBuilder._atlas_wall_name(world._structures.object_at(cell))
-		if not tile_name.begins_with("WALL_"):
-			continue
-		if _dist(cell, near["flag"]) <= 4:
-			continue
-		wall = cell
-		found = true
-		break
-	if not found:
-		printerr("FAIL raid_target: no castle auto-wall")
-		return 1
-	var stand := Vector2i.ZERO
-	var step := Vector2i.ZERO
-	for dir: Vector2i in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
-		var cell: Vector2i = wall + dir
-		if world.has_wall(cell) or world._structures.has_cell(cell):
-			continue
-		var ground: Vector2i = world.predict_cell(cell)[0]
-		if not world.ground_is_walkable(ground):
-			continue
-		stand = cell
-		step = dir
-		break
-	if step == Vector2i.ZERO:
-		printerr("FAIL raid_target: castle wall has no open side")
+	var wall := Vector2i(-10, -33)
+	var stand := Vector2i(-11, -33)
+	var before: Vector2i = world.predict_cell(wall)[1]
+	if world.has_wall(wall) or not TileCatalog.TILES.keys().any(func(tile: String) -> bool:
+			return tile.begins_with("WALL_") and TileCatalog.TILES[tile]["atlas"] == before):
+		printerr("FAIL raid_target: seed-11 stone wall missing")
 		return 1
 	var mob := _mob(world, "mob_stone", stand)
-	var before: Vector2i = world.predict_cell(wall)[1]
-	mob.assign_raid(wall - step, -1)
+	mob.assign_raid(Vector2i(-9, -33), -1)
 	for _i in 6:
 		mob.think(0.25)
 	if world.predict_cell(wall)[1] != before or mob.global_position != world.to_global(world.map_to_local(stand)):
@@ -252,172 +191,19 @@ func _auto_wall(world, near: Dictionary) -> int:
 	return 0
 
 
-func _place_extras(world, tower: Structure, near_flag: Vector2i, far_flag: Vector2i) -> Dictionary:
-	## One pass over anchors for each origin on the island. Ignored owners sit
-	## closer than the owned tower; that tower sits closer than the near city.
-	var anchors := _anchors(world, tower)
-	var flags: Array[Vector2i] = []
-	for anchor in anchors:
-		flags.append(anchor + Vector2i(0, -1))
-	var best := {}
-	for i in flags.size():
-		var origin: Vector2i = flags[i] + Vector2i(3, 0)
-		var d_near := _dist(origin, near_flag)
-		var d_far := _dist(origin, far_flag)
-		if d_near < 18 or d_near > 90 or d_far <= d_near or d_far > 96:
-			continue
-		var ranked: Array[int] = []
-		for j in flags.size():
-			ranked.append(j)
-		ranked.sort_custom(func(a: int, b: int) -> bool:
-			var da := _dist(origin, flags[a])
-			var db := _dist(origin, flags[b])
-			if da != db:
-				return da < db
-			return a < b)
-		var owned := -1
-		for j in ranked:
-			var dist := _dist(origin, flags[j])
-			if dist >= 17 and dist < d_near and dist < 48:
-				owned = j
-				break
-		if owned == -1:
-			continue
-		var owned_d := _dist(origin, flags[owned])
-		var closer: Array[int] = []
-		for j in ranked:
-			if j == owned:
-				break
-			if _dist(origin, flags[j]) < owned_d:
-				closer.append(j)
-		if closer.size() < 2:
-			continue
-		var a := closer[0]
-		var b := closer[1]
-		if _foot_overlap(anchors[a], anchors[b]) or _foot_overlap(anchors[a], anchors[owned]) \
-				or _foot_overlap(anchors[b], anchors[owned]):
-			continue
-		best = {"neutral": anchors[a], "owned": anchors[owned], "mobs": anchors[b], "origin": origin}
-		break
-	if best.is_empty():
-		return {}
-	var nid: int = world.place_structure(tower, best["neutral"], StructurePlacer.OWNER_NEUTRAL)
-	var oid: int = world.place_structure(tower, best["owned"], 1)
-	var mid: int = world.place_structure(tower, best["mobs"], StructurePlacer.OWNER_MOBS)
-	if nid <= 0 or oid <= 0 or mid <= 0:
-		return {}
-	return {
-		"origin": best["origin"],
-		"neutral": world._structures.towers()[nid][0],
-		"tower": world._structures.towers()[oid][0],
-		"mobs": world._structures.towers()[mid][0],
-		"tower_id": oid,
-	}
-
-
-func _foot_overlap(a: Vector2i, b: Vector2i) -> bool:
-	for y in 3:
-		for x in 3:
-			var cell := a + Vector2i(x - 1, y - 2)
-			for yb in 3:
-				for xb in 3:
-					if cell == b + Vector2i(xb - 1, yb - 2):
-						return true
-	return false
-
-
-func _ring_spots(world, tower: Structure) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	for cell in world.get_used_cells(0):
-		var origin: Vector2i = cell
-		if _ring_fits(world, tower, origin):
-			out.append(origin)
-	return out
-
-
-func _ring_pair(spots: Array[Vector2i]) -> Array[Vector2i]:
-	var best: Array[Vector2i] = [spots[0], spots[1]]
-	var best_d := -1
-	for i in spots.size():
-		for j in range(i + 1, spots.size()):
-			var dist := _dist(spots[i] + CENTRE, spots[j] + CENTRE)
-			if dist > best_d and dist <= 90:
-				best_d = dist
-				best = [spots[i], spots[j]]
-	return best
-
-
-func _ring_fits(world, tower: Structure, origin: Vector2i) -> bool:
-	if not _clear_rect(world, origin, Vector2i(RING, RING)):
-		return false
-	if not world.can_place_structure(tower, origin + TOWER_AT).is_empty():
-		return false
-	return _has_stand(world, origin)
-
-
-func _has_stand(world, origin: Vector2i) -> bool:
-	var hi := RING - 1
-	var mid := RING >> 1
-	for stand in [
-		origin + Vector2i(mid, -1), origin + Vector2i(mid, hi + 1),
-		origin + Vector2i(-1, mid), origin + Vector2i(hi + 1, mid),
-	]:
-		if world.get_cell_source_id(0, stand) == -1:
-			continue
-		if world.has_wall(stand) or world._structures.has_cell(stand):
-			continue
-		var ground: Vector2i = world.predict_cell(stand)[0]
-		if world.ground_is_walkable(ground):
-			return true
-	return false
-
-
-func _place_ring(world, cities: Cities, tower: Structure, origin: Vector2i, owner: int) -> Dictionary:
-	var id: int = world.place_structure(tower, origin + TOWER_AT, owner)
-	if id <= 0:
-		return {}
-	var ring := _perimeter(origin, origin + Vector2i(RING - 1, RING - 1))
-	if not world.place_wall_cells(ring):
-		return {}
+func _place_ring(world, cities: Cities, tower: Structure, origin: Vector2i) -> int:
+	var id: int = world.place_structure(tower, origin + Vector2i(3, 4), 1)
+	var ring: Array[Vector2i] = []
+	for offset in 7:
+		ring.append(origin + Vector2i(offset, 0))
+		ring.append(origin + Vector2i(offset, 6))
+		if offset > 0 and offset < 6:
+			ring.append(origin + Vector2i(0, offset))
+			ring.append(origin + Vector2i(6, offset))
+	if id <= 0 or not world.place_wall_cells(ring):
+		return -1
 	cities.rebuild()
-	if not cities.cities.has(id):
-		return {}
-	return {
-		"id": id,
-		"origin": origin,
-		"ring": ring,
-		"flag": world._structures.towers()[id][0],
-	}
-
-
-func _anchors(world, tower: Structure) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	for cell in world.get_used_cells(0):
-		var anchor: Vector2i = cell
-		if world.can_place_structure(tower, anchor).is_empty():
-			out.append(anchor)
-	return out
-
-
-func _outside(world, city: Dictionary) -> Dictionary:
-	var centre: Vector2i = city["origin"] + CENTRE
-	for cell in city["ring"]:
-		var at: Vector2i = cell
-		var piece := WallBuilder._atlas_wall_name(world._walls.piece(at))
-		if not (piece.ends_with("_H") or piece.ends_with("_V")):
-			continue
-		var away := at - centre
-		var step := Vector2i(signi(away.x), signi(away.y))
-		if step == Vector2i.ZERO or (step.x != 0 and step.y != 0):
-			continue
-		var stand := at + step
-		if world.has_wall(stand) or world._structures.has_cell(stand):
-			continue
-		var ground: Vector2i = world.predict_cell(stand)[0]
-		if not world.ground_is_walkable(ground):
-			continue
-		return {"wall": at, "stand": stand}
-	return {}
+	return id if cities.cities.has(id) else -1
 
 
 func _mob(world, mob_name: String, cell: Vector2i) -> Mob:
@@ -438,32 +224,6 @@ func _assigned_names(mobs: Array[Mob]) -> Array:
 			names.append(str(mob.name))
 	names.sort()
 	return names
-
-
-func _clear_rect(world, origin: Vector2i, size: Vector2i) -> bool:
-	for y in size.y:
-		for x in size.x:
-			var cell := origin + Vector2i(x, y)
-			if world.has_wall(cell) or world._structures.has_cell(cell):
-				return false
-			if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
-				return false
-	return true
-
-
-func _perimeter(lo: Vector2i, hi: Vector2i) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	for x in range(lo.x, hi.x + 1):
-		out.append(Vector2i(x, lo.y))
-		out.append(Vector2i(x, hi.y))
-	for y in range(lo.y + 1, hi.y):
-		out.append(Vector2i(lo.x, y))
-		out.append(Vector2i(hi.x, y))
-	return out
-
-
-func _dist(a: Vector2i, b: Vector2i) -> int:
-	return maxi(absi(a.x - b.x), absi(a.y - b.y))
 
 
 func _restore(game, saved: Dictionary) -> void:
