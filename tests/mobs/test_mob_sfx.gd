@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Mob sounds (Scripts/mob_sfx.gd).
+## Mob sounds (Scripts/audio/mob_sfx.gd).
 
 
 func _test_mob_sfx_clips() -> int:

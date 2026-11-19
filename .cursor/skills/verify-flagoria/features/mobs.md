@@ -15,7 +15,7 @@ Slimes, crabs and piglets are placed from the world seed, wander near home, chas
 - `mob-art` one sheet path per type in `MobCatalog.TYPES` (`Scripts/mob_catalog.gd`): 8x16 grid of 16x16 frames.
 - `mob-sync` mobs replicate to a joining client of a dedicated server.
 - `mob-uncharted` a mob is drawn only on ground this peer has generated (#163); it shows in the same frame its chunk is drawn, and a type flagged `visible_in_uncharted` always shows. Hiding never changes its position, state or hurt box.
-- `mob-sfx` `Scripts/mob_sfx.gd` plays `notice`, `attack`, `hurt`, `death` and `idle` once per event on each peer (see [Audio](./audio.md)).
+- `mob-sfx` `Scripts/audio/mob_sfx.gd` plays `notice`, `attack`, `hurt`, `death` and `idle` once per event on each peer (see [Audio](./audio.md)).
 - `mob-points` the killing hit pays [Points](./points.md) once for that mob's name. A second award for the same id adds nothing.
 - Ambient spawn and despawn around players is [Mob band](./mob-band.md).
 
