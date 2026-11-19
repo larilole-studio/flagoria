@@ -2,11 +2,11 @@
 
 Drive: drives/hud_direction_c.gd
 
-In-match HUD uses `art/ui/hud_c/` texture discs, the status nine-patch plate, integer stretch, and the 480x270 default layout in `art/ui/hud_c/layout.json`.
+In-match HUD uses `art/ui/hud_c/` texture discs, the status nine-patch plate, integer stretch, and the 480×270 baseline. `Scripts/hud_tool_row.gd` positions the current controls against the visible viewport, with Attack mirrored across from the joystick.
 
 ## How to get to it (user POV)
 
-- Host a match. The top-left status plate, right-hand column, thumb arc, and joystick show Castle Stone art at crisp integer scale.
+- Host a match. The top-left status plate, top-right Map and Menu, and lower thumb controls show Castle Stone art at integer scale. Buildings opens two rings over the dimmed playfield.
 
 ## Driving it with verify-flagoria helpers
 

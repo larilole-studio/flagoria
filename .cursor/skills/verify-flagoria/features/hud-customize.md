@@ -10,7 +10,7 @@ The in-game menu has a Customize HUD entry. It opens an edit mode over the live 
 - `hud-customize-save` Save and load round-trip in user settings (`-- test_hud_layout_round_trip` in `tests/ui/test_hud_layout.gd`).
 - `hud-customize-clamp` Off-screen positions clamp; overlaps are rejected (`-- test_hud_layout_clamp_overlap`). The edit bar stays inside the viewport on phone and desktop sizes (`-- test_hud_edit_bar_viewport_sizes`). While controls move, the bar never flashes to the top inset (`-- test_hud_edit_bar_stable_during_drag`).
 - `hud-customize-reset` Reset clears the saved file and brings back HudToolRow defaults (`-- test_hud_layout_reset`).
-- `hud-customize-wheel` The wheel button moves and resizes, saves, and reloads the same place and scale. Reset puts it back beside Run. A save that has `mode` and no wheel id loads, and the arc from the moved button stays on screen (`-- test_hud_layout_wheel_slot` and `-- test_hud_layout_legacy_mode`).
+- `hud-customize-wheel` The wheel button moves and resizes, saves, and reloads the same place and scale. Reset puts it back inward of Attack, below Run. A save that has `mode` and no wheel id loads, and the arc from the moved button stays on screen (`-- test_hud_layout_wheel_slot` and `-- test_hud_layout_legacy_mode`).
 - `hud-customize-edit-guard` In edit mode HUD buttons do not open map, buildings, mode, attack, run, or move the stick (`-- test_hud_layout_edit_blocks_map` and the drive tap on Map).
 
 ## How to get to it (user POV)
@@ -29,4 +29,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the `tests/ui/test_hud_layout.g
 
 - Layout is local only; multiplayer peers keep their own saved positions.
 - Until Save, changes apply for this session but are not written to disk.
-- The minimap panel still auto-positions left of the arc; only the listed touch controls move.
+- The minimap panel positions itself to clear the HUD controls.

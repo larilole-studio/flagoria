@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+Also driven by: `drives/smoke.gd` (the CI fallback for a short Host-and-walk check) and `drives/wait.gd` (starts a game and idles for manual checks).
+
 Headless verify checks file sizes, opens the Godot 4.7 project, parses every GDScript file, runs the headless test entry point, and then runs the biome, audio and generator checks, so CI and local agents share one gate.
 
 ## Sub-features
