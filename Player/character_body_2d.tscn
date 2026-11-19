@@ -311,6 +311,7 @@ position = Vector2(0, -5)
 shape = SubResource("RectangleShape2D_5iwvh")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+process_callback = 0
 position = Vector2(0, -8)
 zoom = Vector2(0.7, 0.7)
 
@@ -339,6 +340,7 @@ libraries = {
 }
 
 [node name="weapon" type="Node2D" parent="."]
+physics_interpolation_mode = 2
 visible = false
 position = Vector2(0, 2)
 
