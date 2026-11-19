@@ -53,8 +53,7 @@ func _run() -> void:
 		printerr("generated_building_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
+	await scene_changed
 	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
@@ -74,7 +73,7 @@ func _run() -> void:
 	var deadline := Time.get_ticks_msec() + 60000
 	var next_write := 0
 	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
-		if main.multiplayer == null or main.multiplayer.multiplayer_peer == null:
+		if not is_instance_valid(main) or not main.is_inside_tree():
 			break
 		if not _peer_ready(main):
 			await process_frame
@@ -91,10 +90,6 @@ func _run() -> void:
 			_write(out, main, world, buildings, me)
 			next_write = Time.get_ticks_msec() + 100
 		await process_frame
-	var fin: Node2D = null
-	if _peer_ready(main):
-		fin = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-	_write(out, main, world, buildings, fin)
 	quit(0)
 
 
