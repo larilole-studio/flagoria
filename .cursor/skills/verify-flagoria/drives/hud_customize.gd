@@ -90,8 +90,12 @@ func run() -> void:
 	var wheel_button := wheel.get_node("ToolButton") as Control
 	var ok := attack != null and attack.texture_normal != null and map_btn != null and wheel_button != null
 	step("default-layout")
-	await wait_until(func() -> bool:
-		return map_btn.global_position.x > 400.0 and attack.global_position.x > 400.0
+	var stick := layer.get_node("player_joystick") as Node2D
+	ok = ok and await wait_until(func() -> bool:
+		var center := attack.global_position + attack.texture_normal.get_size() * attack.scale * 0.5
+		var view := layer.get_viewport().get_visible_rect()
+		return is_equal_approx(center.y, stick.global_position.y) \
+				and is_equal_approx(view.end.x - center.x, stick.global_position.x - view.position.x)
 	, 5.0)
 	await snapshot("default-layout")
 	var default_pos := attack.global_position

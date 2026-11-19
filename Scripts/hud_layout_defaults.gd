@@ -91,7 +91,7 @@ static func scale_of(id: String, layer: CanvasLayer, paths: Dictionary) -> float
 		"joystick":
 			return (node as Node2D).scale.x
 		"attack":
-			return (node as TouchScreenButton).scale.x
+			return (node as TouchScreenButton).scale.x / HudToolRow.attack_default_scale(node)
 		_:
 			var c := node as Control
 			if c == null or c.size.x <= 0.0:

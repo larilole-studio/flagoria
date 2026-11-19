@@ -1,7 +1,7 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 49
-## Opens and closes the Buildings picker above Attack, picks
-## Plank, opens the minimap, toggles interact, and taps Run.
+## Checks the mirrored thumb controls and opens and closes the Buildings
+## picker beside them. Picks Plank, opens the minimap, toggles interact, and taps Run.
 ## bin/launch.sh drives/hud_round_buttons.gd --display --seed 49
 
 const BUILDINGS := "CanvasLayer1/BuildingsButton"
@@ -99,12 +99,32 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 	var menu := current_scene.get_node("CanvasLayer1/InGameMenu/MenuButton") as Button
 	var menu_c := menu.get_global_rect().get_center()
 	var map_c := map_button.get_global_rect().get_center()
-	var build_c := buildings.get_global_rect().get_center()
 	if not is_equal_approx(map_c.y, menu_c.y) or map_c.x >= menu_c.x:
 		printerr("hud round: Map %s Menu %s" % [map_c, menu_c])
 		return false
-	if not is_equal_approx(build_c.x, attack_rect.get_center().x) or build_c.y >= attack_rect.position.y:
-		printerr("hud round: Buildings %s Attack %s" % [build_c, attack_rect])
+	var view := current_scene.get_viewport().get_visible_rect()
+	var stick := current_scene.get_node("CanvasLayer1/player_joystick") as Node2D
+	var stick_c := stick.global_position
+	var attack_c := attack_rect.get_center()
+	if not is_equal_approx(attack_c.y, stick_c.y) \
+			or not is_equal_approx(view.end.x - attack_c.x, stick_c.x - view.position.x) \
+			or not is_equal_approx(attack_rect.size.x, stick.start_reach() * 2.0):
+		printerr("hud round: Joystick %s Attack %s" % [stick_c, attack_rect])
+		return false
+	var wheel_rect := (current_scene.get_node(TOOL_BUTTON) as Control).get_global_rect()
+	var build_rect := buildings.get_global_rect()
+	for rect in [run_rect, wheel_rect, build_rect]:
+		var center: Vector2 = rect.get_center()
+		if not view.encloses(rect) or rect.intersects(attack_rect) \
+				or center.x <= view.get_center().x or center.distance_to(attack_c) > attack_rect.size.x * 1.5:
+			printerr("hud round: control %s outside the thumb cluster around %s" % [rect, attack_rect])
+			return false
+		if rect != build_rect and center.x >= attack_c.x and center.y >= attack_c.y:
+			printerr("hud round: satellite %s must sit above or west of Attack %s" % [rect, attack_rect])
+			return false
+	if run_rect.intersects(wheel_rect) or build_rect.intersects(run_rect) \
+			or build_rect.intersects(wheel_rect) or build_rect.position.y <= menu.get_global_rect().end.y:
+		printerr("hud round: overlapping cluster or Buildings on the top row")
 		return false
 	return true
 

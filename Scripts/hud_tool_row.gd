@@ -1,7 +1,8 @@
 class_name HudToolRow
 extends Node
-## Map and Menu sit along the top edge. Buildings sits inward in the right-thumb
-## arc and opens two rings over a dimmed playfield.
+## Map and Menu sit along the top edge. Attack mirrors the joystick, with Run
+## and the tool wheel around it. Buildings sits beside that cluster and opens
+## two rings over a dimmed playfield.
 ## Customize HUD can move these controls and the tool wheel. Layout follows
 ## viewport and visibility changes. A dedicated host builds no tool wheel.
 
@@ -18,19 +19,14 @@ const PLAYER_CLEARANCE := 70.0
 const LAYOUT := {
 	"menu": Vector2(444, 12),
 	"map": Vector2(404, 12),
-	"build": Vector2(396, 171),
 	"scores": Vector2(116, 12),
-	"attack": Vector2(428, 218),
-	"run": Vector2(390, 222),
 	"joystick": Vector2(77, 201),
 }
 
 const HIT_INSET := {
 	"menu": Vector2(4, 4),
 	"map": Vector2(4, 4),
-	"build": Vector2(4, 4),
 	"scores": Vector2(4, 4),
-	"run": Vector2(2, 2),
 }
 
 var _picker_dimmer: ColorRect
@@ -92,11 +88,11 @@ func _layout() -> void:
 
 func _restore_touch_defaults(layer: Node) -> void:
 	_place_menu(layer)
-	_place_map_and_build(layer)
+	_place_map(layer)
 	_place_status(layer)
-	_place_combat(layer)
-	_place_attack(layer)
 	_place_joystick(layer)
+	_place_attack(layer)
+	_place_combat(layer)
 	_place_tool(layer)
 	_place_panel(layer)
 	place_build_picker(layer)
@@ -115,19 +111,13 @@ func _place_menu(layer: Node) -> void:
 	button.z_index = 2
 
 
-func _place_map_and_build(layer: Node) -> void:
+func _place_map(layer: Node) -> void:
 	var map_button := layer.get_node_or_null("MinimapButton") as Button
-	var buildings := layer.get_node_or_null("BuildingsButton") as Button
 	if map_button != null:
 		_pin(map_button)
 		RoundHudStyle.apply(map_button)
 		_set_art(map_button, "map")
 		map_button.z_index = 2
-	if buildings != null:
-		_pin(buildings)
-		RoundHudStyle.apply_build(buildings)
-		_set_art(buildings, "build")
-		buildings.z_index = 2
 
 
 static func hud_child(layer: Node, node_name: String) -> Node:
@@ -162,22 +152,44 @@ func _place_status(layer: Node) -> void:
 
 
 func _place_combat(layer: Node) -> void:
+	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
+	if attack == null or attack.texture_normal == null:
+		return
+	var rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
 	var run := layer.get_node_or_null("RunButton") as Button
 	if run != null:
 		_pin(run)
 		RoundHudStyle.apply_run(run)
-		_set_art(run, "run")
+		run.position = Vector2(rect.position.x - _size_of(run).x - GAP - WHEEL_GAP,
+				rect.get_center().y - _size_of(run).y + WHEEL_GAP)
 		run.z_index = 2
+	var buildings := layer.get_node_or_null("BuildingsButton") as Button
+	if buildings != null:
+		_pin(buildings)
+		RoundHudStyle.apply_build(buildings)
+		# Leave an inward path for both picker rings between the top row and Attack.
+		buildings.position = rect.get_center() + Vector2(33.0, -52.5) - _size_of(buildings) * 0.5
+		buildings.z_index = 2
+
+
+static func attack_default_scale(attack: TouchScreenButton) -> float:
+	var stick := attack.get_parent().get_node_or_null("player_joystick")
+	if stick == null or stick.border == null or attack.texture_normal == null:
+		return 1.0
+	return stick.border.get_width() / float(attack.texture_normal.get_width())
 
 
 func _place_attack(layer: Node) -> void:
 	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
-	if attack == null:
+	var stick := layer.get_node_or_null("player_joystick") as Node2D
+	if attack == null or attack.texture_normal == null or stick == null:
 		return
-	attack.position = LAYOUT["attack"] + _edge_offset()
-	attack.scale = Vector2.ONE
+	var view := get_viewport().get_visible_rect()
+	var center := Vector2(2.0 * view.get_center().x - stick.position.x, stick.position.y)
+	attack.scale = Vector2.ONE * attack_default_scale(attack)
+	attack.position = center - attack.texture_normal.get_size() * attack.scale * 0.5
 	if attack.shape is CircleShape2D:
-		(attack.shape as CircleShape2D).radius = 24.0
+		(attack.shape as CircleShape2D).radius = attack.texture_normal.get_width() * 0.5
 
 
 func _place_joystick(layer: Node) -> void:
@@ -405,7 +417,7 @@ func _place_panel(layer: Node) -> void:
 				panel.position.y = dropped
 
 
-func _place_tool(layer: Node) -> void:
+func _place_tool(layer: Node, custom := false) -> void:
 	var layout := get_node_or_null("/root/HudLayout")
 	if layout != null and not layout.get_entry("wheel").is_empty():
 		return
@@ -420,27 +432,27 @@ func _place_tool(layer: Node) -> void:
 	var disc := button as Button
 	if disc != null and absf(disc.size.x - RoundHudStyle.HIT) > 0.5:
 		RoundHudStyle.apply(disc)
-	var run_size := _size_of(run)
 	var button_size := _size_of(button)
-	var x := run.position.x - WHEEL_GAP - button_size.x
-	var y := run.position.y + (run_size.y - button_size.y) * 0.5
-	if x < SIDE:
-		x = run.position.x
-		y = run.position.y - WHEEL_GAP - button_size.y
-	wheel.place_button(Vector2(roundf(x), roundf(y)))
+	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
+	if not custom and attack != null and attack.texture_normal != null:
+		var attack_size := attack.texture_normal.get_size() * attack.scale
+		wheel.place_button(Vector2(attack.position.x - GAP - button_size.x,
+				attack.position.y + attack_size.y * 0.5 + GAP + WHEEL_GAP))
+	else:
+		var x := run.position.x - WHEEL_GAP - button_size.x
+		var y := run.position.y + (_size_of(run).y - button_size.y) * 0.5
+		if x < SIDE:
+			x = run.position.x
+			y = run.position.y - WHEEL_GAP - button_size.y
+		wheel.place_button(Vector2(roundf(x), roundf(y)))
 	button.z_index = 4
 
 
 func _set_art(control: Control, id: String) -> void:
-	if not LAYOUT.has(id):
-		return
 	var inset: Vector2 = HIT_INSET.get(id, Vector2.ZERO)
 	control.position = LAYOUT[id] - inset
 	if id != "scores":
-		var offset := _edge_offset()
-		control.position.x += offset.x
-		if id == "run" or id == "build":
-			control.position.y += offset.y
+		control.position.x += _edge_offset().x
 
 
 func _edge_offset() -> Vector2:
@@ -462,7 +474,7 @@ func _left_of(control: Control) -> float:
 
 
 func place_custom_popups(layer: Node) -> void:
-	_place_tool(layer)
+	_place_tool(layer, true)
 	_place_panel(layer)
 	place_build_picker(layer)
 

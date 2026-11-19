@@ -55,7 +55,7 @@ func _test_tool_wheel_hold() -> int:
 		"y": run.position.y / view.y,
 		"s": 1.0,
 	})
-	await process_frame
+	layout.apply(scene.get_node("CanvasLayer1"))
 	await process_frame
 	fail += _beside_run(scene)
 	layout.forget_memory()
