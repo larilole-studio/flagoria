@@ -47,7 +47,7 @@ func _test_ui_sfx_clips() -> int:
 	if ui.process_mode != Node.PROCESS_MODE_ALWAYS:
 		printerr("FAIL ui_sfx_clips: UiSfx stops when the game pauses")
 		fail += 1
-	if FileAccess.get_file_as_string("res://Scripts/ui_sfx.gd").contains("rpc"):
+	if FileAccess.get_file_as_string("res://Scripts/audio/ui_sfx.gd").contains("rpc"):
 		printerr("FAIL ui_sfx_clips: UI sounds must stay local (no RPCs)")
 		fail += 1
 	if fail == 0:
