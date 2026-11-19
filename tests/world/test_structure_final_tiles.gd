@@ -209,9 +209,17 @@ func _write_structure_render() -> int:
 	var out := "res://docs/screenshots/structure_finals_tileset.png"
 	sheet.save_png(out)
 	var golden := "res://tests/golden/structure_finals_tileset.png"
+	if OS.get_environment("FLAGORIA_UPDATE_GOLDENS") == "1":
+		var err := sheet.save_png(golden)
+		if err != OK:
+			printerr("FAIL structure_final_tiles: could not write %s (%s)" % [golden, error_string(err)])
+			return 1
+		return 0
 	if not FileAccess.file_exists(golden):
-		sheet.save_png(golden)
-	elif sheet.get_data() != Image.load_from_file(golden).get_data():
+		printerr("FAIL structure_final_tiles: missing %s. Regenerate with FLAGORIA_UPDATE_GOLDENS=1 godot --headless --path . --script res://tests/run_tests.gd -- --only=structure_final_tiles" % golden)
+		return 1
+	var expected := Image.load_from_file(golden)
+	if expected == null or sheet.get_data() != expected.get_data():
 		printerr("FAIL structure_final_tiles: render differs from tests/golden/structure_finals_tileset.png")
 		return 1
 	return 0

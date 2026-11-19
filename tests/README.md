@@ -29,6 +29,8 @@ Run `godot --headless --path . --import` once first on a fresh checkout. To avoi
 
 ## Regenerating goldens
 
+Regenerate the structure finals golden with `FLAGORIA_UPDATE_GOLDENS=1 godot --headless --path . --script res://tests/run_tests.gd -- --only=structure_final_tiles`.
+
 ```bash
 godot --headless --path . --script res://tools/cli.gd -- map render --seed 42 --out tests/golden/map_render_seed42.txt
 godot --headless --path . --script res://tools/cli.gd -- hud layout --out tests/golden/hud_layout.txt

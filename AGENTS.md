@@ -137,6 +137,19 @@ A scenario that `tools/stress_netcode.py` runs must be deterministic. Fix the wo
 
 One flaky run otherwise fails only after every scenario has finished, which costs about 30 minutes of CI. `tools/stress_scenario_lint.py` runs inside `tools/verify.sh` and rejects a bare sleep or an unseeded random call in a stress scenario or the probe it launches. It does not follow other helpers. Picking a free UDP port may stay random. A live screenshot drive that is not the stress run may keep a short settle; that function stays in `tools/stress_scenario_lint_allow.txt`, and new scenarios do not go on that list.
 
+## Test rules
+
+1. Test at a seam through player input, a two-peer scenario, the CLI, or a module's public functions. New tests never touch members starting with an underscore. `tools/test_lint.py` freezes today's per-file count and only lets it go down.
+2. Take expected values from literals, fixtures, or goldens. Never re-run the production formula to get an expected value.
+3. Delete lower-level tests superseded by a seam-level test in the same PR.
+4. Assert each behavior at one layer (unit, peer scenario, or drive) and name that layer on its feature page.
+5. Justify over 200 added test lines for one feature in one line in the PR. Stay within the file budget and keep the tests/game line ratio from rising.
+6. Rewrite a test at a seam or delete it if it changed with its production file in three or more of the last 100 PRs.
+7. Update goldens only through their generator command. A missing baseline fails.
+8. Limit stress reruns to timing-sensitive peer paths with a written sync invariant, bounded waits, and no sleeps.
+9. Show the new test failing on the old code before fixing a bug.
+10. Update the verify-flagoria page and drive for gameplay PRs. Drives use real input only, with no teleporting or manual ticking.
+
 ## Known mistakes and the rules that prevent them
 
 Mistakes that have cost time in this repository before. "Enforced by" says what catches each one. "Review" means nothing automatic catches it yet, so the rule is only as strong as the person following it.
