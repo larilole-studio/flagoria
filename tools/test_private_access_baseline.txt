@@ -8,7 +8,7 @@
 2 tests/docker_publish_probe.gd
 3 tests/helpers/test_helpers.gd
 1 tests/land_score_probe.gd
-14 tests/mechanics/bridges/test_bridge_planks.gd
+3 tests/mechanics/bridges/test_bridge_planks.gd
 2 tests/mechanics/building/test_build_barracks.gd
 1 tests/mechanics/building/test_build_tower.gd
 8 tests/mechanics/building/test_build_wall.gd
@@ -33,7 +33,6 @@
 1 tests/mechanics/trees/test_tree_sounds.gd
 4 tests/mechanics/trees/test_tree_sprouts.gd
 19 tests/mechanics/walls/test_wall_health.gd
-20 tests/mechanics/walls/test_wall_junctions.gd
 2 tests/mobs/test_mob_contact.gd
 9 tests/mobs/test_mob_sfx.gd
 1 tests/mobs/test_mob_spawn.gd
@@ -67,5 +66,4 @@
 11 tests/wall_break_probe.gd
 8 tests/wall_sync_probe.gd
 2 tests/world/test_chunk_refresh_frames.gd
-12 tests/world/test_map_settings.gd
 2 tests/world/test_random_specs.gd

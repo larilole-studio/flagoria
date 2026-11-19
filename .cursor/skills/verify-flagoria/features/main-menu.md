@@ -28,4 +28,4 @@ Preconditions: `doctor.sh` exits `0`.
 
 ## Gotchas
 
-- The theme's Button styles are checked by `verify-generators` (`PASS menu theme (5 Button styles) used by the main menu`) and `-- test_map_settings_uses_menu_theme`. How it looks still needs a screenshot under xvfb (same recipe as `map-settings-panel.md`).
+- The theme's Button styles are checked by `verify-generators` (`PASS menu theme (5 Button styles) used by the main menu`). How it looks still needs a screenshot under xvfb (same recipe as `map-settings-panel.md`).
