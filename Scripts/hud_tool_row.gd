@@ -18,7 +18,7 @@ const LAYOUT := {
 	"build": Vector2(444, 88),
 	"scores": Vector2(116, 12),
 	"attack": Vector2(428, 218),
-	"run": Vector2(392, 222),
+	"run": Vector2(390, 222),
 	"joystick": Vector2(77, 201),
 }
 

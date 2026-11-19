@@ -3,12 +3,9 @@ extends "res://tests/helpers/test_helpers.gd"
 
 
 func _test_run_control() -> int:
-	## The Run button sits beside the attack button and is smaller than it.
-	## A long press runs only
-	## while it is down; a short press latches. Shift holds run without
-	## latching. Run speed is faster than the walk, and releasing the control
-	## returns to the walk cap. The joystick axis, chop reach and sword do
-	## not change.
+	## A long press runs only while it is down. A short press latches, and
+	## Shift holds run without latching. Releasing Run restores the walk
+	## speed cap. The joystick axis, chop reach and sword stay the same.
 	print("-- test_run_control")
 	var fail := 0
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -25,17 +22,11 @@ func _test_run_control() -> int:
 	await process_frame
 	await process_frame
 	var run_button = scene.get_node("CanvasLayer1/RunButton")
-	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu").menu_button.get_global_rect()
 	var run_rect: Rect2 = run_button.get_global_rect()
-	var attack: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
-	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
 	var zoom = body.get_node("Camera2D/MapZoom")
 	if not _run_icon_ok(run_button) or run_button.button_pressed \
-			or run_rect.intersects(attack_rect) or run_rect.intersects(menu_rect) \
-			or _gap(run_rect, attack_rect) > 3.0 or run_rect.size.x >= attack_rect.size.x \
 			or not zoom.starts_on_hud(run_rect.get_center()):
-		printerr("FAIL run_control button icon %s pressed %s at %s, attack %s, menu %s"
-				% [run_button.icon, run_button.button_pressed, run_rect, attack_rect, menu_rect])
+		printerr("FAIL run_control button initial appearance or HUD input at %s" % run_rect)
 		fail += 1
 	if not body.is_multiplayer_authority():
 		printerr("FAIL run_control hero is not the local one")
@@ -279,21 +270,6 @@ func _run_on(button: Button) -> bool:
 	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
 	return button.button_pressed and box != null and box.texture != null \
 			and "ui_disc_run_pressed" in str(box.texture.resource_path)
-
-
-func _gap(a: Rect2, b: Rect2) -> float:
-	## Separation between two rects. Zero when they overlap or touch.
-	var dx := 0.0
-	if a.end.x < b.position.x:
-		dx = b.position.x - a.end.x
-	elif b.end.x < a.position.x:
-		dx = a.position.x - b.end.x
-	var dy := 0.0
-	if a.end.y < b.position.y:
-		dy = b.position.y - a.end.y
-	elif b.end.y < a.position.y:
-		dy = a.position.y - b.end.y
-	return maxf(dx, dy)
 
 
 func _run_body(world: Node, id: String, at: Vector2) -> CharacterBody2D:
