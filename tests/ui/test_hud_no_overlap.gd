@@ -24,7 +24,7 @@ func _test_hud_no_overlap() -> int:
 		fail += await _check_states(hud, size, false)
 
 	layout.edit_begin(hud)
-	if not layout.try_place("attack", 0.75, 0.63, 1.0, hud):
+	if not layout.try_place("attack", 0.69, 0.63, 1.0, hud):
 		printerr("FAIL hud_no_overlap: could not move Attack for the custom layout")
 		fail += 1
 	layout.save_to_disk()

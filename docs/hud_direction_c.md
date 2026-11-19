@@ -134,9 +134,9 @@ Map toggles the minimap.
 | Attack | (428, 218, 40, 40) | (448, 238) | circle, radius 24, centred |
 | Run | (390, 222, 32, 32) | (406, 238) | 36×36, centred |
 | Tool wheel | (358, 226, 24, 24) | (370, 238) | 32×32, centred |
-| Build | (436, 171, 24, 24) | (448, 183) | 32×32, centred |
+| Build | (396, 171, 24, 24) | (408, 183) | 32×32, centred |
 
-Attack, Run, the tool wheel and Build follow the bottom-right edge on expanded canvases. Build opens two compact rings toward the middle of the screen. The inner ring holds Plank, Wall and Tower at a radius of 50 px. The outer ring holds Castle, Guard post and Barracks at 90 px. The picker follows a customized Build button and opens rightward from the left half, with a mirrored or wider layout if controls obstruct it. Tap Build again, choose an option or tap outside to close it.
+Attack, Run and the tool wheel follow the bottom-right edge on expanded canvases. Build follows the same canvas offset from its slot farther inward in the right-thumb arc and opens two compact rings over a dimmed playfield toward the middle of the screen. The inner ring holds Plank, Wall and Tower at a radius of 50 px. The outer ring holds Castle, Guard post and Barracks at 90 px. The picker follows a customized Build button and opens rightward from the left half, with a mirrored or wider layout if controls obstruct it. Tap Build again, choose an option or tap outside to close it.
 
 ### 3.4 Joystick
 

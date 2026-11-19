@@ -1,6 +1,7 @@
 class_name HudToolRow
 extends Node
-## Map and Menu sit along the top edge. Buildings anchors two rings above Attack.
+## Map and Menu sit along the top edge. Buildings sits inward in the right-thumb
+## arc and opens two rings over a dimmed playfield.
 ## Customize HUD can move these controls and the tool wheel. Layout follows
 ## viewport and visibility changes. A dedicated host builds no tool wheel.
 
@@ -17,7 +18,7 @@ const PLAYER_CLEARANCE := 70.0
 const LAYOUT := {
 	"menu": Vector2(444, 12),
 	"map": Vector2(404, 12),
-	"build": Vector2(436, 171),
+	"build": Vector2(396, 171),
 	"scores": Vector2(116, 12),
 	"attack": Vector2(428, 218),
 	"run": Vector2(390, 222),
@@ -31,6 +32,8 @@ const HIT_INSET := {
 	"scores": Vector2(4, 4),
 	"run": Vector2(2, 2),
 }
+
+var _picker_dimmer: ColorRect
 
 
 func _ready() -> void:
@@ -199,13 +202,16 @@ func _input(event: InputEvent) -> void:
 	for child in picker.get_children():
 		if child is Button and child.visible and child.get_global_rect().has_point(point):
 			return
+	get_viewport().set_input_as_handled()
 	buildings.set_pressed(false)
 
 
 func place_build_picker(layer: Node) -> void:
 	var buildings := layer.get_node_or_null("BuildingsButton") as BaseButton
 	var picker := layer.get_node_or_null("BuildPicker") as Control
-	if buildings == null or picker == null or not buildings.button_pressed:
+	if _picker_dimmer != null:
+		_picker_dimmer.hide()
+	if buildings == null or picker == null or not buildings.button_pressed or HudLayoutVisual.blocks_hud_actions():
 		return
 	var buttons: Array[Button] = []
 	for child in picker.get_children():
@@ -214,6 +220,7 @@ func place_build_picker(layer: Node) -> void:
 	if buttons.is_empty():
 		return
 	var view := get_viewport().get_visible_rect()
+	_show_picker_dimmer(layer, view)
 	var origin := buildings.get_global_rect().get_center()
 	var inward := 1.0 if origin.x < view.get_center().x else -1.0
 	var blocked := _picker_obstacles(layer)
@@ -232,6 +239,21 @@ func place_build_picker(layer: Node) -> void:
 		if label.visible:
 			label.position = caption.position - disc.position
 		button.show()
+
+
+func _show_picker_dimmer(layer: Node, view: Rect2) -> void:
+	if _picker_dimmer == null:
+		_picker_dimmer = ColorRect.new()
+		_picker_dimmer.name = "BuildPickerDimmer"
+		_picker_dimmer.color = Color(0, 0, 0, 0.45)
+		_picker_dimmer.mouse_filter = Control.MOUSE_FILTER_STOP
+		_picker_dimmer.z_index = 1
+		layer.add_child(_picker_dimmer)
+		# GUI hit testing follows tree order, independently of draw order.
+		layer.move_child(_picker_dimmer, 0)
+	_picker_dimmer.position = view.position
+	_picker_dimmer.size = view.size
+	_picker_dimmer.show()
 
 
 func _picker_slots(buttons: Array[Button], origin: Vector2, inward: float, view: Rect2,
