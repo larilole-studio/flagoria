@@ -14,7 +14,7 @@ A parsed structure file can be placed on the generated map at an anchor cell. `S
 
 ## How to get to it (user POV)
 
-- Through the [starting castle](./start-castle.md) on spawn, and through the Buildings column for tower, castle, guard post and barracks (see [Build tower](./build-tower.md), [Build castle](./build-castle.md), [Build guard post](./build-guard-post.md), [Build barracks](./build-barracks.md)).
+- Through the [starting castle](./start-castle.md) on spawn, and through the build picker for tower, castle, guard post and barracks (see [Build tower](./build-tower.md), [Build castle](./build-castle.md), [Build guard post](./build-guard-post.md), [Build barracks](./build-barracks.md)).
 
 ## Driving it with verify-flagoria helpers
 

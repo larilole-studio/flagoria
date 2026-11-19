@@ -13,7 +13,7 @@ Wall pieces are picked from their neighbours by `WallSolver` (`Scripts/mechanics
 ## How to get to it (user POV)
 
 - Plank bridges: interact mode → Plank (#225 / `build-placement.md`). Free-form
-  palisade walls: interact mode → Wall in the Buildings column; see
+  palisade walls: interact mode → Wall in the build picker; see
   [Free-form walls](./free-form-walls.md).
 
 ## Driving it with verify-flagoria helpers

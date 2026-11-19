@@ -40,10 +40,7 @@ static func dismiss_popups(layer: CanvasLayer) -> void:
 		map_btn.set_pressed_no_signal(false)
 	var buildings := layer.get_node_or_null("BuildingsButton") as BaseButton
 	if buildings != null:
-		buildings.set_pressed_no_signal(false)
-	var picker := layer.get_node_or_null("BuildPicker") as CanvasItem
-	if picker != null:
-		picker.visible = false
+		buildings.set_pressed(false)
 	var scores := layer.get_node_or_null("ScoreboardPanel") as ScoreboardPanel
 	if scores != null:
 		scores.close()

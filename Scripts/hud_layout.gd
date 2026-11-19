@@ -5,7 +5,7 @@ extends Node
 ## Each control stores a normalized top-left (x, y in 0..1) and scale s
 ## (1.0 = today's size). Positions survive viewport resize and rotation.
 
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 const SIDE := 12.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75

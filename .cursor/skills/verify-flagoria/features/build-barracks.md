@@ -13,7 +13,7 @@ and world saves. Soldier training is #553.
 
 ## Sub-features
 
-- `build-barracks-picker` Barracks button appears in the Buildings column with
+- `build-barracks-picker` Barracks button appears in the build picker with
   Plank, Tower, Castle, Guard and Wall, stays visible while multiplayer is on,
   and switches `BuildPlacement.tool` to Barracks.
 - `build-barracks-place` release spends 30 wood and writes `barracks` owned by

@@ -12,7 +12,7 @@ syncs through `StructureRequests` (#527), including late joiners and world saves
 
 ## Sub-features
 
-- `build-castle-picker` Castle button appears in the Buildings column with
+- `build-castle-picker` Castle button appears in the build picker with
   Plank, Tower and Wall, stays visible while multiplayer is on, and switches
   `BuildPlacement.tool` to Castle.
 - `build-castle-place` release spends 50 wood and writes `castle` owned by the

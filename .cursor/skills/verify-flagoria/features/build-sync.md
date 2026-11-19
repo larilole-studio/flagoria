@@ -28,7 +28,7 @@ Walls and towers are requested from the host
   replaces its bridges with it (`world.replace_bridges` /
   `BridgeBuilder.replace_from_host`). Live places after that arrive on the same
   reliable channel.
-- `build-mode` interact mode shows the full Buildings column (Plank, Tower,
+- `build-mode` interact mode shows the full build picker (Plank, Tower,
   Castle, Guard post, Barracks and Wall) in multiplayer; nothing hides on
   connect (`BuildToolRow.MP_HIDDEN` is empty).
 

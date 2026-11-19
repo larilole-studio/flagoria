@@ -69,7 +69,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
 - [Generated building](./generated-building.md) — host debug key and Map Settings button place one WFC building at the player; clients and a late joiner solve the same seed (#26).
 - [Building merge](./building-merge.md) — full-edge neighbours share a wall; removal re-seals; two-player and late-joiner replay (#27).
-- [Build placement](./build-placement.md) — interact-mode Buildings column (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; H/V-snapped plank and wall drag, footprint previews, green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
+- [Build placement](./build-placement.md) — interact-mode build picker (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; H/V-snapped plank and wall drag, footprint previews, green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
 - [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297).
 - [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag; multiplayer asks the host (#273, #497).
 - [Build castle](./build-castle.md) — extra `castle.txt` for 50 wood with rotation, save/reload and multiplayer sync (#527).
@@ -93,7 +93,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Points scoreboard](./points-scoreboard.md) — every connected player's total, highest first, from the score row toggle (#509).
 - [Touch controls](./touch-controls.md) — joystick hold, Castle Stone attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
-- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Buildings and Map on a top-right arc, build tools on discs in a column, map panel clear of the arc, Run beside attack (#480).
+- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Map beside Menu, Buildings above Attack, labelled build tools in two compact rings, map panel clear of the controls, Run beside attack (#480).
 - [Customize HUD layout](./hud-customize.md) — in-game menu edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
 - [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.

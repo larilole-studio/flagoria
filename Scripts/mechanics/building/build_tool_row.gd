@@ -1,8 +1,8 @@
 class_name BuildToolRow
 extends RefCounted
-## Buildings-column tools: icons, tips, footprint kinds and picker buttons (#556).
+## Build picker tools: icons, tips, footprint kinds and picker buttons (#556).
 
-const COLUMN_ICON := 12
+const PICKER_ICON := 12
 ## Nothing stays hidden once its request exists. Plank (#297), Tower (#497)
 ## and Wall (#498) stay visible. An empty list hides nothing.
 const MP_HIDDEN: Array = []
@@ -41,10 +41,10 @@ const BUTTON_NAMES := {
 }
 
 
-static func column_tools() -> Array:
+static func picker_tools() -> Array:
 	return [
-		BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.CASTLE,
-		BuildPlacement.Tool.GUARD, BuildPlacement.Tool.BARRACKS, BuildPlacement.Tool.WALL,
+		BuildPlacement.Tool.PLANK, BuildPlacement.Tool.WALL, BuildPlacement.Tool.TOWER,
+		BuildPlacement.Tool.CASTLE, BuildPlacement.Tool.GUARD, BuildPlacement.Tool.BARRACKS,
 	]
 
 
@@ -82,9 +82,12 @@ static func populate_picker(
 	for child in picker.get_children():
 		child.queue_free()
 	buttons.clear()
-	for t in column_tools():
+	var tools := picker_tools()
+	for i in tools.size():
+		var t: BuildPlacement.Tool = tools[i]
 		var button := Button.new()
 		button.name = button_name(t)
+		button.set_meta(&"picker_slot", i)
 		button.toggle_mode = true
 		button.theme = theme
 		button.icon = icon(t)
@@ -92,12 +95,24 @@ static func populate_picker(
 		RoundHudStyle.apply_build(button)
 		button.icon = icon(t)
 		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", COLUMN_ICON)
+		button.add_theme_constant_override("icon_max_width", PICKER_ICON)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
+		_add_picker_label(button, "Guard" if t == BuildPlacement.Tool.GUARD else tip(t))
 		picker.add_child(button)
 		buttons[t] = button
 	picker.reset_size()
+
+
+static func _add_picker_label(button: Button, caption: String) -> void:
+	var label := Label.new()
+	label.name = "Caption"
+	label.add_theme_font_size_override("font_size", 10)
+	label.text = caption
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_outline_color", Color(0.08, 0.11, 0.11))
+	label.add_theme_constant_override("outline_size", 2)
+	button.add_child(label)
 
 
 static func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
