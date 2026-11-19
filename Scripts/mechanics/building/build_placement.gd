@@ -1,6 +1,6 @@
 class_name BuildPlacement
 extends RefCounted
-## Build tool (#225 / #273 / #276, #480): Buildings opens a column of round
+## Build tool (#225 / #273 / #276, #480): Buildings opens a fan of round
 ## Plank / Tower / Wall buttons. Cut is the tool when none is selected. H/V-snapped
 ## plank and wall drag, single-anchor tower preview,
 ## green/red preview and wood cost. Placement goes only through
@@ -316,8 +316,9 @@ func _commit_footprint(inventory: Inventory, kind: StringName) -> bool:
 
 
 func _on_buildings_toggled(on: bool) -> void:
-	if HudLayoutVisual.blocks_hud_actions():
-		_buildings.set_pressed_no_signal(false); return
+	if on and HudLayoutVisual.blocks_hud_actions():
+		_buildings.set_pressed_no_signal(false)
+		return
 	_list_open = on
 	_refresh_rotate_visible()
 	_refresh_picker_visible()
@@ -351,17 +352,24 @@ func _ensure_picker() -> void:
 
 
 func _refresh_picker_visible() -> void:
-	## Column stays hidden until Buildings is open. Plank, Tower and Wall
-	## stay once the list is open (#498).
 	if _picker == null or _interaction == null:
 		return
 	var mp := Interaction.multiplayer_on(_interaction.multiplayer)
 	if mp and tool in BuildToolRow.MP_HIDDEN:
 		set_tool(Tool.CUT)
 		return
-	_picker.visible = true
 	for t in _buttons:
-		(_buttons[t] as Button).visible = _list_open and not (mp and t in BuildToolRow.MP_HIDDEN)
+		var button: Button = _buttons[t]
+		var available: bool = not (mp and t in BuildToolRow.MP_HIDDEN)
+		button.set_meta(&"picker_available", available)
+		if not _list_open or not available:
+			button.hide()
+	if _list_open:
+		var hud := _picker.get_parent()
+		var row := hud.get_node_or_null("HudToolRow") as HudToolRow
+		if row != null:
+			# Opening can precede the HUD’s deferred initial layout.
+			row.relayout()
 
 
 func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:

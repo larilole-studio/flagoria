@@ -1,6 +1,6 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 49
-## Top-right Buildings, Map and Mode. Opens and closes the build list, picks
+## Opens and closes the Buildings picker above Attack, picks
 ## Plank, opens the minimap, toggles interact, and taps Run.
 ## bin/launch.sh drives/hud_round_buttons.gd --display --seed 49
 
@@ -30,7 +30,7 @@ func run() -> void:
 	step("building-list")
 	await click(BUILDINGS)
 	ok = ok and await wait_until(func() -> bool: return _plank().visible, 2.0)
-	ok = ok and _column_ok()
+	ok = ok and _picker_ok()
 	await snapshot("building-list")
 	await click(BUILDINGS)
 	ok = ok and await wait_until(func() -> bool: return not _plank().visible, 2.0)
@@ -51,9 +51,9 @@ func run() -> void:
 	step("minimap")
 	await click(MAP_BUTTON)
 	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
-	ok = ok and _column_outside(panel)
+	ok = ok and _buttons_outside(panel)
 	await snapshot("minimap")
-	print("hud round: minimap panel %s clear %s" % [panel.visible, _column_outside(panel)])
+	print("hud round: minimap panel %s clear %s" % [panel.visible, _buttons_outside(panel)])
 
 	step("interact")
 	var before := interaction.mode
@@ -61,7 +61,7 @@ func run() -> void:
 	var switched: bool = interaction.mode != before and interaction.mode == Interaction.Mode.INTERACT \
 			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_interact.png") \
 			and interaction.build.tool == BuildPlacement.Tool.PLANK
-	ok = ok and _column_outside(panel)
+	ok = ok and _buttons_outside(panel)
 	await snapshot("interact")
 	await toggle_mode()
 	var back: bool = interaction.mode == before and interaction.build.tool == BuildPlacement.Tool.CUT \
@@ -96,40 +96,39 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 	if run_rect.intersects(attack_rect) or run_rect.size.x >= attack_rect.size.x:
 		printerr("hud round: Run %s attack %s" % [run_rect, attack_rect])
 		return false
+	var menu := current_scene.get_node("CanvasLayer1/InGameMenu/MenuButton") as Button
+	var menu_c := menu.get_global_rect().get_center()
 	var map_c := map_button.get_global_rect().get_center()
 	var build_c := buildings.get_global_rect().get_center()
-	if absf(map_c.x - build_c.x) > 2.0 or not (map_c.y + 2.0 < build_c.y):
-		printerr("hud round: column map %s buildings %s" % [map_c, build_c])
+	if not is_equal_approx(map_c.y, menu_c.y) or map_c.x >= menu_c.x:
+		printerr("hud round: Map %s Menu %s" % [map_c, menu_c])
+		return false
+	if not is_equal_approx(build_c.x, attack_rect.get_center().x) or build_c.y >= attack_rect.position.y:
+		printerr("hud round: Buildings %s Attack %s" % [build_c, attack_rect])
 		return false
 	return true
 
 
-func _column_ok() -> bool:
-	# The list opens in columns left of Buildings, on screen and clear of Attack.
+func _picker_ok() -> bool:
 	var buildings := current_scene.get_node(BUILDINGS) as Button
 	var picker := current_scene.get_node("CanvasLayer1/BuildPicker") as Control
-	var attack := current_scene.get_node("CanvasLayer1/TouchScreenButton") as Node2D
 	var view := current_scene.get_viewport().get_visible_rect()
-	var taken: Array[Rect2] = [buildings.get_global_rect(), Rect2(attack.global_position, Vector2(40, 40))]
-	var any := false
+	var origin := buildings.get_global_rect().get_center()
+	var count := 0
 	for child in picker.get_children():
 		var button := child as Button
 		if button == null or not button.visible:
 			continue
-		any = true
+		count += 1
 		var rect := button.get_global_rect()
-		var hit := taken.any(func(other: Rect2) -> bool: return rect.intersects(other))
-		if hit or not view.encloses(rect) or rect.position.x >= buildings.get_global_rect().position.x:
+		if not view.encloses(rect) or rect.get_center().x > origin.x \
+				or rect.get_center().distance_to(origin) > 92.0 or not _round(button):
 			printerr("hud round: %s misplaced at %s" % [button.name, rect])
 			return false
-		if not _round(button):
-			printerr("hud round: %s disc" % button.name)
-			return false
-		taken.append(rect)
-	return any
+	return count == 6
 
 
-func _column_outside(panel: Control) -> bool:
+func _buttons_outside(panel: Control) -> bool:
 	var panel_rect := panel.get_global_rect()
 	for path in [BUILDINGS, MAP_BUTTON]:
 		var button := current_scene.get_node(path) as Control

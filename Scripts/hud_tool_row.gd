@@ -1,10 +1,8 @@
 class_name HudToolRow
 extends Node
-## Direction C touch HUD: top-right column, status plate, tool wheel (#480, #492, #574).
-##
-## Map and Buildings stack in the top-right column. Customize HUD can move every
-## control including the wheel (#575). Layout runs on viewport and visibility
-## changes, not every frame. A headless dedicated host builds no wheel.
+## Map and Menu sit along the top edge. Buildings anchors two rings above Attack.
+## Customize HUD can move these controls and the tool wheel. Layout follows
+## viewport and visibility changes. A dedicated host builds no tool wheel.
 
 const ToolWheelScript := preload("res://Scripts/tool_wheel.gd")
 
@@ -12,10 +10,14 @@ const CANVAS_SIZE := Vector2(480, 270)
 const GAP := 4.0
 const WHEEL_GAP := 2.0
 const SIDE := 12.0
+const PICKER_RADII := [50.0, 90.0]
+const PICKER_ANGLES := [[0.0, 50.0, 100.0], [0.0, 40.0, 80.0]]
+const PICKER_SPACING := 40.0
+const PLAYER_CLEARANCE := 70.0
 const LAYOUT := {
 	"menu": Vector2(444, 12),
-	"map": Vector2(444, 52),
-	"build": Vector2(444, 88),
+	"map": Vector2(404, 12),
+	"build": Vector2(436, 171),
 	"scores": Vector2(116, 12),
 	"attack": Vector2(428, 218),
 	"run": Vector2(390, 222),
@@ -55,22 +57,18 @@ func _bind_relayout() -> void:
 	if layer == null:
 		return
 	_layout()
-	for node_name in ["BuildingsButton", "MinimapButton"]:
-		var btn := layer.get_node_or_null(node_name) as BaseButton
-		if btn != null and not btn.toggled.is_connected(_on_relayout):
-			btn.toggled.connect(_on_relayout)
-	var picker := layer.get_node_or_null("BuildPicker") as CanvasItem
-	if picker != null and not picker.visibility_changed.is_connected(_on_relayout):
-		picker.visibility_changed.connect(_on_relayout)
+	var map_button := layer.get_node_or_null("MinimapButton") as BaseButton
+	if map_button != null and not map_button.toggled.is_connected(relayout):
+		map_button.toggled.connect(relayout)
 	for node_name in ["MinimapPanel", "ScoreboardPanel"]:
 		var panel := layer.get_node_or_null(node_name) as CanvasItem
-		if panel != null and not panel.visibility_changed.is_connected(_on_relayout):
-			panel.visibility_changed.connect(_on_relayout)
-	if not get_viewport().size_changed.is_connected(_on_relayout):
-		get_viewport().size_changed.connect(_on_relayout)
+		if panel != null and not panel.visibility_changed.is_connected(relayout):
+			panel.visibility_changed.connect(relayout)
+	if not get_viewport().size_changed.is_connected(relayout):
+		get_viewport().size_changed.connect(relayout)
 
 
-func _on_relayout(_on: Variant = null) -> void:
+func relayout(_on: Variant = null) -> void:
 	_layout()
 
 
@@ -91,14 +89,14 @@ func _layout() -> void:
 
 func _restore_touch_defaults(layer: Node) -> void:
 	_place_menu(layer)
-	_place_column(layer)
+	_place_map_and_build(layer)
 	_place_status(layer)
 	_place_combat(layer)
 	_place_attack(layer)
 	_place_joystick(layer)
 	_place_tool(layer)
-	_place_buildings(layer)
 	_place_panel(layer)
+	place_build_picker(layer)
 
 
 func _place_menu(layer: Node) -> void:
@@ -114,7 +112,7 @@ func _place_menu(layer: Node) -> void:
 	button.z_index = 2
 
 
-func _place_column(layer: Node) -> void:
+func _place_map_and_build(layer: Node) -> void:
 	var map_button := layer.get_node_or_null("MinimapButton") as Button
 	var buildings := layer.get_node_or_null("BuildingsButton") as Button
 	if map_button != null:
@@ -186,52 +184,153 @@ func _place_joystick(layer: Node) -> void:
 		stick.scale = Vector2.ONE
 
 
-func _place_buildings(layer: Node, custom := false) -> void:
-	var buildings := layer.get_node_or_null("BuildingsButton") as Control
-	var picker := layer.get_node_or_null("BuildPicker") as Control
-	if buildings == null or picker == null:
+func _input(event: InputEvent) -> void:
+	if not (event is InputEventScreenTouch or (event is InputEventMouseButton
+			and event.button_index == MOUSE_BUTTON_LEFT)) or not event.pressed:
 		return
-	var buttons: Array[Control] = []
+	var layer := get_parent()
+	var picker := layer.get_node_or_null("BuildPicker") as Control
+	var buildings := layer.get_node_or_null("BuildingsButton") as BaseButton
+	if picker == null or buildings == null or not buildings.button_pressed or not picker.is_visible_in_tree():
+		return
+	var point: Vector2 = event.position
+	if buildings.get_global_rect().has_point(point):
+		return
 	for child in picker.get_children():
-		if child is Control and child.visible and not child.is_queued_for_deletion():
+		if child is Button and child.visible and child.get_global_rect().has_point(point):
+			return
+	buildings.set_pressed(false)
+
+
+func place_build_picker(layer: Node) -> void:
+	var buildings := layer.get_node_or_null("BuildingsButton") as BaseButton
+	var picker := layer.get_node_or_null("BuildPicker") as Control
+	if buildings == null or picker == null or not buildings.button_pressed:
+		return
+	var buttons: Array[Button] = []
+	for child in picker.get_children():
+		if child is Button and child.get_meta(&"picker_available", true) and not child.is_queued_for_deletion():
 			buttons.append(child)
 	if buttons.is_empty():
 		return
+	var view := get_viewport().get_visible_rect()
+	var origin := buildings.get_global_rect().get_center()
+	var inward := 1.0 if origin.x < view.get_center().x else -1.0
+	var blocked := _picker_obstacles(layer)
+	var slots := _picker_slots(buttons, origin, inward, view, blocked)
 	_pin(picker)
 	picker.position = Vector2.ZERO
 	picker.z_index = 2
-	var hit := RoundHudStyle.HIT
-	var step := int(hit + GAP)
-	var view := get_viewport().get_visible_rect()
-	var right := floori(view.end.x - GAP - hit)
-	# Keep the picker in the upper HUD, clear of the default thumb controls.
-	var bottom := floori(minf(view.end.y, LAYOUT["attack"].y - 4.0) - GAP - hit)
-	var left_of_buildings := floori(buildings.position.x - GAP - hit)
-	var top := clampi(roundi(buildings.position.y), int(GAP), bottom)
-	var blocked := _picker_obstacles(layer, custom)
-	var next := 0
-	# Start alongside Buildings, then wrap left. Use the rest of the upper
-	# HUD if a custom layout puts Buildings against the left or bottom edge.
-	var columns := range(left_of_buildings, int(GAP) - 1, -step)
-	columns.append_array(range(right, maxi(left_of_buildings + 1, int(GAP) - 1), -step))
-	var row_bands := [range(top, bottom + 1, step), range(top - step, int(GAP) - 1, -step)]
-	for rows in row_bands:
-		for x in columns:
-			for y in rows:
-				var button := buttons[next]
-				var rect := Rect2(Vector2(x, y), _size_of(button))
-				if not view.encloses(rect) or blocked.any(func(other: Rect2) -> bool: return rect.intersects(other)):
-					continue
-				_pin(button)
-				button.position = rect.position
-				button.z_index = 3
-				blocked.append(rect.grow(GAP))
-				next += 1
-				if next == buttons.size():
-					return
+	for button in buttons:
+		var disc: Rect2 = slots[button][0]
+		var caption: Rect2 = slots[button][1]
+		var label := button.get_node("Caption") as Label
+		_pin(button)
+		button.position = disc.position
+		button.z_index = 3
+		label.visible = caption.has_area()
+		if label.visible:
+			label.position = caption.position - disc.position
+		button.show()
 
 
-func _picker_obstacles(layer: Node, custom: bool) -> Array[Rect2]:
+func _picker_slots(buttons: Array[Button], origin: Vector2, inward: float, view: Rect2,
+		blocked: Array[Rect2]) -> Dictionary:
+	var first_fit := {}
+	# Increase both radii proportionally, testing both sides at each size.
+	var steps := ceili(view.size.length() - PICKER_RADII[0])
+	for extra in range(maxi(0, steps) + 1):
+		var scale_factor := 1.0 + extra / PICKER_RADII[0]
+		for side: float in [inward, -inward]:
+			var slots := _picker_candidate(buttons, origin, side, scale_factor, view, blocked)
+			if slots.is_empty():
+				continue
+			if slots.values().all(func(slot: Array) -> bool: return slot[1].has_area()):
+				return slots
+			if first_fit.is_empty():
+				first_fit = slots
+	if not first_fit.is_empty():
+		return first_fit
+	return _picker_candidate(buttons, origin, inward, 1.0, view, blocked, true)
+
+
+func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, scale_factor: float,
+		view: Rect2, blocked: Array[Rect2], clamp_to_view := false) -> Dictionary:
+	var slots := {}
+	var occupied := blocked.duplicate()
+	for button in buttons:
+		var index: int = button.get_meta(&"picker_slot")
+		@warning_ignore("integer_division")
+		var ring := index / 3
+		var angle := deg_to_rad(PICKER_ANGLES[ring][index % 3])
+		var offset := Vector2(side * sin(angle), -cos(angle)) * float(PICKER_RADII[ring]) * scale_factor
+		var center := (origin + offset).round()
+		var rect := Rect2(center - button.size * 0.5, button.size)
+		if clamp_to_view:
+			rect = _picker_fallback_rect(rect, view, occupied)
+		else:
+			var nearest := view.get_center().clamp(rect.position, rect.end)
+			if nearest.distance_to(view.get_center()) < PLAYER_CLEARANCE:
+				return {}
+			if not _picker_rect_clear(rect, view, occupied, PICKER_SPACING):
+				return {}
+		slots[button] = [rect]
+		occupied.append(rect)
+	for button in buttons:
+		var rect: Rect2 = slots[button][0]
+		var label := button.get_node("Caption") as Label
+		var caption := _picker_caption(rect, label.get_minimum_size(), side, view, occupied)
+		slots[button].append(caption)
+		if caption.has_area():
+			occupied.append(caption.grow(1.0))
+	return slots
+
+
+func _picker_fallback_rect(rect: Rect2, view: Rect2, occupied: Array[Rect2]) -> Rect2:
+	var last := (view.end - rect.size).max(view.position)
+	rect.position = rect.position.clamp(view.position, last)
+	if _picker_rect_clear(rect, view, occupied):
+		return rect
+	var closest := rect
+	var distance := INF
+	for y in range(ceili(view.position.y), floori(last.y) + 1, int(GAP)):
+		for x in range(ceili(view.position.x), floori(last.x) + 1, int(GAP)):
+			var point := Vector2(x, y)
+			var candidate_distance := point.distance_squared_to(rect.position)
+			if candidate_distance >= distance:
+				continue
+			var candidate := Rect2(point, rect.size)
+			if _picker_rect_clear(candidate, view, occupied):
+				closest = candidate
+				distance = candidate_distance
+	return closest
+
+
+func _picker_caption(disc: Rect2, size: Vector2, side: float, view: Rect2,
+		occupied: Array[Rect2]) -> Rect2:
+	var center := disc.get_center()
+	var distance := (disc.size + size) * 0.5 + Vector2.ONE * 2.0
+	for direction: Vector2 in [Vector2.DOWN, Vector2(side, 0), Vector2.UP, Vector2(-side, 0)]:
+		var base := center + direction * distance - size * 0.5
+		var offsets := [0.0, -10.0, 10.0] if direction.x != 0.0 else [0.0]
+		for offset: float in offsets:
+			var rect := Rect2((base + Vector2(0, offset)).round(), size)
+			# Reserve one pixel for the text outline on each side.
+			if _picker_rect_clear(rect.grow(1.0), view, occupied):
+				return rect
+	return Rect2()
+
+
+func _picker_rect_clear(rect: Rect2, view: Rect2, occupied: Array[Rect2], spacing := 0.0) -> bool:
+	if not view.encloses(rect):
+		return false
+	for other in occupied:
+		if rect.intersects(other) or rect.get_center().distance_to(other.get_center()) < spacing:
+			return false
+	return true
+
+
+func _picker_obstacles(layer: Node) -> Array[Rect2]:
 	var blocked: Array[Rect2] = []
 	var layout := get_node("/root/HudLayout")
 	for id in layout.IDS:
@@ -246,9 +345,7 @@ func _picker_obstacles(layer: Node, custom: bool) -> Array[Rect2]:
 			rect = rect.merge(control.global_transform * shape_rect)
 		if rect.has_area():
 			blocked.append(rect)
-	var paths := ["InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel"]
-	if custom:
-		paths.append("MinimapPanel")
+	var paths := ["InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel", "MinimapPanel", "FootprintRotateButton"]
 	for path in paths:
 		var control := layer.get_node_or_null(path) as Control
 		if control != null and control.visible:
@@ -256,7 +353,7 @@ func _picker_obstacles(layer: Node, custom: bool) -> Array[Rect2]:
 	return blocked
 
 
-func _place_panel(layer: Node, avoid_picker := true) -> void:
+func _place_panel(layer: Node) -> void:
 	var panel := layer.get_node_or_null("MinimapPanel") as Control
 	if panel == null or panel.size.x <= 0.0:
 		return
@@ -266,12 +363,6 @@ func _place_panel(layer: Node, avoid_picker := true) -> void:
 	var arc_left := view.x
 	for node_name in ["MinimapButton", "BuildingsButton"]:
 		arc_left = minf(arc_left, _left_of(layer.get_node_or_null(node_name) as Control))
-	var picker := layer.get_node_or_null("BuildPicker") as Control
-	if avoid_picker and picker != null:
-		for child in picker.get_children():
-			var column := child as Control
-			if column != null and column.visible and not column.is_queued_for_deletion():
-				arc_left = minf(arc_left, _left_of(column))
 	var right := minf(view.x - MinimapPanel.MARGIN * panel.scale.x, arc_left - GAP)
 	var y := maxf(MinimapPanel.TOP * panel.scale.y, SIDE + 24.0)
 	var limit := view.y - SIDE
@@ -326,7 +417,7 @@ func _set_art(control: Control, id: String) -> void:
 	if id != "scores":
 		var offset := _edge_offset()
 		control.position.x += offset.x
-		if id == "run":
+		if id == "run" or id == "build":
 			control.position.y += offset.y
 
 
@@ -350,8 +441,8 @@ func _left_of(control: Control) -> float:
 
 func place_custom_popups(layer: Node) -> void:
 	_place_tool(layer)
-	_place_panel(layer, false)
-	_place_buildings(layer, true)
+	_place_panel(layer)
+	place_build_picker(layer)
 
 
 func _pin(control: Control) -> void:

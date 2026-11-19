@@ -40,12 +40,12 @@ func _test_hud_round_buttons() -> int:
 	buildings.set_pressed(true)
 	await process_frame
 	if not plank.visible or not tower.visible or not wall.visible:
-		printerr("FAIL hud_round_buttons: Buildings did not open the column")
+		printerr("FAIL hud_round_buttons: Buildings did not open the picker")
 		fail += 1
 	buildings.set_pressed(false)
 	await process_frame
 	if plank.visible or tower.visible or wall.visible:
-		printerr("FAIL hud_round_buttons: second Buildings tap left the column open")
+		printerr("FAIL hud_round_buttons: second Buildings tap left the picker open")
 		fail += 1
 	buildings.set_pressed(true)
 	await process_frame
@@ -61,8 +61,16 @@ func _test_hud_round_buttons() -> int:
 	if not plank.visible or not _is_selected(plank) or tower.button_pressed:
 		printerr("FAIL hud_round_buttons: reopened list lost the plank ring")
 		fail += 1
-	buildings.set_pressed(false)
+	var outside := InputEventScreenTouch.new()
+	outside.position = root.get_visible_rect().get_center()
+	outside.pressed = true
+	root.push_input(outside, true)
+	outside.pressed = false
+	root.push_input(outside, true)
 	await process_frame
+	if buildings.button_pressed or plank.visible or interaction.build.tool != BuildPlacement.Tool.PLANK:
+		printerr("FAIL hud_round_buttons: outside tap did not close the picker or changed the tool")
+		fail += 1
 	map_button.pressed.emit()
 	if not panel.visible or not map_button.button_pressed or not _is_selected(map_button):
 		printerr("FAIL hud_round_buttons: minimap button left the panel closed")
@@ -103,3 +111,4 @@ func _is_selected(button: Button) -> bool:
 		return false
 	var path := str(box.texture.resource_path)
 	return "_selected" in path or "_pressed" in path
+

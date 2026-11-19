@@ -116,32 +116,27 @@ Anchors are top-left of the **art** box. Positions below were composed on a 480�
 | Status plate | (12, 12, 100, 24) | not a button | top-left, 12px in |
 | Scores disc | (116, 12, 24, 24) | (112, 8, 32, 32) | 4px to the right of the plate, vertically aligned with it |
 
-Stretch the plate's width if the points or wood strings grow; keep the scores disc `GAP` (4px) to its right, and do not let it collide with the right-hand column.
+Stretch the plate's width if the points or wood strings grow; keep the scores disc `GAP` (4px) to its right, and do not let it collide with the top-edge buttons.
 
-### 3.2 Top-right menu column
-
-Stacked top-down, right-aligned, 4px gaps.
+### 3.2 Top-edge menu and map
 
 | Node | Art box (x, y, w, h) | Hit box |
 |-|-|-|
 | Menu (square) | (444, 12, 24, 24) | (440, 8, 32, 32) |
-| Mode | (444, 40, 24, 24) | (440, 36, 32, 32) |
-| Map | (444, 68, 24, 24) | (440, 64, 32, 32) |
-| Build | (444, 96, 24, 24) | (440, 92, 32, 32) |
+| Map | (404, 12, 24, 24) | (400, 8, 32, 32) |
 
-Mode shows `ui_disc_mode_interact_selected` or `ui_disc_mode_attack_selected` according to the current mode. Map and Build use the normal disc until pressed or disabled (map can use the selected frame while the map is open, if the maintainer wants that; it is not required).
+Map toggles the minimap.
 
 ### 3.3 Right-thumb combat arc
 
 | Node | Art box (x, y, w, h) | Centre | Hit |
 |-|-|-|-|
 | Attack | (428, 218, 40, 40) | (448, 238) | circle, radius 24, centred |
-| Run | (392, 222, 32, 32) | (408, 238) | 36×36, centred |
-| Weapon | (406, 186, 32, 32) | (422, 202) | 36×36, centred |
+| Run | (390, 222, 32, 32) | (406, 238) | 36×36, centred |
+| Tool wheel | (358, 226, 24, 24) | (370, 238) | 32×32, centred |
+| Build | (436, 171, 24, 24) | (448, 183) | 32×32, centred |
 
-Attack sits 12px in from the bottom and right. Run sits 4px to the left of attack, vertically centred on it (9 o'clock). Weapon sits on the thumb arc above and left of attack (about 10–11 o'clock), 4px clear of the attack rim. The equipped weapon uses the **selected** frame (gold ring); the other weapon texture is not on screen.
-
-There is no Bow text plate.
+Attack, Run, the tool wheel and Build follow the bottom-right edge on expanded canvases. Build opens two compact rings toward the middle of the screen. The inner ring holds Plank, Wall and Tower at a radius of 50 px. The outer ring holds Castle, Guard post and Barracks at 90 px. The picker follows a customized Build button and opens rightward from the left half, with a mirrored or wider layout if controls obstruct it. Tap Build again, choose an option or tap outside to close it.
 
 ### 3.4 Joystick
 
@@ -179,7 +174,7 @@ These settings are for the maintainer to apply in `project.godot` and the HUD sc
 1. Keep the 480×270 viewport and `display/window/stretch/mode="canvas_items"` with `aspect="keep"`.
 2. Set `display/window/stretch/scale_mode="integer"`.
 3. Set `display/window/size/window_width_override=1920` and `window_height_override=1080`, so the default editor and desktop window fills at a clean **×4**. A 960×540 override is the ×2 alternative.
-4. Set the default clear colour to palette `sky_deep` (`#4a8fd6`), so a camera looking past the island does not drop mid-grey behind the top-right column.
+4. Set the default clear colour to palette `sky_deep` (`#4a8fd6`), so a camera looking past the island does not drop mid-grey behind the top-edge buttons.
 5. Keep canvas texture filter **Nearest**, mipmaps off, lossless imports. No change is required to the existing `.import` settings.
 6. Do not use `StyleBoxFlat` circles or the menu theme (font size 16, 10px side margins) for these in-game HUD buttons. Point each `Button` / `TouchScreenButton` at the textures in §1.
 7. If a fractional window still occurs, either apply the hearts `_fit_pixel_scale` correction to **every** HUD control, or to none of them, so hearts and discs stay on one scale.

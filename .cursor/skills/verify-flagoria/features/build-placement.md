@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-Interact-mode build tools (#225 / #273 / #276). The Buildings column lists Plank,
+Interact-mode build tools (#225 / #273 / #276). The build picker lists Plank,
 Tower, Castle, Guard post, Barracks and Wall on round discs under the wood counter
 (see [Round HUD buttons](./hud-round-buttons.md)). The column stays closed until
 Buildings is open (`BuildPlacement._list_open` starts false; each tool button is
@@ -30,7 +30,7 @@ run-length cap was added (#380 item 1 left open).
 ## Sub-features
 
 - `build-picker` Plank, Tower, Castle, Guard post, Barracks and Wall sit in the
-  Buildings column; the column is hidden until Buildings is open, including in
+  build picker; the picker is hidden until Buildings is open, including in
   combat, and switches `BuildPlacement.tool`. Nothing is hidden in multiplayer.
   Leaving interact resets the tool to Cut.
 - `build-plank-snap` a diagonal drag becomes a straight H or V cell run.
@@ -42,7 +42,7 @@ run-length cap was added (#380 item 1 left open).
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone, offline, or two-player — Plank works in all).
-2. Tap Buildings to open the column, then select chop on the tool wheel to enter interact
+2. Tap Buildings to open the picker, then select chop on the tool wheel to enter interact
    mode if needed.
 3. Tap Plank, drag across water next to land; green cells and the wood cost
    follow the finger (green = what will place). Lift to place. Tower, Castle,

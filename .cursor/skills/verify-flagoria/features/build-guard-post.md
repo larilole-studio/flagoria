@@ -13,7 +13,7 @@ with #37 and #280.
 
 ## Sub-features
 
-- `build-guard-picker` Guard post button appears in the Buildings column with
+- `build-guard-picker` Guard post button appears in the build picker with
   Plank, Tower, Castle and Wall, stays visible while multiplayer is on, and
   switches `BuildPlacement.tool` to Guard.
 - `build-guard-place` release spends 20 wood and writes `guard_post` owned by the
