@@ -2,7 +2,7 @@
 
 Drive: drives/combat_hud.gd
 
-The in-game menu button (three bars, top right) or Esc opens a Pause panel with Resume, Save, Main menu and a status label. Nothing is paused, locally or for other players. The Android back button or a window close asks "Do you want to quit?" first.
+The in-game menu button (three bars, top right) or Esc opens a Pause panel with Resume, Save, Customize HUD, Main menu and a status label. The host also sees [Map Settings](./map-settings-panel.md). Nothing is paused, locally or for other players. The Android back button or a window close asks "Do you want to quit?" first.
 
 ## Sub-features
 

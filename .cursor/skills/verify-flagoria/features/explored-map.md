@@ -4,7 +4,7 @@ Drive: drives/explored_map.gd
 
 The wood minimap panel `CanvasLayer1/MinimapPanel` (`Scripts/minimap_panel.gd`) shows the ground the hero has explored. `ExploredMap` (`Scripts/explored_map.gd`) marks every cell within `REVEAL_RADIUS` (10 cells, Euclidean) of the hero as explored as it moves, in 32 x 32 cell chunks.
 
-The panel starts closed. The round minimap button in the HUD row (`CanvasLayer1/MinimapButton`) opens it; collapse and M hide it again. There is no reopen chip. The panel header has two wood controls, drawn in the frame's own colours: collapse (a minus) and maximize (a square). Maximize, or Shift+M, opens `CanvasLayer1/ParchmentMap` (`Scripts/parchment_map.gd`): the explored ground on an old parchment sheet, with paper fog instead of the panel's blue mist. The world is not paused. While the sheet is open the local hero cannot move or attack; + and − wood buttons, the mouse wheel, and a two-finger pinch zoom the sheet in integer pixel steps from a minimum that fits the whole explored chart up to 16 pixels per cell, centred on the hero for the buttons or on the wheel or pinch midpoint, without changing the play camera. One-finger drag still pans at any zoom. The target-mark recentre control pans back to the hero without changing zoom; closing and reopening returns to the default scale. Close, Esc, or a hit on the hero puts the wood panel back as it was.
+The panel starts closed. The round Map button beside Menu (`CanvasLayer1/MinimapButton`) opens it; collapse and M hide it again. There is no reopen chip. The panel header has two wood controls, drawn in the frame's own colours: collapse (a minus) and maximize (a square). Maximize, or Shift+M, opens `CanvasLayer1/ParchmentMap` (`Scripts/parchment_map.gd`): the explored ground on an old parchment sheet, with paper fog instead of the panel's blue mist. The world is not paused. While the sheet is open the local hero cannot move or attack; + and − wood buttons, the mouse wheel, and a two-finger pinch zoom the sheet in integer pixel steps from a minimum that fits the whole explored chart up to 16 pixels per cell, centred on the hero for the buttons or on the wheel or pinch midpoint, without changing the play camera. One-finger drag still pans at any zoom. The target-mark recentre control pans back to the hero without changing zoom; closing and reopening returns to the default scale. Close, Esc, or a hit on the hero puts the wood panel back as it was.
 
 ## Sub-features
 
@@ -14,7 +14,7 @@ The panel starts closed. The round minimap button in the HUD row (`CanvasLayer1/
 
 ## How to get to it (user POV)
 
-- Host a world. The wood panel stays closed until the minimap button. It opens at the top right. Collapse hides it; the button opens it again. Maximize opens the parchment. +/−, wheel, or pinch to zoom (default, minimum, maximum on a phone-sized window), drag to pan, recentre, then Close to return to the panel.
+- Host a world. The wood panel stays closed until the minimap button. It opens below the top buttons and adjusts to clear nearby HUD controls. Collapse hides it; the button opens it again. Maximize opens the parchment. +/−, wheel, or pinch to zoom (default, minimum, maximum on a phone-sized window), drag to pan, recentre, then Close to return to the panel.
 
 ## Driving it with verify-flagoria helpers
 
