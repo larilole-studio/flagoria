@@ -2,19 +2,19 @@
 
 Drive: drives/hud_round_buttons.gd
 
-The match starts with the minimap and build picker closed. Map sits left of Menu on the top edge. Buildings sits above Attack. It opens two compact rings of labelled discs. From the top, the inner ring holds Plank, Wall and Tower, and the outer ring holds Castle, Guard post and Barracks. The picker follows Buildings in a custom layout. Tap Buildings again, pick a tool or tap outside to close the picker. The selected tool keeps its ring when reopened. The tool wheel sits beside Run.
+The match starts with the minimap and build picker closed. Map sits left of Menu on the top edge. Attack mirrors the joystick and matches its base diameter. Run and the tool wheel sit around Attack. Buildings sits beside that cluster and opens two compact rings over the dimmed playfield. Captions appear where they fit. From the top, the inner ring holds Plank, Wall and Tower, and the outer ring holds Castle, Guard post and Barracks. The picker follows Buildings in a custom layout. Tap Buildings again, pick a tool or tap outside to close the picker. The selected tool keeps its ring when reopened.
 
 ## Sub-features
 
-- `hud-round-arc` Map sits beside Menu and Buildings sits above Attack, with clear space around the tap targets (`-- test_hud_no_overlap` and live drive). Run is a smaller neighbour of the attack button. `CanvasLayer1/MapReopen` is absent (`-- test_hud_round_buttons`).
-- `hud-build-list` Buildings opens the picker and a second tap or an outside tap closes it. Each disc has a tool icon and label. Picking a building selects that tool, collapses the list and keeps the gold ring (`-- test_hud_round_buttons`, `-- test_build_picker_switches_tool`).
+- `hud-round-arc` Map sits beside Menu, and Buildings sits beside the Attack, Run and tool wheel cluster, with clear space around the tap targets (`-- test_hud_no_overlap` and live drive). Run is a smaller neighbour of the attack button. `CanvasLayer1/MapReopen` is absent (`-- test_hud_round_buttons`).
+- `hud-build-list` Buildings opens the picker and a second tap or an outside tap closes it. Each disc has a tool icon, with labels shown where space permits. Picking a building selects that tool, collapses the list and keeps the gold ring (`-- test_hud_round_buttons`, `-- test_build_picker_switches_tool`).
 - `hud-minimap-closed` the wood panel stays hidden until Map opens it, and a second press closes it. While it is open, every arc button sits outside the panel. Selecting chop keeps a picked build tool, and sword clears it back to Cut (`-- test_hud_round_buttons`).
 - `hud-no-overlap` All visible tap targets stay inside the viewport and clear of one another at phone, desktop and tablet sizes. The test opens Buildings, Map, Scores and the tool wheel, and repeats the default and Buildings states with a saved custom layout (`-- test_hud_no_overlap`).
 - `hud-layout-golden` Stock HUD hit rectangles match the saved layout at four window sizes for the default, Buildings, Map and Scores states (`-- test_hud_layout_golden`).
 
 ## How to get to it (user POV)
 
-- Host a world. Buildings is above Attack and the minimap is closed. Tap Buildings to show Plank, Tower, Castle, Guard post, Barracks and Wall, and tap Map to open the panel. Key 3 arms chop and key 1 returns to sword. Run is the small button beside attack.
+- Host a world. Buildings sits beside the right-thumb cluster and the minimap is closed. Tap Buildings to show Plank, Tower, Castle, Guard post, Barracks and Wall, and tap Map to open the panel. Key 3 arms chop and key 1 returns to sword. Run is the small button beside attack.
 
 ## Driving it with verify-flagoria helpers
 
@@ -22,7 +22,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_hud_round_buttons` is abo
 
 - **Run.** `./tools/verify.sh`, or `godot --headless --path . --script res://tests/run_tests.gd -- --only=hud_round_buttons,hud_no_overlap`.
 - **Proof.** `PASS test_hud_round_buttons` and `PASS test_hud_no_overlap`.
-- **Drive (live).** `bin/launch.sh drives/hud_round_buttons.gd --seed 49 --display`. Snapshots: `match-start` (minimap closed, list collapsed), `building-list` (two labelled rings above and inward from Buildings, clear of Attack), `building-selected` (Plank's ring), `minimap` (panel open, arc clear of it), `interact` (chop icon on the tool button, arc still clear).
+- **Drive (live).** `bin/launch.sh drives/hud_round_buttons.gd --seed 49 --display`. Snapshots: `match-start` (minimap closed, list collapsed), `building-list` (two rings above and inward from Buildings, clear of Attack, with the playfield dimmed), `building-selected` (Plank's ring), `minimap` (panel open, arc clear of it), `interact` (chop icon on the tool button, arc still clear).
 
 ## Gotchas
 

@@ -364,12 +364,14 @@ func _refresh_picker_visible() -> void:
 		button.set_meta(&"picker_available", available)
 		if not _list_open or not available:
 			button.hide()
-	if _list_open:
-		var hud := _picker.get_parent()
-		var row := hud.get_node_or_null("HudToolRow") as HudToolRow
-		if row != null:
+	var hud := _picker.get_parent()
+	var row := hud.get_node_or_null("HudToolRow") as HudToolRow
+	if row != null:
+		if _list_open:
 			# Opening can precede the HUD’s deferred initial layout.
 			row.relayout()
+		else:
+			row.place_build_picker(hud)
 
 
 func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:

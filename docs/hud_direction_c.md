@@ -98,7 +98,7 @@ All numbers are UI pixels of the **480×270** viewport (`CanvasLayer1`).
 |-|-|-|-|-|
 | Mode, map, build, menu, scores | 24×24 | **32×32** | yes | 32 art = 128 px ≈ 51 dp |
 | Weapon (bow / sword), run | 32×32 | **36×36** | yes | 36 art = 144 px ≈ 58 dp |
-| Attack | 40×40 | **48×48** (`CircleShape2D` radius 24, unchanged) | yes | already above 48 dp |
+| Attack | 56×56 (scaled from 40×40) | **56×56** at default size | yes | above 48 dp |
 | Joystick | base 56×56, knob 24×24 | start radius **28** (the whole base); knob travel 20 | yes | unchanged |
 
 Font for the plate: the project's `NormalFont.ttf` at size **8**, not the theme's Button size 16.
@@ -131,12 +131,12 @@ Map toggles the minimap.
 
 | Node | Art box (x, y, w, h) | Centre | Hit |
 |-|-|-|-|
-| Attack | (428, 218, 40, 40) | (448, 238) | circle, radius 24, centred |
-| Run | (390, 222, 32, 32) | (406, 238) | 36×36, centred |
-| Tool wheel | (358, 226, 24, 24) | (370, 238) | 32×32, centred |
-| Build | (436, 171, 24, 24) | (448, 183) | 32×32, centred |
+| Attack | (375, 173, 56, 56) | (403, 201) | circle, radius 28, centred |
+| Run | (335, 169, 32, 32) | (351, 185) | 36×36, centred |
+| Tool wheel | (343, 211, 24, 24) | (355, 223) | 32×32, centred |
+| Build | (424, 136.5, 24, 24) | (436, 148.5) | 32×32, centred |
 
-Attack, Run, the tool wheel and Build follow the bottom-right edge on expanded canvases. Build opens two compact rings toward the middle of the screen. The inner ring holds Plank, Wall and Tower at a radius of 50 px. The outer ring holds Castle, Guard post and Barracks at 90 px. The picker follows a customized Build button and opens rightward from the left half, with a mirrored or wider layout if controls obstruct it. Tap Build again, choose an option or tap outside to close it.
+Attack mirrors the joystick across the visible canvas and matches its base diameter. Run and the tool wheel sit west of Attack and move with it as the canvas expands. Build sits above-right of Attack and opens two compact rings over a dimmed playfield toward the middle of the screen. The inner ring holds Plank, Wall and Tower at a radius of 50 px. The outer ring holds Castle, Guard post and Barracks at 90 px. The picker follows a customized Build button and opens rightward from the left half, with a mirrored or wider layout if controls obstruct it. Tap Build again, choose an option or tap outside to close it.
 
 ### 3.4 Joystick
 

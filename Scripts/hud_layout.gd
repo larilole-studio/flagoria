@@ -5,7 +5,7 @@ extends Node
 ## Each control stores a normalized top-left (x, y in 0..1) and scale s
 ## (1.0 = today's size). Positions survive viewport resize and rotation.
 
-const SAVE_VERSION := 3
+const SAVE_VERSION := 5
 const SIDE := 12.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
@@ -314,7 +314,7 @@ func _hit_size(id: String, s: float, layer: CanvasLayer) -> Vector2:
 			var btn := layer.get_node_or_null(PATHS[id]) as TouchScreenButton
 			if btn == null or btn.texture_normal == null:
 				return Vector2.ZERO
-			return btn.texture_normal.get_size() * s
+			return btn.texture_normal.get_size() * HudToolRow.attack_default_scale(btn) * s
 		"run":
 			return Vector2(RoundHudStyle.RUN_HIT, RoundHudStyle.RUN_HIT) * s
 		_:
@@ -338,10 +338,10 @@ func _apply_joystick(stick: Node2D, pos: Vector2, s: float) -> void:
 
 
 func _apply_attack(btn: TouchScreenButton, pos: Vector2, s: float) -> void:
-	btn.scale = Vector2.ONE * s
+	btn.scale = Vector2.ONE * HudToolRow.attack_default_scale(btn) * s
 	btn.position = pos
-	if btn.shape is CircleShape2D:
-		(btn.shape as CircleShape2D).radius = 24.0 * s
+	if btn.shape is CircleShape2D and btn.texture_normal != null:
+		(btn.shape as CircleShape2D).radius = btn.texture_normal.get_width() * 0.5
 
 
 func _apply_run(button: Button, pos: Vector2, s: float) -> void:
