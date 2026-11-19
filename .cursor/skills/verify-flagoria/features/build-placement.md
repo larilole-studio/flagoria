@@ -60,11 +60,11 @@ under 0.05 s in `tools/verify.sh`; `test_build_picker_switches_tool` about 0.3 s
 `test_build_preview_matches_commit_short_wood` about 0.2 s;
 `test_build_preview_matches_commit_mid_invalid` about 0.2 s;
 `test_build_preview_cache_invalidates_on_wood` about 0.5 s;
-`test_build_picker_hides_on_multiplayer_start` about 0.4 s (each ~1.9–2.2 s alone
+`test_build_picker_buttons` about 0.4 s (each ~1.9–2.2 s alone
 with `--only=`, against ~1.7 s runner start-up). Screenshot drive about 15 s
 under xvfb.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=build_placement_snap_run,build_picker_switches_tool,build_plank_preview_tint_and_cost,build_plank_places_and_spends,build_cut_mode_unchanged,build_plank_drag_places,build_preview_matches_commit_short_wood,build_preview_matches_commit_mid_invalid,build_preview_cache_invalidates_on_wood,build_picker_hides_on_multiplayer_start`, or the full `tools/verify.sh`.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=build_placement_snap_run,build_picker_switches_tool,build_plank_preview_tint_and_cost,build_plank_places_and_spends,build_cut_mode_unchanged,build_plank_drag_places,build_preview_matches_commit_short_wood,build_preview_matches_commit_mid_invalid,build_preview_cache_invalidates_on_wood,build_picker_buttons`, or the full `tools/verify.sh`.
 - **Proof.** Headers `-- test_build_placement_snap_run`,
   `-- test_build_picker_switches_tool`,
   `-- test_build_plank_preview_tint_and_cost`,
@@ -74,7 +74,7 @@ under xvfb.
   `-- test_build_preview_matches_commit_short_wood`,
   `-- test_build_preview_matches_commit_mid_invalid`,
   `-- test_build_preview_cache_invalidates_on_wood` and
-  `-- test_build_picker_hides_on_multiplayer_start` in `artifacts/verify.log`
+  `-- test_build_picker_buttons` in `artifacts/verify.log`
   with no `FAIL` after them. Visual: `docs/screenshots/build_placement_preview.png`
   shows the picker and a green/red plank preview (captured under xvfb).
 

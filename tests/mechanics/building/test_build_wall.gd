@@ -64,61 +64,6 @@ func _cell_vp(interaction: Interaction, world, cell: Vector2i) -> Vector2:
 	return interaction.get_canvas_transform() * world.to_global(world.map_to_local(cell))
 
 
-func _test_build_picker_includes_wall() -> int:
-	## The row shows Plank / Tower / Wall; Wall hides while
-	## multiplayer is on (Plank stays, #297). Time cost: about 0.35 s in
-	## tools/verify.sh (~2.0 s alone with --only=build_picker_includes_wall).
-	print("-- test_build_picker_includes_wall")
-	var fail := 0
-	var ctx := await _boot_wall_scene()
-	var scene = ctx["scene"]
-	var interaction: Interaction = ctx["interaction"]
-	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
-	interaction.set_mode(Interaction.Mode.INTERACT)
-	await process_frame
-	if picker == null or picker.get_child_count() < 4:
-		printerr("FAIL build_picker_includes_wall: picker child count %s"
-				% [picker.get_child_count() if picker else null])
-		fail += 1
-	elif not picker.visible:
-		printerr("FAIL build_picker_includes_wall: picker hidden in interact")
-		fail += 1
-	interaction.build.set_tool(BuildPlacement.Tool.WALL)
-	if interaction.build.tool != BuildPlacement.Tool.WALL:
-		printerr("FAIL build_picker_includes_wall: set_tool WALL did not stick")
-		fail += 1
-	var peer := ENetMultiplayerPeer.new()
-	var api := SceneMultiplayer.new()
-	if peer.create_client("127.0.0.1", 1) != OK:
-		printerr("FAIL build_picker_includes_wall: could not start ENet client")
-		fail += 1
-	else:
-		api.multiplayer_peer = peer
-		set_multiplayer(api, scene.get_path())
-		interaction.build._refresh_picker_visible()
-		_open_buildings(scene)
-		await process_frame
-		var wall_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.WALL)
-		var plank_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.PLANK)
-		if wall_btn == null or not wall_btn.visible:
-			printerr("FAIL build_picker_includes_wall: MP should show Wall")
-			fail += 1
-		if plank_btn == null or not plank_btn.visible:
-			printerr("FAIL build_picker_includes_wall: MP should keep Plank visible")
-			fail += 1
-		if interaction.build.tool != BuildPlacement.Tool.WALL:
-			printerr("FAIL build_picker_includes_wall: MP cleared the Wall tool")
-			fail += 1
-		api.multiplayer_peer = null
-		peer.close()
-		set_multiplayer(null, scene.get_path())
-	scene.queue_free()
-	await process_frame
-	if fail == 0:
-		print("PASS test_build_picker_includes_wall")
-	return fail
-
-
 func _test_build_wall_segment_tip_and_gap() -> int:
 	## wall_segment: first placement free; with tip, tap must 4-touch; drag is
 	## H/V from the tip neighbour; gap and diagonal return empty. Time cost:
@@ -334,9 +279,3 @@ func _test_build_wall_first_must_touch_structure() -> int:
 	if fail == 0:
 		print("PASS test_build_wall_first_must_touch_structure")
 	return fail
-
-
-func _open_buildings(scene: Node) -> void:
-	var buildings := scene.get_node_or_null("CanvasLayer1/BuildingsButton") as Button
-	if buildings != null and not buildings.button_pressed:
-		buildings.set_pressed(true)

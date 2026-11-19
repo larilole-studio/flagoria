@@ -21,7 +21,7 @@ Main Menu Join accepts a hostname or an IPv4 address, with an optional `:port`. 
 
 Preconditions: `doctor.sh` exits `0`. Time cost: `join_port_button` ~7 s in verify (one ~6 s no-listener wait); `join_port_dedicated` ~5 s in verify and ~5 s × 8 on the full netcode-stress tier (4 at a time). Live drive ~12 s.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_port_button,join_port_dedicated`, or full `tools/verify.sh`. Both tests call `MainMenu._on_join_button_pressed`.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_port_button,join_port_dedicated`, or full `tools/verify.sh`. Both tests press the Join button.
 - **Drive (live).** `bin/launch.sh drives/join_port.gd --display` (## launch: --seed 42). The drive starts dedicated servers on loopback `9786` and `9799`, clicks Join with a blank address, returns to the menu, types `host:abc` and `127.0.0.1:1` and `127.0.0.1:9799`, and clicks Join each time. Snapshots: `default-address`, `joined-default`, `invalid-address`, `join-timeout`, `joined-9799`.
 - **Proof.** Headers `-- test_join_port_button` and `-- test_join_port_dedicated` with no `FAIL` after them. The drive log has `join_port: ready port=9786 host=localhost field='' players=<peer> seeds=978601,978602,978603,978604,978605 local_altitude=42 ground=81/81` and `join_port: ready port=9799 host=127.0.0.1 field='127.0.0.1:9799' players=<peer> seeds=979901,979902,979903,979904,979905 local_altitude=978601 ground=81/81`, plus `join_port: invalid` and `join_port: timeout status='Could not join 127.0.0.1:1'`. Both joins show a player under `World`. The `9786` listen-server pair in [Two-player Host/Join](./two-player-host-join.md) is unchanged.
 

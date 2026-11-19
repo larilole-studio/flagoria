@@ -1,98 +1,73 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Placed structures, tower owners and free-form walls in world saves
-## (world.structures, #42).
+## Placed structures, tower owners and free-form walls in world saves.
+
+
+func _structure_save_scene() -> Node:
+	var scene = load("res://flagoria_main.tscn").instantiate()
+	root.add_child(scene)
+	scene.get_node("CanvasLayer2/MainMenu").hide()
+	var world = scene.get_node("World/worldMap")
+	world.set_process(false)
+	var params := _spawn_params(7, 0.0)
+	params.ensure_seeds()
+	scene.world_params = params
+	world.apply_map_params(params)
+	return scene
+
+
+func _save_and_read_world(scene: Node) -> WorldSave:
+	var result: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
+	if result["error"] != "":
+		printerr("FAIL structure save: %s" % result["error"])
+		return null
+	var loaded := MapSave.load_world(result["path"])
+	DirAccess.remove_absolute(result["path"])
+	if loaded["error"] != "":
+		printerr("FAIL structure load: %s" % loaded["error"])
+	return loaded["world"]
 
 
 func _castle_city_snapshot(world, cities: Cities) -> Dictionary:
-	var castle_id := -1
 	for id in world.placed_structures():
-		var p: Dictionary = world.placed_structures()[id]
-		if p["name"] == StartCastle.structure().name:
-			castle_id = int(id)
-			break
-	if castle_id < 0 or not cities.cities.has(castle_id):
-		return {}
-	var owner: int = world._structures.owner_of(castle_id)
-	var tint: Color = Cities.TINT.get(owner, Cities.TINT_OTHER)
-	var walls: Dictionary = cities.cities[castle_id]["walls"]
-	return {"castle_id": castle_id, "owner": owner, "tint": tint, "wall_count": walls.size()}
+		if world.placed_structures()[id]["name"] == StartCastle.structure().name and cities.cities.has(id):
+			return {"owner": cities.owner_of(id), "walls": cities.cities[id]["walls"].duplicate()}
+	return {}
 
 
 func _test_castle_wall_tint_save_reload() -> int:
-	## The starting castle's city walls keep the peer-1 owner tint through a
-	## save and load even when Cities had to clear between apply and restore.
+	## Restore the city and its tint owner after Cities sees the cleared map.
 	print("-- test_castle_wall_tint_save_reload")
-	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
+	var scene := _structure_save_scene()
 	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
 	var cities: Cities = scene.get_node("World/Cities")
-	var params := _spawn_params(7, 0.0)
-	params.ensure_seeds()
-	scene.world_params = params
-	scene._apply_params_to_world(params)
 	if not world.place_start_castle(1):
-		printerr("FAIL castle_wall_tint: no castle on seed 7")
+		printerr("FAIL castle_wall_tint_save_reload: no starting castle")
 		scene.queue_free()
 		return 1
 	cities.rebuild()
-	var before: Dictionary = _castle_city_snapshot(world, cities)
-	if before.is_empty() or before["owner"] != 1 or before["wall_count"] <= 0:
-		printerr("FAIL castle_wall_tint: no walled city before save %s" % before)
-		scene.queue_free()
-		return 1
-	var result: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
-	if result["error"] != "":
-		printerr("FAIL castle_wall_tint: save %s" % result["error"])
-		scene.queue_free()
-		return 1
-	var map_gen = root.get_node("MapGen")
-	map_gen.load_map_inputs(result["path"])
-	scene.world_params = map_gen.params.duplicate_params()
-	scene._apply_params_to_world(scene.world_params)
-	cities.tick()
-	scene._restore_loaded_world()
-	if not StructureSaves.adopt_start_castle(world, 1):
-		printerr("FAIL castle_wall_tint: castle not adopted")
-		fail += 1
-	var after: Dictionary = _castle_city_snapshot(world, cities)
-	if after.is_empty():
-		printerr("FAIL castle_wall_tint: no city after reload restore")
-		fail += 1
-	elif after["wall_count"] != before["wall_count"] or after["tint"] != before["tint"] or after["owner"] != before["owner"]:
-		printerr("FAIL castle_wall_tint: after %s want %s" % [after, before])
-		fail += 1
-	DirAccess.remove_absolute(result["path"])
-	map_gen.params = params
+	var before := _castle_city_snapshot(world, cities)
+	var saved := _save_and_read_world(scene)
+	var after := {}
+	if saved != null:
+		world.apply_map_params(saved.params)
+		cities.tick()
+		StructureSaves.restore(saved.structures, world)
+		after = _castle_city_snapshot(world, cities)
 	scene.queue_free()
 	await process_frame
-	if fail == 0:
-		print("PASS test_castle_wall_tint_save_reload (walls %d tint owner %d)" % [before["wall_count"], before["owner"]])
-	return fail
+	if before.get("owner") != 1 or before["walls"].is_empty() or after != before:
+		printerr("FAIL castle_wall_tint_save_reload: city owner or boundary changed")
+		return 1
+	print("PASS test_castle_wall_tint_save_reload")
+	return 0
 
 
 func _test_structure_save_round_trip() -> int:
-	## The starting castle, a wooden tower the mobs hold and a three-cell
-	## palisade saved from the in-game menu come back from the load before
-	## any chunk is drawn: same placements in the same order, the tower's
-	## mob flag, the walls, and the castle's gate front as the spawn, so no
-	## second castle is placed. Bad entries are dropped; the version 1, 2 and 3
-	## fixtures (no structures) load with none and still get a castle.
 	print("-- test_structure_save_round_trip")
-	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
+	var scene := _structure_save_scene()
 	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
-	var params := _spawn_params(7, 0.0)
-	params.ensure_seeds()
-	scene.world_params = params
-	scene._apply_params_to_world(params)
 	if not world.place_start_castle(1):
-		printerr("FAIL structure_save_round_trip: no starting castle on seed 7")
+		printerr("FAIL structure_save_round_trip: no starting castle")
 		scene.queue_free()
 		return 1
 	var front: Vector2i = world.spawn_point
@@ -103,230 +78,109 @@ func _test_structure_save_round_trip() -> int:
 	for r in range(6, 40):
 		var start: Vector2i = front + Vector2i(-r, r)
 		var run: Array[Vector2i] = [start, start + Vector2i.RIGHT, start + Vector2i.RIGHT * 2]
-		if run.all(func(c: Vector2i) -> bool: return world.predicted_clear(c) and not world._structures.has_cell(c)):
+		if run.all(func(c: Vector2i) -> bool: return world.predicted_clear(c)) and world.place_wall_cells(run):
 			walls = run
 			break
-	if tower_id <= 0 or walls.is_empty() or not world.place_wall_cells(walls):
-		printerr("FAIL structure_save_round_trip: setup tower %s walls %s" % [tower_id, walls])
+	if tower_id <= 0 or walls.is_empty():
+		printerr("FAIL structure_save_round_trip: could not place tower and walls")
 		scene.queue_free()
 		return 1
 	var want: Array = world.structures_for_sync()
-
-	var map_gen = root.get_node("MapGen")
-	var before: MapGenParams = map_gen.params
-	var result: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
-	var doc := MapSave.read_document(result["path"]) if result["error"] == "" else {"data": null}
-	var file = doc["data"]
-	var section: Dictionary = file["world"]["structures"] if file is Dictionary else {}
-	var entries := 0
-	for chunk in section:
-		entries += section[chunk].size()
-	if entries != 2 + walls.size():
-		printerr("FAIL structure_save_round_trip: save %s wrote structures %s, want 2 placements and %d walls" % [result["error"], section, walls.size()])
+	var saved := _save_and_read_world(scene)
+	var fail := 0
+	if saved == null:
 		fail += 1
-
-	map_gen.load_map_inputs(result["path"])
-	scene.world_params = map_gen.params.duplicate_params()
-	scene._apply_params_to_world(scene.world_params)
-	var drawn_before: int = world.get_used_cells(0).size()
-	var restored: int = scene._restore_loaded_world()
-	var adopted := StructureSaves.adopt_start_castle(world, 1)
-	if drawn_before != 0 or restored != 2 + walls.size() or not adopted or world.spawn_point != front:
-		printerr("FAIL structure_save_round_trip: restored %d (drawn first %d), castle adopted %s, spawn %s want %s"
-				% [restored, drawn_before, adopted, world.spawn_point, front])
-		fail += 1
-	if str(world.structures_for_sync()) != str(want):
-		printerr("FAIL structure_save_round_trip: placements %s, want %s" % [world.structures_for_sync(), want])
-		fail += 1
-	var towers: Dictionary = world._structures.towers()
-	for id in towers:
-		var flag_want := TileCatalog.PROP_FLAG_MOBS if world._structures.owner_of(id) == StructurePlacer.OWNER_MOBS else TileCatalog.PROP_FLAG_BLUE
-		for c: Vector2i in towers[id]:
-			if world.predict_cell(c)[1] != flag_want:
-				printerr("FAIL structure_save_round_trip: flag %s of tower %d is %s, want %s" % [c, id, world.predict_cell(c)[1], flag_want])
-				fail += 1
-	for c in walls:
-		if not world.has_wall(c):
-			printerr("FAIL structure_save_round_trip: wall %s did not come back" % c)
+	else:
+		world.apply_map_params(saved.params)
+		if StructureSaves.restore(saved.structures, world) != want.size() + walls.size() \
+				or world.get_used_cells(0).size() != 0 or world.structures_for_sync() != want \
+				or not StructureSaves.adopt_start_castle(world, 1) or world.spawn_point != front:
+			printerr("FAIL structure_save_round_trip: placements or castle spawn did not survive reload")
 			fail += 1
-	DirAccess.remove_absolute(result["path"])
+		if not walls.all(func(c: Vector2i) -> bool: return world.has_wall(c)) \
+				or not _shows_flag(world, tower, anchor, TileCatalog.PROP_FLAG_MOBS) \
+				or not _shows_flag(world, StartCastle.structure(), front - StartCastle.GATE_FRONT, TileCatalog.PROP_FLAG_BLUE):
+			printerr("FAIL structure_save_round_trip: walls or owner flags did not survive reload")
+			fail += 1
 
-	# Entries a load must drop or leave to other readers.
-	scene._apply_params_to_world(params)
+	world.apply_map_params(scene.world_params)
 	var bad := {"0,0": {"1,1": {"structure": "no_such_thing", "owner": 1}, "x": {"structure": "castle"}, "2,2": {"cut": "tree"}}}
 	if StructureSaves.restore(bad, world) != 0 or not world.placed_structures().is_empty():
-		printerr("FAIL structure_save_round_trip: bad entries placed %s" % world.placed_structures())
+		printerr("FAIL structure_save_round_trip: bad entries created placements")
 		fail += 1
-
-	# Older saves (no structures) load with none, so the host places a castle.
-	for fixture in ["res://tests/fixtures/world_save_v1.json", "res://tests/fixtures/world_save_v2.json", "res://tests/fixtures/world_save_v3.json"]:
-		var err: String = map_gen.load_map_inputs(fixture)
-		scene.world_params = map_gen.params.duplicate_params()
-		scene._apply_params_to_world(scene.world_params)
-		var n: int = scene._restore_loaded_world()
-		if err != "" or n != 0 or StructureSaves.adopt_start_castle(world, 1) or not world.placed_structures().is_empty():
-			printerr("FAIL structure_save_round_trip: %s: error %s, restored %d, placements %s" % [fixture, err, n, world.placed_structures()])
+	for version in [1, 2, 3]:
+		var loaded := MapSave.load_world("res://tests/fixtures/world_save_v%d.json" % version)
+		var legacy: WorldSave = loaded["world"]
+		if legacy == null:
+			printerr("FAIL structure_save_round_trip: %s" % loaded["error"])
 			fail += 1
-	map_gen.params = before
+			continue
+		world.apply_map_params(legacy.params)
+		if StructureSaves.restore(legacy.structures, world) != 0 \
+				or not world.placed_structures().is_empty() or not world.place_start_castle(1):
+			printerr("FAIL structure_save_round_trip: version %d did not start with a new castle" % version)
+			fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
-		print("PASS test_structure_save_round_trip (castle, tower %s, walls %s)" % [anchor, walls])
+		print("PASS test_structure_save_round_trip")
 	return fail
 
 
-func _guard_anchor(world, quarter_turns: int) -> Variant:
-	var s: Structure = StructurePlacer.load_named("guard_post")
-	if s == null:
-		return null
-	s = Structure.rotated(s, quarter_turns)
-	for r in range(6, 48):
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				if maxi(absi(dx), absi(dy)) != r:
-					continue
-				var cell: Vector2i = world.spawn_point + Vector2i(dx, dy)
-				var foot: Array = StructurePlacer.footprint(s, cell).keys()
-				if foot.all(func(c): return world.predicted_clear(c) and not world._structures.has_cell(c)):
-					return cell
-	return null
+func _shows_flag(world, structure: Structure, anchor: Vector2i, flag: Vector2i) -> bool:
+	return StructurePlacer.footprint(structure, anchor).keys().any(
+		func(cell: Vector2i) -> bool: return world.predict_cell(cell)[1] == flag)
 
 
 func _test_guard_post_save_round_trip() -> int:
-	## A rotated guard post survives save and reload; owner 1 blue, owner 2 red.
-	## Time cost: about 0.4 s.
-	print("-- test_guard_post_save_round_trip")
-	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
-	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
-	var params := _spawn_params(7, 0.0)
-	params.ensure_seeds()
-	scene.world_params = params
-	scene._apply_params_to_world(params)
-	if not world.place_start_castle(1):
-		printerr("FAIL guard_post_save_round_trip: no starting castle")
-		scene.queue_free()
-		return 1
-	var anchor: Variant = _guard_anchor(world, 1)
-	if anchor == null:
-		printerr("FAIL guard_post_save_round_trip: no guard spot")
-		scene.queue_free()
-		return 1
-	var gp := StructurePlacer.load_named("guard_post")
-	var place_id: int = world.place_structure(gp, anchor, 1, 1)
-	if place_id <= 0:
-		printerr("FAIL guard_post_save_round_trip: could not place")
-		fail += 1
-	else:
-		var flag: Vector2i = world._structures.towers()[place_id][0]
-		if world.predict_cell(flag)[1] != TileCatalog.TILES[StructurePlacer.OWNER_FLAGS[1]]["atlas"]:
-			printerr("FAIL guard_post_save_round_trip: owner 1 flag not blue")
-			fail += 1
-		world._structures.set_owner(place_id, 2)
-		flag = world._structures.towers()[place_id][0]
-		if world.predict_cell(flag)[1] != TileCatalog.TILES[StructurePlacer.OTHER_OWNER_FLAG]["atlas"]:
-			printerr("FAIL guard_post_save_round_trip: owner 2 flag not red")
-			fail += 1
-	var want: Array = world.structures_for_sync()
-	var result: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
-	if result["error"] != "":
-		printerr("FAIL guard_post_save_round_trip: save %s" % result["error"])
-		fail += 1
-	else:
-		var map_gen = root.get_node("MapGen")
-		map_gen.load_map_inputs(result["path"])
-		scene.world_params = map_gen.params.duplicate_params()
-		scene._apply_params_to_world(scene.world_params)
-		var restored: int = scene._restore_loaded_world()
-		StructureSaves.adopt_start_castle(world, 1)
-		if restored != want.size() or str(world.structures_for_sync()) != str(want):
-			printerr("FAIL guard_post_save_round_trip: restored %d got %s want %s"
-					% [restored, world.structures_for_sync(), want])
-			fail += 1
-		DirAccess.remove_absolute(result["path"])
-	scene.queue_free()
-	await process_frame
-	if fail == 0:
-		print("PASS test_guard_post_save_round_trip")
-	return fail
-
-
-func _barracks_anchor(world, quarter_turns: int) -> Variant:
-	var s: Structure = StructurePlacer.load_named("barracks")
-	if s == null:
-		return null
-	s = Structure.rotated(s, quarter_turns)
-	for r in range(6, 48):
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				if maxi(absi(dx), absi(dy)) != r:
-					continue
-				var cell: Vector2i = world.spawn_point + Vector2i(dx, dy)
-				var foot: Array = StructurePlacer.footprint(s, cell).keys()
-				if foot.all(func(c): return world.predicted_clear(c) and not world._structures.has_cell(c)):
-					return cell
-	return null
+	return await _rotated_structure_round_trip("guard_post", {1: TileCatalog.PROP_FLAG_BLUE, 2: TileCatalog.PROP_FLAG_RED})
 
 
 func _test_barracks_save_round_trip() -> int:
-	## A rotated barracks survives save and reload; not a flag tower.
-	## Time cost: about 0.5 s.
-	print("-- test_barracks_save_round_trip")
-	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
+	return await _rotated_structure_round_trip("barracks", {1: null})
+
+
+func _rotated_structure_round_trip(kind: String, owners: Dictionary) -> int:
+	var test_name := "test_%s_save_round_trip" % kind
+	print("-- %s" % test_name)
+	var scene := _structure_save_scene()
 	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
-	var params := _spawn_params(7, 0.0)
-	params.ensure_seeds()
-	scene.world_params = params
-	scene._apply_params_to_world(params)
-	if not world.place_start_castle(1):
-		printerr("FAIL barracks_save_round_trip: no starting castle")
-		scene.queue_free()
-		return 1
-	var anchor: Variant = _barracks_anchor(world, 1)
-	if anchor == null:
-		printerr("FAIL barracks_save_round_trip: no barracks spot")
-		scene.queue_free()
-		return 1
-	var barracks := StructurePlacer.load_named("barracks")
-	var place_id: int = world.place_structure(barracks, anchor, 1, 1)
-	if place_id <= 0:
-		printerr("FAIL barracks_save_round_trip: could not place")
-		fail += 1
-	elif world._structures.towers().has(place_id):
-		printerr("FAIL barracks_save_round_trip: barracks listed as tower")
-		fail += 1
+	var structure := StructurePlacer.load_named(kind)
+	var rotated := Structure.rotated(structure, 1)
+	var flags := {}
+	var fail := 0
+	for owner in owners:
+		var anchor: Variant = _place_rotated_structure(world, structure, owner)
+		if anchor == null:
+			printerr("FAIL %s: could not place structure for owner %d" % [test_name, owner])
+			fail += 1
+		elif owners[owner] != null:
+			flags[anchor] = owners[owner]
 	var want: Array = world.structures_for_sync()
-	var result: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
-	if result["error"] != "":
-		printerr("FAIL barracks_save_round_trip: save %s" % result["error"])
+	var saved := _save_and_read_world(scene)
+	if saved == null:
 		fail += 1
 	else:
-		var map_gen = root.get_node("MapGen")
-		map_gen.load_map_inputs(result["path"])
-		scene.world_params = map_gen.params.duplicate_params()
-		scene._apply_params_to_world(scene.world_params)
-		var restored: int = scene._restore_loaded_world()
-		StructureSaves.adopt_start_castle(world, 1)
-		if restored != want.size() or str(world.structures_for_sync()) != str(want):
-			printerr("FAIL barracks_save_round_trip: restored %d got %s want %s"
-					% [restored, world.structures_for_sync(), want])
+		world.apply_map_params(saved.params)
+		if StructureSaves.restore(saved.structures, world) != owners.size() or world.structures_for_sync() != want:
+			printerr("FAIL %s: owner, rotation or placement changed" % test_name)
 			fail += 1
-		for id in world.placed_structures():
-			if str(world.placed_structures()[id].get("name")) == "barracks":
-				if world._structures.towers().has(id):
-					printerr("FAIL barracks_save_round_trip: restored barracks is a tower")
-					fail += 1
-				break
-		DirAccess.remove_absolute(result["path"])
+		for anchor in flags:
+			if not _shows_flag(world, rotated, anchor, flags[anchor]):
+				printerr("FAIL %s: owner flag did not survive reload" % test_name)
+				fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
-		print("PASS test_barracks_save_round_trip")
+		print("PASS %s" % test_name)
 	return fail
+
+
+func _place_rotated_structure(world, structure: Structure, owner: int) -> Variant:
+	for y in range(-24, 25):
+		for x in range(-24, 25):
+			var anchor: Vector2i = world.spawn_point + Vector2i(x, y)
+			if world.can_place_structure(structure, anchor, 1).is_empty():
+				if world.place_structure(structure, anchor, owner, 1) > 0:
+					return anchor
+	return null

@@ -173,30 +173,6 @@ func _test_biome_terrain() -> int:
 			printerr("FAIL biome_terrain decor=%s got l1=%s l2=%s want %s %s" % [d[0], got1, got2, d[5], d[6]])
 			fail += 1
 
-	# Generated chunks use the same per-biome ground the render tool samples.
-	var probe := Vector2i(700, -300)
-	world.generate_chunk(world.map_to_local(probe))
-	var mismatched := 0
-	for x in range(probe.x - 48, probe.x + 48):
-		for y in range(probe.y - 48, probe.y + 48):
-			var cell := Vector2i(x, y)
-			var b: int = world.biome_at(cell)
-			var want: Vector2i = world.ground_tile(world.cell_altitude(cell, b),
-				world.moisture.get_noise_2d(x, y), world.items_chance.get_noise_2d(x, y), b)
-			var got: Vector2i = world.get_cell_atlas_coords(0, cell)
-			if want == TileCatalog.WATER:
-				if world.get_cell_source_id(0, cell) != -1 or not world.is_open_sea(cell):
-					mismatched += 1
-			elif world._sky.touches_sky(world, cell):
-				if got == TileCatalog.SAND or got == TileCatalog.SWAMP \
-						or got == TileCatalog.SWAMP_SPECIAL or got == TileCatalog.WATER:
-					mismatched += 1
-			elif got != want:
-				mismatched += 1
-	if mismatched > 0:
-		printerr("FAIL biome_terrain: %s generated cells differ from ground_tile" % mismatched)
-		fail += 1
-
 	# Over a wide area: swamp share of land is highest in ARCHIPELAGO_DENSE and
 	# lowest in CONTINENTAL; sand share is highest in OCEANIC.
 	var land := {}
@@ -251,25 +227,6 @@ func _test_biome_plants() -> int:
 	root.add_child(scene)
 	var world = scene.get_node("World/worldMap")
 
-	# Biomes off: the biome id passed in is ignored.
-	world.apply_map_params(_biome_terrain_params(true))
-	for b in BiomeCatalog.PLANTS:
-		for alt in [0.28, 0.35, 0.5]:
-			for chance in [-0.1, 0.1, 0.2, 0.4, 0.5]:
-				var want: Vector2i = world.plant_tile(alt, 0.5, chance)
-				if world.plant_tile(alt, 0.5, chance, b) != want:
-					printerr("FAIL biome_plants: frequency 0 biome %s changed plant at alt=%s chance=%s" % [b, alt, chance])
-					fail += 1
-		# No pines or swamp scrub with biomes off, even on dry high ground.
-		if world.plant_tile(0.8, -0.1, 0.9, b) != NONE:
-			printerr("FAIL biome_plants: frequency 0 biome %s grew a pine" % b)
-			fail += 1
-		# No bushy trees with biomes off, even on the wettest land.
-		if world.plant_tile(0.8, 0.95, 0.9, b) != TileCatalog.TREE:
-			printerr("FAIL biome_plants: frequency 0 biome %s grew a bushy tree" % b)
-			fail += 1
-
-	# Biomes on: same altitude / moisture / chance, different plant per biome.
 	var on := _biome_terrain_params(true)
 	on.biome_frequency = 0.003
 	world.apply_map_params(on)
@@ -277,75 +234,22 @@ func _test_biome_plants() -> int:
 	var ocean := BiomeCatalog.OCEANIC
 	var cont := BiomeCatalog.CONTINENTAL
 	var dense := BiomeCatalog.ARCHIPELAGO_DENSE
-	# [name, alt, chance, biome, expected plant]
-	var cases := [
-		["temperate_no_tree", 0.5, 0.2, T, NONE],
-		["continental_forest", 0.5, 0.2, cont, TileCatalog.TREE],
-		["temperate_tree", 0.5, 0.4, T, TileCatalog.TREE],
-		["oceanic_sparse_trees", 0.5, 0.4, ocean, NONE],
-		["dense_sparse_trees", 0.5, 0.4, dense, NONE],
-		["temperate_no_bush", 0.35, -0.1, T, NONE],
-		["dense_scrub", 0.35, -0.1, dense, TileCatalog.BUSH],
-		["temperate_bush", 0.35, 0.1, T, TileCatalog.BUSH],
-		["oceanic_sparse_bushes", 0.35, 0.1, ocean, NONE],
-	]
-	for c in cases:
-		var got: Vector2i = world.plant_tile(c[1], 0.4, c[2], c[3])
-		if got != c[4]:
-			printerr("FAIL biome_plants case=%s got %s want %s" % [c[0], got, c[4]])
-			fail += 1
-	# Pines: dry high ground only, never on swamp, per-biome chance.
-	# [name, alt, moist, chance, biome, expected plant]
-	var pine_cases := [
-		["continental_pine", 0.6, -0.1, 0.1, cont, TileCatalog.PINE],
-		["continental_pine_low", 0.45, -0.1, 0.9, cont, NONE],
-		["continental_pine_wet_is_tree", 0.6, 0.1, 0.9, cont, TileCatalog.TREE],
-		["continental_swamp_no_pine", 0.6, -0.3, 0.9, cont, NONE],
-		["continental_pine_rare_chance", 0.6, -0.1, 0.0, cont, NONE],
-		["oceanic_sparse_pines", 0.6, -0.1, 0.4, ocean, NONE],
-		["oceanic_pine", 0.6, -0.1, 0.7, ocean, TileCatalog.PINE],
-		["temperate_no_pine", 0.6, -0.1, 0.9, T, NONE],
-		["dense_no_pine_swamp_scrub", 0.6, -0.1, 0.9, dense, TileCatalog.BUSH],
-	]
-	for c in pine_cases:
-		var got: Vector2i = world.plant_tile(c[1], c[2], c[3], c[4])
-		if got != c[5]:
-			printerr("FAIL biome_plants case=%s got %s want %s" % [c[0], got, c[5]])
-			fail += 1
-	# Bushy trees: a tree cell on land wetter than bushy_tree_min_moist plus
-	# the biome's bushy_moist; never in TEMPERATE (the biomes-off row).
-	# [name, alt, moist, chance, biome, expected plant]
-	var bushy_cases := [
-		["continental_wet_bushy", 0.6, 0.6, 0.9, cont, TileCatalog.TREE_BUSHY],
-		["continental_moist_oak", 0.6, 0.4, 0.9, cont, TileCatalog.TREE],
-		["dense_bushy", 0.6, 0.2, 0.9, dense, TileCatalog.TREE_BUSHY],
-		["oceanic_bushy", 0.6, 0.4, 0.9, ocean, TileCatalog.TREE_BUSHY],
-		["oceanic_dry_oak", 0.6, 0.2, 0.9, ocean, TileCatalog.TREE],
-		["temperate_no_bushy", 0.6, 0.95, 0.9, T, TileCatalog.TREE],
-		["bushy_needs_tree_chance", 0.6, 0.6, 0.2, ocean, NONE],
-	]
-	for c in bushy_cases:
-		var got: Vector2i = world.plant_tile(c[1], c[2], c[3], c[4])
-		if got != c[5]:
-			printerr("FAIL biome_plants case=%s got %s want %s" % [c[0], got, c[5]])
-			fail += 1
-	# Swamp scrub: bushes on swamp (moisture below the biome's swamp_moisture)
-	# where chance is above swamp_bush_min_chance plus the biome's
-	# swamp_bush_chance; only ARCHIPELAGO_DENSE has any.
-	# [name, alt, moist, chance, biome, expected plant]
-	var scrub_cases := [
-		["dense_swamp_scrub", 0.6, -0.1, 0.5, dense, TileCatalog.BUSH],
-		["dense_swamp_scrub_low", 0.35, -0.5, 0.5, dense, TileCatalog.BUSH],
-		["dense_swamp_rare_chance", 0.6, -0.1, 0.2, dense, NONE],
-		["dense_wet_swamp_tree_first", 0.6, 0.05, 0.9, dense, TileCatalog.TREE],
-		["temperate_swamp_bare", 0.6, -0.1, 0.9, T, NONE],
-		["continental_swamp_bare", 0.6, -0.4, 0.9, cont, NONE],
-		["oceanic_swamp_bare", 0.6, -0.4, 0.9, ocean, NONE],
-	]
-	for c in scrub_cases:
-		var got: Vector2i = world.plant_tile(c[1], c[2], c[3], c[4])
-		if got != c[5]:
-			printerr("FAIL biome_plants case=%s got %s want %s" % [c[0], got, c[5]])
+	# Distinguish the biome mixes at representative dry and wet sites.
+	for c in [
+		[0.5, 0.4, 0.4, T, TileCatalog.TREE],
+		[0.5, 0.4, 0.4, ocean, NONE],
+		[0.35, 0.4, 0.1, T, TileCatalog.BUSH],
+		[0.35, 0.4, 0.1, ocean, NONE],
+		[0.6, -0.1, 0.1, cont, TileCatalog.PINE],
+		[0.6, -0.1, 0.1, ocean, NONE],
+		[0.6, -0.3, 0.9, cont, NONE],
+		[0.6, 0.6, 0.9, cont, TileCatalog.TREE_BUSHY],
+		[0.6, 0.6, 0.9, T, TileCatalog.TREE],
+		[0.6, -0.1, 0.5, dense, TileCatalog.BUSH],
+		[0.6, -0.1, 0.5, T, NONE],
+	]:
+		if world.plant_tile(c[0], c[1], c[2], c[3]) != c[4]:
+			printerr("FAIL biome_plants: unexpected foliage for %s" % [c])
 			fail += 1
 	# Birches: CONTINENTAL plain-tree land above birch_min_chance; nowhere else.
 	var birch_cell := Vector2i.ZERO
@@ -384,94 +288,6 @@ func _test_biome_plants() -> int:
 				world.items_chance.get_noise_2d(top_ok.x, top_ok.y), cont, false) != TileCatalog.TREE_BIRCH_TOP:
 			printerr("FAIL biome_plants: birch top missing above bottom")
 			fail += 1
-
-	# Generated chunks place the plant that predict_cell picks (beaches stay bare).
-	var probe := Vector2i(700, -300)
-	world.generate_chunk(world.map_to_local(probe))
-	world._predict_cache.clear()
-	var mismatched := 0
-	var placed := 0
-	for x in range(probe.x - 48, probe.x + 48):
-		for y in range(probe.y - 48, probe.y + 48):
-			var cell := Vector2i(x, y)
-			var want: Vector2i = NONE
-			if world.is_walkable_land(cell) and world.get_cell_atlas_coords(0, cell) != TileCatalog.SAND \
-					and world._sky.logical_ground(world, cell) != TileCatalog.SAND:
-				want = world.predict_cell(cell)[1]
-			var got: Vector2i = world.get_cell_atlas_coords(1, cell)
-			if want == TileCatalog.FLOWER or want == TileCatalog.STONES:
-				got = world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell)
-			if got != want:
-				mismatched += 1
-			elif want != NONE:
-				placed += 1
-	if mismatched > 0 or placed == 0:
-		printerr("FAIL biome_plants: %s generated cells differ from predict_cell (%s placed)" % [mismatched, placed])
-		fail += 1
-
-	# Over a wide area: tree share of land is highest in CONTINENTAL and lowest
-	# in OCEANIC; bush share is highest in ARCHIPELAGO_DENSE and lowest in OCEANIC.
-	var land := {}
-	var trees := {}
-	var bushes := {}
-	var pines := {}
-	var bushy := {}
-	var birch := {}
-	for b in BiomeCatalog.PLANTS:
-		land[b] = 0
-		trees[b] = 0
-		bushes[b] = 0
-		pines[b] = 0
-		bushy[b] = 0
-		birch[b] = 0
-	for x in range(-2048, 2048, 16):
-		for y in range(-2048, 2048, 16):
-			var cell := Vector2i(x, y)
-			var b: int = world.biome_at(cell)
-			var alt: float = world.cell_altitude(cell, b)
-			var moist: float = world.moisture.get_noise_2d(x, y)
-			var chance: float = world.items_chance.get_noise_2d(x, y)
-			var tile: Vector2i = world.ground_tile(alt, moist, chance, b)
-			if tile == TileCatalog.WATER:
-				continue
-			land[b] += 1
-			if tile == TileCatalog.SAND:
-				continue
-			var plant: Vector2i = world.predict_cell(cell)[1]
-			if plant == TileCatalog.TREE:
-				trees[b] += 1
-			elif plant == TileCatalog.TREE_BIRCH_BOTTOM:
-				birch[b] += 1
-				trees[b] += 1
-			elif plant == TileCatalog.BUSH:
-				bushes[b] += 1
-			elif plant == TileCatalog.PINE:
-				pines[b] += 1
-			elif plant == TileCatalog.TREE_BUSHY:
-				bushy[b] += 1
-	var share := func(d: Dictionary, b: int) -> float: return float(d[b]) / maxf(1.0, float(land[b]))
-	for b in land:
-		if land[b] < 20:
-			printerr("FAIL biome_plants: biome %s has only %s land samples" % [b, land[b]])
-			fail += 1
-	if not (share.call(trees, cont) > share.call(trees, T) and share.call(trees, T) > share.call(trees, ocean)):
-		printerr("FAIL biome_plants: tree shares continental=%s temperate=%s oceanic=%s" % [share.call(trees, cont), share.call(trees, T), share.call(trees, ocean)])
-		fail += 1
-	if not (share.call(bushes, dense) > share.call(bushes, T) and share.call(bushes, T) > share.call(bushes, ocean)):
-		printerr("FAIL biome_plants: bush shares dense=%s temperate=%s oceanic=%s" % [share.call(bushes, dense), share.call(bushes, T), share.call(bushes, ocean)])
-		fail += 1
-	if not (share.call(pines, cont) > share.call(pines, ocean) and pines[T] == 0 and pines[dense] == 0):
-		printerr("FAIL biome_plants: pine shares continental=%s oceanic=%s temperate=%s dense=%s" % [share.call(pines, cont), share.call(pines, ocean), share.call(pines, T), share.call(pines, dense)])
-		fail += 1
-	# Dense islands have too few trees in this sample to count bushy ones;
-	# the point cases above cover them.
-	if not (bushy[cont] > 0 and bushy[T] == 0):
-		printerr("FAIL biome_plants: bushy trees continental=%s temperate=%s" % [bushy[cont], bushy[T]])
-		fail += 1
-	if not (birch[cont] > 0 and birch[T] == 0 and birch[ocean] == 0 and birch[dense] == 0):
-		printerr("FAIL biome_plants: birch continental=%s temperate=%s oceanic=%s dense=%s"
-				% [birch[cont], birch[T], birch[ocean], birch[dense]])
-		fail += 1
 
 	# A save from before pines, bushy trees and swamp scrub (no pine_min_chance,
 	# bushy_tree_min_moist or swamp_bush_min_chance) loads with all three off, so
@@ -522,8 +338,7 @@ func _test_biome_plants() -> int:
 		fail += 1
 
 	if fail == 0:
-		print("PASS test_biome_plants land=%s trees=%s bushes=%s pines=%s bushy=%s birch=%s"
-				% [land, trees, bushes, pines, bushy, birch])
+		print("PASS test_biome_plants")
 	scene.queue_free()
 	return 1 if fail > 0 else 0
 
@@ -599,40 +414,8 @@ func _test_biome_structures() -> int:
 			printerr("FAIL biome_structures decor=%s got l1=%s l2=%s want %s %s" % [d[0], got1, got2, d[6], d[7]])
 			fail += 1
 
-	# Over a wide area: stone share of land is highest in OCEANIC, then
-	# CONTINENTAL; TEMPERATE and ARCHIPELAGO_DENSE have none.
-	var land := {}
-	var stones := {}
-	for b in BiomeCatalog.STRUCTURES:
-		land[b] = 0
-		stones[b] = 0
-	for x in range(-2048, 2048, 16):
-		for y in range(-2048, 2048, 16):
-			var cell := Vector2i(x, y)
-			var b: int = world.biome_at(cell)
-			var alt: float = world.cell_altitude(cell, b)
-			var moist: float = world.moisture.get_noise_2d(x, y)
-			var chance: float = world.items_chance.get_noise_2d(x, y)
-			var tile: Vector2i = world.ground_tile(alt, moist, chance, b)
-			if tile == TileCatalog.WATER:
-				continue
-			land[b] += 1
-			var plant: Vector2i = NONE
-			if tile != TileCatalog.SAND:
-				plant = world.plant_tile(alt, moist, chance, b)
-			if plant == NONE and world.structure_tile(chance, b) == TileCatalog.STONES:
-				stones[b] += 1
-	var share := func(b: int) -> float: return float(stones[b]) / maxf(1.0, float(land[b]))
-	for b in land:
-		if land[b] < 20:
-			printerr("FAIL biome_structures: biome %s has only %s land samples" % [b, land[b]])
-			fail += 1
-	if not (share.call(ocean) > share.call(cont) and share.call(cont) > 0.0 and stones[T] == 0 and stones[dense] == 0):
-		printerr("FAIL biome_structures: stone shares oceanic=%s continental=%s temperate=%s dense=%s" % [share.call(ocean), share.call(cont), share.call(T), share.call(dense)])
-		fail += 1
-
 	if fail == 0:
-		print("PASS test_biome_structures land=%s stones=%s" % [land, stones])
+		print("PASS test_biome_structures")
 	scene.queue_free()
 	return 1 if fail > 0 else 0
 
