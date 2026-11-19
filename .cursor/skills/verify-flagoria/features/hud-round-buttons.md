@@ -2,7 +2,7 @@
 
 Drive: drives/hud_round_buttons.gd
 
-The match starts with the minimap and build picker closed. Map sits left of Menu on the top edge. Attack mirrors the joystick and matches its base diameter. Run and the tool wheel sit around Attack. Buildings sits beside that cluster and opens two compact rings over the dimmed playfield. Captions appear where they fit. From the top, the inner ring holds Plank, Wall and Tower, and the outer ring holds Castle, Guard post and Barracks. The picker follows Buildings in a custom layout. Tap Buildings again, pick a tool or tap outside to close the picker. The selected tool keeps its ring when reopened.
+The match starts with the minimap and build picker closed. Map sits left of Menu on the top edge. Attack mirrors the joystick and matches its base diameter. Run sits inward and above the wheel on the inside of Attack. Buildings sits above and outward from Attack and opens two compact rings over the dimmed playfield. Captions appear where they fit. From the top, the inner ring holds Plank, Wall and Tower, and the outer ring holds Castle, Guard post and Barracks. The picker follows Buildings in a custom layout. Tap Buildings again, pick a tool or tap outside to close the picker. The selected tool keeps its ring when reopened.
 
 ## Sub-features
 
@@ -14,7 +14,7 @@ The match starts with the minimap and build picker closed. Map sits left of Menu
 
 ## How to get to it (user POV)
 
-- Host a world. Buildings sits beside the right-thumb cluster and the minimap is closed. Tap Buildings to show Plank, Tower, Castle, Guard post, Barracks and Wall, and tap Map to open the panel. Key 3 arms chop and key 1 returns to sword. Run is the small button beside attack.
+- Host a world. Buildings sits beside the right-thumb cluster and the minimap is closed. Tap Buildings to show Plank, Tower, Castle, Guard post, Barracks and Wall, and tap Map to open the wood panel below the top buttons. Key 3 arms chop and key 1 returns to sword. Run is the small button beside attack.
 
 ## Driving it with verify-flagoria helpers
 

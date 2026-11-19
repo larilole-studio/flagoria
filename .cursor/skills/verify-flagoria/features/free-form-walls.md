@@ -2,8 +2,7 @@
 
 Drive: drives/free_form_walls.gd
 
-Free-form wooden palisade walls as one connected chain (#276). Interact mode
-shows a Wall icon next to Cut / Plank / Tower. The tool keeps a persistent tip
+Free-form wooden palisade walls as one connected chain (#276). Wall sits in the inner Buildings ring. The tool keeps a persistent tip
 while selected: the first placement must 4-touch an existing tower, castle or
 wall (otherwise refuse with feedback and spend nothing); after that a tap must
 4-touch the tip, and a drag lays an H/V-snapped straight segment
@@ -21,8 +20,7 @@ to the host (#498). Preview green cells and cost match exactly what
 
 ## Sub-features
 
-- `build-wall-picker` Wall icon appears in interact mode with Cut / Plank /
-  Tower, stays visible while multiplayer is on (#498), and switches
+- `build-wall-picker` Wall appears in the Buildings picker, stays visible while multiplayer is on (#498), and switches
   `BuildPlacement.tool` to Wall.
 - `build-wall-tip` first block must 4-touch tower/castle/wall; tip persists
   while Wall is selected; tap must 4-touch tip; drag is H/V from the tip
@@ -40,8 +38,7 @@ to the host (#498). Preview green cells and cost match exactly what
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone or offline) with wood.
-2. Select chop on the tool wheel to enter interact mode; the Cut / Plank / Tower / Wall
-   picker appears.
+2. Open Buildings to show the picker.
 3. Tap Wall, tap clear land that 4-touches the castle, a tower or a wall.
    The tip stays. Tap a 4-neighbour or drag a straight run next to the tip;
    green cells show the wood cost. Lift to place. Switch away from Wall to

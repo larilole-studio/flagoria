@@ -3,8 +3,9 @@
 Drive: not player-facing
 
 Interact-mode build tools (#225 / #273 / #276). The build picker lists Plank,
-Tower, Castle, Guard post, Barracks and Wall on round discs under the wood counter
-(see [Round HUD buttons](./hud-round-buttons.md)). The column stays closed until
+Wall and Tower in the inner ring, and Castle, Guard post and Barracks in the
+outer ring (see [Round HUD buttons](./hud-round-buttons.md)). The rings open
+inward above Buildings and dim the playfield. The picker stays closed until
 Buildings is open (`BuildPlacement._list_open` starts false; each tool button is
 visible only while the list is open). Cut keeps the existing tap, drag and chop
 behaviour and is the tool when none of those is selected. Plank snaps a drag to a
@@ -15,14 +16,13 @@ Wall keeps a tip and places a connected palisade chain (see [Free-form walls](./
 The preview greens exactly the cells `commit` will place and shows that wood cost;
 the rest is red. A refusal reason appears when nothing is placeable (including an
 empty wall gap). On release, placement goes through `ConstructionPlacer`
-(`can_place` / `cost` / `place`). Ghost tiles wait on art. Dead-player gating stays
+(`can_place` / `cost` / `place`). Dead-player gating stays
 on `Interaction.player_dead`. `BuildToolRow.MP_HIDDEN` is empty, so nothing hides
-when a peer connects; every column tool stays available in multiplayer (#297,
+when a peer connects; every picker tool stays available in multiplayer (#297,
 #497, #498, #527, #528, #556). `update_preview` skips the snap / `can_place` work
 only when the snapped cells, wood count, player position and map revision are
 unchanged, so a wood spend, a walk out of reach, or a map change cannot leave a
-stale green preview. The Cut icon uses the AxeTool sprite padded into
-`art/ui/ui_tool_cut.png`; build-tool icons live under `art/ui/`.
+stale green preview. Build-tool icons live under `art/ui/`.
 
 Reach (`Interaction.REACH`) is the length bound for a drag preview; no separate
 run-length cap was added (#380 item 1 left open).

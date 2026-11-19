@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Read-only lint of the feature map against the repo, no Godot needed:
-#   - every features/*.md is linked from features/README.md, and every link resolves;
+#   - every feature page is indexed once, and relative Markdown links resolve;
+#   - every drive script is named by a feature page;
 #   - every feature file (except README) has exactly one Drive: line:
 #       Drive: drives/<path>.gd   (file must exist under the skill)
 #       Drive: not player-facing
@@ -67,6 +68,9 @@ check_feature_drives() {
   for f in "${MAP}"/*.md; do
     name="$(basename "$f")"
     [[ "$name" == README.md ]] && continue
+    if [[ "$(grep -c '^Drive:' "$f")" -gt 1 ]]; then
+      problem "${name} has more than one Drive: line"
+    fi
     value="$(drive_line "$f")"
     check_drive_value "${name}" "${value}"
     # A drive that covers a feature must take at least one snapshot (screen proof).
@@ -78,16 +82,55 @@ check_feature_drives() {
   done
 }
 
+# Markdown destinations used by the map: inline links and reference definitions.
+# Strip inline code, fragments, and optional titles before resolving paths.
+markdown_links() {
+  awk '/^[[:space:]]*(```|~~~)/ { fenced = !fenced; next } !fenced' "$1" \
+    | sed -E 's/`[^`]*`//g' | {
+      grep -oE '\]\([[:space:]]*(<[^>]+>|[^[:space:]()]+)|^ {0,3}\[[^]]+\]:[[:space:]]*(<[^>]+>|[^[:space:]]+)' || true
+    } | sed -E 's/^(\]\(| {0,3}\[[^]]+\]:)[[:space:]]*//; s/^<|>$//g'
+}
+
+check_links() {
+  local f link target
+  for f in "${MAP}"/*.md "${SKILL}/SKILL.md"; do
+    while IFS= read -r link; do
+      target="${link%%#*}"
+      case "$target" in
+        ""|http://*|https://*|/*) continue ;;
+      esac
+      [[ -e "$(dirname "$f")/${target}" ]] || problem "${f} links ${link}, which does not exist"
+    done < <(markdown_links "$f")
+  done
+}
+
 check_index() {
-  local f name link
+  local f name link count
+  local -A entries=()
+  while IFS= read -r link; do
+    link="${link#./}"
+    if [[ "$link" != *.md || "$link" == */* || "$link" == README.md || ! -f "${MAP}/${link}" ]]; then
+      problem "features/README.md has an invalid feature entry: ${link}"
+      continue
+    fi
+    entries["$link"]=$(( ${entries["$link"]:-0} + 1 ))
+  done < <(sed -nE '/^## Features$/,/^## /s/^- \[[^]]+\]\(([^)]*)\).*/\1/p' "${MAP}/README.md")
   for f in "${MAP}"/*.md; do
     name="$(basename "$f")"
     [[ "$name" == README.md ]] && continue
-    grep -q "(./${name})" "${MAP}/README.md" || problem "${name} is not linked from features/README.md"
+    count="${entries["$name"]:-0}"
+    [[ "$count" == 1 ]] || problem "${name} has ${count} entries in features/README.md (want 1)"
   done
-  while read -r link; do
-    [[ -f "${MAP}/${link}" ]] || problem "features/README.md links ${link}, which does not exist"
-  done < <(grep -o '(\./[^)]*\.md)' "${MAP}/README.md" | sed 's/^(\.\///; s/)$//')
+}
+
+check_drive_coverage() {
+  local drive mentions
+  mentions="$(grep -rhoE --include='*.md' --exclude=README.md 'drives/[A-Za-z0-9_./-]+\.gd([^A-Za-z0-9_./-]|$)' "${MAP}" \
+    | sed -E 's/\.gd.$/.gd/' | sort -u)" || true
+  while IFS= read -r drive; do
+    drive="${drive#"${SKILL}/"}"
+    grep -qxF "$drive" <<<"$mentions" || problem "${drive} is not named by any feature page"
+  done < <(find "${DRIVES}" -type f -name '*.gd' | sort)
 }
 
 check_tests() {
@@ -105,7 +148,7 @@ check_tests() {
   done <<<"${registered}"
   n="$(wc -l <<<"${registered}")"
   if [[ ${bad} -eq 0 ]]; then
-    echo "check-map: OK (${n} tests, every one cited; every feature file indexed; every feature has a Drive: line)"
+    echo "check-map: OK (${n} tests, every one cited; feature index, links and drives checked)"
   fi
 }
 
@@ -143,84 +186,26 @@ self_test() {
   cleanup() { rm -rf "${tmp}"; }
   trap cleanup EXIT
 
-  mkdir -p "${tmp}/skill/features" "${tmp}/skill/drives" "${tmp}/repo/tests"
-  # Minimal registered test so the test-citation loop is exercised in isolation
-  # only when we invoke the real script; here we unit-test helpers via a nested run.
-  cat > "${tmp}/skill/drives/ok.gd" <<'GD'
-extends RefCounted
-func run() -> void:
-	await snapshot("start")
-GD
-  # Good feature
-  printf '%s\n' '# Good' '' 'Drive: drives/ok.gd' '' 'See test_dummy.' > "${tmp}/skill/features/good.md"
-  # Missing Drive
-  printf '%s\n' '# Bad' '' 'No drive here.' > "${tmp}/skill/features/missing.md"
-  # Bad value
-  printf '%s\n' '# Badval' '' 'Drive: drives/nope.gd' > "${tmp}/skill/features/badval.md"
-  # not player-facing is fine
-  printf '%s\n' '# Npf' '' 'Drive: not player-facing' > "${tmp}/skill/features/npf.md"
-  # Drive without snapshot
-  printf '%s\n' 'extends RefCounted' 'func run() -> void:' '	pass' > "${tmp}/skill/drives/nosnap.gd"
-  printf '%s\n' '# Nosnap' '' 'Drive: drives/nosnap.gd' > "${tmp}/skill/features/nosnap.md"
-
-  # Run the Drive: checks by pointing SKILL/MAP at the temp tree via a subshell
-  # that sources the same functions. Re-exec this script's checker against tmp
-  # by copying a tiny driver.
-  cat > "${tmp}/run.sh" <<'INNER'
-#!/usr/bin/env bash
-set -euo pipefail
-SKILL="$1"
-MAP="${SKILL}/features"
-bad=0
-problem() { echo "check-map: $*"; bad=1; }
-drive_line() {
-  local v
-  v="$(grep -E '^Drive:[[:space:]]+' "$1" | head -n 1 | sed -E 's/^Drive:[[:space:]]+//; s/[[:space:]]+$//')" || true
-  printf '%s' "${v}"
-}
-check_drive_value() {
-  local name="$1" value="$2"
-  if [[ -z "${value}" ]]; then
-    problem "${name} has no Drive: line (want 'Drive: drives/<name>.gd' or 'Drive: not player-facing')"
-    return
-  fi
-  if [[ "${value}" == "not player-facing" ]]; then return; fi
-  if [[ "${value}" =~ ^drives/[A-Za-z0-9_./-]+\.gd$ ]]; then
-    if [[ ! -f "${SKILL}/${value}" ]]; then
-      problem "${name} Drive: ${value} but ${SKILL}/${value} does not exist"
-    fi
-    return
-  fi
-  problem "${name} Drive: '${value}' is not 'drives/<path>.gd' or 'not player-facing'"
-}
-for f in "${MAP}"/*.md; do
-  name="$(basename "$f")"
-  value="$(drive_line "$f")"
-  check_drive_value "${name}" "${value}"
-  if [[ "${value}" == drives/* ]] && ! grep -qE 'snapshot\("' "${SKILL}/${value}"; then
-    problem "${name} Drive: ${value} never calls snapshot(\"…\")"
-  fi
-done
-# Gameplay changed-files path
-if [[ -n "${2:-}" ]]; then
-  while read -r path; do
-    [[ -z "${path}" ]] && continue
-    name="$(basename "${path}")"
-    [[ "${name}" == README.md ]] && continue
-    value="$(drive_line "${SKILL}/features/${name}")"
-    if [[ -z "${value}" ]]; then
-      problem "gameplay PR: changed feature ${name} lacks a Drive: line"
-    fi
-  done < "$2"
-fi
-exit "${bad}"
-INNER
-  chmod +x "${tmp}/run.sh"
+  local fixture="${tmp}/${SKILL}" check
+  check="${fixture}/bin/check-map.sh"
+  mkdir -p "${fixture}"/{bin,features,drives/nested} "${tmp}/tests"
+  cp "${SKILL}/bin/check-map.sh" "$check"
+  printf '%s\n' 'func _test_dummy() -> int:' > "${tmp}/tests/run_tests.gd"
+  printf '%s\n' '## Features' '- [Good](./good.md)' '- [Npf](./npf.md)' > "${fixture}/features/README.md"
+  printf '%s\n' 'Drive: drives/ok.gd' 'See test_dummy.' \
+    'Also driven by: `drives/nested/helper.gd`' > "${fixture}/features/good.md"
+  printf '%s\n' 'Drive: not player-facing' '[Good](./good.md#heading)' \
+    '[Anchor](#heading) and [web](https://example.com/page)' \
+    '`[Example](./missing.md)`' '```md' '[Example](./missing.md)' '```' > "${fixture}/features/npf.md"
+  printf '%s\n' '[Tests][runner]' '' '[runner]: <../../../tests/run_tests.gd> "Test runner"' \
+    > "${fixture}/SKILL.md"
+  printf '%s\n' 'await snapshot("start")' > "${fixture}/drives/ok.gd"
+  touch "${fixture}/drives/nested/helper.gd"
 
   expect_fail() {
-    local label="$1"; shift
-    if "$@" >"${tmp}/out" 2>&1; then
-      echo "FAIL ${label}: expected non-zero"; cat "${tmp}/out"; failed=1
+    local label="$1" diagnostic="$2"; shift 2
+    if "$@" >"${tmp}/out" 2>&1 || ! grep -qF "$diagnostic" "${tmp}/out"; then
+      echo "FAIL ${label}: expected error containing ${diagnostic}"; cat "${tmp}/out"; failed=1
     else
       echo "ok   ${label}"
     fi
@@ -234,21 +219,34 @@ INNER
     fi
   }
 
-  # Full temp map has missing/bad/nosnap → must fail
-  expect_fail "temp map with missing Drive" "${tmp}/run.sh" "${tmp}/skill"
-
-  # Only good + npf → ok
-  rm -f "${tmp}/skill/features/missing.md" "${tmp}/skill/features/badval.md" "${tmp}/skill/features/nosnap.md"
-  expect_ok "good + not player-facing" "${tmp}/run.sh" "${tmp}/skill"
-
-  # Gameplay PR: changed feature without Drive
-  printf '%s\n' '# X' '' 'nope' > "${tmp}/skill/features/changed.md"
-  printf '%s\n' '.cursor/skills/verify-flagoria/features/changed.md' > "${tmp}/changed.txt"
-  # Put changed.md next to good; run.sh reads SKILL/features/<basename>
-  expect_fail "gameplay changed feature lacks Drive" "${tmp}/run.sh" "${tmp}/skill" "${tmp}/changed.txt"
-
-  # Real repo lint must pass (Drive lines already added)
-  expect_ok "real feature map" bash -c "cd '${ROOT}' && '${ROOT}/${SKILL}/bin/check-map.sh'"
+  expect_ok "valid links, drives and test citations" "$check"
+  printf '%s\n' '[Broken](./missing.md)' >> "${fixture}/features/npf.md"
+  expect_fail "dead feature link" "features/npf.md links ./missing.md" "$check"
+  sed -i '$d' "${fixture}/features/npf.md"
+  printf '%s\n' '[Broken](./missing.md)' >> "${fixture}/SKILL.md"
+  expect_fail "dead skill link" "SKILL.md links ./missing.md" "$check"
+  sed -i '$d' "${fixture}/SKILL.md"
+  touch "${fixture}/drives/nested/orphan.gd"
+  expect_fail "unmentioned nested drive" "drives/nested/orphan.gd is not named" "$check"
+  rm "${fixture}/drives/nested/orphan.gd"
+  printf '%s\n' '- [Duplicate](./good.md)' >> "${fixture}/features/README.md"
+  expect_fail "duplicate feature entry" "good.md has 2 entries" "$check"
+  sed -i '$d' "${fixture}/features/README.md"
+  printf '%s\n' '- [Extra](../SKILL.md)' >> "${fixture}/features/README.md"
+  expect_fail "extra feature entry" "invalid feature entry: ../SKILL.md" "$check"
+  sed -i '$d' "${fixture}/features/README.md"
+  printf '%s\n' 'Drive: not player-facing' >> "${fixture}/features/good.md"
+  expect_fail "duplicate Drive line" "good.md has more than one Drive: line" "$check"
+  sed -i '$d' "${fixture}/features/good.md"
+  printf '%s\n' "${SKILL}/features/good.md" > "${tmp}/changed.txt"
+  sed -i '1d' "${fixture}/features/good.md"
+  expect_fail "gameplay changed feature lacks Drive" "gameplay PR: changed feature good.md lacks a Drive: line" "$check" --gameplay --changed-files "${tmp}/changed.txt"
+  sed -i '1iDrive: drives/nope.gd' "${fixture}/features/good.md"
+  expect_fail "missing primary drive" "Drive: drives/nope.gd but" "$check"
+  sed -i '1cDrive: drives/ok.gd' "${fixture}/features/good.md"
+  : > "${fixture}/drives/ok.gd"
+  expect_fail "primary drive lacks snapshot" "never calls snapshot" "$check"
+  expect_ok "real feature map" "${SKILL}/bin/check-map.sh"
 
   trap - EXIT
   cleanup
@@ -266,6 +264,8 @@ fi
 
 check_feature_drives
 check_index
+check_links
+check_drive_coverage
 if [[ ${GAMEPLAY} -eq 1 ]]; then
   check_changed_gameplay
 fi

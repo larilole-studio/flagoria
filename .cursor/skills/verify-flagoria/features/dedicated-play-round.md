@@ -2,6 +2,8 @@
 
 Drive: drives/dedicated_play/play_client_a.gd
 
+Also driven by: `drives/dedicated_play/play_common.gd` (shared setup for the three launches below).
+
 Two clients on a dedicated `-- --server` host, in the generated spawn chunk. The server has no `World/1`. Client A chops one plant; A receives the wood and both clients see that plant removed. A then kills one mob with the sword; B sees the hurt state and the death. Walking to the mob is only how A reaches sword range. Movement sync itself stays in `test_two_player_smoke` and is not repeated here.
 
 This is not the listen Host/Join pair. That pair clicks Host and is [Two-player Host/Join](./two-player-host-join.md). These drives click Join against a dedicated server.
