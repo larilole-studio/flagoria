@@ -5,14 +5,6 @@ extends RefCounted
 ## worldMap.generate_chunk, the way the game does, and read back the placed
 ## tiles. Same params and seed give byte-identical output.
 
-const USAGE := """usage: godot --headless --path . --script res://tools/cli.gd -- <command> [options]
-  map render [--params <file>|default] [--seed <n>] [--format ascii] [--out <path>]
-  map stats  [--params <file>|default] [--seed <n>] [--out <path>]
---params: a map save (.json, see MapSave) or "default" (the default).
---seed n: altitude, moisture, temperature, items and biome seeds n .. n+4.
-Without --seed every seed must come from --params.
-Exit codes: 0 ok, 1 error, 2 bad usage."""
-
 ## ASCII legend: one character per tile type. A plant or stones is drawn
 ## instead of the ground under it.
 const LEGEND := {

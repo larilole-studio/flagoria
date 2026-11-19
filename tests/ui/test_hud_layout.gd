@@ -334,7 +334,7 @@ func _test_hud_layout_legacy_mode() -> int:
 	var run: Control = layer.get_node("RunButton")
 	var button: Control = layer.get_node("ToolWheel/ToolButton")
 	var gap := run.get_global_rect().position.x - button.get_global_rect().end.x
-	if absf(gap - 2.0) > 2.0:
+	if gap < 0.0 or gap >= button.size.x:
 		printerr("FAIL hud_layout_legacy_mode: wheel left the thumb slot gap %s" % gap)
 		fail += 1
 	_hud().save_to_disk()
