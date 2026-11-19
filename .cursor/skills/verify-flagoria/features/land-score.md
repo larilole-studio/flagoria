@@ -23,6 +23,7 @@ A starting castle's flag is at most 2 cells from any courtyard cell, so the defa
 Preconditions: `doctor.sh` exits `0`. Time cost: `test_land_score_range` and `test_land_score_client_skips` together about 1 s in `tools/verify.sh` (~0.5 s each). `test_land_score_two_players` about 6 s alone; the stress job runs it at the job's tier. The drive is about 15 s under xvfb.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=land_score_range,land_score_client_skips,land_score_two_players`, or the full `tools/verify.sh`.
+- **Unit tests.** The 8x5 wall fixture scores 10 points with one tower, 18 with two, and 0 after the ring opens. A connecting client awards no land points for the same fixture.
 - **Drive (live).** `bin/launch.sh drives/land_score.gd --display` (under xvfb, `--seed 11`). Steps `castle`, `ring`: `start_game()`, wait until the castle scores, `snapshot("castle")`, tap the castle flag, `snapshot("ring")`.
 - **Proof.** Headers `-- test_land_score_range`, `-- test_land_score_client_skips`, `-- test_land_score_two_players` with no `FAIL` after them. Drive snapshots `01-castle` and `02-ring` under `--display`.
 
