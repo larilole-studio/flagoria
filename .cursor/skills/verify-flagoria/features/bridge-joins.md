@@ -47,6 +47,6 @@ of runner start-up). The drive is about 3 s under xvfb.
 
 ## Gotchas
 
-- The drive places and removes through `build_bridge` and `erase_cells`, the solver play uses when a plank run is written. It does not spend wood. `test_bridge_joins` checks the placer still accepts the continuation and still refuses land, an occupied cell and a floating cell.
+- The headless checks read the rendered shore, deck, tip and branch tiles. The drive places and removes through `build_bridge` and `erase_cells`, the solver play uses when a plank run is written. It does not spend wood. `test_bridge_joins` checks the placer still accepts the continuation and still refuses land, an occupied cell and a floating cell.
 - `bridge_pieces` remains the isolated-run table. A joined deck matches that table for the whole connected length, not for each placement on its own.
 - No new art. `BROKEN` pieces are still unused.

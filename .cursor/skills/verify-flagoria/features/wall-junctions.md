@@ -48,7 +48,7 @@ about 1 s in `tools/verify.sh`. `test_wall_collar_sides` adds about 0.5 s
 (~2 s alone with `--only=wall_collar_sides`, against ~1.6 s for runner
 start-up). The collar-sides drive is about 10 s under xvfb.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=wall_collar_sides,wall_junctions,wall_solver`, or the full `tools/verify.sh`.
+- **Run (headless).** The junction tests read the rendered wall and collar layers after placement and host removal. `godot --headless --path . --script res://tests/run_tests.gd -- --only=wall_collar_sides,wall_junctions,wall_solver`, or the full `tools/verify.sh`.
 - **Drive (live).** `bin/launch.sh drives/wall_collar_sides.gd --display` (under xvfb, seed 11). Steps `three`, `four`, `removed`, `readded`, `constrained`: `start_game()`, hide the minimap, place three towers around a palisade, `snapshot("three")`, place the fourth tower, `snapshot("four")`, erase the palisade, `snapshot("removed")`, place it again, `snapshot("readded")`, shrink the window to 854×480, `snapshot("constrained")`. `drives/wall_junctions.gd` still covers the one- and two-side gallery.
 - **Proof.** `-- test_wall_collar_sides`, `-- test_wall_junctions` and `-- test_wall_solver` in `artifacts/verify.log` with no `FAIL` after them. Drive snapshots `01-three`, `02-four`, `03-removed`, `04-readded`, `05-constrained` under `--display`. The first four are the 1280×720 window; `constrained` is the 854×480 landscape window. No portrait shot.
 
