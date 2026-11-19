@@ -10,6 +10,7 @@ The match starts with the wood minimap closed and the build list collapsed. Buil
 - `hud-build-list` Buildings opens the column and a second tap closes it. Each entry is a round disc with the tool icon inside it. Picking a building selects that tool, collapses the list and keeps the gold ring (`-- test_hud_round_buttons`, `-- test_build_picker_switches_tool`).
 - `hud-minimap-closed` the wood panel stays hidden until Map opens it, and a second press closes it. While it is open, every arc button sits outside the panel. Selecting chop keeps a picked build tool, and sword clears it back to Cut (`-- test_hud_round_buttons`).
 - `hud-no-overlap` All visible tap targets stay inside the viewport and clear of one another at phone, desktop and tablet sizes. The test opens Buildings, Map, Scores and the tool wheel, and repeats the default and Buildings states with a saved custom layout (`-- test_hud_no_overlap`).
+- `hud-layout-golden` Stock HUD hit rectangles match the saved layout at four window sizes for the default, Buildings, Map and Scores states (`-- test_hud_layout_golden`).
 
 ## How to get to it (user POV)
 

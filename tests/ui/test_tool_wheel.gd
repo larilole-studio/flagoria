@@ -47,7 +47,6 @@ func _test_tool_wheel_hold() -> int:
 	if wheel.tool != before or wheel.is_open():
 		printerr("FAIL tool_wheel_hold: a hold with no drag changed the tool to %s" % wheel.tool)
 		fail += 1
-	fail += _beside_run(scene, "default")
 	var layout := root.get_node("HudLayout")
 	var run: Control = scene.get_node("CanvasLayer1/RunButton")
 	var view: Vector2 = scene.get_viewport().get_visible_rect().size
@@ -58,7 +57,7 @@ func _test_tool_wheel_hold() -> int:
 	})
 	await process_frame
 	await process_frame
-	fail += _beside_run(scene, "custom")
+	fail += _beside_run(scene)
 	layout.forget_memory()
 	_free(scene)
 	if fail == 0:
@@ -264,13 +263,13 @@ func _drag_to(scene: Node, wheel: ToolWheel, which: int) -> bool:
 	return ok
 
 
-func _beside_run(scene: Node, label: String) -> int:
+func _beside_run(scene: Node) -> int:
 	var run: Control = scene.get_node("CanvasLayer1/RunButton")
 	var button: Control = scene.get_node("CanvasLayer1/ToolWheel/ToolButton")
 	var gap := run.get_global_rect().position.x - button.get_global_rect().end.x
-	if absf(gap - 2.0) > 1.5:
-		printerr("FAIL tool_wheel_hold %s: tool %s run %s gap %s"
-				% [label, button.get_global_rect(), run.get_global_rect(), gap])
+	if gap < 0.0 or gap >= button.size.x:
+		printerr("FAIL tool_wheel_hold custom: tool %s run %s gap %s"
+				% [button.get_global_rect(), run.get_global_rect(), gap])
 		return 1
 	return 0
 

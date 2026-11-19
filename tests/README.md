@@ -27,6 +27,15 @@ godot --headless --path . --script res://tests/run_tests.gd -- --list
 
 Run `godot --headless --path . --import` once first on a fresh checkout. To avoid sharing `user://` with another run, give each run its own `XDG_DATA_HOME` (`tools/verify.sh` does this on every run).
 
+## Regenerating goldens
+
+```bash
+godot --headless --path . --script res://tools/cli.gd -- map render --seed 42 --out tests/golden/map_render_seed42.txt
+godot --headless --path . --script res://tools/cli.gd -- hud layout --out tests/golden/hud_layout.txt
+```
+
+The HUD golden records visible hit rectangles in window pixels at four window sizes, with the stock HUD and each of Buildings, Minimap, and Scoreboard open.
+
 ## Netcode stress and the `needs-play-review` label
 
 `tools/stress_netcode.py` runs every multiplayer scenario (a test, in any test file, that opens an ENet peer or starts another Godot process) N times (default 20 locally), each in a fresh headless process with its own XDG dirs, 4 runs at a time (`-j`; each parallel slot picks UDP ports from its own block, passed to `_free_udp_port()` as `FLAGORIA_TEST_PORTS`), and prints pass rate and worst wall time per scenario. Logs of failed runs go to `artifacts/out/stress/`. A scenario listed in `KNOWN_FLAKY` (with the issue that tracks it) gets one retry after a failed run and counts as failed only if the retry fails too; the `retried` column shows how often its first attempt failed. Remove the entry when its issue is fixed.
