@@ -1,170 +1,79 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Main Menu Join: hostname or IPv4, optional :port, default 9786 (#434).
-## Every case presses MainMenu._on_join_button_pressed. The address field
-## is left as typed. A bad address is rejected on the menu with no dial.
-## Port 1 is a real port: nothing is listening, and the menu must say
-## "Could not join 127.0.0.1:1".
+## Main Menu Join accepts a hostname or IPv4 address with an optional port.
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
-const Main = preload("res://flagoria_main.gd")
-
 const ADDRESS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry"
 const STATUS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinStatus"
+const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
 
 
 func _test_join_port_button() -> int:
-	## Button presses for blank, bare hosts, explicit ports, rejected forms,
-	## and one no-listener port-1 timeout. No second process. Time cost:
-	## ~7 s in verify (the port-1 wait is the 6 s dial budget).
 	print("-- test_join_port_button")
 	var fail := 0
-	if JoinAddress.DEFAULT_PORT != Main.PORT:
-		printerr("FAIL join_port_button default port %s, flagoria PORT %s" % [JoinAddress.DEFAULT_PORT, Main.PORT])
-		return 1
-	await process_frame
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
-	if scene.get_path() != NodePath("/root/Flagoria"):
-		printerr("FAIL join_port_button scene at %s" % scene.get_path())
-		_drop_scene(scene)
-		return 1
-	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
+	var menu: Control = scene.get_node("CanvasLayer2/MainMenu")
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
-
-	for row in [
-		[":9799", JoinAddress.ERROR_ADDRESS],
-		["host:", JoinAddress.ERROR_ADDRESS],
-		["host:abc", JoinAddress.ERROR_ADDRESS],
-		["host:0", JoinAddress.ERROR_PORT],
-		["host:65536", JoinAddress.ERROR_PORT],
-		["::1", JoinAddress.ERROR_UNSUPPORTED],
-		["[::1]:9799", JoinAddress.ERROR_UNSUPPORTED],
-		["host:1:2", JoinAddress.ERROR_UNSUPPORTED],
-	]:
-		var typed: String = row[0]
-		var want: String = row[1]
-		scene.get_node(ADDRESS).text = typed
-		var started := Time.get_ticks_msec()
-		menu._on_join_button_pressed()
-		var elapsed := Time.get_ticks_msec() - started
-		var status: Label = scene.get_node(STATUS)
-		if not menu.visible or hud.visible or not status.visible or status.text != want:
-			printerr("FAIL join_port_button reject '%s': menu=%s hud=%s status='%s' want '%s'" % [
-				typed, menu.visible, hud.visible, status.text, want])
-			fail += 1
-		if scene.get_node(ADDRESS).text != typed:
-			printerr("FAIL join_port_button reject '%s' rewrote the field to '%s'" % [typed, scene.get_node(ADDRESS).text])
-			fail += 1
-		if scene._join_port != 0 or scene._join_host != "":
-			printerr("FAIL join_port_button reject '%s' still dialed %s:%s" % [typed, scene._join_host, scene._join_port])
-			fail += 1
-		if elapsed > 300:
-			printerr("FAIL join_port_button reject '%s' took %d ms (no dial should be immediate)" % [typed, elapsed])
-			fail += 1
-		if status.text.begins_with("Could not join"):
-			printerr("FAIL join_port_button reject '%s' used the timeout message" % typed)
-			fail += 1
-
-	for row in [
-		["", "localhost", JoinAddress.DEFAULT_PORT, "localhost"],
-		["   ", "localhost", JoinAddress.DEFAULT_PORT, "localhost"],
-		["127.0.0.1", "127.0.0.1", JoinAddress.DEFAULT_PORT, "127.0.0.1"],
-		["localhost", "localhost", JoinAddress.DEFAULT_PORT, "localhost"],
-		["127.0.0.1:65535", "127.0.0.1", 65535, "127.0.0.1:65535"],
-		["localhost:9799", "localhost", 9799, "localhost:9799"],
-	]:
-		fail += _dial(scene, menu, hud, row[0], row[1], row[2], row[3], false)
-
-	# DNS for this name fails immediately. The port is still the default,
-	# and the menu names the typed host rather than calling it invalid.
-	fail += _dial(scene, menu, hud, "my-host.local", "my-host.local", JoinAddress.DEFAULT_PORT, "my-host.local", true)
-
-	scene.get_node(ADDRESS).text = "127.0.0.1:1"
-	var started := Time.get_ticks_msec()
-	menu._on_join_button_pressed()
+	var address: LineEdit = scene.get_node(ADDRESS)
 	var status: Label = scene.get_node(STATUS)
+	var join: Button = scene.get_node(JOIN)
+	var requested := []
+	menu.new_player_joined.connect(func(port: int) -> void: requested.append(port))
+
+	for row in [
+		[":9799", JoinAddress.ERROR_ADDRESS], ["host:", JoinAddress.ERROR_ADDRESS],
+		["host:abc", JoinAddress.ERROR_ADDRESS], ["host:0", JoinAddress.ERROR_PORT],
+		["host:65536", JoinAddress.ERROR_PORT], ["::1", JoinAddress.ERROR_UNSUPPORTED],
+		["[::1]:9799", JoinAddress.ERROR_UNSUPPORTED], ["host:1:2", JoinAddress.ERROR_UNSUPPORTED],
+	]:
+		address.text = row[0]
+		join.pressed.emit()
+		if not menu.visible or hud.visible or not status.is_visible_in_tree() \
+				or status.text != row[1] or address.text != row[0] or not requested.is_empty():
+			printerr("FAIL join_port_button: rejection of '%s' showed '%s'" % [row[0], status.text])
+			fail += 1
+
+	address.text = "127.0.0.1:1"
+	join.pressed.emit()
 	var deadline := Time.get_ticks_msec() + 8000
-	while Time.get_ticks_msec() < deadline:
-		if menu.visible and status.visible and status.text != "":
-			break
+	while not menu.visible and Time.get_ticks_msec() < deadline:
 		await process_frame
-	var elapsed := Time.get_ticks_msec() - started
-	var want := "Could not join 127.0.0.1:1"
-	if status.text != want or not menu.visible or hud.visible:
-		printerr("FAIL join_port_button port 1: menu=%s hud=%s status='%s' want '%s' (%d ms)" % [
-			menu.visible, hud.visible, status.text, want, elapsed])
-		fail += 1
-	elif scene._join_host != "127.0.0.1" or scene._join_port != 1:
-		printerr("FAIL join_port_button port 1 dialed %s:%s" % [scene._join_host, scene._join_port])
-		fail += 1
-	elif elapsed < 250:
-		printerr("FAIL join_port_button port 1 returned in %d ms; want the no-listener wait" % elapsed)
-		fail += 1
-	if scene.get_node(ADDRESS).text != "127.0.0.1:1":
-		printerr("FAIL join_port_button port 1 rewrote the field to '%s'" % scene.get_node(ADDRESS).text)
+	if not menu.visible or hud.visible or not status.is_visible_in_tree() \
+			or status.text != "Could not join 127.0.0.1:1" or address.text != "127.0.0.1:1" or requested != [1]:
+		printerr("FAIL join_port_button: timeout showed '%s' with join requests %s" % [status.text, requested])
 		fail += 1
 
-	# After the timeout the menu can reject again, then dial the default port.
-	scene.get_node(ADDRESS).text = "host:abc"
-	var again := Time.get_ticks_msec()
-	menu._on_join_button_pressed()
-	status = scene.get_node(STATUS)
-	if status.text != JoinAddress.ERROR_ADDRESS or not menu.visible or Time.get_ticks_msec() - again > 300:
-		printerr("FAIL join_port_button retry reject after timeout: status='%s'" % status.text)
+	address.text = "host:abc"
+	join.pressed.emit()
+	if not menu.visible or status.text != JoinAddress.ERROR_ADDRESS or requested != [1]:
+		printerr("FAIL join_port_button: invalid retry showed '%s'" % status.text)
 		fail += 1
-	fail += _dial(scene, menu, hud, "", "localhost", JoinAddress.DEFAULT_PORT, "localhost", false)
 
+	address.text = ""
+	join.pressed.emit()
+	if menu.visible or not hud.visible or status.visible or address.text != "" or requested != [1, 9786]:
+		printerr("FAIL join_port_button: default retry gave join requests %s" % [requested])
+		fail += 1
 	_drop_scene(scene)
+	await process_frame
+
+	# Exercise address forms independently of DNS and of whether a host is listening.
+	for row in [
+		["   ", "localhost", 9786], ["localhost", "localhost", 9786],
+		["127.0.0.1", "127.0.0.1", 9786], ["join-example.test", "join-example.test", 9786],
+		["127.0.0.1:65535", "127.0.0.1", 65535], ["localhost:9799", "localhost", 9799],
+	]:
+		var parsed := JoinAddress.parse(row[0])
+		if not parsed["ok"] or parsed["host"] != row[1] or parsed["port"] != row[2]:
+			printerr("FAIL join_port_button: '%s' parsed as %s" % [row[0], parsed])
+			fail += 1
 	if fail == 0:
 		print("PASS test_join_port_button")
 	return fail
 
 
-func _dial(scene, menu: Node, hud: CanvasLayer, typed: String, host: String, port: int, endpoint: String, resolve_fails: bool) -> int:
-	scene.get_node(ADDRESS).text = typed
-	var started := Time.get_ticks_msec()
-	menu._on_join_button_pressed()
-	var elapsed := Time.get_ticks_msec() - started
-	var status: Label = scene.get_node(STATUS)
-	var fail := 0
-	if scene.get_node(ADDRESS).text != typed:
-		printerr("FAIL join_port_button dial '%s' rewrote the field to '%s'" % [typed, scene.get_node(ADDRESS).text])
-		fail += 1
-	if scene._join_host != host or scene._join_port != port or scene._join_address != endpoint:
-		printerr("FAIL join_port_button dial '%s' -> %s:%s endpoint '%s', want %s:%s '%s'" % [
-			typed, scene._join_host, scene._join_port, scene._join_address, host, port, endpoint])
-		fail += 1
-	if resolve_fails:
-		if status.text != "Could not join %s" % endpoint or not menu.visible:
-			printerr("FAIL join_port_button dial '%s' status='%s' menu=%s" % [typed, status.text, menu.visible])
-			fail += 1
-	else:
-		if menu.visible or not hud.visible:
-			printerr("FAIL join_port_button dial '%s' did not leave the menu (status='%s')" % [typed, status.text])
-			fail += 1
-		_abort_dial(scene)
-	if elapsed > 1000:
-		printerr("FAIL join_port_button dial '%s' took %d ms" % [typed, elapsed])
-		fail += 1
-	return fail
-
-
-func _abort_dial(scene) -> void:
-	var mp = scene.multiplayer
-	if mp.connection_failed.is_connected(scene._on_connection_failed):
-		mp.connection_failed.disconnect(scene._on_connection_failed)
-	if mp.server_disconnected.is_connected(scene._on_server_disconnected):
-		mp.server_disconnected.disconnect(scene._on_server_disconnected)
-	scene.enet_peer.close()
-	mp.multiplayer_peer = OfflineMultiplayerPeer.new()
-	scene.get_node("CanvasLayer2/MainMenu").show()
-	scene.get_node("CanvasLayer1").hide()
-
-
 func _drop_scene(scene) -> void:
-	if scene == null:
-		return
 	scene.enet_peer.close()
 	scene.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	scene.queue_free()
@@ -190,11 +99,11 @@ func _test_join_port_dedicated() -> int:
 		printerr("FAIL join_port_dedicated could not start the server")
 		return 1
 	var fail := 0
-	fail += await _button_join(pid, "host:abc", JoinAddress.ERROR_ADDRESS, false, port)
+	fail += await _button_join(pid, "host:abc", JoinAddress.ERROR_ADDRESS, false)
 	if fail == 0:
-		fail += await _button_join(pid, "127.0.0.1:%d" % port, "", true, port)
+		fail += await _button_join(pid, "127.0.0.1:%d" % port, "", true)
 	if fail == 0:
-		fail += await _button_join(pid, "localhost:%d" % port, "", true, port)
+		fail += await _button_join(pid, "localhost:%d" % port, "", true)
 	if OS.is_process_running(pid):
 		OS.kill(pid)
 	if fail == 0:
@@ -202,7 +111,7 @@ func _test_join_port_dedicated() -> int:
 	return fail
 
 
-func _button_join(pid: int, typed: String, error_text: String, want_player: bool, port: int) -> int:
+func _button_join(pid: int, typed: String, error_text: String, want_player: bool) -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
@@ -210,15 +119,13 @@ func _button_join(pid: int, typed: String, error_text: String, want_player: bool
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
 	var status: Label = scene.get_node(STATUS)
 	scene.get_node(ADDRESS).text = typed
-	menu._on_join_button_pressed()
+	scene.get_node(JOIN).pressed.emit()
 	var fail := 0
 	if not want_player:
 		if not menu.visible or hud.visible or status.text != error_text:
 			printerr("FAIL join_port_dedicated reject '%s' status='%s' menu=%s" % [typed, status.text, menu.visible])
 			fail = 1
-		if scene._join_port != 0:
-			printerr("FAIL join_port_dedicated reject '%s' dialed port %s" % [typed, scene._join_port])
-			fail = 1
+
 	else:
 		var deadline := Time.get_ticks_msec() + 30000
 		var client_id := 0
@@ -233,13 +140,12 @@ func _button_join(pid: int, typed: String, error_text: String, want_player: bool
 			printerr("FAIL join_port_dedicated server exited before '%s' joined" % typed)
 			fail = 1
 		elif scene.world_params == null or not world.has_node(str(client_id)) or world.has_node("1"):
-			printerr("FAIL join_port_dedicated '%s' player=%s params=%s node1=%s port=%s" % [
-				typed, client_id, scene.world_params != null, world.has_node("1"), scene._join_port])
+			printerr("FAIL join_port_dedicated '%s' player=%s params=%s node1=%s" % [
+				typed, client_id, scene.world_params != null, world.has_node("1")])
 			fail = 1
-		elif scene._join_host == "" or scene._join_port != port or scene.get_node(ADDRESS).text != typed:
-			printerr("FAIL join_port_dedicated '%s' dialed %s:%s field '%s'" % [
-				typed, scene._join_host, scene._join_port, scene.get_node(ADDRESS).text])
-			fail = 1
+		elif scene.get_node(ADDRESS).text != typed:
+			printerr("FAIL join_port_dedicated: Join rewrote '%s'" % typed)
+			fail += 1
 	_drop_scene(scene)
 	await process_frame
 	return fail

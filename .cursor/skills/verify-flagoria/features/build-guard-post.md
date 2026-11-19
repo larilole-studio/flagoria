@@ -34,12 +34,11 @@ with #37 and #280.
 
 Preconditions: `doctor.sh` exits `0`. Time cost: `test_construction_placer_guard`
 about 0.6 s in `tools/verify.sh`; `test_guard_post_save_round_trip` about 0.4 s;
-`test_build_picker_includes_guard` about 0.35 s;
 `test_guard_build_two_players` about 8–12 s per stress run. Drive about 25–45 s
 under xvfb.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_guard,guard_post_save_round_trip,build_picker_includes_guard,guard_build_two_players`, or the full `tools/verify.sh`.
-- **Proof.** `PASS test_construction_placer_guard`, `PASS test_guard_post_save_round_trip`, `PASS test_build_picker_includes_guard`, and `PASS test_guard_build_two_players` with no `FAIL` after them.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_guard,guard_post_save_round_trip,build_picker_buttons,guard_build_two_players`, or the full `tools/verify.sh`.
+- **Proof.** `PASS test_construction_placer_guard`, `PASS test_guard_post_save_round_trip`, `PASS test_build_picker_buttons`, and `PASS test_guard_build_two_players` with no `FAIL` after them.
 - **Drive (live).** `bin/launch.sh drives/build_guard_post.gd --seed 11 --display`.
 
 ## Gotchas

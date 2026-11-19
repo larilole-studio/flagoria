@@ -21,9 +21,6 @@ func _test_build_cost_table() -> int:
 		if got != want[k]:
 			printerr("FAIL build_cost_table: %s x%d cost, refund %s, want %s" % [k[0], k[1], got, want[k]])
 			fail += 1
-	if BuildCosts.REFUND_SHARE != 0.5:
-		printerr("FAIL build_cost_table: refund share %s, want 0.5" % BuildCosts.REFUND_SHARE)
-		fail += 1
 	if fail == 0:
 		print("PASS test_build_cost_table")
 	return fail

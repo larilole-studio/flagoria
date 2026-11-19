@@ -553,60 +553,68 @@ func _test_build_preview_cache_invalidates_on_wood() -> int:
 	return fail
 
 
-func _test_build_picker_hides_on_multiplayer_start() -> int:
-	## Host alone in interact + Plank: when multiplayer turns on, the picker
-	## refreshes without a mode change. Plank (#297) and Tower (#497) stay;
-	## Wall hides. With Plank selected the tool stays Plank.
-	## Time cost: about 0.4 s in tools/verify.sh (~2.1 s alone with
-	## --only=build_picker_hides_on_multiplayer_start).
-	print("-- test_build_picker_hides_on_multiplayer_start")
+func _test_build_picker_buttons() -> int:
+	## Each tool is available through Buildings both offline and on an ENet client.
+	print("-- test_build_picker_buttons")
 	var fail := 0
-	var ctx := await _boot_interact_scene(false)
-	var scene = ctx["scene"]
-	var interaction: Interaction = ctx["interaction"]
+	var scene = load("res://flagoria_main.tscn").instantiate()
+	root.add_child(scene)
+	scene.get_node("CanvasLayer2/MainMenu").hide()
+	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
+	hud.show()
+	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_mode(Interaction.Mode.INTERACT)
-	interaction.build.set_tool(BuildPlacement.Tool.PLANK)
-	_open_buildings(scene)
-	await process_frame
-	var plank_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.PLANK)
-	if plank_btn == null or not plank_btn.visible or interaction.build.tool != BuildPlacement.Tool.PLANK:
-		printerr("FAIL picker_hides_on_multiplayer_start: Plank not visible host-alone")
-		fail += 1
+	var buildings: Button = hud.get_node("BuildingsButton")
+	var picker: Control = hud.get_node("BuildPicker")
+	var tools := {
+		"PlankButton": BuildPlacement.Tool.PLANK, "TowerButton": BuildPlacement.Tool.TOWER,
+		"CastleButton": BuildPlacement.Tool.CASTLE, "GuardButton": BuildPlacement.Tool.GUARD,
+		"BarracksButton": BuildPlacement.Tool.BARRACKS, "WallButton": BuildPlacement.Tool.WALL,
+	}
 	var peer := ENetMultiplayerPeer.new()
 	var api := SceneMultiplayer.new()
-	if peer.create_client("127.0.0.1", 1) != OK:
-		printerr("FAIL picker_hides_on_multiplayer_start: could not start ENet client")
-		fail += 1
-	else:
-		api.multiplayer_peer = peer
-		set_multiplayer(api, scene.get_path())
-		# Do not call _refresh_picker_visible by hand — Interaction._process must.
-		await process_frame
-		await process_frame
-		plank_btn = interaction.build._buttons.get(BuildPlacement.Tool.PLANK)
-		var tower_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.TOWER)
-		var wall_btn: Button = interaction.build._buttons.get(BuildPlacement.Tool.WALL)
-		if plank_btn == null or not plank_btn.visible:
-			printerr("FAIL picker_hides_on_multiplayer_start: Plank should stay visible in MP")
-			fail += 1
-		if tower_btn == null or not tower_btn.visible or wall_btn == null or not wall_btn.visible:
-			printerr("FAIL picker_hides_on_multiplayer_start: Tower and Wall should stay visible")
-			fail += 1
-		if interaction.build.tool != BuildPlacement.Tool.PLANK:
-			printerr("FAIL picker_hides_on_multiplayer_start: tool %s want Plank"
-					% interaction.build.tool)
-			fail += 1
-		api.multiplayer_peer = null
-		peer.close()
-		set_multiplayer(null, scene.get_path())
+	for online in [false, true]:
+		if online:
+			buildings.button_pressed = true
+			picker.get_node("PlankButton").pressed.emit()
+			buildings.button_pressed = true
+			if peer.create_client("127.0.0.1", 1) != OK:
+				printerr("FAIL build_picker_buttons: could not start ENet client")
+				fail += 1
+				break
+			api.multiplayer_peer = peer
+			set_multiplayer(api, scene.get_path())
+			await process_frame
+			await process_frame
+			if not buildings.button_pressed or interaction.build.tool != BuildPlacement.Tool.PLANK:
+				printerr("FAIL build_picker_buttons: multiplayer closed Buildings or cleared Plank")
+				fail += 1
+		fail += _check_picker_buttons(buildings, picker, interaction.build, tools, online)
+	api.multiplayer_peer = null
+	peer.close()
+	set_multiplayer(null, scene.get_path())
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
-		print("PASS test_build_picker_hides_on_multiplayer_start")
+		print("PASS test_build_picker_buttons")
 	return fail
 
 
-func _open_buildings(scene: Node) -> void:
-	var buildings := scene.get_node_or_null("CanvasLayer1/BuildingsButton") as Button
-	if buildings != null and not buildings.button_pressed:
-		buildings.set_pressed(true)
+func _check_picker_buttons(buildings: Button, picker: Control, build: BuildPlacement, tools: Dictionary, online: bool) -> int:
+	var fail := 0
+	buildings.button_pressed = true
+	for button_name in tools:
+		var button := picker.get_node_or_null(button_name) as Button
+		if button == null or not button.is_visible_in_tree() or button.disabled:
+			printerr("FAIL build_picker_buttons: %s unavailable (multiplayer=%s)" % [button_name, online])
+			fail += 1
+	for button_name in tools:
+		buildings.button_pressed = true
+		var button := picker.get_node_or_null(button_name) as Button
+		if button == null or not button.is_visible_in_tree() or button.disabled:
+			continue
+		button.pressed.emit()
+		if build.tool != tools[button_name] or not build.tracks_pointer():
+			printerr("FAIL build_picker_buttons: %s did not select its tool (multiplayer=%s)" % [button_name, online])
+			fail += 1
+	return fail

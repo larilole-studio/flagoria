@@ -96,48 +96,6 @@ func _test_barracks_not_a_tower() -> int:
 	return fail
 
 
-func _test_build_picker_includes_barracks() -> int:
-	## Buildings column has BarracksButton; tracks_pointer is true for footprint tools.
-	print("-- test_build_picker_includes_barracks")
-	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
-	menu.hide()
-	menu.set_process_unhandled_input(false)
-	scene.get_node("CanvasLayer1").show()
-	var interaction: Interaction = scene.get_node("World/Interaction")
-	interaction.set_mode(Interaction.Mode.INTERACT)
-	await process_frame
-	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
-	var barracks_btn: Button = picker.get_node_or_null("BarracksButton") if picker != null else null
-	if barracks_btn == null:
-		printerr("FAIL build_picker_includes_barracks: BarracksButton missing")
-		fail += 1
-	interaction.build.set_tool(BuildPlacement.Tool.BARRACKS)
-	if interaction.build.tool != BuildPlacement.Tool.BARRACKS:
-		printerr("FAIL build_picker_includes_barracks: set_tool BARRACKS did not stick")
-		fail += 1
-	for t in [
-		BuildPlacement.Tool.PLANK, BuildPlacement.Tool.TOWER, BuildPlacement.Tool.CASTLE,
-		BuildPlacement.Tool.GUARD, BuildPlacement.Tool.BARRACKS, BuildPlacement.Tool.WALL,
-	]:
-		if not BuildToolRow.tracks_pointer(t):
-			printerr("FAIL build_picker_includes_barracks: tracks_pointer false for %s" % t)
-			fail += 1
-	if BuildToolRow.tracks_pointer(BuildPlacement.Tool.CUT):
-		printerr("FAIL build_picker_includes_barracks: cut should not track pointer")
-		fail += 1
-	if interaction.build.tool == BuildPlacement.Tool.BARRACKS and not interaction.build.tracks_pointer():
-		printerr("FAIL build_picker_includes_barracks: barracks instance tracks_pointer false")
-		fail += 1
-	scene.queue_free()
-	await process_frame
-	if fail == 0:
-		print("PASS test_build_picker_includes_barracks")
-	return fail
-
-
 func _test_barracks_rotation() -> int:
 	## Quarter turn 1 is stored on the placement and in structures_for_sync.
 	print("-- test_barracks_rotation")

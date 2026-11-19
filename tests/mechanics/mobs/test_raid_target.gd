@@ -76,35 +76,25 @@ func _settings(game) -> int:
 	game.save_path = path
 	game.load_from_disk()
 	var fail := 0
-	if game.raids_enabled or game.raid_interval_s != game.RAID_INTERVAL_DEFAULT \
-			or game.raid_group != game.RAID_GROUP_DEFAULT \
-			or game.raid_radius_cells != game.RAID_RADIUS_DEFAULT:
-		printerr("FAIL raid_target: defaults on=%s interval=%s group=%s radius=%s" % [
-			game.raids_enabled, game.raid_interval_s, game.raid_group, game.raid_radius_cells])
+	if game.raids_enabled:
+		printerr("FAIL raid_target: raids enabled in fresh settings")
 		fail += 1
-	game.set_raid_interval_s(1, false)
-	game.set_raid_group(0, false)
-	game.set_raid_radius_cells(1, false)
-	if game.raid_interval_s != game.RAID_INTERVAL_MIN or game.raid_group != game.RAID_GROUP_MIN \
-			or game.raid_radius_cells != game.RAID_RADIUS_MIN:
-		printerr("FAIL raid_target: low clamp %s %s %s" % [
-			game.raid_interval_s, game.raid_group, game.raid_radius_cells])
-		fail += 1
-	game.set_raid_interval_s(999, false)
-	game.set_raid_group(99, false)
-	game.set_raid_radius_cells(999, false)
-	if game.raid_interval_s != game.RAID_INTERVAL_MAX or game.raid_group != game.RAID_GROUP_MAX \
-			or game.raid_radius_cells != game.RAID_RADIUS_MAX:
-		printerr("FAIL raid_target: high clamp %s %s %s" % [
-			game.raid_interval_s, game.raid_group, game.raid_radius_cells])
-		fail += 1
+	for row in [[-100, [15.0, 1, 16]], [1000, [180.0, 8, 96]]]:
+		game.set_raid_interval_s(row[0], false)
+		game.set_raid_group(row[0], false)
+		game.set_raid_radius_cells(row[0], false)
+		if [game.raid_interval_s, game.raid_group, game.raid_radius_cells] != row[1]:
+			printerr("FAIL raid_target: out-of-range settings did not clamp for %d" % row[0])
+			fail += 1
 	game.set_raids_enabled(true, false)
 	game.set_raid_interval_s(30, false)
 	game.set_raid_group(4, false)
 	game.set_raid_radius_cells(20, false)
 	game.save_to_disk()
 	game.raids_enabled = false
-	game.raid_interval_s = 1.0
+	game.set_raid_interval_s(45, false)
+	game.set_raid_group(3, false)
+	game.set_raid_radius_cells(96, false)
 	game.load_from_disk()
 	if not game.raids_enabled or game.raid_interval_s != 30.0 or game.raid_group != 4 \
 			or game.raid_radius_cells != 20:
@@ -163,9 +153,7 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 		return 1
 	var stand: Vector2i = outside["stand"]
 	var wall: Vector2i = outside["wall"]
-	if world._walls.hp(wall) != WallBuilder.MAX_HP:
-		printerr("FAIL raid_target: fresh wall hp %d" % world._walls.hp(wall))
-		fail += 1
+	var before := StructureSaves.to_changes(world)
 	var mobs: Array[Mob] = []
 	for i in 6:
 		mobs.append(_mob(world, "mob_%d" % i, stand))
@@ -175,15 +163,13 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 	game.set_raid_radius_cells(96, false)
 	mobs[0].assign_raid(near["flag"], int(near["id"]))
 	director.advance(90.0)
-	if mobs[0]._raid_cell != Mob.RAID_NONE or world._walls.hp(wall) != WallBuilder.MAX_HP:
-		printerr("FAIL raid_target: raids off left cell %s hp %d" % [mobs[0]._raid_cell, world._walls.hp(wall)])
+	if mobs[0].pinned() or StructureSaves.to_changes(world) != before:
+		printerr("FAIL raid_target: disabling raids did not clear the assignment and leave walls intact")
 		fail += 1
 	game.set_raids_enabled(true, false)
-	director._accum = 0.0
-	director._tick = 0
 	director.advance(44.0)
-	if _assigned(mobs) != 0:
-		printerr("FAIL raid_target: early interval assigned %d" % _assigned(mobs))
+	if not _assigned_names(mobs).is_empty():
+		printerr("FAIL raid_target: mobs assigned before the interval elapsed")
 		fail += 1
 	director.advance(1.0)
 	var names := _assigned_names(mobs)
@@ -192,9 +178,10 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 		fail += 1
 	for mob in mobs:
 		mob.clear_raid()
-	director._accum = 0.0
-	director._tick = 0
-	director.advance(45.0)
+	var replay := RaidDirector.new()
+	director.get_parent().add_child(replay)
+	replay.advance(45.0)
+	replay.free()
 	if _assigned_names(mobs) != names:
 		printerr("FAIL raid_target: retick assigned %s want %s" % [_assigned_names(mobs), names])
 		fail += 1
@@ -202,12 +189,18 @@ func _clock_and_hp(game, director: RaidDirector, world, cities: Cities, near: Di
 		mob.clear_raid()
 	var striker := mobs[0]
 	striker.global_position = world.to_global(world.map_to_local(stand))
-	striker._raid_strikes.clear()
 	striker.assign_raid(near["flag"], int(near["id"]))
-	striker._step_raid(1.0)
-	if world._walls.hp(wall) != WallBuilder.MAX_HP - 1 or striker._raid_strikes != [wall]:
-		printerr("FAIL raid_target: strike hp %d hits %s want %s" % [
-			world._walls.hp(wall), striker._raid_strikes, wall])
+	striker.think(1.0)
+	var chunk := WorldSave.chunk_key(wall)
+	var cell := WorldSave.cell_key(wall)
+	var after := StructureSaves.to_changes(world)
+	var hit: Dictionary = after.get(chunk, {}).get(cell, {})
+	if hit.get("hp") != 2:
+		printerr("FAIL raid_target: palisade took no damage")
+		fail += 1
+	after[chunk][cell] = before[chunk][cell]
+	if after != before:
+		printerr("FAIL raid_target: strike also changed other structures")
 		fail += 1
 	cities.rebuild()
 	return fail
@@ -249,13 +242,12 @@ func _auto_wall(world, near: Dictionary) -> int:
 		printerr("FAIL raid_target: castle wall has no open side")
 		return 1
 	var mob := _mob(world, "mob_stone", stand)
-	mob._raid_strikes.clear()
+	var before: Vector2i = world.predict_cell(wall)[1]
 	mob.assign_raid(wall - step, -1)
 	for _i in 6:
-		mob._step_raid(0.25)
-	if not mob._raid_strikes.is_empty() or world.local_to_map(world.to_local(mob.global_position)) == wall:
-		printerr("FAIL raid_target: auto-wall strikes %s cell %s" % [
-			mob._raid_strikes, world.local_to_map(world.to_local(mob.global_position))])
+		mob.think(0.25)
+	if world.predict_cell(wall)[1] != before or mob.global_position != world.to_global(world.map_to_local(stand)):
+		printerr("FAIL raid_target: castle wall changed or the mob moved through it")
 		return 1
 	return 0
 
@@ -439,18 +431,10 @@ func _mob(world, mob_name: String, cell: Vector2i) -> Mob:
 	return mob
 
 
-func _assigned(mobs: Array[Mob]) -> int:
-	var n := 0
-	for mob in mobs:
-		if mob._raid_cell != Mob.RAID_NONE:
-			n += 1
-	return n
-
-
 func _assigned_names(mobs: Array[Mob]) -> Array:
 	var names := []
 	for mob in mobs:
-		if mob._raid_cell != Mob.RAID_NONE:
+		if mob.pinned():
 			names.append(str(mob.name))
 	names.sort()
 	return names

@@ -42,7 +42,6 @@ as the auto entries the solver replaces. The picker icon comes from
 Preconditions: `doctor.sh` exits `0`. Time cost: `test_construction_placer_tower`
 about 0.6 s in `tools/verify.sh` (~2.3 s alone with `--only=`);
 `test_construction_placer_tower_atomic_spend` about 0.3 s (~2.0 s alone);
-`test_build_picker_includes_tower` about 0.35 s (~2.0 s alone);
 `test_build_tower_preview_matches_commit` about 0.5 s (~2.2 s alone);
 `test_build_tower_tap_places` about 0.5 s (~2.2 s alone).
 `test_build_tower_out_of_reach` about 0.12 s (~2.6 s alone with `--only=`);
@@ -50,10 +49,10 @@ about 0.6 s in `tools/verify.sh` (~2.3 s alone with `--only=`);
 The two new tests add about 0.18 s to `tools/verify.sh`, not to netcode stress.
 Staged screenshot harness about 3 s under xvfb.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_tower,construction_placer_tower_atomic_spend,build_picker_includes_tower,build_tower_preview_matches_commit,build_tower_tap_places,build_tower_out_of_reach,construction_tower_cached`, or the full `tools/verify.sh`.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_tower,construction_placer_tower_atomic_spend,build_picker_buttons,build_tower_preview_matches_commit,build_tower_tap_places,build_tower_out_of_reach,construction_tower_cached`, or the full `tools/verify.sh`.
 - **Proof.** Headers `-- test_construction_placer_tower`,
   `-- test_construction_placer_tower_atomic_spend`,
-  `-- test_build_picker_includes_tower`,
+  `-- test_build_picker_buttons`,
   `-- test_build_tower_preview_matches_commit`,
   `-- test_build_tower_tap_places`, `-- test_build_tower_out_of_reach` and
   `-- test_construction_tower_cached` in `artifacts/verify.log` with no `FAIL`
