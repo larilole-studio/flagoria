@@ -158,7 +158,7 @@ func add(cell: Vector2i) -> bool:
 		return false
 	_sprouts[cell] = tile
 	touch(cell)
-	_map._predict_cache.erase(cell)
+	_map.invalidate_painted_cell(cell)
 	if _map.is_drawn(cell) and not _map.has_cut(cell):
 		_map.set_cell(1, cell, TileCatalog.SOURCE_ID, tile)
 	return true

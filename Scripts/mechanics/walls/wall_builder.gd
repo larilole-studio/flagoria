@@ -72,7 +72,7 @@ func erase_cells(cells: Array[Vector2i]) -> bool:
 		_pieces.erase(cell)
 		_caps.erase(cell)
 		_hp.erase(cell)
-		_map._predict_cache.erase(cell)
+		_map.invalidate_painted_cell(cell)
 		_erase_tiles(cell)
 		removed = true
 	if removed:
@@ -154,7 +154,7 @@ func replace_from_host(cells: Array) -> void:
 		_pieces.erase(cell)
 		_caps.erase(cell)
 		_hp.erase(cell)
-		_map._predict_cache.erase(cell)
+		_map.invalidate_painted_cell(cell)
 		_erase_tiles(cell)
 		removed = true
 	var added := false

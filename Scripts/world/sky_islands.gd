@@ -21,11 +21,32 @@ const _CORNER_SIDES := [0, 1, 1, 2, 2, 3, 3, 0]
 
 var _logical := {}
 var _sea := {}
+var _painted: Dictionary[Vector2i, bool] = {}
+var _last_window := Rect2i()
+var _painted_probe := Vector2i.MAX
 
 
 func clear() -> void:
 	_logical.clear()
+	_clear_drawn()
+
+
+func _clear_drawn() -> void:
 	_sea.clear()
+	_painted.clear()
+	_last_window = Rect2i()
+	_painted_probe = Vector2i.MAX
+
+
+func invalidate_cell(cell: Vector2i) -> void:
+	## An edit left generated tiles to restore when this cell is in the window.
+	_painted.erase(cell)
+	_invalidate_window_at(cell)
+
+
+func _invalidate_window_at(cell: Vector2i) -> void:
+	if _last_window.has_point(cell):
+		_last_window = Rect2i()
 
 
 func is_sea(cell: Vector2i) -> bool:
@@ -99,44 +120,51 @@ func display_ground(map, cell: Vector2i) -> Vector2i:
 	return logical
 
 
-func paint_ground(map, tile_pos: Vector2i) -> void:
-	## Paint the chunk's final ground tiles, including shores and structure foundations.
-	_ensure_layers(map)
-	var origin := Vector2i(tile_pos.x - map.chunk_width / 2, tile_pos.y - map.chunk_height / 2)
-	var land: Array[Vector2i] = []
-	var sea: Array[Vector2i] = []
-	var bridges: Array[Vector2i] = []
-	var finals := {}
-	for x in map.chunk_width:
-		for y in map.chunk_height:
-			var cell := origin + Vector2i(x, y)
-			if map._bridges.has_bridge(cell):
-				bridges.append(cell)
+func paint_window(map, center: Vector2i, size: Vector2i) -> void:
+	# Native TileMap.clear() can bypass script methods. A painted cell always
+	# has either a ground tile or a sea collider, even after gameplay edits.
+	if _painted_probe != Vector2i.MAX and map.get_cell_source_id(0, _painted_probe) == -1 \
+			and map.get_cell_source_id(SEA_LAYER, _painted_probe) == -1:
+		_clear_drawn()
+	var window := Rect2i(center - size / 2, size)
+	if window == _last_window:
+		return
+	_last_window = window
+
+	var cells: Array[Vector2i] = []
+	var painted := Rect2i()
+	for x in range(window.position.x, window.end.x):
+		for y in range(window.position.y, window.end.y):
+			var cell := Vector2i(x, y)
+			if _painted.has(cell):
 				continue
-			var logical: Vector2i = logical_ground(map, cell)
-			var shown: Vector2i = map._structures.ground_at(cell, display_ground(map, cell))
-			if shown == TileCatalog.WATER:
-				sea.append(cell)
-				continue
-			_sea.erase(cell)
-			land.append(cell)
-			finals[cell] = shown
-			if _spawnable(logical) and map.spawn_point == Vector2i.ZERO:
-				map.spawn_point = cell
-	for cell in sea:
-		_paint_sea(map, cell)
-	for cell in bridges:
-		_paint_bridge(map, cell)
-	for cell in land:
-		map.erase_cell(SEA_LAYER, cell)
-		map.set_cell(0, cell, TileCatalog.SOURCE_ID, finals[cell])
-	_paint_clouds(map, origin, map.chunk_width, map.chunk_height)
+			_painted[cell] = true
+			cells.append(cell)
+			var bounds := Rect2i(cell, Vector2i.ONE)
+			painted = painted.merge(bounds) if painted.has_area() else bounds
+
+	if not cells.is_empty():
+		_ensure_layers(map)
+		_painted_probe = cells[0]
+		for cell in cells:
+			_paint_cell(map, cell)
+	# Stamps are clipped and resolved in window order, including on revisits.
+	_paint_clouds(map, window.position, window.size.x, window.size.y)
+	for cell in cells:
+		var b: int = map.biome_at(cell)
+		map.set_tile_type_z1(cell, map.cell_altitude(cell, b), map.moisture.get_noise_2d(cell.x, cell.y),
+				map.temperature.get_noise_2d(cell.x, cell.y), map.items_chance.get_noise_2d(cell.x, cell.y), b)
+	if painted.has_area():
+		map.ground_changed.emit(painted)
 
 
 func repaint_cell(map, cell: Vector2i) -> void:
-	## One cell after a bridge is removed or its piece changes. The chunk is
-	## already drawn; neighbours keep the edge they have.
 	_ensure_layers(map)
+	_paint_cell(map, cell)
+	_invalidate_window_at(cell)
+
+
+func _paint_cell(map, cell: Vector2i) -> void:
 	if map._bridges.has_bridge(cell):
 		_paint_bridge(map, cell)
 		return
@@ -168,6 +196,7 @@ func claim(map, cell: Vector2i, atlas: Vector2i) -> void:
 	_sea.erase(cell)
 	map.erase_cell(SEA_LAYER, cell)
 	map.set_cell(0, cell, TileCatalog.SOURCE_ID, atlas)
+	_invalidate_window_at(cell)
 
 
 func _mask(map, cell: Vector2i) -> int:
