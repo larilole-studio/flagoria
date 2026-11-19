@@ -105,10 +105,12 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 
 
 func _column_ok() -> bool:
+	# The list opens in columns left of Buildings, on screen and clear of Attack.
 	var buildings := current_scene.get_node(BUILDINGS) as Button
 	var picker := current_scene.get_node("CanvasLayer1/BuildPicker") as Control
-	var previous := buildings.get_global_rect().end.y - 0.5
-	var left := buildings.get_global_rect().position.x
+	var attack := current_scene.get_node("CanvasLayer1/TouchScreenButton") as Node2D
+	var view := current_scene.get_viewport().get_visible_rect()
+	var taken: Array[Rect2] = [buildings.get_global_rect(), Rect2(attack.global_position, Vector2(40, 40))]
 	var any := false
 	for child in picker.get_children():
 		var button := child as Button
@@ -116,13 +118,14 @@ func _column_ok() -> bool:
 			continue
 		any = true
 		var rect := button.get_global_rect()
-		if rect.position.y < previous or absf(rect.position.x - left) > 1.0:
-			printerr("hud round: %s not stacked at %s" % [button.name, rect])
+		var hit := taken.any(func(other: Rect2) -> bool: return rect.intersects(other))
+		if hit or not view.encloses(rect) or rect.position.x >= buildings.get_global_rect().position.x:
+			printerr("hud round: %s misplaced at %s" % [button.name, rect])
 			return false
 		if not _round(button):
 			printerr("hud round: %s disc" % button.name)
 			return false
-		previous = rect.end.y + 1.0
+		taken.append(rect)
 	return any
 
 
