@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-In interact mode the hero chops trees and bushes for wood. Each choppable kind is a data file (`data/interactables/tree.tres`, `pine.tres`, `bush.tres`, script `Scripts/mechanics/interactables/interactable_type.gd`) that sets its tiles, hits, `yields` (wood), what it leaves (STUMP, BUSH_STUMP), `regrow_delay`, `save_key`, sounds and effect frames. The pine (`TREE_PINE_SMALL`, generated as `PINE`) is its own type with the tree's values (#266). `InteractableCatalog` (a preload list) maps a foliage tile to its type.
+In interact mode the hero chops trees and bushes for wood. Each choppable kind is a data file (`data/interactables/tree.tres`, `pine.tres`, `bush.tres`, script `Scripts/mechanics/interactables/interactable_type.gd`) that sets its tiles, hits, `yields` (wood), what it leaves (STUMP, BUSH_STUMP), `regrow_delay`, `save_key`, sounds and effect frames. The pine (`TREE_PINE_SMALL`, generated as `PINE`) is its own type with the tree's values (#266). `InteractableCatalog` (a preload list) maps a foliage tile to its type. A birch trunk uses the standard tree type. Chopping it clears the canopy one cell north as well.
 
 ## Sub-features
 
@@ -15,13 +15,13 @@ In interact mode the hero chops trees and bushes for wood. Each choppable kind i
 - `chop-sounds` each type's sound slots (`hit_sounds`, `hit_layer_sounds`, `last_hit_sounds`, `fell_sounds`, `pickup_sounds`, `hit_no_repeat`); the tree fills all of them, the bush only `hit_sounds` and `fell_sounds` (`docs/audio.md`, Chop sounds).
 - `chop-death` the hero dying before the fall cancels the chop with no stump and no wood (`ChopAction.step_chop`). A dead hero's taps and drags cut nothing ([Dead player cuts nothing](./dead-player-cut.md)).
 - `stump-kept` the stump stays when the chunk is drawn again and is open ground for mobs (`TileMap.cut_choppable`, kept in `TreeCuts._cut_cells` in `Scripts/mechanics/trees/tree_cuts.gd`).
-- `wood-hud` the wood counter (`ResourceHud`) sits centred at the top at the hearts' scale, starts at 0 and follows the inventory.
+- `wood-hud` the wood counter (`ResourceHud`) sits in the top-left status plate, starts at 0 and follows the inventory.
 - `type-checklist` every `.tres` in `data/interactables/` is in `InteractableCatalog.TYPES` and passes each machine-checkable step of the `docs/interactables.md` checklist (#269, #326); a broken copy fails naming the type and step.
 - `regrow` after its type's `regrow_delay` seconds of play (300 for every type; 0 = never) the stump turns back into the same tree or bush (`TileMap.regrow_due`, forwards to `TreeCuts`). Setting `TileMap.regrow_delay` (default -1) overrides it for every type; tests set 30. A due stump waits while a player's body box or a mob's feet box (`Mob.add_feet_cells`, the cells `Mob.can_stand_at` checks) covers it, and regrows on a later check once the cell is free (`TileMap.player_on_cell`, `TileMap.mob_cells`, #232), so a regrown tree never traps a mob. The cells under mobs are gathered into one set per `regrow_due` pass, on its first due stump, and each stump is looked up in it (#354), so a pass costs stumps + mobs rather than stumps × mobs. Only the host (or a single-player game) runs this check.
 
 ## How to get to it (user POV)
 
-- Start or join a game, select chop on the tool wheel, then tap a tree or bush next to the hero. The wood count on the HUD goes up when it falls.
+- Start or join a game, select chop on the tool wheel, then tap or drag Attack to sweep trees and bushes in reach. The wood count on the HUD goes up when it falls.
 
 ## Driving it with verify-flagoria helpers
 

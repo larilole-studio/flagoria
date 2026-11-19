@@ -4,8 +4,8 @@
 
 ## Layout
 
-- `tests/<area>/test_<topic>.gd`: tests grouped by area or mechanic, for example `tests/ui/test_map_zoom.gd`. The runner finds every `tests/**/test_*.gd` file on its own; nothing lists them.
-- `tests/helpers/test_helpers.gd`: shared helpers (`_pre_biome_defaults`, `_free_udp_port`, `_walls_from_rows` and the others). Every test file starts with `extends "res://tests/helpers/test_helpers.gd"`. Inside a test file, `root`, `process_frame`, `physics_frame`, `paused`, `create_timer()` and `set_multiplayer()` work as they do on the `SceneTree`.
+- `tests/<area>/test_<topic>.gd` and `tests/mechanics/<mechanic>/test_<topic>.gd`: area and mechanic suites. Examples include `tests/ui/test_map_zoom.gd`, `tests/mechanics/trees/test_tree_sprouts.gd`, `tests/net/` for multiplayer scenarios and `tests/saves/` for persistence. The runner finds every `tests/**/test_*.gd` file on its own; nothing lists them.
+- `tests/helpers/test_helpers.gd`: shared helpers (`_pre_biome_defaults`, `_free_udp_port`, `_walls_from_rows` and the others). Test suites use `extends "res://tests/helpers/test_helpers.gd"`. Inside a test file, `root`, `process_frame`, `physics_frame`, `paused`, `create_timer()` and `set_multiplayer()` work as they do on the `SceneTree`.
 - `tests/run_tests.gd`: the runner, plus `discovery_messages`, which checks that a misnamed or indented test is reported and that `--only=` points at that warning.
 - `tests/*_probe.gd`: scripts that tests start as separate Godot processes. `tests/fixtures/` and `tests/golden/` hold the data tests compare against.
 
@@ -23,9 +23,9 @@ godot --headless --path . --script res://tests/run_tests.gd -- --only=mob_chase,
 godot --headless --path . --script res://tests/run_tests.gd -- --list
 ```
 
-`--only` takes names with or without the `test_` prefix. An unknown name prints the known names and exits `1`. An empty `--only=` prints a usage message and exits `1`. The last lines are `Ran N of M tests.` and `All tests passed.` (or `Tests failed: K`).
+Pass runner flags after `--`. `--list` prints registered names and exits. `--only=` takes comma-separated names as `name`, `test_name`, or `_test_name` and runs them in registration order. An unknown name prints the known names and exits `1`. An empty filter or an unrecognized flag also exits `1`. A completed run prints `Ran N of M tests.` and `All tests passed.` (or `Tests failed: K`). Script errors logged during a test count as failures.
 
-Run `godot --headless --path . --import` once first on a fresh checkout. To avoid sharing `user://` with another run, give each run its own `XDG_DATA_HOME` (`tools/verify.sh` does this on every run).
+Run `godot --headless --path . --import` once first on a fresh checkout. To avoid sharing `user://` with another run, give each run separate `XDG_DATA_HOME`, `XDG_CONFIG_HOME` and `XDG_CACHE_HOME` (`tools/verify.sh` does this on every run).
 
 ## Regenerating goldens
 
@@ -55,6 +55,6 @@ A scenario must be deterministic. Fix the world seed. Do not time it with `await
 
 CI sets N from `tools/play_review_paths.py` (skipped when the change is not gameplay and does not touch the stress runner, the stress lint, `tests/net/`, or a `tests/*_probe.gd` probe; otherwise 4 or 8 runs per scenario — see `.cursor/skills/verify-flagoria/ci-netcode-stress.md`). `.github/workflows/play-review.yml` runs stress for those pull requests and for gameplay pushes to main. `.github/workflows/play-review-label.yml` adds `needs-play-review` when a pull request touches gameplay: player, mobs, scenes, HUD and menus, touch input, netcode, map generation parameters and saved worlds (`Scripts/map_gen.gd`, `Scripts/MapGenParams.gd`, `Scripts/map_save.gd`), or the `[input]` section of `project.godot`. The path list is in `tools/play_review_paths.py` (`--self-test` checks it).
 
-## Gameplay drives and the `needs-drive` label
+## Gameplay drives
 
-Gameplay drives (`.cursor/skills/verify-flagoria/drives/`) start a real game, so `tools/verify.sh` and the required checks never run them. `.github/workflows/verify-drive.yml` runs them only when asked: from the Actions tab (**verify-drive**, **Run workflow**, optionally a space-separated list of drive names), or when a pull request from this repository gets the `needs-drive` label. Each drive's evidence is uploaded as the `drive-evidence` artifact. To run one locally, see the verify-flagoria skill (`bin/launch.sh drives/<name>.gd`).
+Gameplay drives start a real game through `.cursor/skills/verify-flagoria/bin/launch.sh`. The separate **Gameplay drives** check runs them under xvfb for gameplay pull requests from this repository. It selects the primary `Drive:` values from changed feature pages, skips nested scripts, and falls back to `smoke` if the selection is empty. The **verify-drive** workflow can also run named drives from the Actions tab. Screenshots are uploaded as `drive-screenshots`.

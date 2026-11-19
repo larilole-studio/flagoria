@@ -2,7 +2,7 @@
 
 Drive: drives/tool_wheel.gd
 
-One button beside Run arms sword, bow or chop (#574). A press shorter than 200 ms with less than 6 px of movement swaps to the previous tool. A longer press, or any drag, opens a half-moon. The arc opens toward the side of the screen with more room, which is the left of the thumb button, and shortens so every option stays visible. Dragging up or down highlights a tool. Releasing selects it and closes the wheel. Sword is combat with the bow off, bow is combat with the bow armed, and chop is interact mode. Hold Q and aim with the mouse, the scroll wheel, or up/down, then release. Keys 1, 2 and 3 select sword, bow and chop directly. Customize HUD can move and resize the button (#575). Until that slot is saved, the button stays left of Run. Sword and chop use the existing mode icons. Bow uses a drawn stand-in until the wheel art (#576).
+The button inward of Attack and below Run arms sword, bow or chop (#574). A press shorter than 200 ms with less than 6 px of movement swaps to the previous tool. A longer press, or any drag, opens a half-moon. The arc opens toward the side of the screen with more room, normally to the left of the stock button, and shortens so every option stays visible. Dragging up or down highlights a tool. Releasing selects it and closes the wheel. Sword is combat with the bow off, bow is combat with the bow armed, and chop is interact mode. Hold Q and aim with the mouse, the scroll wheel, or up/down, then release. Keys 1, 2 and 3 select sword, bow and chop directly. Customize HUD can move and resize the button (#575). With a custom Run position, an unsaved wheel slot follows Run. Sword and chop use the existing mode icons. Bow uses a drawn stand-in until the wheel art (#576).
 
 ## Sub-features
 
@@ -13,7 +13,7 @@ One button beside Run arms sword, bow or chop (#574). A press shorter than 200 m
 
 ## How to get to it (user POV)
 
-- Host or join. The round button just left of Run shows the armed tool (sword at the start). Tap it to swap back to the previous tool. Press and hold, then drag up or down, and release on sword, bow or chop. On a keyboard, hold Q or press 1, 2 or 3.
+- Host or join. The round button below Run and inward of Attack shows the armed tool (sword at the start). Tap it to swap back to the previous tool. Press and hold, then drag up or down, and release on sword, bow or chop. On a keyboard, hold Q or press 1, 2 or 3.
 
 ## Driving it with verify-flagoria helpers
 
@@ -28,4 +28,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the four headless tests add abo
 - A tap swaps only after some other tool has been armed. Until then sword stays armed.
 - Releasing a hold without leaving the button keeps the current tool. The wheel opened, and the highlight was already that tool.
 - The wheel node has no `_process`. A headless `--server` host does not create it, and `HudToolRow` skips its layout pass there.
-- Until the wheel slot is saved, the button follows Run. A saved slot stays where Customize HUD put it, and the half-moon still opens fully on screen.
+- Without a saved wheel slot, the button follows the stock cluster or the custom Run position. A saved slot stays where Customize HUD put it, and the half-moon still opens fully on screen.

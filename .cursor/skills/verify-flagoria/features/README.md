@@ -13,7 +13,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 
 ## Driving conventions
 
-- Every feature file starts with a `Drive:` line right under its title: `Drive: drives/<name>.gd` when an automated drive covers it, or `Drive: not player-facing` otherwise. Drives call `snapshot("<screen>")` for each promised screen.
+- Every feature file starts with a `Drive:` line right under its title: `Drive: drives/<name>.gd` when an automated drive covers it, or `Drive: not player-facing` otherwise. Primary drives call `snapshot("<screen>")` for each promised screen. Use `Also driven by:` to name supplemental scripts without changing CI selection.
 - Automated proof goes through `tools/verify.sh` via `bin/drive-verify.sh`.
 - Visual proof uses `xvfb-run` and `--rendering-driver opengl3` when a display is required.
 - Record skips with the unmet precondition; do not report a skipped path as verified through a different path.
@@ -24,13 +24,13 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - Keep verify logs and screenshots in `artifacts/`; cleanup must not delete them.
 - UI proof for Map Settings includes a PNG with the panel title visible.
 - Two-peer flows (dedicated server, mobs, health sync, cuts, points) are scripted headless; menu Host/Join has a two-launch drive; the two-GUI play checklist is still manual. See placeholders below.
-- After adding or renaming a test or feature file, run `./.cursor/skills/verify-flagoria/bin/check-map.sh` (no Godot, under 1 s). It fails when a feature file is not indexed here, a cited `test_<name>` does not exist, a test is cited by no feature file, or a feature file lacks a `Drive:` line (`Drive: drives/<name>.gd` pointing at an existing drive that calls `snapshot("…")`, or `Drive: not player-facing`). CI enforces the full map check in the required `tools/verify.sh` job only. On a gameplay pull request, `check-map.sh --gameplay --changed-files <paths>` locally also fails when a changed or added feature file lacks that line. Time cost: under 1 s.
+- After adding or renaming a test or feature file, run `./.cursor/skills/verify-flagoria/bin/check-map.sh` (no Godot, under 1 s). It fails when a feature is missing or duplicated here, a relative Markdown link is broken, a drive is absent from the feature pages, a cited `test_<name>` does not exist, a test is cited by no feature file, or a feature file lacks a `Drive:` line (`Drive: drives/<name>.gd` pointing at an existing drive that calls `snapshot("…")`, or `Drive: not player-facing`). CI enforces the full map check in the required `tools/verify.sh` job only. On a gameplay pull request, `check-map.sh --gameplay --changed-files <paths>` locally also fails when a changed or added feature file lacks that line. Time cost: under 1 s.
 
 ## Features
 
 - [Headless verify](./headless-verify.md) — `tools/verify.sh` file budget, load, parse, tests, biome, audio, generator and map render golden checks.
 - [Map characterization](./map-characterization.md) — pinned map-output / golden atlas check, `tools/cli.gd` map render and stats.
-- [Map Settings panel](./map-settings-panel.md) — map parameters before Host, rows from `@export_range` hints, number pad, five action buttons in two pairs plus Host (#217), Random specs (#335).
+- [Map Settings panel](./map-settings-panel.md) — map parameters before Host, five seeds and a noise selector, numeric and toggle rows, number pad, Generate building, and five pinned actions.
 - [Two-player Host/Join](./two-player-host-join.md) — multiplayer boot (headless peers scripted; two-launch menu drive; GUI checklist manual).
 - [Join failure returns to the main menu](./join-fail.md) — failed Join shows `Could not join …` on the main menu; host quit reloads to the menu (#348).
 - [Join an address with an optional port](./join-port.md) — hostname or IPv4, optional `:port`, default UDP 9786; bad addresses rejected on the menu (#434).
@@ -56,11 +56,11 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Object removals save](./object-removals-save.md) — picked flowers and destroyed stones in `world.object_changes` (#198).
 - [Player save](./player-save.md) — save and load position, health, wood, score and charted ground (#197).
 - [Map zoom](./map-zoom.md) — local pinch, wheel and Ctrl +/- zoom.
-- [Chopping trees and bushes](./chop-trees-and-bushes.md) — interact-mode chop, tree, pine and bush types, their hit and fall frames, per-type wood and regrow delay, stumps, regrowth (held while a player or mob stands on the stump, one mob-cell set per pass), wood HUD, type checklist.
-- [Chop trees (live drive)](./chop-trees.md) — chop tool, tap a tree in reach, two hits, tree hit frames and sounds, stump and wood once.
+- [Chopping trees and bushes](./chop-trees-and-bushes.md) — interact-mode chop, broadleaf trees, birch, pine and bushes, their hit and fall frames, per-type wood and regrow delay, stumps, regrowth (held while a player or mob stands on the stump, one mob-cell set per pass), wood HUD, type checklist.
+- [Chop trees (live drive)](./chop-trees.md) — chop tool, aimed attack-button sweeps, two hits per tree, stumps and wood.
 - [Cut sync (two-player)](./cut-sync.md) — host-decided tree and bush cuts, same stump on every peer, wood to the cutter, late joiners get the exact set, sent in parts of at most 500 cuts.
 - [Regrowth sync messages](./regrow-sync.md) — one `apply_regrow_cells` per regrowth tick, applied only when the host (peer 1) sent it.
-- [Tree sprouts](./tree-sprouts.md) — trees sprout on free cells where a biome is below its target tree share, host-decided, one `apply_sprout_cells` per pass, kept in saves and join lists.
+- [Tree sprouts](./tree-sprouts.md) — trees, including birch trunks, sprout where a biome is below its target tree share, host-decided, batched `apply_sprout_cells`, kept in saves and join lists.
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
 - [Explored map](./explored-map.md) — wood minimap (collapse, reopen, maximize) and the parchment full map; cells revealed within 10 cells of the hero.
@@ -82,7 +82,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
 - [Wall and tower junctions](./wall-junctions.md) — mask pieces, collar overlays on stone, tower ring with the team flag, far corner flips when a loop closes.
-- [Walls and bridges](./walls-and-bridges.md) — wall solver, plank bridges (live via build picker); free-form walls via [Free-form walls](./free-form-walls.md).
+- [Walls and bridges](./walls-and-bridges.md) — wall solver and plank bridges, live via the build picker.
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).
 - [Audio](./audio.md) — buses, music, combat, UI and mob SFX, footsteps, `audio_check` gate.
 - [Main menu](./main-menu.md) — menu theme, Host/Join, volume and mob spawn sliders, letter keyboard.
@@ -111,5 +111,5 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 
 ## Placeholders (not verified here yet)
 
-- **#45 automated two-player smoke** — headless movement is `test_two_player_smoke`: a dedicated server and two headless clients, one walking with an input action, the server and the other client seeing the move (see [Dedicated server](./dedicated-server.md) and [Two-player Host/Join](./two-player-host-join.md)). `./tools/verify.sh` runs that test. It does not click Host or Join. The two-launch drives `drives/two_player/two_player_host.gd` and `drives/two_player/two_player_client.gd` do click those buttons and are not in CI. Still missing: two GUI humans, a cut the other client sees, and a sword hit the other client sees. The Join-port drive is a separate one-client Join click (see [Join an address with an optional port](./join-port.md)).
-- **#48 CLI map renders** — partly covered: `tools/render_biomes.gd` renders a wide biome map (see [Biomes](./biomes.md)), and verify compares the `tools/cli.gd map render --seed 42` text map to `tests/golden/map_render_seed42.txt` (see [Headless verify](./headless-verify.md)). Still missing: golden image (PNG) diffs.
+- **#45 automated two-player smoke** — headless movement is `test_two_player_smoke`: a dedicated server and two headless clients, one walking with an input action, the server and the other client seeing the move (see Dedicated server and Two-player Host/Join). `./tools/verify.sh` runs that test. It does not click Host or Join. The two-launch drives `drives/two_player/two_player_host.gd` and `drives/two_player/two_player_client.gd` do click those buttons and are not in CI. Still missing: two GUI humans, a cut the other client sees, and a sword hit the other client sees. The Join-port drive is a separate one-client Join click (see Join an address with an optional port).
+- **#48 CLI map renders** — partly covered: `tools/render_biomes.gd` renders a wide biome map (see Biomes), and verify compares the `tools/cli.gd map render --seed 42` text map to `tests/golden/map_render_seed42.txt` (see Headless verify). Still missing: golden image (PNG) diffs.

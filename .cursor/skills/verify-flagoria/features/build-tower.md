@@ -2,8 +2,7 @@
 
 Drive: not player-facing
 
-Wooden palisade tower for 10 wood (#273). Interact mode shows a Tower icon
-next to Cut and Plank. The tool previews the 3×3 `tower_wood` footprint under
+Wooden palisade tower for 10 wood (#273). Tower sits in the inner Buildings ring. The tool previews the 3×3 `tower_wood` footprint under
 the finger: all green and "10 wood" when `commit` will place, all red with a
 refusal reason otherwise. On release, placement goes through
 `ConstructionPlacer` (`BuildCosts.TOWER` → `StructurePlacer` writing
@@ -17,23 +16,22 @@ as the auto entries the solver replaces. The picker icon comes from
 
 ## Sub-features
 
-- `build-tower-picker` Tower icon appears in interact mode with Cut / Plank,
+- `build-tower-picker` Tower appears in the Buildings picker,
   stays visible while multiplayer is on (#497), and switches `BuildPlacement.tool` to Tower.
 - `build-tower-preview` footprint cells and cost match what commit places and
-  charges; red when refused (wrong ground, occupied, short wood, multiplayer).
+  charges; red when refused (wrong ground, occupied, short wood).
   A clear anchor beyond reach reports `out of reach`, not `occupied` (#386).
 - `build-tower-cache` the placer lazily reads/parses `tower_wood.txt` once and
   reuses its read-only `Structure` for footprint, checks and placement across
   cell changes (#386). No per-cell file read, parse or name-regex compile;
   a new placer reads the file again. Other named structures are unchanged.
 - `build-tower-place` release spends 10 wood and writes `tower_wood` owned by
-  the local peer; ConstructionPlacer refuses water, overlaps and multiplayer.
+  the local peer; ConstructionPlacer refuses water and overlaps. A client requests placement from the host.
 
 ## How to get to it (user POV)
 
 1. Start a local game (Host alone or offline) with at least 10 wood.
-2. Select chop on the tool wheel to enter interact mode; the Cut / Plank / Tower picker
-   appears.
+2. Open Buildings to show the picker.
 3. Tap Tower, aim at clear land; the 3×3 footprint greens with "10 wood".
    Lift to place. The tower's flag takes the builder's colour.
 

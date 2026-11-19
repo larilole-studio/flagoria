@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+Also driven by: `drives/tower_capture.gd`.
+
 Flag towers change hands (#274). Every placement with a `team` flag (the castle's main tower, a guard post) is a tower. `TowerCapture` (`Scripts/mechanics/conquest/tower_capture.gd`, the `World/TowerCapture` node in `flagoria_main.tscn`) checks each tower every physics tick against a tower list refreshed on `ground_changed` and a player list gathered once per tick (#378). Living players count for their peer id. Mobs that are not dying count for the mobs (`StructurePlacer.OWNER_MOBS`, -1). Only those within `CAPTURE_RADIUS` (32 px, two cells) of the flag cell's centre take part. When progress reaches `CAPTURE_TIME` (5 s), `StructurePlacer.set_owner` hands the tower over: the placement's `owner` entry and its flag tile change, nothing else. Flags: host blue, other peers red, neutral grey (`OWNER_NEUTRAL`, 0), mobs purple; the neutral and mob flags are placeholders drawn by `tools/art/gen_flag_tiles.py`. A bar above the flag shows progress in the capturing side's colour. In multiplayer only the host advances progress and sends owner and progress to every peer, including a late joiner ([Conquest sync](./conquest-sync.md), #497). A client does not advance a tower on its own.
 
 ## Sub-features
@@ -11,7 +13,7 @@ Flag towers change hands (#274). Every placement with a `team` flag (the castle'
 - `capture-drains` with the area empty, progress drains at the capture rate down to 0. A different lone side first drains the old side's progress, then builds its own.
 - `capture-contested` two other sides inside (two peers, or a peer and a mob) freeze the progress.
 - `capture-dead-players` a dead player counts for no side: it neither captures nor defends.
-- `capture-mob` a mob standing in the area takes the tower for the mobs (purple flag); a dying mob does not count. Mobs do not seek towers yet (#280); they count when they wander or chase in.
+- `capture-mob` a mob standing in the area takes the tower for the mobs (purple flag); a dying mob does not count. Mobs count when they wander or chase in. With [raids](./mob-raid.md) enabled they can also target an owned tower.
 - `capture-owner-and-flag-only` a capture changes the placement's owner and its flag cell only (every other footprint cell on every layer, the name and the anchor stay), `predict_cell` gives the new flag, and the new owner survives `structures_for_sync` → `replace_structures`, the copy a joining peer gets.
 - `capture-off-in-multiplayer` a connecting client does not advance a tower; back offline it runs again. The host advances and syncs (`test_tower_capture_two_players`).
 
@@ -26,11 +28,12 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the eight tests in `tests/mecha
 - **Run.** `./.cursor/skills/verify-flagoria/bin/drive-verify.sh` and read `artifacts/verify.log`.
 - **Proof.** Headers `-- test_tower_capture_completes`, `-- test_tower_capture_defender_pauses`, `-- test_tower_capture_drains_when_empty`, `-- test_tower_capture_contested`, `-- test_tower_capture_dead_players`, `-- test_tower_capture_mob`, `-- test_tower_capture_changes_owner_and_flag_only`, `-- test_tower_capture_off_in_multiplayer` with no `FAIL` after them.
 - **Drive (live).** Host from the main menu, lure a mob into the castle courtyard and leave it there: the purple bar fills in 5 s and the flag turns purple. Step back in and the next capture needs your side to be the only one inside.
+- **Two-peer drive.** `bin/launch.sh drives/tower_capture.gd --display --seed 7`. A client probe places a tower and moves aside. The drive places the host in capture range, then advances the capture clock in fixed steps. Expect `tower-tool`, `host-captured` and `client-captured.png`. Follow-up #627: make the host walk into range using player movement input.
 - **Look.** `docs/screenshots/tower-capture.png` shows the four flag colours and two bars (red over the host's tower, purple over a neutral one).
 
 ## Gotchas
 
-- Placements, and so captured owners, are not saved to disk yet; a reloaded world places the castle again for the host (#42).
+- Placed structures store their owner in world saves (`Scripts/mechanics/structures/structure_saves.gd`), so captured flags retain their owner on reload.
 - A client does not run capture. The host does, and `receive_capture_state` updates every peer (#497).
 - The cached tower list refreshes on `worldMap.ground_changed` (structure place and map clear). Owner reads use `StructurePlacer.owner_of`, so a capture does not need a ground signal to see the new owner (#378).
 - A side is a player node's name as a peer id; player bodies whose name is not a number are ignored.
