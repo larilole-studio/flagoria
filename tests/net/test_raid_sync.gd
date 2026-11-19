@@ -85,49 +85,27 @@ func _raid_open(raids_on: bool) -> Dictionary:
 	if port == 0:
 		printerr("FAIL raid sync found no free UDP port")
 		return {}
-	var dir := OS.get_user_data_dir().path_join("raid_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var dir := make_probe_dir("raid_%d_%d" % [OS.get_process_id(), port])
 	var outs: Array[String] = []
-	var pids: Array[int] = []
+	var probes: Array[Dictionary] = []
 	var flag := "on" if raids_on else "off"
 	var launch := func() -> void:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args: Array = ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", PROBE, "--", "--port=%d" % port, "--out=" + outs[-1],
+		var args: Array = ["--port=%d" % port,
 				"--role=join", "--seed=%d" % SEED, "--raids=" + flag]
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		if i >= outs.size() or not FileAccess.file_exists(outs[i]):
-			return {}
-		var data = JSON.parse_string(FileAccess.get_file_as_string(outs[i]))
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+		probes.append(spawn_probe(PROBE, outs[-1], args))
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 	outs.append(dir.path_join("p0.json"))
-	var host_args: Array = ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--script", PROBE, "--", "--port=%d" % port, "--out=" + outs[0],
+	var host_args: Array = ["--port=%d" % port,
 			"--role=host", "--seed=%d" % SEED, "--raids=" + flag]
-	pids.append(OS.create_process(OS.get_executable_path(), host_args))
+	probes.append(spawn_probe(PROBE, outs[0], host_args))
 	launch.call()
-	return {"dir": dir, "outs": outs, "pids": pids, "launch": launch, "read": read, "wait_for": wait_for}
+	return {"dir": dir, "outs": outs, "probes": probes, "launch": launch, "read": read, "wait_for": wait_for}
 
 
 func _raid_close(session: Dictionary) -> void:
 	if session.is_empty():
 		return
-	for out in session["outs"]:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	var wait: Callable = session["wait_for"]
-	await wait.call(func() -> bool:
-		for pid in session["pids"]:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in session["pids"]:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(session["probes"], 10000)
 	_remove_dir(session["dir"])

@@ -13,27 +13,17 @@ func _test_rejoin_sees_every_death() -> int:
 	if port == 0:
 		printerr("FAIL rejoin_sees_every_death found no free UDP port")
 		return 1
-	var dir := OS.get_user_data_dir().path_join("rejoin_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var pids: Array[int] = []
+	var dir := make_probe_dir("rejoin_%d_%d" % [OS.get_process_id(), port])
+	var probes: Array[Dictionary] = []
 	var outs: Array[String] = []
 	var start := func(extra: Array) -> void:
 		var out := dir.path_join("p%d.json" % outs.size())
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", "res://tests/late_join_probe.gd", "--", "--port=%d" % port, "--out=" + out]
+		var args: Array = ["--port=%d" % port]
 		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
+		probes.append(spawn_probe("res://tests/late_join_probe.gd", out, args))
 		outs.append(out)
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i])
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 	var joined := func(i: int) -> bool:
 		var s: Dictionary = read.call(i)
 		return s.get("origin") != null and s.get("players", {}).has(s.get("id")) \
@@ -51,8 +41,8 @@ func _test_rejoin_sees_every_death() -> int:
 			fail += 1
 	var old_id: String = read.call(1).get("id", "") if fail == 0 else ""
 	if fail == 0:
-		OS.kill(pids[1])
-		pids[1] = 0
+		OS.kill(probes[1]["pid"])
+		probes[1]["pid"] = 0
 		start.call([])
 		if not await wait_for.call(joined.bind(2), 30000):
 			printerr("FAIL rejoin_sees_every_death the restarted joiner did not join: %s" % read.call(2))
@@ -80,15 +70,6 @@ func _test_rejoin_sees_every_death() -> int:
 			print("PASS test_rejoin_sees_every_death (3 deaths and respawns; old peer %s)"
 					% ("still held at the first" if stale else "already gone"))
 
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if pid > 0 and OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if pid > 0 and OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(probes, 10000)
 	_remove_dir(dir)
 	return fail

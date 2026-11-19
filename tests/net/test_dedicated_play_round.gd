@@ -68,27 +68,16 @@ func _test_dedicated_play_round() -> int:
 	var mob_name := "mob_%d" % mob_i
 	var yield_wood: int = InteractableCatalog.by_id(plant_id).amount_of(Inventory.WOOD)
 	var cell_key := WorldSave.cell_key(plant)
-	var dir := OS.get_user_data_dir().path_join("dedicated_play_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var dir := make_probe_dir("dedicated_play_%d_%d" % [OS.get_process_id(), port])
 	var outs: Array[String] = []
-	var pids: Array[int] = []
+	var probes: Array[Dictionary] = []
 	var launch := func(extra: Array) -> void:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", "res://tests/dedicated_play_probe.gd", "--",
-				"--port=%d" % port, "--out=" + outs[-1], "--cells=" + cell_key, "--mob=" + mob_name]
+		var args: Array = ["--port=%d" % port, "--cells=" + cell_key, "--mob=" + mob_name]
 		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i]) if FileAccess.file_exists(outs[i]) else ""
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+		probes.append(spawn_probe("res://tests/dedicated_play_probe.gd", outs[-1], args))
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 	var fail := 0
 	launch.call(["--dedicated", "--rate=%s" % rate, "--save=" + ProjectSettings.globalize_path(saved["path"])])
 	if not await wait_for.call(func() -> bool: return read.call(0).get("ready", false), 30000):
@@ -167,16 +156,7 @@ func _test_dedicated_play_round() -> int:
 			if not errors.is_empty():
 				printerr("FAIL dedicated_play_round peer %d logged errors: %s" % [i, errors])
 				fail = 1
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(probes, 10000)
 	_remove_dir(dir)
 	DirAccess.remove_absolute(saved["path"])
 	if fail == 0:

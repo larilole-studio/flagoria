@@ -1,77 +1,35 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a tower sync session (#497). Modes place, capture, watch, drive.
 ## Host: --host --save --port --out. Client: --port --out --mode [--shot].
 
 
-var _errors := _ErrorLog.new()
 var _refused_wood := -1
 var _aside := false
 var _shot := false
 var _place_error := ""
 
 
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
-
-
 func _run() -> void:
-	var port := 0
-	var save := ""
-	var out := ""
-	var host := false
-	var mode := "watch"
-	var shot := ""
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--save="):
-			save = arg.trim_prefix("--save=")
-		elif arg.begins_with("--out="):
-			out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--mode="):
-			mode = arg.trim_prefix("--mode=")
-		elif arg.begins_with("--shot="):
-			shot = arg.trim_prefix("--shot=")
-		elif arg == "--host":
-			host = true
-	if host:
-		HostListen.arm_host(out)
-	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	var save := option("--save")
+	var host := has_option("--host")
+	var mode := option("--mode", "watch")
+	var shot := option("--shot")
+	if host and save == "":
 		printerr("tower_sync_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
+	var main = await open_game(host)
+	if main == null:
+		printerr("tower_sync_probe: needs --port, --out, --save with --host, and the main scene")
+		quit(1)
+		return
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		var map_gen = root.get_node("MapGen")
-		var error: String = map_gen.load_map_inputs(save)
-		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
+		var error := host_saved_game(main, save)
+		if error != "":
 			printerr("tower_sync_probe: could not host %s: %s" % [save, error])
 			quit(1)
 			return
-		main.add_player(1)
 		if mode == "place" or mode == "capture":
 			main.get_node("World/TowerCapture").set_physics_process(false)
 			# Place mode awards flags once, with land score off so the total
@@ -83,17 +41,16 @@ func _run() -> void:
 			for node in main.get_node("World/Mobs").get_children():
 				if node is Mob:
 					node.global_position = Vector2(100000, 100000)
-		HostListen.mark_host_listening(out)
+		host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, out)
+		await join_game(main)
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var flags_ticked := false
 	var capture_done := false
 	var capture_more_done := false
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
+	while game_active(main, deadline):
 		if main.multiplayer == null:
 			break
 		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
@@ -108,27 +65,22 @@ func _run() -> void:
 			flags_ticked = true
 			main.get_node("FlagsHeldPoints").tick()
 		if host and mode == "capture" and ready:
-			if not capture_done and FileAccess.file_exists(out + ".capture"):
+			if not capture_done and FileAccess.file_exists(probe_out + ".capture"):
 				capture_done = true
-				_scripted_ticks(main, world, FileAccess.get_file_as_string(out + ".capture"))
-			if capture_done and not capture_more_done and FileAccess.file_exists(out + ".capture_more"):
+				_scripted_ticks(main, world, FileAccess.get_file_as_string(probe_out + ".capture"))
+			if capture_done and not capture_more_done and FileAccess.file_exists(probe_out + ".capture_more"):
 				capture_more_done = true
-				_scripted_ticks(main, world, FileAccess.get_file_as_string(out + ".capture_more"))
+				_scripted_ticks(main, world, FileAccess.get_file_as_string(probe_out + ".capture_more"))
 		if not host and mode == "drive" and phase == "done" and not _shot and _tower_owner(world) == 1:
 			if shot != "" and DisplayServer.get_name() != "headless":
 				await RenderingServer.frame_post_draw
 				_shot = root.get_texture().get_image().save_png(shot) == OK
 			else:
 				_shot = true
-		if Time.get_ticks_msec() >= next_write:
-			_write(out, main, world, me)
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
+			_write(main, world, me)
 		await process_frame
-	var fin: Node2D = null
-	if main.multiplayer != null:
-		fin = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-	_write(out, main, world, fin)
-	quit(0)
+	finish(main, func() -> void: _write(main, world, local_player(main)))
 
 
 func _peer_id(main) -> String:
@@ -255,8 +207,8 @@ func _remote_tower(world) -> bool:
 	return owner > 1
 
 
-func _write(out: String, main, world, me: Node2D) -> void:
-	if out == "":
+func _write(main, world, me: Node2D) -> void:
+	if probe_out == "":
 		return
 	var placements := []
 	var capture := []
@@ -284,10 +236,7 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		for peer_id in score_ids:
 			points[str(peer_id)] = scores.total_of(int(peer_id))
 	var inventory: Inventory = main.get_node("Inventory") if main != null else null
-	var file := FileAccess.open(out + ".tmp", FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify({
+	write_result({
 		"id": _peer_id(main),
 		"ready": main != null and main.world_params != null and me != null,
 		"wood": inventory.count_of(Inventory.WOOD) if inventory != null else -1,
@@ -299,6 +248,4 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		"capture": capture,
 		"points": points,
 		"errors": _errors.snapshot(),
-	}))
-	file.close()
-	DirAccess.rename_absolute(out + ".tmp", out)
+	})

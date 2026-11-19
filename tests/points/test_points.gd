@@ -607,27 +607,14 @@ func _test_points_kill_late_join() -> int:
 	if server_mobs.has("mob_0"):
 		printerr("FAIL points_kill_late_join mob_0 still on the server after it died")
 		fail += 1
-	var dir := OS.get_user_data_dir().path_join("kill_join_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var pids: Array[int] = []
+	var dir := make_probe_dir("kill_join_%d_%d" % [OS.get_process_id(), port])
+	var probes: Array[Dictionary] = []
 	var start_joiner := func(i: int) -> String:
 		var out := dir.path_join("p%d.json" % i)
-		pids.append(OS.create_process(OS.get_executable_path(), [
-			"--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--script", "res://tests/late_join_probe.gd", "--",
-			"--port=%d" % port, "--out=" + out,
-		]))
+		probes.append(spawn_probe("res://tests/late_join_probe.gd", out, ["--port=%d" % port]))
 		return out
-	var read := func(path: String) -> Dictionary:
-		var text := FileAccess.get_file_as_string(path)
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+	var read := read_probe_result
+	var wait := wait_until
 	var joined := func(path: String) -> bool:
 		var s: Dictionary = read.call(path)
 		return s.get("origin") != null and s.get("players", {}).has(s.get("id"))
@@ -688,17 +675,7 @@ func _test_points_kill_late_join() -> int:
 					printerr("FAIL points_kill_late_join peers did not see the new mob_0 once: first %s second %s"
 							% [read.call(first).get("host_points"), read.call(second).get("host_points")])
 					fail += 1
-	for out in [dir.path_join("p1.json"), dir.path_join("p2.json")]:
-		if FileAccess.file_exists(out):
-			FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 5000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(probes, 5000)
 	_close_scene(scene)
 	_remove_dir(dir)
 	if fail == 0:
