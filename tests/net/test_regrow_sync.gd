@@ -2,7 +2,7 @@ extends "res://tests/helpers/test_helpers.gd"
 ## Regrowth of cut trees and bushes during two-player play (#298).
 
 const PROBE := "res://tests/cut_sync_probe.gd"
-const HOST_REGROW := 6.0  ## seconds; the host's delay is the one that counts
+const HOST_REGROW := 600.0  ## seconds; holds the stumps until the test releases them
 const CLIENT_REGROW := 1.0  ## a client's own, shorter delay, which it must not use
 const SAME_TIME_MS := 500  ## how far apart two peers may show one regrowth
 
@@ -12,8 +12,8 @@ func _test_regrow_sync_two_players() -> int:
 	## on seed 7 each cut a plant near the spawn: the host a tree, the client
 	## a bush. The client's own regrow delay is shorter than the host's, and
 	## it also sends the host a forged apply_regrow_cells: the stumps stay on
-	## both until the host's delay is up. A second client joining before that gets
-	## the stumps with the host's ages. Then the host regrows both, and every
+	## both while a second client joins and receives the stumps with the host's
+	## ages. The test then shortens the host's delay to regrow both, and every
 	## peer shows the same plant back within SAME_TIME_MS of the host. A third
 	## client joining after that sees no cuts and the same plants.
 	print("-- test_regrow_sync_two_players")
@@ -128,16 +128,17 @@ func _test_regrow_sync_two_players() -> int:
 							printerr("FAIL regrow_sync_two_players: late joiner ages %s, host %s" % [joiner_ages, host_ages])
 							fail += 1
 							break
-				if not await wait_for.call(func() -> bool: return regrown_like_host.call(1) and regrown_like_host.call(2),
-						int(HOST_REGROW * 1000) + 10000):
-					printerr("FAIL regrow_sync_two_players: after the host's delay, host %s, client %s, late joiner %s"
+				FileAccess.open(outs[0] + ".regrow", FileAccess.WRITE).store_string(str(CLIENT_REGROW))
+				if not await wait_for.call(func() -> bool: return regrown_like_host.call(1) and regrown_like_host.call(2), 10000):
+					printerr("FAIL regrow_sync_two_players: after releasing regrowth, host %s, client %s, late joiner %s"
 							% [read.call(0), read.call(1), read.call(2)])
 					fail += 1
 				else:
-					await wait_for.call(func() -> bool: return false, 300)  # every peer wrote its last regrowth
+					await wait_for.call(func() -> bool: return range(3).all(func(i: int) -> bool:  # every peer stamped both
+						return keys.all(func(k: String) -> bool: return int(read.call(i).get("regrown", {}).get(k, 0)) != 0)), 5000)
 					var spread := {}
 					for key in keys:
-						var times: Array = range(3).map(func(i: int) -> int: return int(read.call(i)["regrown"].get(key, 0)))
+						var times: Array = range(3).map(func(i: int) -> int: return int(read.call(i).get("regrown", {}).get(key, 0)))
 						spread[key] = times.max() - times.min()
 						if times.min() == 0 or spread[key] > SAME_TIME_MS:
 							printerr("FAIL regrow_sync_two_players: %s regrew at %s (host, client, late joiner)" % [key, times])
