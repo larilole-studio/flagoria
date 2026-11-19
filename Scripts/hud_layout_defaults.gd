@@ -3,7 +3,6 @@ extends RefCounted
 ## Save file I/O, reset-to-touch-defaults, and layout capture for HudLayout.
 
 const SECTION := "hud"
-const SAVE_VERSION := 1
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
@@ -13,7 +12,7 @@ static func load_from_disk(hl: Node) -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(hl.save_path) != OK:
 		return
-	if int(cfg.get_value(SECTION, "version", 0)) != SAVE_VERSION:
+	if int(cfg.get_value(SECTION, "version", 0)) != hl.SAVE_VERSION:
 		return
 	for id in hl.IDS:
 		var xv: Variant = _finite(cfg.get_value(SECTION, id + "_x"))
@@ -34,7 +33,7 @@ static func save_to_disk(hl: Node) -> void:
 	if hl._editing:
 		hl._saved = hl._draft.duplicate(true)
 	var cfg := ConfigFile.new()
-	cfg.set_value(SECTION, "version", SAVE_VERSION)
+	cfg.set_value(SECTION, "version", hl.SAVE_VERSION)
 	for id in hl.IDS:
 		if hl._saved.has(id):
 			var e: Dictionary = hl._saved[id]

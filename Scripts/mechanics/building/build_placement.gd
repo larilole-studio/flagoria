@@ -319,6 +319,7 @@ func _on_buildings_toggled(on: bool) -> void:
 	if HudLayoutVisual.blocks_hud_actions():
 		_buildings.set_pressed_no_signal(false); return
 	_list_open = on
+	_refresh_rotate_visible()
 	_refresh_picker_visible()
 
 
@@ -471,7 +472,7 @@ func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory:
 func _refresh_rotate_visible() -> void:
 	if _interaction == null:
 		return
-	var show := _interaction.mode == Interaction.Mode.INTERACT and is_footprint_tool(tool) \
+	var show := not _list_open and _interaction.mode == Interaction.Mode.INTERACT and is_footprint_tool(tool) \
 			and not cells.is_empty()
 	_rotate.set_visible(show)
 

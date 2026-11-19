@@ -308,7 +308,7 @@ func _test_hud_layout_legacy_mode() -> int:
 	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
 	await process_frame
 	var cfg := ConfigFile.new()
-	cfg.set_value("hud", "version", 1)
+	cfg.set_value("hud", "version", _hud().SAVE_VERSION)
 	cfg.set_value("hud", "attack_x", 0.62)
 	cfg.set_value("hud", "attack_y", 0.35)
 	cfg.set_value("hud", "attack_s", 1.0)

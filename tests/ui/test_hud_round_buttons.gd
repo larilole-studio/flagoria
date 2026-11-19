@@ -5,7 +5,7 @@ extends "res://tests/helpers/test_helpers.gd"
 func _test_hud_round_buttons() -> int:
 	## A hosted scene starts with the wood panel closed and the build list
 	## collapsed. Buildings and Map are a top-right arc of round buttons.
-	## Buildings opens a column; a pick selects that tool and collapses it.
+	## Buildings opens columns to the left; a pick selects that tool and collapses it.
 	## Map toggles the panel. Chop keeps the picked build tool. Run sits
 	## beside the attack button and is smaller. The same arc holds at
 	## 1280x720 and 2400x1080. Time cost: about 0.8 s in tools/verify.sh.
@@ -173,20 +173,20 @@ func _check_cluster(scene: Node, label: String) -> int:
 
 func _check_column(buildings: Button, buttons: Array[Button]) -> int:
 	var fail := 0
-	var previous := buildings.get_global_rect().end.y - 0.5
-	var left := buildings.get_global_rect().position.x
+	var previous := buildings.get_global_rect()
 	for button in buttons:
 		var rect := button.get_global_rect()
-		if not _is_round(button) or rect.position.y < previous \
-				or absf(rect.position.x - left) > 1.0:
-			printerr("FAIL hud_round_buttons: %s column %s under %s"
+		if not _is_round(button) or rect.position.x > previous.position.x \
+				or rect.end.x > buildings.get_global_rect().position.x \
+				or (rect.position.x == previous.position.x and rect.position.y < previous.end.y):
+			printerr("FAIL hud_round_buttons: %s column %s beside %s"
 					% [button.name, rect, buildings.get_global_rect()])
 			fail += 1
 		for other in buttons:
 			if other != button and rect.intersects(other.get_global_rect()):
 				printerr("FAIL hud_round_buttons: column %s overlaps %s" % [button.name, other.name])
 				fail += 1
-		previous = rect.end.y + 1.0
+		previous = rect
 	return fail
 
 

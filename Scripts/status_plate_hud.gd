@@ -89,7 +89,7 @@ func _fit_pixel_scale() -> void:
 	var stretch := get_viewport().get_final_transform().get_scale().x
 	if stretch <= 0.0:
 		return
-	var k := maxf(roundf(stretch), 1.0) / stretch
+	var k := roundf(stretch) / stretch if stretch >= 1.0 else 1.0
 	scale = Vector2(k, k)
 	position = PLATE_POS * k
 	reflow()

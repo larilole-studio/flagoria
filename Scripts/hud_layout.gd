@@ -5,10 +5,8 @@ extends Node
 ## Each control stores a normalized top-left (x, y in 0..1) and scale s
 ## (1.0 = today's size). Positions survive viewport resize and rotation.
 
-const SECTION := "hud"
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const SIDE := 12.0
-const GAP := 4.0
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
@@ -126,7 +124,7 @@ func entry_write(id: String, entry: Dictionary, layer: CanvasLayer) -> bool:
 	else:
 		_saved[id] = _entry_from_rect(id, rect, layer, float(entry.get("s", 1.0)))
 	apply_control(id, layer)
-	_place_build_column(layer)
+	_place_popups(layer)
 	return true
 
 
@@ -176,11 +174,13 @@ func apply(layer: CanvasLayer) -> void:
 	for id in IDS:
 		if src.has(id):
 			apply_control(id, layer)
-	_place_build_column(layer)
-	# Minimap panel still hugs the arc.
+	_place_popups(layer)
+
+
+func _place_popups(layer: CanvasLayer) -> void:
 	var row := layer.get_node_or_null("HudToolRow") as HudToolRow
 	if row != null:
-		row.place_panel_only(layer)
+		row.place_custom_popups(layer)
 
 
 func apply_control(id: String, layer: CanvasLayer) -> void:
@@ -331,37 +331,6 @@ func _entry_from_rect(id: String, rect: Rect2, layer: CanvasLayer, s: float) -> 
 	}
 
 
-func _place_build_column(layer: CanvasLayer) -> void:
-	var buildings := layer.get_node_or_null("BuildingsButton") as Control
-	var picker := layer.get_node_or_null("BuildPicker") as Control
-	if buildings == null or picker == null:
-		return
-	_pin(buildings)
-	picker.position = Vector2.ZERO
-	picker.z_index = 2
-	var view := layer.get_viewport().get_visible_rect().size
-	var bsize := _control_size(buildings)
-	var below := buildings.position.y + bsize.y + GAP
-	var column_h := 0.0
-	for child in picker.get_children():
-		var button := child as Control
-		if button == null or button.is_queued_for_deletion() or not button.visible:
-			continue
-		column_h += _control_size(button).y + GAP
-	var place_below := below + column_h <= view.y - SIDE
-	var x := buildings.position.x
-	var y := below if place_below else buildings.position.y - GAP - column_h
-	for child in picker.get_children():
-		var button := child as Control
-		if button == null or button.is_queued_for_deletion() or not button.visible:
-			continue
-		_pin(button)
-		var size := _control_size(button)
-		button.position = Vector2(roundf(x), roundf(y))
-		button.z_index = 3
-		y += size.y + GAP if place_below else -(size.y + GAP)
-
-
 func _apply_joystick(stick: Node2D, pos: Vector2, s: float) -> void:
 	stick.scale = Vector2.ONE * s
 	var reach: float = stick.start_reach()
@@ -397,18 +366,6 @@ func _apply_round(button: Button, pos: Vector2, s: float, _is_run := false) -> v
 	else:
 		RoundHudStyle.apply(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	button.position = pos
-
-
-static func _pin(control: Control) -> void:
-	if control.has_meta(&"hud_pinned"):
-		return
-	control.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	control.set_meta(&"hud_pinned", true)
-
-
-static func _control_size(control: Control) -> Vector2:
-	var need := control.get_combined_minimum_size()
-	return Vector2(maxf(control.size.x, need.x), maxf(control.size.y, need.y))
 
 
 static func _sanitize_entry(entry: Dictionary) -> Dictionary:
