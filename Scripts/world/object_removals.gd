@@ -149,7 +149,7 @@ func replace(changes: Dictionary) -> int:
 
 func _redraw(cell: Vector2i) -> void:
 	## Put generated decor back on a drawn cell whose removal was dropped.
-	_map._predict_cache.erase(cell)
+	_map.invalidate_painted_cell(cell)
 	if not _map.is_drawn(cell):
 		return
 	_map.erase_cell(1, cell)

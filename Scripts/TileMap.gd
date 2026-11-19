@@ -140,6 +140,11 @@ func apply_map_params(p: MapGenParams) -> void:
 	ground_changed.emit(Rect2i())
 
 
+func invalidate_painted_cell(cell: Vector2i) -> void:
+	_predict_cache.erase(cell)
+	_sky.invalidate_cell(cell)
+
+
 func _configure_noise(noise: FastNoiseLite, seed_value: int, frequency: float, p: MapGenParams) -> void:
 	noise.seed = seed_value
 	noise.noise_type = p.noise_type
@@ -164,22 +169,8 @@ func _process(delta):
 			generate_chunk(curr_player.position)
 
 
-func generate_chunk(position):
-	var tile_pos = local_to_map(position)
-	_sky.paint_ground(self, tile_pos)
-	for x in range(chunk_width):
-		for y in range(chunk_height):
-			var new_x = tile_pos.x - chunk_width / 2 + x
-			var new_y = tile_pos.y - chunk_height / 2 + y
-			var moist = moisture.get_noise_2d(new_x, new_y)
-			var temp = temperature.get_noise_2d(new_x, new_y)
-			var cell := Vector2i(new_x, new_y)
-			var b := biome_at(cell)
-			var alt := cell_altitude(cell, b)
-			var chance = items_chance.get_noise_2d(new_x, new_y)
-			set_tile_type_z1(cell, alt, moist, temp, chance, b)
-	var corner := Vector2i(tile_pos.x - chunk_width / 2, tile_pos.y - chunk_height / 2)
-	ground_changed.emit(Rect2i(corner, Vector2i(chunk_width, chunk_height)))
+func generate_chunk(position) -> void:
+	_sky.paint_window(self, local_to_map(position), Vector2i(chunk_width, chunk_height))
 
 
 func cell_altitude(cell: Vector2i, biome_id: int) -> float:

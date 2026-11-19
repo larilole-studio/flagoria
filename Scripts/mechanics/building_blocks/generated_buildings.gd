@@ -32,6 +32,7 @@ const STYLE_TILES: Array = [
 
 var _records: Array[Dictionary] = []
 var _grids := {}
+var _door_steps: Dictionary[Vector2i, bool] = {}
 var _pieces := {}
 var _repainting := false
 
@@ -239,12 +240,6 @@ func receive_generated_buildings(records: Array) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	_repainting = true
-	for cell in _pieces.keys():
-		var map := _map()
-		if map != null:
-			map.erase_cell(LAYER, cell)
-	_pieces.clear()
-	_grids.clear()
 	_records.clear()
 	for record in records:
 		if record is Dictionary:
@@ -273,9 +268,13 @@ func _rebuild_from_records() -> void:
 func _rebuild_paint() -> void:
 	var map := _map()
 	ensure_layer(map)
-	for cell in _pieces.keys():
+	for cell in _pieces:
 		map.erase_cell(LAYER, cell)
+		map.invalidate_painted_cell(cell)
+	for cell in _door_steps:
+		map.invalidate_painted_cell(cell)
 	_pieces.clear()
+	_door_steps.clear()
 	for record in _records:
 		_paint_record(record)
 
@@ -343,6 +342,7 @@ func _clear_door_exit(map: TileMap, door: Vector2i, x: int, y: int, width: int, 
 		var cell := door + step
 		if _pieces.has(cell):
 			continue
+		_door_steps[cell] = true
 		map.erase_cell(1, cell)
 		map.erase_cell(map.GROUND_DECOR_LAYER, cell)
 		if not map.is_walkable_land(cell):
