@@ -19,7 +19,6 @@
 3 tests/mechanics/building_blocks/test_generated_building.gd
 7 tests/mechanics/conquest/test_cities.gd
 3 tests/mechanics/conquest/test_flags_held_points.gd
-7 tests/mechanics/conquest/test_land_score.gd
 3 tests/mechanics/conquest/test_tower_capture.gd
 1 tests/mechanics/day_night/test_day_night.gd
 4 tests/mechanics/defense/test_tower_guns.gd
@@ -31,7 +30,6 @@
 6 tests/mechanics/trees/test_tree_chop.gd
 13 tests/mechanics/trees/test_tree_frames.gd
 1 tests/mechanics/trees/test_tree_sounds.gd
-4 tests/mechanics/trees/test_tree_sprouts.gd
 19 tests/mechanics/walls/test_wall_health.gd
 2 tests/mobs/test_mob_contact.gd
 9 tests/mobs/test_mob_sfx.gd

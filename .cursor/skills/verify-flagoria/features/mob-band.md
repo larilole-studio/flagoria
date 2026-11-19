@@ -13,7 +13,7 @@ The host keeps spawning and removing mobs around living players. The opening wav
 Preconditions: `doctor.sh` exits `0`. Time cost: `test_mob_band_plan` is about 0.5 s in `tools/verify.sh`. `test_mob_band_two_players` is about 5 s per run locally (one host, one client, then a late joiner; budget 15 s; the netcode stress job runs it at the job's tier). The live drive is about 5 s under xvfb.
 
 - **Drive (live).** `bin/launch.sh drives/mob_band.gd --seed 11 --display` (the drive's `## launch: --seed 11` line). Steps `near`, `ring`. `snapshot("band-near-hero")` once the ground under the hero is drawn, then `snapshot("band-mob-in-ring")` when a mob is on screen and between 13 and 40 cells from the hero.
-- **Proof.** `-- test_mob_band_plan` and `-- test_mob_band_two_players` appear in the verify log, no `FAIL` line follows either, and the run ends with `All tests passed.` and `Verification passed.` The plan test uses seed 11 and does not open a peer. The two-player test is the stress scenario.
+- **Proof.** `-- test_mob_band_plan` and `-- test_mob_band_two_players` appear in the verify log, no `FAIL` line follows either, and the run ends with `All tests passed.` and `Verification passed.` The unit test checks fixed seed 11 waves for one and two players, as well as despawn and population caps. The two-player test is the stress scenario.
 
 ## Rules
 
