@@ -1,95 +1,55 @@
 class_name StatusPlateHud
-extends PanelContainer
-## Nine-patch status row: hearts, points, wood (#509, Direction C).
+extends Panel
+## Floating top-left row for health, points and resources.
 
-const PLATE_POS := Vector2(12, 12)
-const PLATE_W := 100.0
-const PLATE_H := 24.0
-const HEART_SLOT := Vector2(6, 7)
-const POINTS_X := 39.0
-const WOOD_GAP := 6.0
-const FONT_SIZE := 8
-const FONT := preload("res://art/Sprites/NinjaAdventure/HUD/Font/NormalFont.ttf")
-const FONT_COLOR := Color(0.91, 0.89, 0.89)
+const ROW_POS := Vector2(12, 12)
+const ROW_HEIGHT := 24.0
+const GAP := 6.0
+const ICON_GAP := 2.0
 
 var _hearts: Control
 var _score: Label
 var _wood: ResourceHud
-var _mounted := false
+var _star: TextureRect
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_theme_stylebox_override("panel", RoundHudStyle.status_plate_style())
-	custom_minimum_size = Vector2(PLATE_W, PLATE_H)
-	size = custom_minimum_size
-	position = PLATE_POS
+	texture_filter = RoundHudStyle.FILTER
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	position = ROW_POS
 	z_index = 1
-	clip_contents = true
-	get_viewport().size_changed.connect(_fit_pixel_scale)
-	_fit_pixel_scale()
+	_star = TextureRect.new()
+	_star.texture = RoundHudStyle.texture("star")
+	_star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_star)
 
 
 func bind_nodes(hearts: Control, score: Label, wood: ResourceHud) -> void:
 	_hearts = hearts
 	_score = score
 	_wood = wood
-	if not _mounted:
-		_mount(hearts)
-		_mount(score)
-		_mount(wood)
-		_mounted = true
+	for node in [_hearts, _score, _wood]:
+		if node.get_parent() != self:
+			node.reparent(self, false)
+		node.scale = Vector2.ONE
+		node.show()
+	if not _hearts.resized.is_connected(reflow):
+		_hearts.resized.connect(reflow)
 	reflow()
 
 
 func reflow() -> void:
-	_layout_children()
-
-
-func _mount(node: Control) -> void:
-	if node.get_parent() == self:
+	if _hearts == null:
 		return
-	node.get_parent().remove_child(node)
-	add_child(node)
-	node.z_index = 1
-	node.show()
-
-
-func _layout_children() -> void:
-	if _hearts == null or _score == null or _wood == null:
-		return
-	_hearts.position = HEART_SLOT
-	_hearts.scale = Vector2.ONE
-	_hearts.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var pts_y := (PLATE_H - FONT_SIZE) * 0.5
-	_score.position = Vector2(POINTS_X, pts_y)
-	_score.scale = Vector2.ONE
-	_score.add_theme_font_size_override("font_size", FONT_SIZE)
-	_score.add_theme_font_override("font", FONT)
-	_score.add_theme_color_override("font_color", FONT_COLOR)
-	_score.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_score.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_score.reset_size()
 	_wood.reset_size()
-	var wood_x := POINTS_X + _text_w(_score) + WOOD_GAP
-	_wood.position = Vector2(wood_x, pts_y)
-	_wood.scale = Vector2.ONE
-	_wood.label.add_theme_font_size_override("font_size", FONT_SIZE)
-	_wood.label.add_theme_font_override("font", FONT)
-	_wood.label.add_theme_color_override("font_color", FONT_COLOR)
-	_wood.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_center(_hearts, 0)
+	_center(_star, _hearts.size.x + GAP)
+	_center(_score, _star.position.x + _star.size.x + ICON_GAP)
+	_center(_wood, _score.position.x + _score.size.x + GAP)
+	size = Vector2(_wood.position.x + _wood.size.x, ROW_HEIGHT)
 
 
-func _text_w(label: Label) -> float:
-	var font: Font = label.get_theme_font("font")
-	return font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x
-
-
-func _fit_pixel_scale() -> void:
-	var stretch := get_viewport().get_final_transform().get_scale().x
-	if stretch <= 0.0:
-		return
-	var k := roundf(stretch) / stretch if stretch >= 1.0 else 1.0
-	scale = Vector2(k, k)
-	position = PLATE_POS * k
-	reflow()
+func _center(node: Control, x: float) -> void:
+	node.position = Vector2(x, (ROW_HEIGHT - node.size.y) * 0.5)

@@ -5,3 +5,6 @@
 # Keep entries generic (role or noreply addresses, generated files). Adding a
 # personal address here would itself publish it.
 cursoragent@cursor.com
+
+# third-party font licence (art/ui/fonts/OFL.txt)
+juan@remolacha.biz

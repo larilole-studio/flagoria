@@ -19,20 +19,19 @@ const PLAYER_CLEARANCE := 70.0
 const LAYOUT := {
 	"menu": Vector2(444, 12),
 	"map": Vector2(404, 12),
-	"scores": Vector2(116, 12),
 	"joystick": Vector2(77, 201),
-}
-
-const HIT_INSET := {
-	"menu": Vector2(4, 4),
-	"map": Vector2(4, 4),
-	"scores": Vector2(4, 4),
 }
 
 var _picker_dimmer: ColorRect
 
 
 func _ready() -> void:
+	var stick := get_parent().get_node_or_null("player_joystick") as Node2D
+	var attack := get_parent().get_node_or_null("TouchScreenButton") as TouchScreenButton
+	if stick != null:
+		RoundHudStyle.apply_joystick(stick)
+	if attack != null:
+		RoundHudStyle.apply_attack(attack)
 	if ToolWheelScript.headless_host():
 		set_process(false)
 		call_deferred("_bind_relayout")
@@ -120,10 +119,6 @@ func _place_map(layer: Node) -> void:
 		map_button.z_index = 2
 
 
-static func hud_child(layer: Node, node_name: String) -> Node:
-	return status_node(layer, node_name)
-
-
 static func status_node(layer: Node, node_name: String) -> Node:
 	var node := layer.get_node_or_null(node_name)
 	if node != null:
@@ -147,7 +142,6 @@ func _place_status(layer: Node) -> void:
 	if scores != null:
 		_pin(scores)
 		RoundHudStyle.apply_scores(scores)
-		_set_art(scores, "scores")
 		scores.z_index = 2
 
 
@@ -271,6 +265,7 @@ func _show_picker_dimmer(layer: Node, view: Rect2) -> void:
 func _picker_slots(buttons: Array[Button], origin: Vector2, inward: float, view: Rect2,
 		blocked: Array[Rect2]) -> Dictionary:
 	var first_fit := {}
+	var first_side := inward
 	# Increase both radii proportionally, testing both sides at each size.
 	var steps := ceili(view.size.length() - PICKER_RADII[0])
 	for extra in range(maxi(0, steps) + 1):
@@ -279,13 +274,16 @@ func _picker_slots(buttons: Array[Button], origin: Vector2, inward: float, view:
 			var slots := _picker_candidate(buttons, origin, side, scale_factor, view, blocked)
 			if slots.is_empty():
 				continue
-			if slots.values().all(func(slot: Array) -> bool: return slot[1].has_area()):
+			if _picker_captions(slots, side, view, blocked, true):
+				_picker_captions(slots, side, view, blocked)
 				return slots
 			if first_fit.is_empty():
 				first_fit = slots
-	if not first_fit.is_empty():
-		return first_fit
-	return _picker_candidate(buttons, origin, inward, 1.0, view, blocked, true)
+				first_side = side
+	if first_fit.is_empty():
+		first_fit = _picker_candidate(buttons, origin, inward, 1.0, view, blocked, true)
+	_picker_captions(first_fit, first_side, view, blocked)
+	return first_fit
 
 
 func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, scale_factor: float,
@@ -310,14 +308,30 @@ func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, sca
 				return {}
 		slots[button] = [rect]
 		occupied.append(rect)
-	for button in buttons:
-		var rect: Rect2 = slots[button][0]
+	return slots
+
+
+func _picker_captions(slots: Dictionary, side: float, view: Rect2,
+		blocked: Array[Rect2], reserve := false) -> bool:
+	var occupied := blocked.duplicate()
+	for slot: Array in slots.values():
+		occupied.append(slot[0])
+	var all_fit := true
+	for button: Button in slots:
 		var label := button.get_node("Caption") as Label
-		var caption := _picker_caption(rect, label.get_minimum_size(), side, view, occupied)
-		slots[button].append(caption)
+		var extent := label.get_minimum_size()
+		if reserve:
+			# Keep the search footprint of the original 10-unit theme captions.
+			var font := label.get_theme_font("font")
+			extent = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).ceil()
+		var caption := _picker_caption(slots[button][0], extent, side, view, occupied)
+		if not reserve:
+			slots[button].append(caption)
 		if caption.has_area():
 			occupied.append(caption.grow(1.0))
-	return slots
+		else:
+			all_fit = false
+	return all_fit
 
 
 func _picker_fallback_rect(rect: Rect2, view: Rect2, occupied: Array[Rect2]) -> Rect2:
@@ -429,9 +443,8 @@ func _place_tool(layer: Node, custom := false) -> void:
 	if button == null or run == null:
 		return
 	_pin(button)
-	var disc := button as Button
-	if disc != null and absf(disc.size.x - RoundHudStyle.HIT) > 0.5:
-		RoundHudStyle.apply(disc)
+	if not custom:
+		wheel.style_button(RoundHudStyle.HIT, RoundHudStyle.SIZE)
 	var button_size := _size_of(button)
 	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
 	if not custom and attack != null and attack.texture_normal != null:
@@ -449,10 +462,8 @@ func _place_tool(layer: Node, custom := false) -> void:
 
 
 func _set_art(control: Control, id: String) -> void:
-	var inset: Vector2 = HIT_INSET.get(id, Vector2.ZERO)
-	control.position = LAYOUT[id] - inset
-	if id != "scores":
-		control.position.x += _edge_offset().x
+	control.position = LAYOUT[id] - Vector2(4, 4)
+	control.position.x += _edge_offset().x
 
 
 func _edge_offset() -> Vector2:

@@ -1,9 +1,6 @@
 class_name ScoreHud
 extends Label
-## The local player's point total, under the hearts. Only your own total is
-## shown; there is no scoreboard of other players. It sits GAP art pixels
-## under the sibling HeartsHud at the hearts' own pixel scale, so both stay
-## crisp and lined up on any screen.
+## The local player's point total.
 
 const GAP := 2  ## art px between the hearts and the counter
 
@@ -13,7 +10,7 @@ var _peer_id := 0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	RoundHudStyle.apply_label(self, 10)
 
 
 func _process(_delta: float) -> void:
@@ -51,7 +48,7 @@ func _on_total_changed(peer_id: int, _total: int, _amount: int, _reason: String)
 
 
 func _refresh() -> void:
-	text = "%d pts" % (_points.total_of(_peer_id) if _points else 0)
+	text = "%d" % (_points.total_of(_peer_id) if _points else 0)
 	var plate := get_parent() as StatusPlateHud
 	if plate != null:
 		plate.reflow()

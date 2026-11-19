@@ -14,8 +14,6 @@ const DRAG_PX := 6.0
 const ARC_R := 56.0
 const NAMES: PackedStringArray = ["Sword", "Bow", "Chop"]
 const DIRECT: PackedStringArray = ["tool_sword", "tool_bow", "tool_chop"]
-const SWORD_ICON := preload("res://assets/ui/hud/icon_mode_attack.png")
-const CHOP_ICON := preload("res://assets/ui/hud/icon_mode_interact.png")
 const ARC_COLOR := Color(0.95, 0.92, 0.86, 0.9)
 const _MOUSE := -2
 
@@ -32,8 +30,8 @@ var _applying := false
 var _timer: Timer
 var _button: Button
 var _options: Array[Button] = []
-var _bow_icon: Texture2D
-var _face_box: StyleBox
+var _hit := RoundHudStyle.HIT
+var _art := RoundHudStyle.SIZE
 var _fan_sign := -1.0
 var _fan_radius := ARC_R
 
@@ -64,17 +62,14 @@ func _ready() -> void:
 	set_process(false)
 	set_physics_process(false)
 	_ensure_actions()
-	_bow_icon = _make_bow_icon()
 	_button = _make_disc("ToolButton")
 	add_child(_button)
-	_face_box = _button.get_theme_stylebox("normal")
-	_button.icon = SWORD_ICON
 	_button.tooltip_text = "Sword"
 	for i in NAMES.size():
 		var opt := _make_disc(NAMES[i])
+		RoundHudStyle.apply_wheel(opt, i)
 		opt.visible = false
 		opt.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		opt.icon = _icon_for(i)
 		opt.tooltip_text = NAMES[i]
 		add_child(opt)
 		_options.append(opt)
@@ -236,6 +231,7 @@ func _begin(pos: Vector2, pointer: int) -> void:
 	_down_msec = Time.get_ticks_msec()
 	_down_pos = pos
 	_moved = false
+	_button.set_pressed_no_signal(true)
 	_timer.start(float(TAP_MS) / 1000.0)
 
 
@@ -301,6 +297,8 @@ func _highlight_at(pos: Vector2) -> void:
 
 
 func _set_open(show: bool) -> void:
+	if not show and _button != null:
+		_button.set_pressed_no_signal(false)
 	if _open == show:
 		_paint_options()
 		return
@@ -315,12 +313,7 @@ func _paint_options() -> void:
 	for i in _options.size():
 		var opt := _options[i]
 		opt.visible = _open
-		# The round normal style stays. Removing it falls back to the
-		# theme's square, which is what the unhighlighted options were.
-		if i == _highlight and _open:
-			opt.add_theme_stylebox_override("normal", opt.get_theme_stylebox("pressed"))
-		elif _face_box != null:
-			opt.add_theme_stylebox_override("normal", _face_box)
+		RoundHudStyle.refresh_toggle(opt, i == _highlight and _open)
 
 
 func _place_options() -> void:
@@ -397,16 +390,14 @@ func _button_center() -> Vector2:
 func _refresh_button() -> void:
 	if _button == null:
 		return
-	_button.icon = _icon_for(tool)
+	style_button(_hit, _art)
 	_button.tooltip_text = NAMES[tool]
 
 
-func _icon_for(which: int) -> Texture2D:
-	if which == Tool.BOW:
-		return _bow_icon
-	if which == Tool.CHOP:
-		return CHOP_ICON
-	return SWORD_ICON
+func style_button(hit: float, art: float) -> void:
+	_hit = hit
+	_art = art
+	RoundHudStyle.apply_wheel(_button, tool, hit, art)
 
 
 func _hud_live() -> bool:
@@ -431,7 +422,6 @@ func _make_disc(node_name: String) -> Button:
 	button.name = node_name
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
-	RoundHudStyle.apply(button)
 	return button
 
 
@@ -452,20 +442,3 @@ func _bind(action: String, key: Key) -> void:
 	event.physical_keycode = key
 	event.keycode = key
 	InputMap.action_add_event(action, event)
-
-
-static func _make_bow_icon() -> Texture2D:
-	## Stand-in until the wheel art lands (#576). A pale bow on a clear tile.
-	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0, 0, 0, 0))
-	var ink := Color(0.95, 0.93, 0.86, 1)
-	for y in 32:
-		var t := (float(y) - 15.5) / 15.5
-		var x := int(round(20.0 - 12.0 * (1.0 - t * t)))
-		for dx in 2:
-			var px := x + dx
-			if px >= 0 and px < 32:
-				image.set_pixel(px, y, ink)
-		if y >= 2 and y <= 29:
-			image.set_pixel(24, y, ink)
-	return ImageTexture.create_from_image(image)

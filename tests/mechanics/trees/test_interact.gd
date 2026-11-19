@@ -15,21 +15,18 @@ func _test_interact_mode_toggle() -> int:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var wheel: ToolWheel = scene.get_node("CanvasLayer1/ToolWheel")
-	var button: Button = wheel.get_node("ToolButton")
 	if scene.get_node_or_null("CanvasLayer1/ModeButton") != null:
 		printerr("FAIL interact_mode_toggle: ModeButton is still on the HUD")
 		fail += 1
-	if interaction.mode != Interaction.Mode.COMBAT or not str(button.icon.resource_path).ends_with("icon_mode_attack.png"):
-		printerr("FAIL interact_mode_toggle: does not start in combat mode with the sword icon")
+	if interaction.mode != Interaction.Mode.COMBAT:
+		printerr("FAIL interact_mode_toggle: does not start in combat mode")
 		fail += 1
 	wheel.select(ToolWheel.Tool.CHOP)
-	if interaction.mode != Interaction.Mode.INTERACT \
-			or not str(button.icon.resource_path).ends_with("icon_mode_interact.png"):
+	if interaction.mode != Interaction.Mode.INTERACT:
 		printerr("FAIL interact_mode_toggle: chop did not switch to interact mode")
 		fail += 1
 	wheel.select(ToolWheel.Tool.SWORD)
-	if interaction.mode != Interaction.Mode.COMBAT \
-			or not str(button.icon.resource_path).ends_with("icon_mode_attack.png"):
+	if interaction.mode != Interaction.Mode.COMBAT:
 		printerr("FAIL interact_mode_toggle: sword did not switch back to combat mode")
 		fail += 1
 	scene.queue_free()

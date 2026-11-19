@@ -10,7 +10,6 @@ func _ready() -> void:
 	text = ""
 	icon = null
 	focus_mode = FOCUS_NONE
-	texture_filter = TEXTURE_FILTER_NEAREST
 	RoundHudStyle.apply_scores(self)
 	pressed.connect(_on_pressed)
 	get_viewport().size_changed.connect(_follow_score)
@@ -43,11 +42,9 @@ func _follow_score() -> void:
 		return
 	var plate := get_node_or_null("../StatusPlate") as StatusPlateHud
 	if plate != null:
-		var k := plate.scale.x
-		scale = Vector2(k, k)
-		var inset := Vector2(4, 4)
-		position = HudToolRow.LAYOUT["scores"] - inset * k
-		position.x = ceilf(plate.get_global_rect().end.x) + GAP
+		scale = Vector2.ONE
+		var row := plate.get_global_rect()
+		position = Vector2(row.end.x, row.get_center().y - size.y * 0.5)
 		set_anchors_preset(Control.PRESET_TOP_LEFT)
 	else:
 		var score := _status_sibling("ScoreHud") as Control
@@ -81,8 +78,11 @@ func _on_pressed() -> void:
 func _refresh_disc() -> void:
 	var panel := get_node_or_null("../ScoreboardPanel") as ScoreboardPanel
 	var open := panel != null and panel.is_open()
+	if get_meta(&"scores_open", false) == open:
+		return
+	set_meta(&"scores_open", open)
 	set_pressed_no_signal(open)
-	RoundHudStyle.refresh_toggle(self)
+	RoundHudStyle.refresh_toggle(self, open)
 
 
 ## Hit rect for Customize HUD capture when the toggle has not laid out yet.
