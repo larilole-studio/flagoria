@@ -6,15 +6,15 @@ const SEED := 11
 
 
 func _test_raid_two_players() -> int:
-	## Host strikes once. Both peers and a late joiner see that wall under 3 hp.
-	## Seed 11. State waits only. Worst about 6.7 s over 20 runs.
+	## Host strikes once. Both peers and a late joiner see that wall at 2 hp.
+	## Seed 11. State waits only.
 	print("-- test_raid_two_players")
 	return await _raid_case(true)
 
 
 func _test_raid_off_two_players() -> int:
 	## The same city with raids off keeps hp at 3 on both peers.
-	## Seed 11. State waits only. Worst about 6.2 s over 20 runs.
+	## Seed 11. State waits only.
 	print("-- test_raid_off_two_players")
 	return await _raid_case(false)
 
@@ -55,31 +55,19 @@ func _settled(read: Callable, raids_on: bool) -> bool:
 	var client: Dictionary = read.call(1)
 	if int(host.get("phase", 0)) != 1 or str(host.get("note", "")) != "":
 		return false
-	if not bool(host.get("has_cell", false)):
-		return false
-	var hp := int(host.get("hp", -1))
-	if raids_on:
-		if hp < 0 or hp >= WallBuilder.MAX_HP or int(host.get("assigned", 0)) < 1:
-			return false
-	elif hp != WallBuilder.MAX_HP or int(host.get("assigned", 0)) != 0:
-		return false
-	return _peer_hp(client, int(host.get("x", 0)), int(host.get("y", 0))) == hp
+	var hp := 2 if raids_on else 3
+	return int(host.get("hp", -1)) == hp and bool(host.get("assigned", false)) == raids_on \
+			and _peer_hp(client, host["cell"]) == hp
 
 
 func _joiner_sees(read: Callable) -> bool:
 	var host: Dictionary = read.call(0)
 	var joiner: Dictionary = read.call(2)
-	if not bool(joiner.get("ready", false)) or str(joiner.get("note", "")) != "":
-		return false
-	var hp := _peer_hp(joiner, int(host.get("x", 0)), int(host.get("y", 0)))
-	return hp >= 0 and hp < WallBuilder.MAX_HP and hp == int(host.get("hp", -2))
+	return bool(joiner.get("ready", false)) and _peer_hp(joiner, host["cell"]) == 2
 
 
-func _peer_hp(data: Dictionary, x: int, y: int) -> int:
-	for row in data.get("walls", []):
-		if row is Array and row.size() >= 3 and int(row[0]) == x and int(row[1]) == y:
-			return int(row[2])
-	return -1
+func _peer_hp(data: Dictionary, cell: String) -> int:
+	return int(data.get("walls", {}).get(cell, -1))
 
 
 func _raid_errors(read: Callable, session: Dictionary, label: String) -> bool:

@@ -1,8 +1,6 @@
 extends SceneTree
-## One peer of a raid session (#529). The host places a palisade city and
-## applies RaidDirector.advance directly, so the test does not wait out the
-## 45 s interval. With raids on, one strike drops a wall below 3 hp. With
-## raids off, that hp stays 3.
+## Raid wall damage and the disabled setting over real peers (#529).
+## The host waits for the normal raid clock and mob physics to run.
 ##   -- --port=N --out=PATH --role=host --seed=11 --raids=on
 ##   -- --port=N --out=PATH --role=join --seed=11 --raids=off
 
@@ -14,8 +12,7 @@ var _armed := false
 var _phase := 0
 var _hp := -1
 var _cell := Vector2i.ZERO
-var _has_cell := false
-var _assigned := 0
+var _assigned := false
 var _note := ""
 
 
@@ -69,7 +66,7 @@ func _run() -> void:
 		var settings = root.get_node("GameSettings")
 		settings.set_mob_rate(1.0, false)
 		settings.set_raids_enabled(false, false)
-		settings.set_raid_interval_s(45, false)
+		settings.raid_interval_s = 0.25  # Short fixture interval below the menu minimum.
 		settings.set_raid_group(8, false)
 		settings.set_raid_radius_cells(96, false)
 		if main.setup_server(_params(seed_value), port) != OK:
@@ -84,7 +81,7 @@ func _run() -> void:
 	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):
 		if role == "host" and not _armed and FileAccess.file_exists(_out + ".go"):
 			_armed = true
-			_arm(main)
+			await _arm(main)
 			_phase = 1
 		if Time.get_ticks_msec() >= next_write:
 			_write(main)
@@ -108,147 +105,65 @@ func _params(seed_value: int) -> MapGenParams:
 func _arm(main) -> void:
 	var world = main.get_node("World/worldMap")
 	var cities: Cities = main.get_node("World/Cities")
-	var director: RaidDirector = main.get_node("World/RaidDirector")
 	var settings = root.get_node("GameSettings")
-	var city := _place_city(world, cities)
-	if city.is_empty():
-		_note = "no palisade city"
+	var requests: StructureRequests = main.get_node("World/StructureRequests")
+	var player: Node2D = main.get_node("World/1")
+	var inventory: Inventory = main.get_node("Inventory")
+	var anchor := Vector2i(22, -15)
+	var origin := Vector2i(19, -19)
+	_cell = Vector2i(22, -13)
+	world.generate_chunk(world.map_to_local(anchor))
+	var spawn := player.global_position
+	player.global_position = world.to_global(world.map_to_local(anchor + Vector2i(0, 2)))
+	inventory.add(Inventory.WOOD, 10)
+	var placed := requests.place(BuildCosts.TOWER, [anchor])
+	player.global_position = spawn
+	var ring: Array[Vector2i] = []
+	for offset in 7:
+		ring.append(origin + Vector2i(offset, 0))
+		ring.append(origin + Vector2i(offset, 6))
+		if offset > 0 and offset < 6:
+			ring.append(origin + Vector2i(0, offset))
+			ring.append(origin + Vector2i(6, offset))
+	if not placed or not world.place_wall_cells(ring):
+		_note = "could not place seed-11 city"
 		return
-	var wall: Vector2i = city["wall"]
-	_cell = wall
-	_has_cell = true
-	_hp = world._walls.hp(wall)
-	if not _raids:
-		director.advance(settings.raid_interval_s)
-		_hp = world._walls.hp(wall)
-		_assigned = 0
-		_publish(main)
-		return
-	var mob := _raider(main, world, city["stand"])
-	if mob == null:
-		_note = "no mob"
-		return
-	settings.set_raids_enabled(true, false)
-	director.advance(settings.raid_interval_s)
-	_assigned = 1 if mob._raid_cell != Mob.RAID_NONE else 0
-	if _assigned == 0:
-		_note = "raid did not assign"
-		settings.set_raids_enabled(false, false)
-		return
-	mob._step_raid(1.0)
-	if mob._raid_strikes.is_empty():
-		_note = "raid did not strike"
-		settings.set_raids_enabled(false, false)
-		return
-	_cell = mob._raid_strikes[0]
-	_hp = world._walls.hp(_cell)
-	mob.clear_raid()
-	settings.set_raids_enabled(false, false)
-	director.advance(0.0)
-	_publish(main)
-
-
-func _publish(main) -> void:
-	var requests = main.get_node("World/StructureRequests")
+	cities.rebuild()
 	for peer_id in main.multiplayer.get_peers():
-		requests.sync_to_peer(int(peer_id))
+		requests.sync_to_peer(peer_id)
+	var mobs: MobSpawner = main.get_node("World/Mobs")
+	mobs.set_physics_process(false)
+	mobs.clear_mobs()
+	var mob := mobs.spawner.spawn({
+		"name": "raid_fixture", "type": MobCatalog.SLIME, "seed": 11,
+		"pos": world.map_to_local(Vector2i(22, -12)),
+	}) as Mob
+	if mob == null:
+		_note = "could not spawn raider"
+		return
+	settings.set_raids_enabled(_raids, false)
+	var deadline := Time.get_ticks_msec() + 5000
+	var off_done := Engine.get_physics_frames() + 30  # Half a second at 60 Hz.
+	var key := WorldSave.cell_key(_cell)
+	while Time.get_ticks_msec() < deadline:
+		_hp = int(_walls(main).get(key, -1))
+		_assigned = _assigned or (mob.state != Mob.State.CHASE and mob.pinned())
+		if (_raids and _hp == 2 and _assigned) or (not _raids and Engine.get_physics_frames() >= off_done):
+			settings.set_raids_enabled(false, false)
+			return
+		await process_frame
+	_note = "raid clock or strike did not reach the expected state"
 
 
-func _raider(main, world, stand: Vector2i) -> Mob:
-	var mobs_node: Node = main.get_node("World/Mobs")
-	var best: Mob = null
-	for child in mobs_node.get_children():
-		if child is Mob and not (child as Mob).is_queued_for_deletion() \
-				and (child as Mob).state != Mob.State.DYING:
-			if best == null or str(child.name) < str(best.name):
-				best = child
-	if best == null:
-		return null
-	for child in mobs_node.get_children():
-		if child is Mob and child != best:
-			(child as Mob).state = Mob.State.CHASE
-	best.global_position = world.to_global(world.map_to_local(stand))
-	best.state = Mob.State.IDLE
-	best._calm = 0.0
-	return best
-
-
-func _place_city(world, cities: Cities) -> Dictionary:
-	var tower: Structure = StructurePlacer.load_named("tower_wood")
-	for cell in world.get_used_cells(0):
-		var origin: Vector2i = cell
-		if not _clear_rect(world, origin, Vector2i(7, 7)):
-			continue
-		if not world._structures.can_place(tower, origin + Vector2i(3, 4), 0, true, false).is_empty():
-			continue
-		var id: int = world._structures.place_from_host(tower, origin + Vector2i(3, 4), 1)
-		if id <= 0:
-			continue
-		var ring := _perimeter(origin, origin + Vector2i(6, 6))
-		if not world.place_wall_cells(ring):
-			continue
-		cities.rebuild()
-		if not cities.cities.has(id):
-			continue
-		var spot := _straight(world, origin, ring)
-		if spot.is_empty():
-			continue
-		spot["id"] = id
-		return spot
-	return {}
-
-
-func _straight(world, origin: Vector2i, ring: Array[Vector2i]) -> Dictionary:
-	var centre := origin + Vector2i(3, 3)
-	for cell in ring:
-		var at: Vector2i = cell
-		var piece := WallBuilder._atlas_wall_name(world._walls.piece(at))
-		if not (piece.ends_with("_H") or piece.ends_with("_V")):
-			continue
-		var away := at - centre
-		var step := Vector2i(signi(away.x), signi(away.y))
-		if step == Vector2i.ZERO or (step.x != 0 and step.y != 0):
-			continue
-		var stand := at + step
-		if world.has_wall(stand) or world._structures.has_cell(stand):
-			continue
-		var ground: Vector2i = world.predict_cell(stand)[0]
-		if not world.ground_is_walkable(ground):
-			continue
-		return {"wall": at, "stand": stand}
-	return {}
-
-
-func _clear_rect(world, origin: Vector2i, size: Vector2i) -> bool:
-	for y in size.y:
-		for x in size.x:
-			var cell := origin + Vector2i(x, y)
-			if world.has_wall(cell) or world._structures.has_cell(cell):
-				return false
-			if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
-				return false
-	return true
-
-
-func _perimeter(lo: Vector2i, hi: Vector2i) -> Array[Vector2i]:
-	var out: Array[Vector2i] = []
-	for x in range(lo.x, hi.x + 1):
-		out.append(Vector2i(x, lo.y))
-		out.append(Vector2i(x, hi.y))
-	for y in range(lo.y + 1, hi.y):
-		out.append(Vector2i(lo.x, y))
-		out.append(Vector2i(hi.x, y))
-	return out
-
-
-func _walls(main) -> Array:
-	var rows := []
+func _walls(main) -> Dictionary:
+	var walls := {}
 	var world = main.get_node_or_null("World/worldMap")
-	if world == null:
-		return rows
-	for cell: Vector2i in world._walls._wall_cells:
-		rows.append([cell.x, cell.y, world._walls.hp(cell)])
-	return rows
+	if world != null:
+		for chunk: Dictionary in StructureSaves.to_changes(world).values():
+			for key: String in chunk:
+				if chunk[key].has("wall"):
+					walls[key] = chunk[key].get("hp", 3)
+	return walls
 
 
 func _names_ready(main) -> bool:
@@ -263,11 +178,8 @@ func _write(main) -> void:
 		"ready": _names_ready(main),
 		"phase": _phase,
 		"hp": _hp,
-		"x": _cell.x,
-		"y": _cell.y,
-		"has_cell": _has_cell,
+		"cell": WorldSave.cell_key(_cell),
 		"assigned": _assigned,
-		"raids": _raids,
 		"walls": _walls(main),
 		"note": _note,
 		"errors": _errors.snapshot(),

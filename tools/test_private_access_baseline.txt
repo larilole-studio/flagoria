@@ -23,7 +23,6 @@
 1 tests/mechanics/day_night/test_day_night.gd
 4 tests/mechanics/defense/test_tower_guns.gd
 14 tests/mechanics/interactables/test_bushes.gd
-11 tests/mechanics/mobs/test_raid_target.gd
 4 tests/mechanics/npcs/test_soldier_fight.gd
 2 tests/mechanics/structures/test_footprint_rotation.gd
 2 tests/mechanics/trees/test_dead_cut.gd
@@ -39,11 +38,10 @@
 2 tests/net/test_cut_sync.gd
 1 tests/net/test_join_cuts.gd
 1 tests/net/test_regrow_sync.gd
-6 tests/net/test_sprout_sync.gd
+3 tests/net/test_sprout_sync.gd
 2 tests/net/test_structure_sync.gd
 7 tests/player/test_player_health.gd
 4 tests/player/test_player_respawn.gd
-15 tests/raid_probe.gd
 6 tests/saves/test_bridge_save.gd
 7 tests/saves/test_cut_save.gd
 1 tests/saves/test_map_save.gd
@@ -61,7 +59,6 @@
 15 tests/ui/test_parchment_map.gd
 17 tests/ui/test_saved_worlds.gd
 2 tests/ui/test_worlds_list_scroll.gd
-11 tests/wall_break_probe.gd
 8 tests/wall_sync_probe.gd
 2 tests/world/test_chunk_refresh_frames.gd
 2 tests/world/test_random_specs.gd

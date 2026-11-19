@@ -12,10 +12,10 @@ The host can send a small group of idle mobs at the nearest player city, or at t
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `test_raid_target` is about 1 s inside `tools/verify.sh` and does not open a peer (a standalone headless run, including engine start, was 4 s). `test_raid_two_players` worst 6.7 s and `test_raid_off_two_players` worst 6.2 s over 20 local runs (one host, one client, and a late joiner on the on-path; the netcode stress job runs each at the job's tier). The live drive is about 2 s under xvfb.
+Preconditions: `doctor.sh` exits `0`. Time cost: `test_raid_target` is about 1 s inside `tools/verify.sh` and does not open a peer (a standalone headless run, including engine start, was 4 s). `test_raid_two_players` worst 8.3 s and `test_raid_off_two_players` worst 7.5 s over five local runs each (one host, one client, and a late joiner on the on-path; the netcode stress job runs each at the job's tier). The live drive is about 2 s under xvfb.
 
 - **Drive (live).** `bin/launch.sh drives/mob_raid.gd --seed 11 --display` (the drive's `## launch: --seed 11` line). Steps `raid-city-intact`, `raid-wall-cracked`. `snapshot("raid-city-intact")` shows the palisade city before a strike, then `snapshot("raid-wall-cracked")` once a straight wall is at 2 hp.
-- **Proof.** `-- test_raid_target`, `-- test_raid_two_players` and `-- test_raid_off_two_players` appear in the verify log, no `FAIL` line follows any of them, and the run ends with `All tests passed.` and `Verification passed.` The target test uses seed 11 and does not open a peer. The two-player tests are the stress scenarios.
+- **Proof.** `-- test_raid_target`, `-- test_raid_two_players` and `-- test_raid_off_two_players` appear in the verify log, no `FAIL` line follows any of them, and the run ends with `All tests passed.` and `Verification passed.` The seed-11 unit test checks target choice, settings, clock and group size, and castle-wall immunity. The two-peer stress scenarios check wall health with raids on and off and whether a late joiner receives the damage.
 
 ## Rules
 
@@ -28,4 +28,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_raid_target` is about 1 s
 
 - Raids default off. A save with no raid keys stays off.
 - The strike needs a free-form palisade. Castle stone is not one, so the drive and the tests close a palisade ring the way a city test does.
-- The first automatic raid waits for the interval (45 s unless the menu changes it). The stress probe applies the director delta itself and does not sleep for that interval.
+- The first automatic raid waits for the interval (45 s unless the menu changes it). The two-peer probe uses a short in-memory interval and observes the raid clock and wall damage through the normal physics loop.

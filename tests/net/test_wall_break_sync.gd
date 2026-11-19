@@ -32,7 +32,7 @@ func _test_wall_break_two_players() -> int:
 		else:
 			launch.call(false, "watch")
 			if not await wait_for.call(func() -> bool:
-				return read.call(2).get("ready", false) and _same_built(read.call(2), read.call(0)), 30000):
+				return read.call(2).get("ready", false) and read.call(2).get("walls", {}) == read.call(0).get("walls", {}), 30000):
 				printerr("FAIL wall_break_two_players: late joiner %s host %s"
 						% [read.call(2), read.call(0)])
 				fail = 1
@@ -47,47 +47,14 @@ func _test_wall_break_two_players() -> int:
 
 func _broke(read: Callable) -> bool:
 	var client: Dictionary = read.call(1)
-	if str(client.get("place_error", "")) != "" or str(client.get("phase_done", "")) != "":
+	if not client.get("break_done", false):
 		return false
-	return not _has_target_wall(read.call(0)) and not _has_target_wall(client)
-
-
-func _has_target_wall(data: Dictionary) -> bool:
-	var target: Array = data.get("target", [])
-	if target.size() < 2:
-		return true
-	for row in data.get("walls", []):
-		if int(row[0]) == int(target[0]) and int(row[1]) == int(target[1]):
-			return true
-	return false
+	var target: String = client["target"]
+	return not read.call(0).get("walls", {}).has(target) and not client.get("walls", {}).has(target)
 
 
 func _both_hp2(read: Callable) -> bool:
-	for i in 2:
-		if not read.call(i).get("saw_hp2", false):
-			return false
-	return true
-
-
-func _peer_hp(data: Dictionary, want: int) -> bool:
-	for row in data.get("walls", []):
-		if row.size() >= 5 and int(row[4]) == want:
-			return true
-	for row in data.get("damaged", []):
-		if int(row[2]) == want:
-			return true
-	return false
-
-
-func _same_built(a: Dictionary, b: Dictionary) -> bool:
-	return _key(a.get("walls", [])) == _key(b.get("walls", []))
-
-
-func _key(rows: Array) -> String:
-	var parts: PackedStringArray = []
-	for row in rows:
-		parts.append(str(row))
-	return "|".join(parts)
+	return read.call(0).get("saw_hp2", false) and read.call(1).get("saw_hp2", false)
 
 
 func _note_errors(read: Callable, session: Dictionary) -> void:
