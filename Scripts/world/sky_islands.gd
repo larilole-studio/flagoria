@@ -100,15 +100,13 @@ func display_ground(map, cell: Vector2i) -> Vector2i:
 
 
 func paint_ground(map, tile_pos: Vector2i) -> void:
-	## One chunk: terrain-connect the land, then put the shared display tile on
-	## each land cell (interiors are grass, sand or swamp; the rim is the edge).
+	## Paint the chunk's final ground tiles, including shores and structure foundations.
 	_ensure_layers(map)
 	var origin := Vector2i(tile_pos.x - map.chunk_width / 2, tile_pos.y - map.chunk_height / 2)
 	var land: Array[Vector2i] = []
 	var sea: Array[Vector2i] = []
 	var bridges: Array[Vector2i] = []
 	var finals := {}
-	var halo := _halo_snapshot(map, origin, map.chunk_width, map.chunk_height)
 	for x in map.chunk_width:
 		for y in map.chunk_height:
 			var cell := origin + Vector2i(x, y)
@@ -125,11 +123,6 @@ func paint_ground(map, tile_pos: Vector2i) -> void:
 			finals[cell] = shown
 			if _spawnable(logical) and map.spawn_point == Vector2i.ZERO:
 				map.spawn_point = cell
-	if not land.is_empty() and DisplayServer.get_name() != "headless":
-		# The display tile is written just below. Headless hosts skip this pass;
-		# paying it on every chunk refresh has starved netcode stress.
-		map.set_cells_terrain_connect(0, land, TileCatalog.ISLAND_TERRAIN_SET, TileCatalog.ISLAND_TERRAIN)
-	_restore_halo(map, halo)
 	for cell in sea:
 		_paint_sea(map, cell)
 	for cell in bridges:
@@ -242,31 +235,6 @@ func _ensure_layers(map) -> void:
 	map.set_layer_enabled(CLOUD_LAYER, true)
 	map.set_layer_modulate(CLOUD_LAYER, Color(1, 1, 1, 1))
 	map.set_layer_z_index(CLOUD_LAYER, -1)
-
-
-func _halo_snapshot(map, origin: Vector2i, w: int, h: int) -> Array:
-	## Terrain connect rewrites immediate neighbours. Keep the ring outside
-	## this chunk as it was; the next chunk paints that ring for real.
-	var saved: Array = []
-	for x in range(-1, w + 1):
-		for y in [-1, h]:
-			saved.append(_cell_snap(map, origin + Vector2i(x, y)))
-	for y in range(h):
-		for x in [-1, w]:
-			saved.append(_cell_snap(map, origin + Vector2i(x, y)))
-	return saved
-
-
-func _cell_snap(map, cell: Vector2i) -> Array:
-	return [cell, map.get_cell_source_id(0, cell), map.get_cell_atlas_coords(0, cell)]
-
-
-func _restore_halo(map, saved: Array) -> void:
-	for item in saved:
-		if item[1] == -1:
-			map.erase_cell(0, item[0])
-		else:
-			map.set_cell(0, item[0], item[1], item[2])
 
 
 func _paint_clouds(map, origin: Vector2i, w: int, h: int) -> void:
