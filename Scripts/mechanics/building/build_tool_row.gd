@@ -2,20 +2,10 @@ class_name BuildToolRow
 extends RefCounted
 ## Build picker tools: icons, tips, footprint kinds and picker buttons (#556).
 
-const PICKER_ICON := 12
 ## Nothing stays hidden once its request exists. Plank (#297), Tower (#497)
 ## and Wall (#498) stay visible. An empty list hides nothing.
 const MP_HIDDEN: Array = []
 
-const TOOL_ICONS := {
-	BuildPlacement.Tool.CUT: preload("res://art/ui/ui_tool_cut.png"),
-	BuildPlacement.Tool.PLANK: preload("res://art/ui/ui_tool_plank.png"),
-	BuildPlacement.Tool.TOWER: preload("res://art/ui/ui_tool_tower.png"),
-	BuildPlacement.Tool.CASTLE: preload("res://art/ui/ui_tool_castle.png"),
-	BuildPlacement.Tool.GUARD: preload("res://art/ui/ui_tool_guard.png"),
-	BuildPlacement.Tool.BARRACKS: preload("res://art/ui/ui_tool_guard.png"),
-	BuildPlacement.Tool.WALL: preload("res://art/ui/ui_tool_wall.png"),
-}
 const FOOTPRINT_KIND := {
 	BuildPlacement.Tool.TOWER: BuildCosts.TOWER,
 	BuildPlacement.Tool.CASTLE: BuildCosts.CASTLE,
@@ -46,10 +36,6 @@ static func picker_tools() -> Array:
 		BuildPlacement.Tool.PLANK, BuildPlacement.Tool.WALL, BuildPlacement.Tool.TOWER,
 		BuildPlacement.Tool.CASTLE, BuildPlacement.Tool.GUARD, BuildPlacement.Tool.BARRACKS,
 	]
-
-
-static func icon(tool: BuildPlacement.Tool) -> Texture2D:
-	return TOOL_ICONS[tool] as Texture2D
 
 
 static func tip(tool: BuildPlacement.Tool) -> String:
@@ -90,12 +76,9 @@ static func populate_picker(
 		button.set_meta(&"picker_slot", i)
 		button.toggle_mode = true
 		button.theme = theme
-		button.icon = icon(t)
 		button.tooltip_text = tip(t)
-		RoundHudStyle.apply_build(button)
-		button.icon = icon(t)
-		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", PICKER_ICON)
+		var sprite := "guard" if t == BuildPlacement.Tool.GUARD else tip(t).to_lower()
+		RoundHudStyle.apply_disc(button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, 2)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
 		_add_picker_label(button, "Guard" if t == BuildPlacement.Tool.GUARD else tip(t))
@@ -107,11 +90,9 @@ static func populate_picker(
 static func _add_picker_label(button: Button, caption: String) -> void:
 	var label := Label.new()
 	label.name = "Caption"
-	label.add_theme_font_size_override("font_size", 10)
+	RoundHudStyle.apply_label(label, 10)
 	label.text = caption
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.add_theme_color_override("font_outline_color", Color(0.08, 0.11, 0.11))
-	label.add_theme_constant_override("outline_size", 2)
 	button.add_child(label)
 
 

@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
-"""Draw placeholder wooden-tower tiles (#273) into the tileset atlas and the
-interact-mode Tower picker icon.
+"""Draw placeholder wooden-tower tiles (#273) into the tileset atlas.
 
 Atlas cells (empty in v3 before this runs):
 - TOWER_WOOD_POST (6, 7): a short palisade post
 - TOWER_WOOD_WALL (7, 7): a short palisade wall segment
 
-Also writes art/ui/ui_tool_tower.png (16x16) from art/icon/tower_32.txt so the
-build picker has a Tower icon. Placeholders until dedicated tower art exists.
-Rerunning rewrites the same cells and icon. Run from the repo root:
+Rerunning rewrites the same cells. Run from the repo root:
 python3 tools/art/gen_tower_wood_tiles.py (needs Pillow).
 """
 from __future__ import annotations
@@ -19,8 +16,6 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ATLAS = os.path.join(ROOT, "art", "flagoria", "flagoria_tiles_v4.png")
-ICON_GRID = os.path.join(ROOT, "art", "icon", "tower_32.txt")
-PICKER = os.path.join(ROOT, "art", "ui", "ui_tool_tower.png")
 TILE = 16
 
 # Wood palette (NinjaAdventure-adjacent browns).
@@ -32,24 +27,6 @@ BAND = (0x6E, 0x45, 0x28, 255)
 
 POST_CELL = (6, 7)
 WALL_CELL = (7, 7)
-
-# Same legend as tools/icon/make_icon.py for the picker glyph.
-ICON_PALETTE = {
-    "O": (0x14, 0x1B, 0x1B),
-    "L": (0xAB, 0xC2, 0xBC),
-    "M": (0x8D, 0x97, 0x7F),
-    "D": (0x5F, 0x71, 0x60),
-    "K": (0x3B, 0x36, 0x43),
-    "P": (0x81, 0x68, 0x55),
-    "Y": (0xFF, 0xE1, 0x8D),
-    "W": (0xF1, 0xC4, 0x71),
-    "R": (0xE0, 0x39, 0x4C),
-    "r": (0x8F, 0x3E, 0x56),
-    "F": (0xF2, 0xEA, 0xF1),
-    "G": (0x74, 0xA3, 0x34),
-    "g": (0x56, 0x86, 0x4C),
-}
-
 
 def _blank() -> Image.Image:
     return Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
@@ -99,31 +76,9 @@ def _write_atlas() -> None:
     atlas.save(ATLAS)
 
 
-def _write_picker_icon() -> None:
-    with open(ICON_GRID, encoding="utf-8") as f:
-        rows = [line.rstrip("\n") for line in f if line.strip("\n")]
-    if len(rows) != 32 or any(len(r) != 32 for r in rows):
-        raise SystemExit("tower_32.txt must be 32 rows of 32 characters")
-    src = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
-    for y, row in enumerate(rows):
-        for x, ch in enumerate(row):
-            if ch == ".":
-                continue
-            if ch not in ICON_PALETTE:
-                raise SystemExit("unknown colour %r at %d,%d" % (ch, x, y))
-            src.putpixel((x, y), ICON_PALETTE[ch] + (255,))
-    # Crop to the tower mass and scale to 16x16 for the picker row.
-    bbox = src.getbbox()
-    cropped = src.crop(bbox) if bbox else src
-    icon = cropped.resize((16, 16), Image.Resampling.NEAREST)
-    os.makedirs(os.path.dirname(PICKER), exist_ok=True)
-    icon.save(PICKER)
-
-
 def main() -> None:
     _write_atlas()
-    _write_picker_icon()
-    print("wrote TOWER_WOOD_POST (6,7), TOWER_WOOD_WALL (7,7), and", PICKER)
+    print("wrote TOWER_WOOD_POST (6,7), TOWER_WOOD_WALL (7,7)")
 
 
 if __name__ == "__main__":

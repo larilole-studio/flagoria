@@ -134,7 +134,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/explored_map.gd` | Explored cells per chunk | stays |
 | `Scripts/minimap_panel.gd` | In-play explored map panel; starts closed and sits left of the arc (#450, #480) | stays |
 | `Scripts/round_hud_style.gd` | Circle style, selected ring and tap target for the HUD buttons | stays (#450, #480) |
-| `Scripts/hud_tool_row.gd` | Direction C column, status plate, event-driven layout, tool wheel beside Run | stays (#450, #480, #492, #574) |
+| `Scripts/hud_tool_row.gd` | Candy Glass controls, floating status row, event-driven layout, tool wheel beside Run | stays (#450, #480, #492, #574) |
 | `Scripts/map_wood_button.gd` | Wood header button shared by the panel and the parchment | stays |
 | `Scripts/parchment_map.gd` | Full-screen parchment of explored ground | stays |
 | `Scripts/hearts_hud.gd` | Hearts row | stays |

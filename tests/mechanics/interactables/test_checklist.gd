@@ -55,7 +55,7 @@ func _test_checklist_fixtures_fail() -> int:
 		["tiles", _names_of(["GRASS_A"]), "bush", "step 2 art"],
 		["tiles", _names_of(["NO_SUCH_TILE"]), "bush", "step 2 art"],
 		["leaves", "TREE", "bush", "step 2 art"],
-		["fx_sheet", load("res://art/ui/ui_wood_icon.png"), "bush", "step 2 art"],
+		["fx_sheet", ImageTexture.create_from_image(Image.create_empty(9, 9, false, Image.FORMAT_RGBA8)), "bush", "step 2 art"],
 		["hit_sheet", load("res://art/flagoria/fx/bush_hit.png"), "tree", "step 2 art"],
 		["hit_sounds", _streams([bad_wav]), "tree", "step 3 sound"],
 		["fell_sounds", _streams([]), "bush", "step 3 sound"],

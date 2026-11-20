@@ -262,14 +262,14 @@ func _run_world(peer: Node) -> Node2D:
 
 func _run_icon_ok(button: Button) -> bool:
 	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
-	return box != null and box.texture != null and "ui_disc_run" in str(box.texture.resource_path) \
+	return box != null and box.texture != null and box.texture.get_size() == Vector2(32, 32) \
 			and is_equal_approx(button.size.x, RoundHudStyle.RUN_HIT)
 
 
 func _run_on(button: Button) -> bool:
 	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
 	return button.button_pressed and box != null and box.texture != null \
-			and "ui_disc_run_pressed" in str(box.texture.resource_path)
+			and box.texture != (button.get_theme_stylebox("normal") as StyleBoxTexture).texture
 
 
 func _run_body(world: Node, id: String, at: Vector2) -> CharacterBody2D:

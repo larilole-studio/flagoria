@@ -27,7 +27,7 @@ func run() -> void:
 	var score: Label = current_scene.find_child("ScoreHud", true, false) as Label
 	var points: Points = current_scene.get_node("Points")
 	var shown := await wait_until(func() -> bool:
-		return score.text == "%d pts" % points.total_of(1), 2.0)
+		return score.text == "%d" % points.total_of(1), 2.0)
 	print("combat_hud: hearts %d/%d, score '%s'" % [hearts.current, hearts.maximum, score.text])
 	ok = ok and hearts.current == FULL_HEALTH and hearts.maximum == FULL_HEALTH and shown
 	await snapshot("start")
