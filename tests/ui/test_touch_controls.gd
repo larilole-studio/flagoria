@@ -70,6 +70,7 @@ func _test_touch_controls_look() -> int:
 	var camera: Camera2D = player.get_node("Camera2D")
 	for z in [0.7, 1.4]:
 		camera.zoom = Vector2(z, z)
+		for i in 3: await physics_frame  # the interpolated camera eases zoom over a tick
 		await process_frame
 		if not is_equal_approx(aim.screen_px() * z, 1.0):
 			printerr("FAIL touch_controls_look at zoom %s a screen px is %s world px" % [z, aim.screen_px()])

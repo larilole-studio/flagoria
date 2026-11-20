@@ -50,6 +50,7 @@ static func apply(game: Node, body: Node, data: Dictionary) -> void:
 		var at: Variant = position_of(data)
 		if at is Vector2:
 			body.position = at
+			body.reset_physics_interpolation()
 		var health := body.get_node_or_null("Health")
 		if health and health.has_method("set_health_now"):
 			health.set_health_now(_health_of(data.get("health", null), int(health.max_health)))

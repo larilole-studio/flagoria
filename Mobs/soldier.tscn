@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier.gd" id="1_soldier"]
-[ext_resource type="Script" path="res://Scripts/mob_sfx.gd" id="2_sfx"]
+[ext_resource type="Script" path="res://Scripts/audio/mob_sfx.gd" id="2_sfx"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurt"]
 size = Vector2(12, 10)
