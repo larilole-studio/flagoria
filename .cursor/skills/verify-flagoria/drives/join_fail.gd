@@ -4,6 +4,9 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Joins a free UDP port with nothing listening, then snapshots the menu.
 
 
+const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
+
+
 func run() -> void:
 	step("menu")
 	if change_scene_to_file(MAIN) != OK:
@@ -24,25 +27,27 @@ func run() -> void:
 		printerr("join_fail: no free UDP port")
 		done(false)
 		return
-	current_scene.host_port = port  # unused for join; keep aside
-	address.text = "127.0.0.1"
-	# Override PORT used by add_player_joined default by calling it with port
-	# after the button would fire — press Join then immediately re-issue with port.
+	var target := "127.0.0.1:%d" % port
+	address.text = target
 	await snapshot("before-join")
 	step("join")
-	# Mirror the button: hide menu / show HUD / game music, then join `port`.
-	menu.hide()
-	hud.show()
-	var music = root.get_node("MusicPlayer")
-	music.play(music.GAME_TRACK)
-	current_scene.add_player_joined(port)
-	var back := await wait_until(
-		func() -> bool: return menu.visible and status.visible, 8.0
-	)
-	print("join_fail: menu_back=%s status='%s'" % [back, status.text])
-	var ok := back and status.text == "Could not join 127.0.0.1" and not hud.visible
+	await click(JOIN)
+	if menu.visible or not hud.visible:
+		_fail("Join did not hide the menu and show the HUD")
+		return
+	var returned := await wait_until(func() -> bool: return menu.is_visible_in_tree(), 8.0)
 	await snapshot("join-failed")
-	done(ok)
+	var expected := "Could not join " + target
+	if not returned:
+		_fail("main menu did not return after failed join")
+	elif hud.visible:
+		_fail("HUD is still visible after failed join")
+	elif not status.is_visible_in_tree() or status.text != expected:
+		_fail("join status visible=%s text='%s', expected '%s'"
+				% [status.is_visible_in_tree(), status.text, expected])
+	else:
+		print("join_fail: menu returned, HUD hidden, status='%s'" % status.text)
+		done(true)
 
 
 func _free_port() -> int:

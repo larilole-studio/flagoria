@@ -8,6 +8,8 @@ const PHONE := Vector2i(844, 390)
 
 
 func run() -> void:
+	# Exercise the touch handlers without synthesized mouse events.
+	Input.emulate_mouse_from_touch = false
 	if not await start_game():
 		return
 	var win := current_scene.get_window()
@@ -15,38 +17,82 @@ func run() -> void:
 	await process_frame
 	await process_frame
 	var wheel: ToolWheel = current_scene.get_node(WHEEL)
-	var button: Control = wheel.get_node("ToolButton")
+	var button: Button = wheel.get_node("ToolButton")
 	var interaction: Interaction = current_scene.get_node(INTERACTION)
-	var ok := await wait_until(func() -> bool: return button.size.y > 1.0, 2.0)
+	if not await wait_until(func() -> bool: return button.size.y > 1.0, 2.0):
+		_fail("tool button has no size")
+		return
 	print("tool wheel: window %s visible %s" % [win.size, current_scene.get_viewport().get_visible_rect().size])
 
 	step("closed")
-	ok = ok and not wheel.is_open() and wheel.tool == ToolWheel.Tool.SWORD \
-			and interaction.mode == Interaction.Mode.COMBAT \
-			and _icon_is(button, "icon_mode_attack.png") and _arc_left(wheel)
+	if not _selected(wheel, interaction, ToolWheel.Tool.SWORD) \
+			or not _icon_is(button, "wheel_sword") or not _arc_left(wheel):
+		_fail("wheel did not start closed with the sword icon and left arc")
+		return
 	await snapshot("tool-closed")
 
-	step("open")
 	var at := to_window(button, button.size * 0.5)
-	_touch(at, true)
-	await create_timer(0.25).timeout
-	ok = ok and wheel.is_open() and _options_visible(wheel) and _arc_left(wheel)
-	await snapshot("tool-open")
+	step("first-tap")
+	await _tap(at)
+	if not _selected(wheel, interaction, ToolWheel.Tool.SWORD):
+		_fail("expected sword after first tap, got %s" % ToolWheel.NAMES[wheel.tool])
+		return
 
-	step("selected")
-	var chop: Control = wheel.get_node("Chop")
-	var chop_at := to_window(chop, chop.size * 0.5)
-	_drag(chop_at)
+	step("hold")
+	_touch(at, true)
+	if not await wait_until(func() -> bool: return wheel.is_open(), 2.0) \
+			or not _options_visible(wheel) or not _arc_left(wheel) \
+			or wheel.highlighted() != ToolWheel.Tool.SWORD:
+		_fail("hold did not open the arc with sword highlighted")
+		return
+	await snapshot("tool-open")
+	_touch(at, false)
 	await process_frame
-	ok = ok and wheel.highlighted() == ToolWheel.Tool.CHOP
-	_touch(chop_at, false)
-	await process_frame
-	ok = ok and not wheel.is_open() and wheel.tool == ToolWheel.Tool.CHOP \
-			and interaction.mode == Interaction.Mode.INTERACT \
-			and _icon_is(button, "icon_mode_interact.png") and not wheel.bow_armed()
+	if not _selected(wheel, interaction, ToolWheel.Tool.SWORD):
+		_fail("expected sword after hold release, got %s" % ToolWheel.NAMES[wheel.tool])
+		return
+
+	step("drag-select")
+	for tool in [ToolWheel.Tool.BOW, ToolWheel.Tool.SWORD, ToolWheel.Tool.CHOP]:
+		var option: Control = wheel.get_node(ToolWheel.NAMES[tool])
+		var target := to_window(option, option.size * 0.5)
+		_touch(at, true)
+		await process_frame
+		_drag(target)
+		await process_frame
+		var highlighted: bool = wheel.is_open() and wheel.highlighted() == tool
+		_touch(target, false)
+		await process_frame
+		if not highlighted or not _selected(wheel, interaction, tool):
+			_fail("touch drag did not highlight and select %s" % ToolWheel.NAMES[tool])
+			return
+	if not _icon_is(button, "wheel_chop"):
+		_fail("chop selection did not update the button icon")
+		return
 	await snapshot("tool-selected")
-	print("tool wheel: closed sword, open half-moon, selected chop: %s" % ok)
-	done(ok)
+
+	step("swap")
+	await _tap(at)
+	if not _selected(wheel, interaction, ToolWheel.Tool.SWORD):
+		_fail("expected sword after swap, got %s" % ToolWheel.NAMES[wheel.tool])
+		return
+	await _tap(at, Vector2(3, 0))
+	if not _selected(wheel, interaction, ToolWheel.Tool.CHOP):
+		_fail("expected chop after second swap, got %s" % ToolWheel.NAMES[wheel.tool])
+		return
+	done(true)
+
+
+func _selected(wheel: ToolWheel, interaction: Interaction, tool: ToolWheel.Tool) -> bool:
+	var mode := Interaction.Mode.INTERACT if tool == ToolWheel.Tool.CHOP else Interaction.Mode.COMBAT
+	return not wheel.is_open() and wheel.tool == tool and interaction.mode == mode \
+			and wheel.bow_armed() == (tool == ToolWheel.Tool.BOW)
+
+
+func _tap(at: Vector2, offset := Vector2.ZERO) -> void:
+	_touch(at, true)
+	_touch(at + offset, false)
+	await process_frame
 
 
 func _arc_left(wheel: ToolWheel) -> bool:
@@ -69,9 +115,10 @@ func _options_visible(wheel: ToolWheel) -> bool:
 	return true
 
 
-func _icon_is(button: Control, file_name: String) -> bool:
-	var icon: Texture2D = button.get("icon")
-	return icon != null and str(icon.resource_path).ends_with(file_name)
+func _icon_is(button: Button, sprite: String) -> bool:
+	var style := button.get_theme_stylebox("normal") as StyleBoxTexture
+	return style != null and (style.texture == RoundHudStyle.texture(sprite + "_normal")
+			or style.texture == RoundHudStyle.texture(sprite + "_selected"))
 
 
 func _touch(at: Vector2, pressed: bool) -> void:
