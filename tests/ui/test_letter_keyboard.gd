@@ -8,9 +8,7 @@ func _test_main_menu_letter_keyboard() -> int:
 	## type letters, digits, "." and ":", the first key replaces the old text,
 	## OK closes it, and a physical keyboard still types there.
 	print("-- test_main_menu_letter_keyboard")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	var field: LineEdit = menu.address_entry
 	var kb = menu.get_node_or_null("LetterKeyboard")
@@ -60,8 +58,7 @@ func _test_main_menu_letter_keyboard() -> int:
 	if field.text != "localhost:7":
 		printerr("FAIL letter_keyboard physical keys gave %s want localhost:7" % field.text)
 		fail += 1
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_main_menu_letter_keyboard")
 	return fail
@@ -71,9 +68,7 @@ func _test_letter_keyboard_minus_key() -> int:
 	## The letter keyboard has a "-" key, so a host name with a hyphen can be
 	## typed by touch.
 	print("-- test_letter_keyboard_minus_key")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	var field: LineEdit = menu.address_entry
 	var kb = menu.get_node("LetterKeyboard")
@@ -93,8 +88,7 @@ func _test_letter_keyboard_minus_key() -> int:
 		printerr("FAIL letter_keyboard_minus_key keys gave %s want my-host.local" % field.text)
 		fail += 1
 	kb.close()
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_letter_keyboard_minus_key")
 	return fail
@@ -105,9 +99,7 @@ func _test_letter_keyboard_first_minus_replaces() -> int:
 	## (letter Minus types; it does not negate) (#356). Time cost: ~0.15 s in
 	## verify (~1.5 s alone with --only=, Godot boot dominates).
 	print("-- test_letter_keyboard_first_minus_replaces")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	var field: LineEdit = menu.address_entry
 	var kb = menu.get_node("LetterKeyboard")
@@ -125,8 +117,7 @@ func _test_letter_keyboard_first_minus_replaces() -> int:
 		printerr("FAIL letter_keyboard_first_minus_replaces: first Minus gave %s want -" % field.text)
 		fail += 1
 	kb.close()
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_letter_keyboard_first_minus_replaces")
 	return fail
@@ -137,9 +128,7 @@ func _test_letter_keyboard_third_row_fits() -> int:
 	## still fits the 480x270 viewport (#356). Time cost: ~0.15 s in verify
 	## (~1.5 s alone with --only=).
 	print("-- test_letter_keyboard_third_row_fits")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	var field: LineEdit = menu.address_entry
 	var kb: NumberPad = menu.get_node("LetterKeyboard")
@@ -176,8 +165,7 @@ func _test_letter_keyboard_third_row_fits() -> int:
 					% [key, b.size if b else Vector2.ZERO])
 			fail += 1
 	kb.close()
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_letter_keyboard_third_row_fits")
 	return fail

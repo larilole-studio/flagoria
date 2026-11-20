@@ -9,15 +9,12 @@ func _test_mob_sword() -> int:
 	print("-- test_mob_sword")
 	var fail := 0
 	await process_frame
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
 	scene.world_params = _spawn_params(42, 0.003)
 	world.apply_map_params(scene.world_params)
 	scene.spawn_mobs()
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = "1"
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, Vector2.ZERO)
 	player.health.max_health = 1000  # contact damage is not under test here
 	player.health.set_health_now(1000)
 	for t in MobCatalog.names():

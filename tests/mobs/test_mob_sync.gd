@@ -101,11 +101,8 @@ func _test_mob_hidden_on_uncharted() -> int:
 	## that tile loads. A type flagged visible_in_uncharted (final bosses)
 	## always shows. Hiding never changes the mob's position, state or hurt box.
 	print("-- test_mob_hidden_on_uncharted")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_seeded_tree_world(42, 0.003)
 	var world: TileMap = scene.get_node("World/worldMap")
-	world.apply_map_params(_spawn_params(42, 0.003))
-	world.generate_chunk(Vector2.ZERO)
 	var mobs_node: Node = scene.get_node("World/Mobs")
 	var far := Vector2i(400, 400)  # far outside the loaded chunk
 	var add_mob := func(cell: Vector2i, boss: bool) -> Mob:

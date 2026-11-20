@@ -88,11 +88,8 @@ func _test_bridge_joins() -> int:
 	## side branch that leaves the main run horizontal.
 	print("-- test_bridge_joins")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_seeded_tree_world(3, 0.0)
 	var world = scene.get_node("World/worldMap")
-	world.apply_map_params(_spawn_params(3, 0.0))
-	world.generate_chunk(Vector2.ZERO)
 
 	# Start, step, continuation length, near shore, separate tip, joined interior, far end.
 	# The horizontal fixture reaches land. The vertical fixture ends in water.

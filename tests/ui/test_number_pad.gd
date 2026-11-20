@@ -7,9 +7,7 @@ func _test_number_pad_first_key_replaces() -> int:
 	## old value instead of adding to it; later keys add as usual. A field left
 	## holding only "-" or "." when the pad closes gets its old value back.
 	print("-- test_number_pad_first_key_replaces")
-	var panel = load("res://map_admin_panel.tscn").instantiate()
-	root.add_child(panel)
-	await process_frame
+	var panel = await mount_ui_scene(preload("res://map_admin_panel.tscn"), root.size, 1)
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
 	var seed_field: LineEdit = panel.find_child("ItemsSeed")
@@ -49,7 +47,7 @@ func _test_number_pad_first_key_replaces() -> int:
 			fail += 1
 		field.release_focus()
 		await process_frame
-	panel.queue_free()
+	await free_ui_scene(panel)
 	if fail == 0:
 		print("PASS test_number_pad_first_key_replaces")
 	return fail
@@ -94,9 +92,7 @@ func _test_number_pad_keycap_style() -> int:
 	## The pad has its own keyboard look from the menu theme: keycaps for the
 	## digits, a red Delete and a gold OK key, and a framed panel.
 	print("-- test_number_pad_keycap_style")
-	var panel = load("res://map_admin_panel.tscn").instantiate()
-	root.add_child(panel)
-	await process_frame
+	var panel = await mount_ui_scene(preload("res://map_admin_panel.tscn"), root.size, 1)
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
 	var theme: Theme = load("res://art/ui/main_menu_theme.tres")
@@ -115,7 +111,7 @@ func _test_number_pad_keycap_style() -> int:
 	if pad.get_node("Panel").theme_type_variation != &"KeyboardPanel":
 		printerr("FAIL number_pad_keycap_style panel is not a KeyboardPanel")
 		fail += 1
-	panel.queue_free()
+	await free_ui_scene(panel)
 	if fail == 0:
 		print("PASS test_number_pad_keycap_style")
 	return fail

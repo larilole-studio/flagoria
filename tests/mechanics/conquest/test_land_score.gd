@@ -8,11 +8,8 @@ const SECOND_TOWER := ORIGIN + Vector2i(5, 3)
 
 func _setup_city() -> Dictionary:
 	## An 8x5 ring with a 6x3 interior, cleared for two wooden towers.
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_seeded_tree_world(42, 0.0)
 	var world = scene.get_node("World/worldMap")
-	world.apply_map_params(_spawn_params(42, 0.0))
-	world.generate_chunk(Vector2.ZERO)
 	var ring: Array[Vector2i] = []
 	for y in 5:
 		for x in 8:

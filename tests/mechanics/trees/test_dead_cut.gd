@@ -11,8 +11,7 @@ func _test_dead_cut_alone() -> int:
 	## start-up). Isolation: the painted patch must survive respawn (#359).
 	print("-- test_dead_cut_alone")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -31,11 +30,8 @@ func _test_dead_cut_alone() -> int:
 	var stand := Vector2i(10, 10)
 	world.spawn_point = stand
 	world._castle_front = stand
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
 	var below: Vector2 = world.to_global(world.map_to_local(stand))
-	player.position = below
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, below)
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_process(false)
@@ -100,8 +96,7 @@ func _test_painted_tree_survives_respawn() -> int:
 		p.set(key, 6)
 	root.get_node("MapGen").params = p
 	root.get_node("MapGen").save_to_disk()
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
 	root.get_node("MapGen").reset_to_defaults()
 	world.set_process(false)
@@ -114,11 +109,8 @@ func _test_painted_tree_survives_respawn() -> int:
 	var stand := Vector2i(10, 10)
 	world.spawn_point = stand
 	world._castle_front = stand
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
 	var below: Vector2 = world.to_global(world.map_to_local(stand))
-	player.position = below
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, below)
 	await process_frame
 	player.health.set_health_now(0)
 	player.health.respawn()

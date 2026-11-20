@@ -58,9 +58,7 @@ func _test_two_worlds_stay_separate() -> int:
 	var fail := 0
 	var map_gen = root.get_node("/root/MapGen")
 	var saved_params: MapGenParams = map_gen.params.duplicate_params()
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer1/InGameMenu")
 	scene.get_node("CanvasLayer1").show()
 	var first := _params_with_seed(111111)
@@ -106,8 +104,7 @@ func _test_two_worlds_stay_separate() -> int:
 	map_gen.params = saved_params
 	map_gen.clear_loaded_world()
 	map_gen.save_to_disk()
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_two_worlds_stay_separate")
 	return fail
@@ -125,9 +122,7 @@ func _test_saved_world_rename_panel() -> int:
 		if MapSave.save_world(WorldSave.new(params), name)["error"] != "":
 			printerr("FAIL saved_world_rename_panel: could not create %s" % name)
 			return 1
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	menu._on_worlds_pressed()
 	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List")
@@ -174,8 +169,7 @@ func _test_saved_world_rename_panel() -> int:
 	map_gen.params = saved_params
 	map_gen.clear_loaded_world()
 	map_gen.save_to_disk()
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_saved_world_rename_panel")
 	return fail
