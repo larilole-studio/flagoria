@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Points awards, the score HUD and points sync (Scripts/points.gd).
+## Points awards, the score HUD and points sync (Scripts/mechanics/conquest/points.gd).
 
 
 func _test_points_award() -> int:

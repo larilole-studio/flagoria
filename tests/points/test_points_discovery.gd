@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Discovery points (Scripts/discovery_points.gd).
+## Discovery points (Scripts/mechanics/conquest/discovery_points.gd).
 
 
 func _test_points_discovery() -> int:
