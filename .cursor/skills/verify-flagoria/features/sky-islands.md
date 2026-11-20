@@ -2,6 +2,8 @@
 
 Drive: drives/sky_islands.gd
 
+The map node delegates `predict_cell` to `Scripts/world_chunks.gd`.
+
 Open sea is an empty cell, so the clear colour (`#7cc8f2`) is the sky. Land is the Island terrain: a coast cell is an island-edge piece, and an inland cell stays grass, sand or swamp. Sand and swamp do not touch the sky. Clouds sit on their own layer, only on sky. A plank bridge from the shore uses the plain (transparent) pieces. Sea still blocks movement.
 
 ## Sub-features
