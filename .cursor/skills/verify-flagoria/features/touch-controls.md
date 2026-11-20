@@ -2,7 +2,7 @@
 
 Drive: drives/combat_hud.gd
 
-On touch screens the hero moves with an on-screen joystick and attacks with a round attack button that also aims (see [Combat and aiming](./combat-and-aiming.md)). Both use Castle Stone art. Attack mirrors the joystick across the viewport and matches the joystick base diameter. Customize HUD can move and resize them. Number fields and the join address open an on-screen number pad or letter keyboard.
+On touch screens the hero moves with an on-screen joystick and attacks with a round attack button that also aims (see [Combat and aiming](./combat-and-aiming.md)). Both use Candy Glass art. Attack mirrors the joystick across the viewport and matches the joystick base diameter. Customize HUD can move and resize them. Number fields and the join address open an on-screen number pad or letter keyboard.
 
 ## Sub-features
 

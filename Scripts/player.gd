@@ -73,6 +73,10 @@ var swing_turn := 0.0
 
 
 func _ready():
+	# Only the owner moves in physics. Copies receive position from the
+	# synchronizer during multiplayer polling.
+	physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_ON if is_multiplayer_authority() else PHYSICS_INTERPOLATION_MODE_OFF
+	reset_physics_interpolation()
 	health.damaged.connect(_on_damaged)
 	health.healed.connect(_on_healed)
 	health.died.connect(_on_died)
@@ -447,6 +451,7 @@ func _on_respawned(at: Vector2):
 		_respawn_hold = at
 		_respawn_hold_until = Time.get_ticks_msec() + RESPAWN_HOLD_MS
 	position = at
+	reset_physics_interpolation()
 	velocity = Vector2.ZERO
 	# On every peer: this body neither pushes nor is pushed until the
 	# physics server has every respawned body at its new spot.

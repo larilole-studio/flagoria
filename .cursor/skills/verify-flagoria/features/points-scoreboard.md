@@ -2,16 +2,16 @@
 
 Drive: drives/points_scoreboard.gd
 
-Every connected player's point total opens from the score row toggle next to `N pts`. Rows sort highest first and update when totals change or players join or leave.
+Every connected player's point total opens from the score row trophy at the end of the floating row. Rows sort highest first and update when totals change or players join or leave.
 
 ## Sub-features
 
 - `points-scoreboard-panel` `ScoreboardPanel` (`Scripts/scoreboard_panel.gd`): lists connected peers using synced `Points` totals.
-- `points-scoreboard-toggle` round `ScoreboardToggle` (`Scripts/scoreboard_toggle.gd`) beside the own-total label; layout id `scores` in Customize HUD (#492).
+- `points-scoreboard-toggle` trophy `ScoreboardToggle` (`Scripts/scoreboard_toggle.gd`) beside the own-total label; layout id `scores` in Customize HUD (#492).
 
 ## How to get to it (user POV)
 
-- Host or Join, tap the round scores icon beside the top-left `N pts`, read every player's total (colour swatch, `You` or `Player N` / display name).
+- Host or Join, tap the top-left trophy, read every player's total (colour swatch, `You` or `Player N` / display name).
 
 ## Driving it with verify-flagoria helpers
 

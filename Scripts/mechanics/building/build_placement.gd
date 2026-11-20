@@ -16,7 +16,6 @@ const COST_COLOR := Color(0.98, 0.95, 0.88, 1.0)
 const REASON_COLOR := Color(1.0, 0.75, 0.55, 1.0)
 const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 
-const BUILDINGS_ICON := preload("res://assets/ui/hud/icon_buildings.png")
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
 
 var tool := Tool.CUT
@@ -85,10 +84,12 @@ func set_tool(value: Tool) -> void:
 	for t in _buttons:
 		var button: Button = _buttons[t]
 		button.set_pressed_no_signal(t == tool)
+		RoundHudStyle.refresh_toggle(button)
 	if value != Tool.CUT:
 		_list_open = false
 		if _buildings != null:
 			_buildings.set_pressed_no_signal(false)
+			RoundHudStyle.refresh_toggle(_buildings)
 	_refresh_picker_visible()
 
 
@@ -319,6 +320,7 @@ func _commit_footprint(inventory: Inventory, kind: StringName) -> bool:
 func _on_buildings_toggled(on: bool) -> void:
 	if on and HudLayoutVisual.blocks_hud_actions():
 		_buildings.set_pressed_no_signal(false)
+		RoundHudStyle.refresh_toggle(_buildings)
 		return
 	_list_open = on
 	_refresh_rotate_visible()

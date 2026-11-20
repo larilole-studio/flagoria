@@ -129,7 +129,7 @@ func _test_points_discovery_two_players() -> int:
 		var until := Time.get_ticks_msec() + 1500  # several more checks
 		while Time.get_ticks_msec() < until:
 			await process_frame
-		if points.total_of(me) != Points.DISCOVERY_POINTS + covered or hud.text != "%d pts" % points.total_of(me):
+		if points.total_of(me) != Points.DISCOVERY_POINTS + covered or hud.text != "%d" % points.total_of(me):
 			printerr("FAIL points_discovery_two_players standing still: total %s, counter '%s'"
 					% [points.total_of(me), hud.text])
 			fail += 1

@@ -4,7 +4,7 @@
 
 `default_bus_layout.tres` defines `Music` and `SFX` buses, both sending to
 `Master`. Game sounds (footsteps, combat) play on `SFX`. The `AudioSettings`
-autoload (`Scripts/audio_settings.gd`) keeps a 0..1 volume per bus (defaults:
+autoload (`Scripts/audio/audio_settings.gd`) keeps a 0..1 volume per bus (defaults:
 Music 0.6, SFX 1.0). It applies the volume as `volume_db = linear_to_db(v)`,
 mutes the bus at 0, and saves to `user://audio_settings.cfg`. Saved values
 that are not finite numbers, or are negative, load as the default; values
@@ -16,7 +16,7 @@ the sliders cover them.
 
 ## Music
 
-The `MusicPlayer` autoload (`Scripts/music_player.gd`) plays looping music
+The `MusicPlayer` autoload (`Scripts/audio/music_player.gd`) plays looping music
 on the `Music` bus, on this client only. Nothing is networked. Tracks:
 
 - **Menu:** `MENU_TRACK`, Ninja Adventure "5 - Peaceful". Started by the
@@ -30,7 +30,7 @@ restart or double it. A dedicated server stops the music.
 ## Sounds
 
 Sounds live under `art/audio/sfx/<group>/<name>_NN.wav`, credited in
-`art/audio/CREDITS.md`. `Scripts/footsteps.gd` and `Scripts/combat_sfx.gd`
+`art/audio/CREDITS.md`. `Scripts/audio/footsteps.gd` and `Scripts/audio/combat_sfx.gd`
 play them from the player scene.
 
 ### Regen tick
@@ -45,7 +45,7 @@ mastered about 10 dB under the other sounds.
 
 ### Mob sounds
 
-`Scripts/mob_sfx.gd` (the `Sfx` child of `Mobs/mob.tscn`) plays
+`Scripts/audio/mob_sfx.gd` (the `Sfx` child of `Mobs/mob.tscn`) plays
 `art/audio/sfx/mobs/<type>/<type>_<event>_NN.wav` for slime, crab and
 piglet. Each event plays once on every peer, from values the mob already
 syncs:
@@ -91,7 +91,7 @@ hero dying) plays no fall or pickup sound.
 
 ### UI sounds
 
-The `UiSfx` autoload (`Scripts/ui_sfx.gd`) plays `art/audio/sfx/ui/` on the
+The `UiSfx` autoload (`Scripts/audio/ui_sfx.gd`) plays `art/audio/sfx/ui/` on the
 `SFX` bus, on this client only. Nothing is networked. Scenes do not call it;
 they only tag nodes:
 

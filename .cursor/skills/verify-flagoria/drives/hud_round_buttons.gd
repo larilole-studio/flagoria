@@ -21,9 +21,9 @@ func run() -> void:
 				and not _plank().visible
 	, 5.0)
 	step("match-start")
-	ok = ok and _cluster_ok(panel) and _disc_is(buildings, "ui_disc_build") \
-			and _disc_is(current_scene.get_node(MAP_BUTTON), "ui_disc_map") \
-			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_attack.png")
+	ok = ok and _cluster_ok(panel) and _disc_is(buildings, "build_normal") \
+			and _disc_is(current_scene.get_node(MAP_BUTTON), "map_normal") \
+			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
 	await snapshot("match-start")
 	print("hud round: start panel %s tool %s" % [panel.visible, interaction.build.tool])
 
@@ -59,13 +59,13 @@ func run() -> void:
 	var before := interaction.mode
 	await toggle_mode()
 	var switched: bool = interaction.mode != before and interaction.mode == Interaction.Mode.INTERACT \
-			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_interact.png") \
+			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_chop_normal") \
 			and interaction.build.tool == BuildPlacement.Tool.PLANK
 	ok = ok and _buttons_outside(panel)
 	await snapshot("interact")
 	await toggle_mode()
 	var back: bool = interaction.mode == before and interaction.build.tool == BuildPlacement.Tool.CUT \
-			and _icon_is(current_scene.get_node(TOOL_BUTTON), "icon_mode_attack.png")
+			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
 	print("hud round: mode switched %s back %s" % [switched, back])
 
 	step("run")
@@ -88,7 +88,7 @@ func _cluster_ok(panel: MinimapPanel) -> bool:
 	if panel.visible or not _round(map_button) or not _round(buildings):
 		printerr("hud round: start buttons map %s buildings %s" % [map_button.size, buildings.size])
 		return false
-	if not _disc_is(run, "ui_disc_run"):
+	if not _disc_is(run, "run_normal"):
 		printerr("hud round: Run disc")
 		return false
 	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
@@ -158,14 +158,9 @@ func _buttons_outside(panel: Control) -> bool:
 	return true
 
 
-func _icon_is(button: Control, file_name: String) -> bool:
-	var icon: Texture2D = button.get("icon")
-	return icon != null and str(icon.resource_path).ends_with(file_name)
-
-
 func _disc_is(button: Button, stem: String) -> bool:
 	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
-	return box != null and box.texture != null and stem in str(box.texture.resource_path)
+	return box != null and box.texture != null and box.texture == RoundHudStyle.texture(stem)
 
 
 func _round(button: Button, hit := RoundHudStyle.HIT) -> bool:
@@ -181,5 +176,4 @@ func _selected(button: Button) -> bool:
 	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
 	if box == null or box.texture == null:
 		return false
-	var path := str(box.texture.resource_path)
-	return "_selected" in path or "_pressed" in path
+	return box.texture == RoundHudStyle.texture("pick_plank_selected")

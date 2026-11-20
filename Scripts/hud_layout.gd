@@ -357,12 +357,8 @@ func _apply_round(button: Button, pos: Vector2, s: float, _is_run := false) -> v
 		RoundHudStyle.apply_scores(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	elif button.name == "BuildingsButton":
 		RoundHudStyle.apply_build(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
-	elif button.name == "ModeButton":
-		var mode := Interaction.Mode.COMBAT
-		var world := button.get_node_or_null("/root/Flagoria/World/Interaction") as Interaction
-		if world != null:
-			mode = world.mode
-		RoundHudStyle.apply_mode(button, mode, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
+	elif button.name == "ToolButton":
+		button.get_parent().style_button(RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	else:
 		RoundHudStyle.apply(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	button.position = pos

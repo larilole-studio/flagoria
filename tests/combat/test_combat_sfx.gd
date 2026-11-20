@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Player combat and health sounds (Scripts/combat_sfx.gd).
+## Player combat and health sounds (Scripts/audio/combat_sfx.gd).
 
 
 func _test_combat_sfx() -> int:

@@ -2,8 +2,6 @@ class_name BuildPlacementRotate
 extends RefCounted
 ## Round rotate control for footprint placement previews (#493).
 
-const ROTATE_ICON := preload("res://art/ui/ui_tool_rotate.png")
-
 var quarter_turns := 0
 var _button: Button
 
@@ -24,9 +22,8 @@ func ensure(hud: CanvasLayer, theme: Theme) -> Button:
 		_button = Button.new()
 		_button.name = "FootprintRotateButton"
 		_button.theme = theme
-		_button.icon = ROTATE_ICON
 		_button.tooltip_text = "Rotate"
-		RoundHudStyle.apply(_button)
+		RoundHudStyle.apply_disc(_button, "rotate")
 		_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		hud.add_child(_button)
 	_button.visible = false

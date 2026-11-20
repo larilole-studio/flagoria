@@ -6,7 +6,7 @@ A world save keeps the host's own progress in `player`: position, health, wood, 
 
 ## Sub-features
 
-- `player-round-trip` `PlayerSave` (`Scripts/player_save.gd`) writes the section from the in-game menu's Save and applies it when the host body is placed. Health is half-hearts, wood is the inventory, score is the point total, charted ground is the explored-map bitset.
+- `player-round-trip` `PlayerSave` (`Scripts/saves/player_save.gd`) writes the section from the in-game menu's Save and applies it when the host body is placed. Health is half-hearts, wood is the inventory, score is the point total, charted ground is the explored-map bitset.
 - `player-score-chunks` chunks that already paid discovery points are stored with the score, so a load does not pay them again.
 - `player-legacy` a version 1, 2 or 3 file with an empty or missing `player` object loads as the default player. A bad value on one key uses that key's default.
 - `player-join` a joining peer is not this section. They start fresh. The host's health and score still sync as in a live match.
