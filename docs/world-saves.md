@@ -5,8 +5,8 @@ world was generated and what changed in it since. Terrain is never stored: the
 generator rebuilds it from the generation inputs, and the change sections are
 applied on top.
 
-`Scripts/map_save.gd` (`MapSave`) reads and writes the file.
-`Scripts/world_save.gd` (`WorldSave`) is the save in memory. This page covers
+`Scripts/saves/map_save.gd` (`MapSave`) reads and writes the file.
+`Scripts/saves/world_save.gd` (`WorldSave`) is the save in memory. This page covers
 the container format (#196). Tree and bush cuts fill
 `world.object_changes` (see [Cut trees and bushes](#cut-trees-and-bushes)).
 Placed plank bridges fill `world.tile_edits` (see

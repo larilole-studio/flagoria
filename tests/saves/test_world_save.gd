@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## One save in memory (Scripts/world_save.gd) and its versions.
+## One save in memory (Scripts/saves/world_save.gd) and its versions.
 
 ## Compressed size ceilings printed by the size test. A fresh world is the
 ## header and the generation inputs. A few hundred edits is 300 plank cells.
