@@ -55,6 +55,7 @@ GAMEPLAY = [
     "Scripts/player_health.gd",
     "Scripts/mechanics/mobs/mob.gd", "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/mobs/mob_catalog.gd",
     "Scripts/TileMap.gd",  # chunk loading, collision, ground sync
+    "Scripts/world_chunks.gd", "Scripts/world_map_params.gd", "Scripts/world_cell_queries.gd",
     "Scripts/world/*.gd",  # terrain shape and spawn search for the world map
     "Scripts/mechanics/*.gd",  # cuts, bridges, walls, structures, choppable types (all subfolders)
     "Scripts/map_gen.gd",  # session map parameters applied to the world map
@@ -104,6 +105,7 @@ NETCODE_MIXED = [
     "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
     "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
     "Scripts/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/TileMap.gd",
+    "Scripts/world_chunks.gd", "Scripts/world_map_params.gd", "Scripts/world_cell_queries.gd",
 ]
 NET_LINE = re.compile(r"rpc|multiplayer|peer|authority|replicat|synchroniz|spawner|is_server|enet", re.I)
 

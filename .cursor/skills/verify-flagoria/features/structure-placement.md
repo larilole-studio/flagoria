@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+The map node delegates `generate_chunk` and `predict_cell` to `Scripts/world_chunks.gd`.
+
 A parsed structure file can be placed on the generated map at an anchor cell. `StructurePlacer` (`Scripts/mechanics/structures/structure_placer.gd`, owned by `Scripts/TileMap.gd`) checks the footprint, writes the ground and object cells, picks wall and gate pieces with `WallSolver`, sets the team flag, and records the placement so `generate_chunk` draws it again after a redraw. In-game structure files are `structures/castle.txt`, `structures/tower_wood.txt`, `structures/guard_post.txt` and `structures/barracks.txt` (`construction_placer.gd` loads them by name). The [starting castle](./start-castle.md) is placed by the host directly while alone. Every other footprint structure a player builds in multiplayer goes through `StructureRequests` on the host (#497, #527, #528, #556). A peer that joins gets the host's placements with the map (`receive_map_params`, after the cuts) and draws them before its player is placed. A castle the host places for a joining peer is sent to peers already connected and is in the list a later peer receives (#278). Free-form walls use the same request pipeline (#498).
 
 ## Sub-features
