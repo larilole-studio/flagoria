@@ -258,6 +258,7 @@ func _apply_player_spots(spots: Dictionary) -> void:
 		var node = get_node_or_null("World/" + str(key))
 		if node is CharacterBody2D:
 			node.position = _pending_spots[key]
+			node.reset_physics_interpolation()
 			_pending_spots.erase(key)
 
 
@@ -268,6 +269,7 @@ func _on_world_child_entered(node: Node) -> void:
 	var key := str(node.name)
 	if _pending_spots.has(key):
 		node.position = _pending_spots[key]
+		node.reset_physics_interpolation()
 		_pending_spots.erase(key)
 	elif key == str(multiplayer.get_unique_id()) and _own_spot != Vector2.INF:
 		_place_own_player.call_deferred()
