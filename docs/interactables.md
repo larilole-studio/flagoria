@@ -57,7 +57,7 @@ The catalog is a fixed `preload` list. It does not scan `data/interactables/`, b
 
 ## 4. Yield
 
-- **The amount** is set in `yields` in the `.tres`. `Interaction` adds each entry to `Scripts/inventory.gd` when the plant falls.
+- **The amount** is set in `yields` in the `.tres`. `Interaction` adds each entry to `Scripts/mechanics/trees/inventory.gd` when the plant falls.
 - **Wood** (`Inventory.WOOD`) is the only resource today. It is also the only one `Scripts/ui/resource_hud.gd` shows. A new resource needs its constant in `Inventory`, plus a HUD change.
 
 ## 5. Save and sync

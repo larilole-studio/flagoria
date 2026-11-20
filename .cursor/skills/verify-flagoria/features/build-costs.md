@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-What each buildable costs in wood, and buying one. `BuildCosts` (`Scripts/mechanics/building/build_costs.gd`) holds the table and `buy`; `Inventory.spend` (`Scripts/inventory.gd`) takes the wood. Wood comes from chopping: a tree gives 3, a bush 1 (`data/interactables/`).
+What each buildable costs in wood, and buying one. `BuildCosts` (`Scripts/mechanics/building/build_costs.gd`) holds the table and `buy`; `Inventory.spend` (`Scripts/mechanics/trees/inventory.gd`) takes the wood. Wood comes from chopping: a tree gives 3, a bush 1 (`data/interactables/`).
 
 | Kind | Wood per unit | Unit |
 |---|---|---|
