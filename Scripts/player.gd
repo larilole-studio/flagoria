@@ -104,6 +104,10 @@ func _process(_delta):
 	_wall_draw.apply(self)
 
 
+func _wall_cover(map: TileMap) -> float:
+	return _wall_draw._wall_cover(map, global_position)
+
+
 func set_chop_pose(direction: String, col: int) -> void:
 	## Interaction's chop (local only): show chop sheet column `col` facing
 	## `direction` in place of the walk sprite, or the walk sprite again for -1.
