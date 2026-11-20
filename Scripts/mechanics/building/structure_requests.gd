@@ -59,12 +59,23 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	for cell in cells:
 		if body.global_position.distance_to(interaction.cell_center(cell)) > Interaction.REACH + Interaction.REACH_SLACK:
 			return false
-	if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE or kind == BuildCosts.GUARD_POST \
-			or kind == BuildCosts.BARRACKS:
-		return _host_named(kind, cells[0], peer_id, quarter_turns)
+	var local := peer_id == multiplayer.get_unique_id()
+	var inventory := get_node_or_null("../../Inventory") as Inventory if local else null
+	if local and inventory == null:
+		return false
+	var placer := ConstructionPlacer.new(_map())
+	if not placer.place_for_peer(kind, cells, peer_id, inventory, quarter_turns):
+		return false
+	if not local:
+		interaction.rpc_id(peer_id, "receive_charge", placer.cost(kind, cells))
 	if kind == BuildCosts.WALL_BLOCK:
-		return _host_wall(cells, peer_id)
-	return false
+		_publish()
+	else:
+		apply_structure.rpc(ConstructionPlacer.named_structure_file(kind), peer_id, cells[0], quarter_turns)
+		var cities := get_node_or_null("../Cities") as Cities
+		if cities != null and (kind == BuildCosts.GUARD_POST or kind == BuildCosts.CASTLE):
+			cities.tick()
+	return true
 
 
 func host_damage_wall(cell: Vector2i) -> bool:
@@ -115,54 +126,6 @@ func sync_to_peer(peer_id: int) -> void:
 	apply_wall_state.rpc_id(peer_id, snap[0], snap[1], snap[2])
 
 
-func _host_named(kind: StringName, anchor: Vector2i, peer_id: int, quarter_turns: int = 0) -> bool:
-	## Solo footprint rules. The host spends its own wood; a client is charged
-	## with receive_charge after the write, same order as a plank (#297).
-	var placer := ConstructionPlacer.new(_map())
-	var structure_name := ConstructionPlacer.named_structure_file(kind)
-	if structure_name == "":
-		return false
-	if peer_id == multiplayer.get_unique_id():
-		var inventory := get_node_or_null("../../Inventory") as Inventory
-		if inventory == null:
-			return false
-		var turns := quarter_turns
-		var why := BuildCosts.buy(inventory, kind, 1, func() -> int:
-			return placer.write_named(kind, anchor, peer_id, turns))
-		if why != "":
-			return false
-	elif placer.write_named(kind, anchor, peer_id, quarter_turns) <= 0:
-		return false
-	else:
-		_interaction().rpc_id(peer_id, "receive_charge", BuildCosts.cost(kind, 1))
-	apply_structure.rpc(structure_name, peer_id, anchor, quarter_turns)
-	var cities := get_node_or_null("../Cities") as Cities
-	if cities != null and (kind == BuildCosts.GUARD_POST or kind == BuildCosts.CASTLE):
-		cities.tick()
-	return true
-
-
-func _host_wall(cells: Array[Vector2i], peer_id: int) -> bool:
-	## Solo wall rules: land, a straight run, touching a wall or structure.
-	## Two wood per cell. The host spends its own; a client is charged after
-	## the write. Peers get the whole chain and the solved auto junctions.
-	var placer := ConstructionPlacer.new(_map())
-	if peer_id == multiplayer.get_unique_id():
-		var inventory := get_node_or_null("../../Inventory") as Inventory
-		if inventory == null:
-			return false
-		var why := BuildCosts.buy(inventory, BuildCosts.WALL_BLOCK, cells.size(), func() -> bool:
-			return placer.write_wall(cells))
-		if why != "":
-			return false
-	elif not placer.write_wall(cells):
-		return false
-	else:
-		_interaction().rpc_id(peer_id, "receive_charge", BuildCosts.cost(BuildCosts.WALL_BLOCK, cells.size()))
-	_publish()
-	return true
-
-
 func _publish() -> void:
 	## Walls first, then Cities.tick, so a closed or opened loop is the host's
 	## decision and leaves on the same reliable channel.
@@ -209,16 +172,7 @@ func apply_structure(structure_name: String, owner: int, anchor: Vector2i, quart
 	## `quarter_turns` is clockwise; 0 keeps an older three-field row.
 	if multiplayer.get_remote_sender_id() != 1:
 		return
-	var map := _map()
-	var turns := posmod(quarter_turns, 4)
-	for entry in map.placed_structures().values():
-		if str(entry["name"]) == structure_name and int(entry["owner"]) == owner \
-				and entry["anchor"] == anchor and int(entry.get("rotation", 0)) == turns:
-			return
-	var structure := StructurePlacer.load_named(structure_name)
-	if structure == null:
-		return
-	map._structures.place_from_host(structure, anchor, owner, quarter_turns)
+	ConstructionPlacer.new(_map()).apply_replica(structure_name, anchor, owner, quarter_turns)
 
 
 @rpc("authority", "reliable", "call_remote")

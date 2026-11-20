@@ -17,7 +17,7 @@ extends Node2D
 ## apply_sprout_cells per sprout pass, SPROUTS_PER_MESSAGE cells at most each.
 ## Plank bridges sync the same way (#297): a client asks with
 ## request_place_planks, the host checks the placer is alive and in reach,
-## writes through ConstructionPlacer.write_plank, sends apply_bridge to every
+## writes through ConstructionPlacer.place_for_peer, sends apply_bridge to every
 ## other peer and charges the placer with receive_charge. A host placing with
 ## peers connected spends its own wood through ConstructionPlacer.place and
 ## broadcasts apply_bridge. Peers that join later get the host's bridges with
@@ -422,19 +422,16 @@ func host_place_planks(cells: Array[Vector2i], peer_id: int) -> bool:
 		if placer_node.global_position.distance_to(cell_center(cell)) > REACH + REACH_SLACK:
 			return false
 	var placer := ConstructionPlacer.new(world_map)
-	var ends: Array[Vector2i] = []
-	if peer_id == multiplayer.get_unique_id():
-		var inventory := get_node_or_null(INVENTORY_PATH) as Inventory
-		if inventory == null or not placer.place(BuildCosts.PLANK, cells, inventory):
-			return false
-		ends = placer.plank_ends(cells)
-	else:
-		ends = placer.write_plank(cells)
-		if ends.is_empty():
-			return false
+	var local := peer_id == multiplayer.get_unique_id()
+	var inventory := get_node_or_null(INVENTORY_PATH) as Inventory if local else null
+	if local and inventory == null:
+		return false
+	if not placer.place_for_peer(BuildCosts.PLANK, cells, peer_id, inventory):
+		return false
+	if not local:
 		receive_charge.rpc_id(peer_id, cells.size())
-	if not ends.is_empty():
-		apply_bridge.rpc(ends[0], ends[1])
+	var ends := placer.plank_ends(cells)
+	apply_bridge.rpc(ends[0], ends[1])
 	return true
 
 

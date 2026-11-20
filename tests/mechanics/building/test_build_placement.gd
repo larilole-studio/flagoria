@@ -189,48 +189,6 @@ func _test_build_plank_preview_tint_and_cost() -> int:
 	return fail
 
 
-func _test_build_plank_places_and_spends() -> int:
-	## Releasing a plank drag places the longest valid prefix through
-	## ConstructionPlacer and spends wood. Time cost: about 0.5 s in
-	## tools/verify.sh (~2.2 s alone with --only=).
-	print("-- test_build_plank_places_and_spends")
-	var fail := 0
-	var ctx := await _boot_interact_scene()
-	var found: Dictionary = ctx["found"]
-	if found.is_empty():
-		printerr("FAIL build_plank_places_and_spends: no shore run")
-		ctx["scene"].queue_free()
-		await process_frame
-		return 1
-	var interaction: Interaction = ctx["interaction"]
-	var inventory: Inventory = ctx["inventory"]
-	var world = ctx["world"]
-	var water_run: Array[Vector2i] = found["water_run"]
-	inventory.add(Inventory.WOOD, water_run.size())
-	var before := inventory.count_of(Inventory.WOOD)
-	interaction.set_mode(Interaction.Mode.INTERACT)
-	interaction.build.set_tool(BuildPlacement.Tool.PLANK)
-	var start := _cell_vp(interaction, world, water_run[0])
-	var end := _cell_vp(interaction, world, water_run[water_run.size() - 1])
-	interaction.build.update_preview(start, end)
-	if not interaction.build.commit():
-		printerr("FAIL build_plank_places_and_spends: commit returned false")
-		fail += 1
-	if not water_run.all(func(c: Vector2i) -> bool: return world.has_bridge(c)):
-		printerr("FAIL build_plank_places_and_spends: bridges %s"
-				% [water_run.map(func(c: Vector2i) -> bool: return world.has_bridge(c))])
-		fail += 1
-	if inventory.count_of(Inventory.WOOD) != before - water_run.size():
-		printerr("FAIL build_plank_places_and_spends: wood %d -> %d"
-				% [before, inventory.count_of(Inventory.WOOD)])
-		fail += 1
-	ctx["scene"].queue_free()
-	await process_frame
-	if fail == 0:
-		print("PASS test_build_plank_places_and_spends")
-	return fail
-
-
 func _test_build_cut_mode_unchanged() -> int:
 	## With Cut selected, a tap still chops a tree in reach. Time cost: about
 	## 0.4 s in tools/verify.sh (~2.1 s alone with --only=).

@@ -46,18 +46,17 @@ to the host (#498). Preview green cells and cost match exactly what
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `test_construction_placer_wall`
-about 0.7 s in `tools/verify.sh` (~2.5 s alone with `--only=`);
-`test_construction_placer_wall_atomic_spend` about 0.3 s (~2.0 s alone);
+Preconditions: `doctor.sh` exits `0`. Placement and charge use the shared
+[construction seam](./construction-placement.md).
 `test_build_wall_segment_tip_and_gap` under 0.05 s (~1.8 s alone);
 `test_build_wall_preview_matches_commit` about 0.6 s (~2.3 s alone);
 `test_build_wall_first_must_touch_structure` about 0.5 s (~2.2 s alone). Drive
 about 20 s under xvfb.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_wall,construction_placer_wall_atomic_spend,build_picker_buttons,build_wall_segment_tip_and_gap,build_wall_preview_matches_commit,build_wall_first_must_touch_structure`, or the full `tools/verify.sh`.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=building_seam_runs,building_seam_refund,build_picker_buttons,build_wall_segment_tip_and_gap,build_wall_preview_matches_commit,build_wall_first_must_touch_structure`, or the full `tools/verify.sh`.
 - **Drive (live).** `bin/launch.sh drives/free_form_walls.gd --display` (under xvfb). Steps `start`, `interact`, `first-block`, `chain`, `gap`: `start_game()`, settle, `snapshot("start")`, enter interact + Wall, give wood, place a first land block, `snapshot("first-block")`, place a short H chain off the tip, `snapshot("chain")`, try a gap (no spend), `snapshot("gap")`, `done(true)`.
-- **Proof.** Headers `-- test_construction_placer_wall`,
-  `-- test_construction_placer_wall_atomic_spend`,
+- **Proof.** Headers `-- test_building_seam_runs`,
+  `-- test_building_seam_refund`,
   `-- test_build_picker_buttons`,
   `-- test_build_wall_segment_tip_and_gap` and
   `-- test_build_wall_preview_matches_commit` and
