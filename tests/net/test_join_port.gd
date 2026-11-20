@@ -1,7 +1,7 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Main Menu Join accepts a hostname or IPv4 address with an optional port.
 
-const JoinAddress = preload("res://Scripts/join_address.gd")
+const JoinAddress = preload("res://Scripts/net/join_address.gd")
 const ADDRESS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry"
 const STATUS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinStatus"
 const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"

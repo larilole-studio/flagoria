@@ -6,7 +6,7 @@ extends RefCounted
 ## Re-dial every 1 s for 6 s, which still connects through a 4 s stall, and
 ## an unanswered join still returns inside the 8 s menu check.
 
-const JoinEnetTimeout = preload("res://Scripts/join_enet_timeout.gd")
+const JoinEnetTimeout = preload("res://Scripts/net/join_enet_timeout.gd")
 
 const BUDGET_MS := 6000
 const REDIAL_MS := 1000
