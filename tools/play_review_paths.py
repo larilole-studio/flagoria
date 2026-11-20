@@ -61,7 +61,7 @@ GAMEPLAY = [
     "Scripts/ui/hearts_hud.gd", "Scripts/map_zoom.gd",
     "Scripts/shell/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
     "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
-    "Scripts/points.gd", "Scripts/discovery_points.gd",  # score awards
+    "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",  # score awards
     "Scripts/inventory.gd",  # gathered wood
     "Scripts/shell/game_settings.gd",  # mob spawn rate
     "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
@@ -90,7 +90,7 @@ STRESS_MATRIX = [
 # Netcode files: spawners, RPC-only scripts, and the stress matrix above.
 # Any change to them gets the full stress tier.
 NETCODE = [
-    "Scripts/mob_spawner.gd", "Scripts/points.gd", "Scripts/discovery_points.gd",
+    "Scripts/mob_spawner.gd", "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",
     "tilemap_dynamic.tscn",
     *STRESS_MATRIX,
 ]
@@ -226,7 +226,7 @@ def self_test() -> int:
         (["tests/docker_publish_probe.gd"], None, None, False),
         (["Scripts/attack_aim.gd"], None, None, True),
         (["Scripts/aim_cone_style.gd"], None, None, True),
-        (["Scripts/points.gd"], None, None, True),
+        (["Scripts/mechanics/conquest/points.gd"], None, None, True),
         (["Scripts/saves/world_save.gd"], None, None, True),
         (["Scripts/saves/player_save.gd"], None, None, True),
         (["Scripts/shell/ingame_menu.gd"], None, None, True),
