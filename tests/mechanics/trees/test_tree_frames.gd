@@ -10,8 +10,7 @@ func _test_chop_tree_frames() -> int:
 	## impacts at 140 ms and 460 ms.
 	print("-- test_chop_tree_frames")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -23,10 +22,7 @@ func _test_chop_tree_frames() -> int:
 	var plants := {Vector2i(9, 9): TileCatalog.TREE, Vector2i(10, 9): TileCatalog.TREE_BUSHY, Vector2i(11, 9): TileCatalog.TREE_PINE_SMALL}
 	for cell: Vector2i in plants:
 		world.set_cell(1, cell, TileCatalog.SOURCE_ID, plants[cell])
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
-	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, world.to_global(world.map_to_local(Vector2i(10, 10))))
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_process(false)  # the test steps the chop clock itself

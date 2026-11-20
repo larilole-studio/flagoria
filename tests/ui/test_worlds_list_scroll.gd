@@ -24,23 +24,19 @@ func _test_worlds_list_scroll() -> int:
 			fail += 1
 			continue
 		paths.append(saved["path"])
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	var menu = scene.get_node("CanvasLayer2/MainMenu")
-	var vp: Viewport = scene.get_viewport()
+	var original_size := root.size
 	for size in VIEWPORTS:
-		vp.size = size
-		root.size = size
-		await process_frame
-		await process_frame
+		var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), size, 2)
+		var menu = scene.get_node("CanvasLayer2/MainMenu")
+		var vp: Viewport = scene.get_viewport()
 		menu._on_worlds_pressed()
 		await process_frame
 		await process_frame
 		fail += await _check_scroll_at_size(scene, vp, size)
 		menu._on_worlds_back_pressed()
 		await process_frame
-	scene.queue_free()
-	await process_frame
+		await free_ui_scene(scene)
+	root.size = original_size
 	for path in paths:
 		DirAccess.remove_absolute(path)
 	if fail == 0:

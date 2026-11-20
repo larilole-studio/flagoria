@@ -65,9 +65,7 @@ func _test_ui_sfx_presses() -> int:
 	print("-- test_ui_sfx_presses")
 	var fail := 0
 	var ui = root.get_node("UiSfx")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	await process_frame  # the map settings panel is added deferred
+	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var layer: Node = scene.get_node("CanvasLayer2")
 	var buttons := layer.find_children("*", "BaseButton", true, false)
 	var names := []
@@ -107,8 +105,7 @@ func _test_ui_sfx_presses() -> int:
 	if not menu.visible or panel.visible:
 		printerr("FAIL ui_sfx_presses: Back did not return to the main menu")
 		fail += 1
-	scene.queue_free()
-	await process_frame
+	await free_ui_scene(scene)
 
 	# A handler that blocks, then frees the button's scene (like a scene
 	# change): the click has already started and keeps playing.

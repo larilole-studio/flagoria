@@ -65,11 +65,7 @@ func _test_mob_sfx_events() -> int:
 	print("-- test_mob_sfx_events")
 	var fail := 0
 	await process_frame
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	var world: TileMap = scene.get_node("World/worldMap")
-	world.apply_map_params(_spawn_params(42, 0.003))
-	world.generate_chunk(Vector2.ZERO)
+	var scene = mount_seeded_tree_world(42, 0.003)
 	var mobs_node: Node = scene.get_node("World/Mobs")
 	var add_mob := func(type: String, n: String) -> Mob:
 		var m: Mob = load("res://Mobs/mob.tscn").instantiate()
@@ -92,10 +88,7 @@ func _test_mob_sfx_events() -> int:
 
 	for t in MobCatalog.names():
 		var mob: Mob = add_mob.call(t, "server_" + t)
-		var player = load("res://Player/character_body_2d.tscn").instantiate()
-		player.name = "1"
-		player.position = Vector2(400, 400)
-		scene.get_node("World").add_child(player)
+		var player = add_combat_actor(scene, Vector2(400, 400))
 		player.health.max_health = 1000
 		player.health.set_health_now(1000)
 		# The same events as the server's behaviour sets them.

@@ -44,12 +44,9 @@ func _test_structure_rotation_blocked() -> int:
 	## A rotated guard_post that overlaps its own unrotated footprint is refused.
 	print("-- test_structure_rotation_blocked")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_seeded_tree_world(42, 0.0)
 	var world = scene.get_node("World/worldMap")
 	var structure := _guard_post()
-	world.apply_map_params(_spawn_params(42, 0.0))
-	world.generate_chunk(Vector2(0, 0))
 	var anchor: Variant = null
 	for cell in world.get_used_cells(0):
 		if world.can_place_structure(structure, cell).is_empty():

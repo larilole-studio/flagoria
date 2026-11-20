@@ -8,8 +8,7 @@ func _chop_scene() -> Dictionary:
 	## Isolation (#359): freeze TileMap processing, reset MapGen, and pin
 	## spawn on the painted stand cell so a revive does not
 	## resolve_player_spawn → generate_chunk over the paint.
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -24,10 +23,7 @@ func _chop_scene() -> Dictionary:
 	var stand := Vector2i(10, 10)
 	world.spawn_point = stand
 	world._castle_front = stand
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
-	player.position = world.to_global(world.map_to_local(stand))
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, world.to_global(world.map_to_local(stand)))
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_process(false)

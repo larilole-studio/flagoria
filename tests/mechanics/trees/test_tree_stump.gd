@@ -6,15 +6,13 @@ func _test_cut_tree_stays_stump() -> int:
 	## A cut tree stays a stump when its chunk is drawn again, and predict_cell
 	## and predicted_clear see the stump, so mobs treat the cell as open ground.
 	print("-- test_cut_tree_stays_stump")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
 	var fail := 0
 	var tree := Vector2i(1 << 20, 0)
 	var seed_value := 0
 	for s in [11, 42, 7, 1, 99, 3, 5]:
-		world.apply_map_params(_spawn_params(s, 0.0))
-		world.generate_chunk(Vector2(0, 0))
+		generate_seeded_chunk(world, s, 0.0)
 		for cell in world.get_used_cells(1):
 			if world.has_tree(cell):
 				tree = cell
@@ -37,8 +35,7 @@ func _test_cut_tree_stays_stump() -> int:
 	if world.predict_cell(tree)[1] != TileCatalog.STUMP or not world.predicted_clear(tree) or not world.is_clear_ground(tree):
 		printerr("FAIL cut_tree_stays_stump: predict_cell %s for the stump" % [world.predict_cell(tree)])
 		fail += 1
-	world.apply_map_params(_spawn_params(seed_value, 0.0))
-	world.generate_chunk(Vector2(0, 0))
+	generate_seeded_chunk(world, seed_value, 0.0)
 	if not world.has_tree(tree):
 		printerr("FAIL cut_tree_stays_stump: a new map kept the stump at %s" % tree)
 		fail += 1
@@ -53,14 +50,12 @@ func _test_tree_regrows() -> int:
 	## passed since the cut, not before, and not while a player stands on it:
 	## the same tree, with its collision, and predict_cell sees it again.
 	print("-- test_tree_regrows")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
 	var fail := 0
 	var tree := Vector2i(1 << 20, 0)
 	for s in [11, 42, 7, 1, 99, 3, 5]:
-		world.apply_map_params(_spawn_params(s, 0.0))
-		world.generate_chunk(Vector2(0, 0))
+		generate_seeded_chunk(world, s, 0.0)
 		for cell in world.get_used_cells(1):
 			if world.has_tree(cell):
 				tree = cell
@@ -83,10 +78,7 @@ func _test_tree_regrows() -> int:
 		printerr("FAIL tree_regrows: %s regrew before the delay" % tree)
 		fail += 1
 	# Not while a player stands on the stump.
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
-	player.position = world.to_global(world.map_to_local(tree))
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, world.to_global(world.map_to_local(tree)))
 	await process_frame
 	world.play_time = 200.0
 	if not world.player_on_cell(tree) or world.regrow_due() != 0 or not is_stump.call():
@@ -124,14 +116,12 @@ func _test_tree_regrows_under_mob() -> int:
 	## trap the mob, also when only a corner of the feet box is on the cell;
 	## it regrows on the next regrow_due once the mob has left (#232).
 	print("-- test_tree_regrows_under_mob")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
 	var fail := 0
 	var tree := Vector2i(1 << 20, 0)
 	for s in [11, 42, 7, 1, 99, 3, 5]:
-		world.apply_map_params(_spawn_params(s, 0.0))
-		world.generate_chunk(Vector2(0, 0))
+		generate_seeded_chunk(world, s, 0.0)
 		for cell in world.get_used_cells(1):
 			if world.has_tree(cell):
 				tree = cell

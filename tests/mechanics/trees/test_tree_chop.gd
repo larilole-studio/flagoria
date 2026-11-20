@@ -11,8 +11,7 @@ func _test_chop_tree_two_hits() -> int:
 	## multiplayer, and a peer joining forces combat mode, which cancels too.
 	print("-- test_chop_tree_two_hits")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -24,10 +23,7 @@ func _test_chop_tree_two_hits() -> int:
 			world.set_cell(0, Vector2i(x, y), TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
 	world.set_cell(1, Vector2i(10, 8), TileCatalog.SOURCE_ID, TileCatalog.TREE)
 	world.set_cell(1, Vector2i(18, 10), TileCatalog.SOURCE_ID, TileCatalog.TREE_PINE_SMALL)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
-	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, world.to_global(world.map_to_local(Vector2i(10, 10))))
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_process(false)  # the test steps the chop clock itself
@@ -123,8 +119,7 @@ func _test_chop_sheet_on_single_cut() -> int:
 	## (~1.5 s alone with --only=).
 	print("-- test_chop_sheet_on_single_cut")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -142,10 +137,7 @@ func _test_chop_sheet_on_single_cut() -> int:
 	world.set_cell(1, tree_b, TileCatalog.SOURCE_ID, TileCatalog.TREE)
 	world.set_cell(1, tree_c, TileCatalog.SOURCE_ID, TileCatalog.TREE)
 	world.set_cell(1, tree_west, TileCatalog.SOURCE_ID, TileCatalog.TREE)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
-	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, world.to_global(world.map_to_local(Vector2i(10, 10))))
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_process(false)
@@ -228,8 +220,7 @@ func _test_chop_sweep_bounds_and_cancel() -> int:
 	if AimConeStyle.SWORD_REACH != 30.0 or Interaction.CHOP_REACH != 240.0:
 		printerr("FAIL chop_sweep_bounds: reach chop %s sword %s" % [Interaction.CHOP_REACH, AimConeStyle.SWORD_REACH])
 		return 1
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -335,8 +326,7 @@ func _test_chop_tap_ignores_stale_end() -> int:
 	## cover the facing tree. Time cost: about 0.3 s in tools/verify.sh.
 	print("-- test_chop_tap_ignores_stale_end")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
 	menu.hide()
 	menu.set_process_unhandled_input(false)
@@ -350,10 +340,7 @@ func _test_chop_tap_ignores_stale_end() -> int:
 	var west := Vector2i(6, 10)
 	world.set_cell(1, east, TileCatalog.SOURCE_ID, TileCatalog.TREE)
 	world.set_cell(1, west, TileCatalog.SOURCE_ID, TileCatalog.TREE)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
-	player.name = str(scene.multiplayer.get_unique_id())
-	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
-	scene.get_node("World").add_child(player)
+	var player = add_combat_actor(scene, world.to_global(world.map_to_local(Vector2i(10, 10))))
 	await process_frame
 	player.lastAnimDirection = "Right"
 	var interaction: Interaction = scene.get_node("World/Interaction")
@@ -382,8 +369,7 @@ func _test_chop_birch_clears_both_cells() -> int:
 	## Chopping a birch bottom removes its top canopy and leaves a stump with tree wood.
 	print("-- test_chop_birch_clears_both_cells")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
+	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
 	world.clear()
 	var bottom := Vector2i(12, 9)

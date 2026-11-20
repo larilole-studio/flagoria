@@ -36,6 +36,48 @@ func set_multiplayer(api: MultiplayerAPI, root_path: NodePath = ^"") -> void:
 	tree.set_multiplayer(api, root_path)
 
 
+func mount_main_scene() -> Node:
+	var scene := load("res://flagoria_main.tscn").instantiate() as Node
+	root.add_child(scene)
+	return scene
+
+
+func mount_ui_scene(packed_scene: PackedScene, window_size: Vector2i, frames: int) -> Node:
+	if root.size != window_size:
+		root.size = window_size
+	var scene := packed_scene.instantiate()
+	root.add_child(scene)
+	for frame in frames:
+		await process_frame
+	return scene
+
+
+func free_ui_scene(scene: Node) -> void:
+	scene.queue_free()
+	await process_frame
+
+
+func add_combat_actor(scene: Node, position: Vector2) -> CharacterBody2D:
+	## Attach the local player after the caller has prepared the arena.
+	var player := load("res://Player/character_body_2d.tscn").instantiate() as CharacterBody2D
+	player.name = str(scene.multiplayer.get_unique_id())
+	player.position = position
+	scene.get_node("World").add_child(player)
+	return player
+
+
+func mount_seeded_tree_world(seed_value: int, biome_frequency: float) -> Node:
+	var scene := mount_main_scene()
+	generate_seeded_chunk(scene.get_node("World/worldMap"), seed_value, biome_frequency)
+	return scene
+
+
+func generate_seeded_chunk(world: TileMap, seed_value: int, biome_frequency: float) -> void:
+	## Also used to try successive seeds in the same world.
+	world.apply_map_params(_spawn_params(seed_value, biome_frequency))
+	world.generate_chunk(Vector2.ZERO)
+
+
 func _pre_biome_defaults() -> MapGenParams:
 	## Default params with biomes off. New worlds have biomes on; tests that pin
 	## exact cells or compare against pre-biome maps start from this instead.
