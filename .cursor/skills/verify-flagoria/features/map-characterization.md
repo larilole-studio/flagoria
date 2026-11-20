@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+Assertion owner for the seed-42 render golden: the Map render golden step in `tools/verify.sh` runs the real CLI and compares its output.
+
 Map characterization pins procedural tile output for fixed seeds so parameter changes show up as failing atlas expectations.
 
 ## Sub-features
