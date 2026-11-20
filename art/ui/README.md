@@ -28,20 +28,20 @@ mode and menu buttons, 4 px from the right edge (224x144 at (252, 28) in the
 | `ui_map_marker_hero_{up,right,down,left}.png` | 16x16 | the local hero, pointing the way it faces; pixel (8, 8) sits on the hero's cell |
 
 The window shows the world at 2 px per cell, centred on the hero. Explored
-cells use the map colours in `Scripts/minimap_panel.gd` (water, shore,
+cells use the map colours in `Scripts/ui/minimap_panel.gd` (water, shore,
 sand, swamp, grass, trees, stones, flowers), with a 1 px ink line where
 explored land meets explored water. Cells nobody has been near show as mist,
 a 1 px dither of `#ffffff` and `#d9e6f2`. The panel is drawn at a whole
 number of screen pixels per art pixel, rounding down, so at fractional
 window stretches it stays clear of the attack button.
 
-The header carries two controls drawn in code (`Scripts/map_wood_button.gd`)
+The header carries two controls drawn in code (`Scripts/ui/map_wood_button.gd`)
 in the frame's own colours, ink `#2a2238` on light wood `#e0a96b`: a minus
 that collapses the window, and a square that opens the parchment. Collapsed,
 a 56x24 wood chip in the same corner (a small map and an up chevron) opens
 the panel again. The frame PNG is unchanged.
 
-The parchment (`Scripts/parchment_map.gd`) fills the viewport. It is old
+The parchment (`Scripts/ui/parchment_map.gd`) fills the viewport. It is old
 paper, not a second wood frame: `#e7d7b1` with a `#cbb98a` dither, a
 `#8a5a32` edge and the same ink. Explored cells use the panel's map colours.
 Unexplored cells stay that paper fog. Wheel and pinch zoom the sheet in
@@ -74,7 +74,7 @@ controls' textures. The aim cone is drawn with the `AimConeStyle` resource
 
 ## In-game keyboard
 
-The in-game number pad and letter keyboard (`number_pad.tscn`) use their own
+The in-game number pad and letter keyboard (`Scripts/ui/number_pad.tscn`) use their own
 keycap styles from `main_menu_theme.tres`, as theme type variations:
 `KeyCap` for character keys (tan wood face, ink outline, deeper bottom edge
 that moves to the top when pressed), `KeyCapDelete` (muted red) and

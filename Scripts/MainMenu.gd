@@ -2,7 +2,7 @@ extends PanelContainer
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
 const WorldsSaveList = preload("res://Scripts/worlds_save_list.gd")
-const WorldSavePreview = preload("res://Scripts/world_save_preview.gd")
+const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
 
 @onready var main_menu = $"."
 @onready var address_entry = $MarginContainer/VBoxContainer/AddressEntry
@@ -115,12 +115,12 @@ func _ready() -> void:
 		game.set_raid_radius_cells(int(round(v)))
 		raid_radius_value.text = str(game.raid_radius_cells))
 	# The join address is typed on the in-game letter keyboard, not the OS one.
-	var keyboard: NumberPad = preload("res://number_pad.tscn").instantiate()
+	var keyboard: NumberPad = preload("res://Scripts/ui/number_pad.tscn").instantiate()
 	keyboard.name = "LetterKeyboard"
 	add_child(keyboard)
 	keyboard.attach_text(address_entry)
 	visibility_changed.connect(keyboard.close)
-	admin_panel = preload("res://map_admin_panel.tscn").instantiate()
+	admin_panel = preload("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	admin_panel.visible = false
 	admin_panel.closed.connect(_on_admin_closed)
 	admin_panel.start_host_requested.connect(_on_host_button_pressed)

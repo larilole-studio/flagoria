@@ -5,7 +5,7 @@ func _test_map_settings_water_reopen() -> int:
 	## Map Settings must show the in-use water value on reopen, even when a
 	## SpinBox LineEdit still holds a dirty string for the same numeric value.
 	print("-- test_map_settings_water_reopen")
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	var spin := _setting_spin(panel, "water_max_alt")
 	var in_use := 0.45
@@ -31,7 +31,7 @@ func _test_map_settings_covers_params() -> int:
 	print("-- test_map_settings_covers_params")
 	var params := MapGenParams.make_defaults()
 	var data := params.to_dict()
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	var control_names := {
 		"altitude_seed": "AltitudeSeed", "moisture_seed": "MoistureSeed",
@@ -55,7 +55,7 @@ func _test_map_settings_covers_params() -> int:
 func _test_map_settings_number_pad_touch_tap() -> int:
 	## An Android-style tap must reach the pad attached to the Map Settings seed.
 	print("-- test_map_settings_number_pad_touch_tap")
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	await process_frame
 	var field: LineEdit = panel.find_child("AltitudeSeed")
@@ -99,7 +99,7 @@ func _test_map_settings_number_pad_spin_boxes() -> int:
 	var shore := Vector2i(-14, 10)
 	var was_land: bool = world.is_walkable_land(shore)
 
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	await process_frame
 	var pad = panel.get_node("NumberPad")
@@ -171,7 +171,7 @@ func _test_map_settings_bottom_buttons_visible() -> int:
 	print("-- test_map_settings_bottom_buttons_visible")
 	var previous_size := root.size
 	root.size = Vector2i(1280, 720)
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	for i in 5:
 		await process_frame

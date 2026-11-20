@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-Chop on the tool wheel (`Scripts/tool_wheel.gd`, [Tool wheel](./tool-wheel.md)) sets interact mode (`Interaction.Mode` in `Scripts/mechanics/interact/interaction.gd`). Sword and bow are combat. Chopping, building and their sync are in [Chop trees (live drive)](./chop-trees.md), [Chopping trees and bushes](./chop-trees-and-bushes.md) and [Build placement](./build-placement.md).
+Chop on the tool wheel (`Scripts/ui/tool_wheel.gd`, [Tool wheel](./tool-wheel.md)) sets interact mode (`Interaction.Mode` in `Scripts/mechanics/interact/interaction.gd`). Sword and bow are combat. Chopping, building and their sync are in [Chop trees (live drive)](./chop-trees.md), [Chopping trees and bushes](./chop-trees-and-bushes.md) and [Build placement](./build-placement.md).
 
 ## Sub-features
 

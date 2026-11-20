@@ -224,7 +224,7 @@ func _test_biome_seed_panel_round_trip() -> int:
 	var map_gen = root.get_node("MapGen")
 	var saved_params = map_gen.params
 	map_gen.params = params
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	map_gen.params = saved_params
 	panel.load_from_params(params)

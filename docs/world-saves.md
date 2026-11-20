@@ -99,7 +99,7 @@ saves go in a new file, so an existing save is not replaced. Save writes that
 match's file again. A file already in the folder is listed as it is; opening
 the list does not rewrite it. Rename changes the file name through the same
 inline confirm pattern as delete (`MapSave.rename_save`). Each row shows a
-cached terrain preview from the generation inputs (`Scripts/world_save_preview.gd`).
+cached terrain preview from the generation inputs (`Scripts/ui/world_save_preview.gd`).
 
 ## Cut trees and bushes
 

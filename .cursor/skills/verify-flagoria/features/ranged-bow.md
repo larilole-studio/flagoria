@@ -6,7 +6,7 @@ One bow on the existing aim (#362). The bow stays off until the tool wheel arms 
 
 ## Sub-features
 
-- `bow-toggle` the tool wheel's bow tool (`Scripts/tool_wheel.gd`) arms the shot. It starts off. `World/RangedShots` (`Scripts/mechanics/combat/ranged_shots.gd`) no longer adds a button.
+- `bow-toggle` the tool wheel's bow tool (`Scripts/ui/tool_wheel.gd`) arms the shot. It starts off. `World/RangedShots` (`Scripts/mechanics/combat/ranged_shots.gd`) no longer adds a button.
 - `bow-shot` with the toggle on, `attack_toward` in `Scripts/player.gd` sends `request_shot` and does not call `attack_animation`. Interact mode still does not aim.
 - `bow-flight` `RangedShot.fly` (`Scripts/mechanics/combat/ranged_shot.gd`) walks the segment at `SPEED` 180, `RANGE` 120, `STEP` 1/60. A failed `AttackAim.clear_shot` between samples is terrain. The first mob contact box or living player box wins. The shooter is skipped. `DAMAGE` is 1 and `COOLDOWN` is 1.0 s.
 - `bow-host` the host rejects a dead sender, an origin farther than 24 px from the server body, a bad direction, or a live cooldown, then flies from the server body. One `Mob.take_hit` or one `PlayerHealth.take_damage`. `show_shot` draws a 2 px line for 0.2 s. In-flight shots are not in the join snapshot.

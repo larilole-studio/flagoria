@@ -6,7 +6,7 @@ extends Node
 ## Customize HUD can move these controls and the tool wheel. Layout follows
 ## viewport and visibility changes. A dedicated host builds no tool wheel.
 
-const ToolWheelScript := preload("res://Scripts/tool_wheel.gd")
+const ToolWheelScript := preload("res://Scripts/ui/tool_wheel.gd")
 
 const CANVAS_SIZE := Vector2(480, 270)
 const GAP := 4.0
