@@ -2,26 +2,22 @@
 
 Drive: not player-facing
 
-Shared placement for every buildable (#296). `ConstructionPlacer`
-(`Scripts/mechanics/building/construction_placer.gd`) checks a kind on a list
-of cells, reports the wood cost, and places through `BuildCosts.buy` into the
-kind's writer. Registered kinds (`ConstructionPlacer.KINDS`): plank bridge (a straight water
-run that touches land or an existing plank, written by `TileMap.build_bridge` /
-`BridgeBuilder`), wooden tower (#273: `tower_wood` through `StructurePlacer`),
-extra castle (#527: `castle`), guard post (#528: `guard_post`), barracks (#556:
-`barracks`), and free-form wall blocks (#276: land cells, 2 wood each, written
-by `TileMap.place_wall_cells` / `WallBuilder`). The placement UI (#225) only
-talks to this module.
+`ConstructionPlacer` is the shared placement seam (#296, #610).
+`can_place(kind, cells, inventory, turns)` reports refusal reasons for the
+preview. `place(kind, cells, inventory, turns)` uses the local inventory and
+owner. In multiplayer, named footprints and walls go through
+`StructureRequests`; `Interaction` submits plank requests. Both handlers check
+reach before calling `place_for_peer(kind, cells, owner, inventory, turns)`.
+The host supplies inventory for its own purchase and sends the existing wood
+charge after a successful remote purchase. A refused writer refunds the
+full charge. Peers apply live named placements through `apply_replica` and
+read the result through `TileMap.placed_structures` or `structures_for_sync`.
 
-Refusal reasons (each at most once): `empty cells`, `unknown kind`,
-`wrong ground`, `occupied`, `not straight`, `not adjacent`, `not enough wood`,
-`multiplayer on`. A floating water cell with no land or plank neighbour is
-`not adjacent` (2026-11-02: no floating planks).
-
-Plank bridges sync between peers (#297): `can_place` / `place` allow planks
-while multiplayer is on. Towers, extra castles, guard posts, barracks and wall
-blocks ask the host through `StructureRequests.REQUEST_KINDS` (#497, #498, #527,
-#528, #556) and do not refuse with `multiplayer on`.
+Registered kinds are plank, wall block, wooden tower, castle, guard post and
+barracks. Planks need a straight water run touching land or a plank. Walls
+need a straight land run touching a wall or structure. Named buildings take
+an anchor and quarter turns. Refusals describe empty cells, unknown kinds,
+wrong ground, occupancy, straightness, adjacency and insufficient wood.
 
 ## Sub-features
 
@@ -31,7 +27,7 @@ blocks ask the host through `StructureRequests.REQUEST_KINDS` (#497, #498, #527,
   Planks place while multiplayer is on (#297).
 - `construction-plank-occupied` a plank cell under a player, a mob, a wall or
   a structure is `occupied`: nothing is written, no wood is spent, and the
-  host's `write_plank` for a peer's request refuses it too (#380 item 2).
+  host's `place_for_peer` for a peer's request refuses it too (#380 item 2).
 - `construction-tower` a clear land anchor places `tower_wood` for 10 wood,
   owned by the local peer; water, an overlapping structure/player/mob and short
   wood are refused and spend nothing (#273). A connecting client does not
@@ -57,37 +53,27 @@ blocks ask the host through `StructureRequests.REQUEST_KINDS` (#497, #498, #527,
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `test_construction_placer_plank`
-about 0.4 s in `tools/verify.sh` (~2.0 s alone with `--only=`);
-`test_construction_placer_tower` about 0.6 s (~2.3 s alone);
-`test_construction_placer_tower_atomic_spend` about 0.3 s (~2.0 s alone);
-`test_construction_placer_wall` about 0.7 s (~2.5 s alone);
-`test_construction_placer_wall_atomic_spend` about 0.3 s (~2.0 s alone);
-`test_construction_placer_atomic_spend` about 0.1 s (~1.8 s alone with `--only=`);
-`test_build_costs_spend_failed` about 0.15 s (~1.8 s alone with `--only=`);
-`test_construction_placer_plank_occupied` about 0.2 s (~2.5 s alone with `--only=`);
-`test_construction_writers_all_or_nothing` about 0.1 s (~2.4 s alone with `--only=`).
-
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_plank,construction_placer_tower,construction_placer_tower_atomic_spend,construction_placer_wall,construction_placer_wall_atomic_spend,construction_placer_atomic_spend,build_costs_spend_failed,construction_placer_plank_occupied,construction_writers_all_or_nothing`, or the full `tools/verify.sh`.
-- **Proof.** Headers `-- test_construction_placer_plank`,
-  `-- test_construction_placer_tower`,
-  `-- test_construction_placer_tower_atomic_spend`,
-  `-- test_construction_placer_wall`,
-  `-- test_construction_placer_wall_atomic_spend`,
-  `-- test_construction_placer_atomic_spend`,
-  `-- test_build_costs_spend_failed`,
-  `-- test_construction_placer_plank_occupied` and
-  `-- test_construction_writers_all_or_nothing` in `artifacts/verify.log` with no `FAIL`
-  after them. Live placement is driven through the build picker; see
-  [Build placement](./build-placement.md), [Build tower](./build-tower.md) and
+- **Placement seam.** `test_building_seam_placement` checks named footprints,
+  rotation, overlap, terrain, world bounds and wood balances.
+  `test_building_seam_runs` checks wall and plank support, geometry and
+  per-cell charges.
+- **Charge and refund seam.** `test_building_seam_refund` covers failed
+  charges for planks, walls and towers and full rollback after a refused
+  write. `test_build_costs_spend_failed` checks that a failed spend never
+  calls its writer (#380 item 3). `test_construction_placer_plank_occupied`
+  checks the host and local placement paths (#380 item 2).
+  `test_construction_writers_all_or_nothing` checks partial multi-cell
+  refusals at the writer boundary (#380 item 3, #381).
+- **Peer scenarios.** `test_building_seam_connecting` covers the connecting
+  client preview and submit behavior (#297, #497, #498).
+  `test_building_seam_host_sync` checks that an already-connected client and
+  a late joiner receive the host's rotated guard post, with the same owner
+  and anchor and one host charge. Run with `--only=building_seam_host_sync`.
+- **Live input.** See [Build castle](./build-castle.md) and
   [Free-form walls](./free-form-walls.md).
 
 ## Gotchas
 
 - Never paint planks from a drive to make placement pass; report the missing UI.
-- Callers must go through `ConstructionPlacer.place` (or `can_place` then
-  `BuildCosts.buy`) so the adjacency rule, the cost and the writer stay together.
-  `buy` takes the wood before the writer runs; a failed place is unambiguous
-  (nothing written, wood unchanged or refunded).
-- `TileMap.build_bridge` stays as the low-level writer for tests that only
-  check the tiles; play and the shared module go through `ConstructionPlacer`.
+- Use `ConstructionPlacer.place` for local builds and `place_for_peer` for
+  host-validated requests. The writer and the wood charge share one transaction.

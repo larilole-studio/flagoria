@@ -39,64 +39,6 @@ func _clear_castle_anchor(world, quarter_turns := 0) -> Variant:
 	return null
 
 
-func _test_construction_placer_castle() -> int:
-	## A clear land anchor places castle for 50 wood with the builder's flag.
-	## Water, overlap, short wood and multiplayer are refused without spending.
-	print("-- test_construction_placer_castle")
-	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	var world = scene.get_node("World/worldMap")
-	var inventory: Inventory = scene.get_node("Inventory")
-	var placer := ConstructionPlacer.new(world)
-	var anchor: Variant = _clear_castle_anchor(world)
-	if anchor == null:
-		printerr("FAIL construction_placer_castle: no clear castle footprint")
-		scene.queue_free()
-		return 1
-	var cells: Array[Vector2i] = [anchor]
-	inventory.add(Inventory.WOOD, 49)
-	var reasons := placer.can_place(BuildCosts.CASTLE, cells, inventory)
-	if ConstructionPlacer.NOT_ENOUGH_WOOD not in reasons or placer.place(BuildCosts.CASTLE, cells, inventory) \
-			or inventory.count_of(Inventory.WOOD) != 49:
-		printerr("FAIL construction_placer_castle: short wood gave %s wood %d" % [reasons, inventory.count_of(Inventory.WOOD)])
-		fail += 1
-	inventory.add(Inventory.WOOD, 1)
-	var before := inventory.count_of(Inventory.WOOD)
-	if not placer.place(BuildCosts.CASTLE, cells, inventory) \
-			or inventory.count_of(Inventory.WOOD) != before - 50:
-		printerr("FAIL construction_placer_castle: place wood %d" % inventory.count_of(Inventory.WOOD))
-		fail += 1
-	else:
-		var placed: Dictionary = world.placed_structures()
-		var owner_id: int = scene.multiplayer.get_unique_id()
-		var entry: Dictionary = placed[placed.keys()[0]]
-		if entry.get("name") != "castle" or entry.get("owner") != owner_id:
-			printerr("FAIL construction_placer_castle: entry %s" % entry)
-			fail += 1
-	inventory.add(Inventory.WOOD, 50)
-	reasons = placer.can_place(BuildCosts.CASTLE, cells, inventory)
-	if ConstructionPlacer.OCCUPIED not in reasons or placer.place(BuildCosts.CASTLE, cells, inventory):
-		printerr("FAIL construction_placer_castle: overlap gave %s" % reasons)
-		fail += 1
-	var water_anchor := Vector2i(1 << 20, 0)
-	for cell in world.get_used_cells(0):
-		if world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell):
-			water_anchor = cell
-			break
-	if water_anchor.x != 1 << 20:
-		var wcells: Array[Vector2i] = [water_anchor]
-		reasons = placer.can_place(BuildCosts.CASTLE, wcells, inventory)
-		if ConstructionPlacer.WRONG_GROUND not in reasons or placer.place(BuildCosts.CASTLE, wcells, inventory):
-			printerr("FAIL construction_placer_castle: water gave %s" % reasons)
-			fail += 1
-	scene.queue_free()
-	await process_frame
-	if fail == 0:
-		print("PASS test_construction_placer_castle")
-	return fail
-
-
 func _test_build_castle_save_round_trip() -> int:
 	## A rotated extra castle survives save and reload with owner and rotation.
 	print("-- test_build_castle_save_round_trip")

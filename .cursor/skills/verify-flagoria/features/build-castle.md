@@ -31,15 +31,15 @@ syncs through `StructureRequests` (#527), including late joiners and world saves
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `test_construction_placer_castle`
-about 0.8 s in `tools/verify.sh`; `test_build_castle_land_score_flag` about 0.5 s;
+Preconditions: `doctor.sh` exits `0`. Placement and charge use the shared
+[construction seam](./construction-placement.md). Time cost: `test_build_castle_land_score_flag` about 0.5 s.
 `test_build_castle_save_round_trip` about 1.2 s;
 `test_castle_build_two_players` about 6–12 s per stress run. Drive about 25–45 s
 under xvfb.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_placer_castle,build_castle_land_score_flag,build_castle_save_round_trip,castle_build_two_players`, or the full `tools/verify.sh`.
-- **Proof.** `PASS test_construction_placer_castle`, `PASS test_build_castle_land_score_flag`, `PASS test_build_castle_save_round_trip`, and `PASS test_castle_build_two_players` with no `FAIL` after them.
-- **Drive (live).** `bin/launch.sh drives/build_castle.gd --seed 7 --display`.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=building_seam_placement,build_castle_land_score_flag,build_castle_save_round_trip,castle_build_two_players`, or the full `tools/verify.sh`.
+- **Proof.** `PASS test_building_seam_placement`, `PASS test_build_castle_land_score_flag`, `PASS test_build_castle_save_round_trip`, and `PASS test_castle_build_two_players` with no `FAIL` after them.
+- **Drive (live).** `bin/launch.sh drives/build_castle.gd --seed 11 --display`.
 
 ## Gotchas
 
