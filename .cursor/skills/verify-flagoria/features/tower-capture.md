@@ -30,7 +30,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the eight tests in `tests/mecha
 - **Run.** `./.cursor/skills/verify-flagoria/bin/drive-verify.sh` and read `artifacts/verify.log`.
 - **Proof.** Headers `-- test_tower_capture_completes`, `-- test_tower_capture_defender_pauses`, `-- test_tower_capture_drains_when_empty`, `-- test_tower_capture_contested`, `-- test_tower_capture_dead_players`, `-- test_tower_capture_mob`, `-- test_tower_capture_changes_owner_and_flag_only`, `-- test_tower_capture_off_in_multiplayer` with no `FAIL` after them.
 - **Drive (live).** Host from the main menu, lure a mob into the castle courtyard and leave it there: the purple bar fills in 5 s and the flag turns purple. Step back in and the next capture needs your side to be the only one inside.
-- **Two-peer drive.** `bin/launch.sh drives/tower_capture.gd --display --seed 7`. A client probe places a tower and moves aside. The drive places the host in capture range, then advances the capture clock in fixed steps. Expect `tower-tool`, `host-captured` and `client-captured.png`. Follow-up #627: make the host walk into range using player movement input.
+- **Two-peer drive.** `bin/launch.sh drives/tower_capture.gd --display --seed 7`. A client probe places a tower and moves aside. The host uses movement input to walk one cell south from spawn, east along a clear row, then south to capture range at the tower's north edge. The drive advances the capture clock in fixed steps. Expect `tower-tool`, `host-captured` and `client-captured.png`.
 - **Look.** `docs/screenshots/tower-capture.png` shows the four flag colours and two bars (red over the host's tower, purple over a neutral one).
 
 ## Gotchas

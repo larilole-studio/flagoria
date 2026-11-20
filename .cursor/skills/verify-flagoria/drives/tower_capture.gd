@@ -1,12 +1,14 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 7
 ## A client builds a tower and steps aside. The host captures it with
-## TowerCapture.tick. Snapshots: tower-tool, host-captured, client-captured.png.
+## TowerCapture.tick after walking out of the gate and around the terrain.
+## Snapshots: tower-tool, host-captured, client-captured.png.
 
 
 const CAPTURE_STEPS := 40  ## 40 * 0.125 s = TowerCapture.CAPTURE_TIME
 const CLIENT_JOIN_S := 30.0
 const CLIENT_SHOT_S := 20.0
+const WALK_LEG_S := 8.0
 
 
 func run() -> void:
@@ -62,8 +64,11 @@ func run() -> void:
 		if node is Mob:
 			node.global_position = Vector2(100000, 100000)
 	var flag: Vector2i = _flag()
-	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	hero().global_position = map.to_global(map.map_to_local(flag))
+	if not await _walk_to_flag(flag):
+		printerr("tower capture: host at %s could not walk within range of flag %s" % [hero().global_position, flag])
+		await _stop_client(pid, client_out)
+		done(false)
+		return
 	for _i in CAPTURE_STEPS:
 		capture.tick(0.125)
 	if _owner() != 1:
@@ -80,6 +85,47 @@ func run() -> void:
 		return
 	await _stop_client(pid, client_out)
 	done(true)
+
+
+func _walk_to_flag(flag: Vector2i) -> bool:
+	var map: TileMap = current_scene.get_node(WORLD_MAP)
+	var host := hero() as CharacterBody2D
+	var centre := map.to_global(map.map_to_local(flag))
+	var spawn_cell := map.local_to_map(map.to_local(host.global_position))
+	var gate_exit := map.to_global(map.map_to_local(spawn_cell + Vector2i.DOWN))
+	# Seed 7 has a clear eastbound row one cell south of spawn. Follow it
+	# to the flag's column, then approach the north edge of the tower.
+	step("walk-into-range")
+	if not await _walk_leg(host, 1, gate_exit.y):
+		return false
+	if not await _walk_leg(host, 0, centre.x):
+		return false
+	if not await _walk_leg(host, 1, centre.y - (TowerCapture.CAPTURE_RADIUS - 4.0)):
+		return false
+	return host.global_position.distance_to(centre) <= TowerCapture.CAPTURE_RADIUS
+
+
+func _walk_leg(host: CharacterBody2D, axis: int, target: float) -> bool:
+	var remaining := target - host.global_position[axis]
+	if absf(remaining) <= 4.0:
+		return true
+	var direction := signf(remaining)
+	var action: StringName
+	if axis == 0:
+		action = &"ui_right" if direction > 0 else &"ui_left"
+	else:
+		action = &"ui_down" if direction > 0 else &"ui_up"
+	# Release early so the host can coast to a stop before turning.
+	var friction: float = host.FRICTION
+	Input.action_press(action)
+	var reached := await wait_until(func() -> bool:
+		var speed := host.velocity[axis]
+		var coast := speed * speed / (2.0 * friction)
+		return direction * (target - host.global_position[axis]) <= coast + 1.0, WALK_LEG_S)
+	Input.action_release(action)
+	if not reached or not await wait_until(func() -> bool: return host.velocity.is_zero_approx(), 2.0):
+		return false
+	return absf(target - host.global_position[axis]) <= 5.0
 
 
 func _launch_client(client_out: String, shot: String) -> int:
