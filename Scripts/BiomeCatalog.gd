@@ -1,29 +1,14 @@
 class_name BiomeCatalog
 extends RefCounted
-## Large-scale biome ids with hardcoded per-biome island density, altitude
-## bias, ground terrain table, plant table and structure table. Every table
-## applies only when biomes are on.
+## Large-scale biome ids with hardcoded per-biome ground terrain table, plant
+## table and structure table. Every table applies only when biomes are on.
+## Per-biome island density and altitude bias are Map Settings fields
+## (MapGenParams, e.g. oceanic_altitude_bias).
 
 const OCEANIC := 0
 const TEMPERATE := 1
 const CONTINENTAL := 2
 const ARCHIPELAGO_DENSE := 3
-
-## Fraction of archipelago squares kept when biomes are on (count unlimited).
-const DENSITY := {
-	OCEANIC: 0.2,
-	TEMPERATE: 1.0,
-	CONTINENTAL: 1.0,
-	ARCHIPELAGO_DENSE: 1.0,
-}
-
-## Added to altitude in generate_chunk when biomes are on (continuous path).
-const ALTITUDE_BIAS := {
-	OCEANIC: -0.15,
-	TEMPERATE: 0.0,
-	CONTINENTAL: 0.1,
-	ARCHIPELAGO_DENSE: 0.05,
-}
 
 ## Per-biome ground mix (layer 0 and ground decorations). TEMPERATE is the
 ## identity row, so it matches the terrain with biomes off.
@@ -91,14 +76,6 @@ static func from_noise(value: float, edge: float = 0.5) -> int:
 	if value < edge:
 		return CONTINENTAL
 	return ARCHIPELAGO_DENSE
-
-
-static func density(biome_id: int) -> float:
-	return float(DENSITY.get(biome_id, 1.0))
-
-
-static func altitude_bias(biome_id: int) -> float:
-	return float(ALTITUDE_BIAS.get(biome_id, 0.0))
 
 
 static func terrain(biome_id: int, key: String) -> float:

@@ -72,6 +72,10 @@ var birch_min_chance: float = 0.55
 var biome_frequency: float = 0.0
 var biome_seed: int = 0
 var biome_edge: float = 0.2
+## Per-biome altitude bias and archipelago island density, indexed by biome
+## id (MapGenParams, Map Settings); apply_map_params copies them.
+var biome_altitude_bias: PackedFloat32Array = MapGenParams.new().biome_altitude_biases()
+var biome_island_density: PackedFloat32Array = MapGenParams.new().biome_island_densities()
 
 # Walkable ground decorations (flowers, stones) sit on their own layer at the ground's
 # z_index so the player always draws over them; layer 1 (bushes, trees) is z 1.
@@ -102,6 +106,8 @@ func apply_map_params(p: MapGenParams) -> void:
 	biome_frequency = working.biome_frequency
 	biome_seed = working.biome_seed
 	biome_edge = working.biome_edge
+	biome_altitude_bias = working.biome_altitude_biases()
+	biome_island_density = working.biome_island_densities()
 	if biome_frequency > 0.0:
 		_configure_noise(biome, working.biome_seed, working.biome_frequency, working)
 
