@@ -1,87 +1,48 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a land-score session (#279).
 ## Host: --host --save --port --out. Client: --port --out --mode.
 ## The host scores city land. A ".drop" file hands the host castle to neutral.
 
 
-var _errors := _ErrorLog.new()
 var _dropped := false
 var _client_tick_same := true
 
 
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
-
-
 func _run() -> void:
-	var port := 0
-	var save := ""
-	var out := ""
-	var host := false
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--save="):
-			save = arg.trim_prefix("--save=")
-		elif arg.begins_with("--out="):
-			out = arg.trim_prefix("--out=")
-		elif arg == "--host":
-			host = true
-	if host:
-		HostListen.arm_host(out)
-	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	var save := option("--save")
+	var host := has_option("--host")
+	if host and save == "":
 		printerr("land_score_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
+	var main = await open_game(host)
+	if main == null:
+		printerr("land_score_probe: needs --port, --out, --save with --host, and the main scene")
+		quit(1)
+		return
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		var map_gen = root.get_node("MapGen")
-		var error: String = map_gen.load_map_inputs(save)
-		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
+		var error := host_saved_game(main, save)
+		if error != "":
 			printerr("land_score_probe: could not host %s: %s" % [save, error])
 			quit(1)
 			return
-		main.add_player(1)
 		main.get_node("Discovery").set_physics_process(false)
 		_park_mobs(main)
-		HostListen.mark_host_listening(out)
+		host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, out)
+		await join_game(main)
 	var world = main.get_node("World/worldMap")
 	var checked_client := false
 	var deadline := Time.get_ticks_msec() + 60000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
+	while game_active(main, deadline):
 		if main.multiplayer == null or main.multiplayer.multiplayer_peer == null:
 			break
 		if not _peer_ready(main):
 			await process_frame
 			continue
 		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-		if host and not _dropped and FileAccess.file_exists(out + ".drop"):
+		if host and not _dropped and FileAccess.file_exists(probe_out + ".drop"):
 			_dropped = true
 			_drop_host_castle(main, world)
 		if not host and not checked_client and main.world_params != null and me != null:
@@ -90,15 +51,10 @@ func _run() -> void:
 			var before: int = points.total_of(1)
 			main.get_node("World/LandScore").tick()
 			_client_tick_same = points.total_of(1) == before
-		if Time.get_ticks_msec() >= next_write:
-			_write(out, main, world, me)
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
+			_write(main, world, me)
 		await process_frame
-	var fin: Node2D = null
-	if _peer_ready(main):
-		fin = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-	_write(out, main, world, fin)
-	quit(0)
+	finish(main, func() -> void: _write(main, world, local_player(main)))
 
 
 func _drop_host_castle(main, world) -> void:
@@ -131,8 +87,8 @@ func _park_mobs(main) -> void:
 			node.global_position = Vector2(100000, 100000)
 
 
-func _write(out: String, main, world, me: Node2D) -> void:
-	if out == "" or main == null:
+func _write(main, world, me: Node2D) -> void:
+	if probe_out == "" or main == null:
 		return
 	var points := {}
 	var land := {}
@@ -151,10 +107,7 @@ func _write(out: String, main, world, me: Node2D) -> void:
 			var panel: ScoreboardPanel = main.get_node("CanvasLayer1/ScoreboardPanel")
 			for row in panel.sorted_rows():
 				board.append([int(row[0]), int(row[1])])
-	var file := FileAccess.open(out + ".tmp", FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify({
+	write_result({
 		"id": str(main.multiplayer.get_unique_id()) if _peer_ready(main) else "",
 		"ready": main.world_params != null and me != null,
 		"dropped": _dropped,
@@ -163,6 +116,4 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		"land": land,
 		"board": board,
 		"errors": _errors.snapshot(),
-	}))
-	file.close()
-	DirAccess.rename_absolute(out + ".tmp", out)
+	})

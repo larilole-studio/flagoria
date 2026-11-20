@@ -16,28 +16,17 @@ func _test_ranged_two_players() -> int:
 	if port == 0:
 		printerr("FAIL ranged_two_players found no free UDP port")
 		return 1
-	var dir := OS.get_user_data_dir().path_join("ranged_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var dir := make_probe_dir("ranged_%d_%d" % [OS.get_process_id(), port])
 	var outs: Array[String] = []
-	var pids: Array[int] = []
+	var probes: Array[Dictionary] = []
 	var launch := func(extra: Array) -> void:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", PROBE, "--", "--port=%d" % port, "--out=" + outs[-1],
+		var args: Array = ["--port=%d" % port,
 				"--seed=%d" % SEED]
 		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		if i < 0 or i >= outs.size() or not FileAccess.file_exists(outs[i]):
-			return {}
-		var data = JSON.parse_string(FileAccess.get_file_as_string(outs[i]))
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+		probes.append(spawn_probe(PROBE, outs[-1], args))
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 	var health_of := func(peer: Dictionary, who: String) -> int:
 		var row = peer.get("players", {}).get(who)
 		return int(row["health"]) if row is Dictionary and row.has("health") else -1
@@ -53,22 +42,7 @@ func _test_ranged_two_players() -> int:
 		f.store_string(token)
 		f.close()
 	var stop := func() -> void:
-		for out in outs:
-			var f := FileAccess.open(out + ".stop", FileAccess.WRITE)
-			if f:
-				f.close()
-		var until := Time.get_ticks_msec() + 8000
-		while Time.get_ticks_msec() < until:
-			var alive := false
-			for pid in pids:
-				if OS.is_process_running(pid):
-					alive = true
-			if not alive:
-				break
-			await process_frame
-		for pid in pids:
-			if OS.is_process_running(pid):
-				OS.kill(pid)
+		await stop_probes(probes, 8000)
 		_remove_dir(dir)
 
 	var fail := 0

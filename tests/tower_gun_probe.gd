@@ -1,11 +1,10 @@
-extends SceneTree
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a tower-gun session (#37). Host: --host --save --port --out.
 ## Client: --port --out --mode=place. Late joiner: --port --out --mode=watch.
 ## The client places a tower with StructureRequests. The host pins itself
-## from a phase file (out + ".phase": "in" or "out"). No timed sleep.
+## from a phase file (probe_out + ".phase": "in" or "out"). No timed sleep.
 
 
-var _errors := _ErrorLog.new()
 var _place_error := ""
 var _want := Vector2.INF
 var _anchor := Vector2i.ZERO
@@ -13,74 +12,38 @@ var _chose := false
 var _placed := false
 
 
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
-
-
 func _run() -> void:
-	var port := 0
-	var save := ""
-	var out := ""
-	var host := false
-	var mode := "watch"
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--save="):
-			save = arg.trim_prefix("--save=")
-		elif arg.begins_with("--out="):
-			out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--mode="):
-			mode = arg.trim_prefix("--mode=")
-		elif arg == "--host":
-			host = true
-	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	var save := option("--save")
+	var host := has_option("--host")
+	var mode := option("--mode", "watch")
+	if host and save == "":
 		printerr("tower_gun_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
+	var main = await open_game(host)
+	if main == null:
+		printerr("tower_gun_probe: needs --port, --out, --save with --host, and the main scene")
+		quit(1)
+		return
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		var map_gen = root.get_node("MapGen")
-		var error: String = map_gen.load_map_inputs(save)
-		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
+		var error := host_saved_game(main, save)
+		if error != "":
 			printerr("tower_gun_probe: could not host %s: %s" % [save, error])
 			quit(1)
 			return
-		main.add_player(1)
 		_park_mobs(main)
 		_stop_regen(main)
+		host_listening()
 	else:
-		main.add_player_joined(port)
+		await join_game(main)
 	var world = main.get_node("World/worldMap")
 	var outside_since := 0
 	var outside_health := -1
 	var held := false
 	var dropped_outside := false
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
+	while game_active(main, deadline):
 		if main.multiplayer == null:
 			break
 		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
@@ -88,7 +51,7 @@ func _run() -> void:
 		if host:
 			_park_mobs(main)
 			_stop_regen(main)
-			var phase := FileAccess.get_file_as_string(out + ".phase").strip_edges() if FileAccess.file_exists(out + ".phase") else ""
+			var phase := FileAccess.get_file_as_string(probe_out + ".phase").strip_edges() if FileAccess.file_exists(probe_out + ".phase") else ""
 			var info := _tower_wood(world)
 			if ready and not info.is_empty() and phase in ["in", "out"]:
 				var centre: Vector2 = world.to_global(world.map_to_local(info["flag"]))
@@ -121,7 +84,7 @@ func _run() -> void:
 					_chose = true
 				else:
 					_place_error = "no tower spot far from the castles"
-			elif not _placed and FileAccess.file_exists(out + ".go"):
+			elif not _placed and FileAccess.file_exists(probe_out + ".go"):
 				var inventory: Inventory = main.get_node("Inventory")
 				inventory.add(Inventory.WOOD, 10)
 				var one: Array[Vector2i] = [_anchor]
@@ -134,15 +97,10 @@ func _run() -> void:
 				var centre: Vector2 = world.to_global(world.map_to_local(info["flag"]))
 				var dir := _away(centre, _other_flags(world, info["flag"]))
 				_pin(me, centre + dir * 200.0)
-		if Time.get_ticks_msec() >= next_write:
-			_write(out, main, world, me, held, dropped_outside)
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
+			_write(main, world, me, held, dropped_outside)
 		await process_frame
-	var fin: Node2D = null
-	if main.multiplayer != null:
-		fin = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-	_write(out, main, world, fin, held, dropped_outside)
-	quit(0)
+	finish(main, func() -> void: _write(main, world, local_player(main), held, dropped_outside))
 
 
 func _park_mobs(main) -> void:
@@ -284,8 +242,8 @@ func _clear_of(at: Vector2, others: Array, gap: float) -> bool:
 	return true
 
 
-func _write(out: String, main, world, me: Node2D, held: bool, dropped_outside: bool) -> void:
-	if out == "":
+func _write(main, world, me: Node2D, held: bool, dropped_outside: bool) -> void:
+	if probe_out == "":
 		return
 	var players := {}
 	var host_health := -1
@@ -297,10 +255,7 @@ func _write(out: String, main, world, me: Node2D, held: bool, dropped_outside: b
 			if node is CharacterBody2D and str(node.name).is_valid_int():
 				players[str(node.name)] = [node.global_position.x, node.global_position.y]
 	var info := _tower_wood(world) if world != null else {}
-	var file := FileAccess.open(out + ".tmp", FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify({
+	write_result({
 		"id": _peer_id(main),
 		"ready": main != null and main.world_params != null and me != null,
 		"self_health": _hp(me) if me != null else -1,
@@ -314,6 +269,4 @@ func _write(out: String, main, world, me: Node2D, held: bool, dropped_outside: b
 		"players": players,
 		"place_error": _place_error,
 		"errors": _errors.snapshot(),
-	}))
-	file.close()
-	DirAccess.rename_absolute(out + ".tmp", out)
+	})

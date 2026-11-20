@@ -12,36 +12,24 @@ func _test_two_player_smoke() -> int:
 	if port == 0:
 		printerr("FAIL two_player_smoke found no free UDP port")
 		return 1
-	var dir := OS.get_user_data_dir().path_join("smoke_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var dir := make_probe_dir("smoke_%d_%d" % [OS.get_process_id(), port])
 	var outs: Array[String] = []
-	var pids: Array[int] = []
+	var probes: Array[Dictionary] = []
 	for extra in [["--dedicated"], [], []]:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
 		# Each probe quits by itself after 90 s, whatever happens to this run.
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", "res://tests/late_join_probe.gd", "--", "--port=%d" % port, "--out=" + outs[-1]]
+		var args: Array = ["--port=%d" % port]
 		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
+		probes.append(spawn_probe("res://tests/late_join_probe.gd", outs[-1], args))
 		if outs.size() == 1:
 			# Clients join once the server is up, so their spots are picked.
-			var up := Time.get_ticks_msec() + 30000
-			while Time.get_ticks_msec() < up and not FileAccess.file_exists(outs[0]):
-				await process_frame
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i])
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
+			await wait_result(probes[0], 30000)
+	var read := read_probe_at.bind(probes)
 	var seen := func(viewer: int, id: String) -> Vector2:
 		## Where peer `viewer` sees player `id`, or Vector2.INF.
 		var p = read.call(viewer).get("players", {}).get(id)
 		return Vector2(p["pos"][0], p["pos"][1]) if p != null else Vector2.INF
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+	var wait_for := wait_until
 
 	var fail := 0
 	var both_seen := func() -> bool:
@@ -59,7 +47,9 @@ func _test_two_player_smoke() -> int:
 				% [read.call(0), read.call(1), read.call(2)])
 		fail += 1
 	else:
-		await wait_for.call(func() -> bool: return false, 500)  # let spawn landing settle
+		await wait_until(func() -> bool:
+			var own: Vector2 = seen.call(1, a)
+			return own.distance_to(seen.call(0, a)) < 1.0 and own.distance_to(seen.call(2, a)) < 1.0, 500)
 		var start: Vector2 = seen.call(1, a)
 		var b_start: Vector2 = seen.call(2, a)
 		# Walk until A has moved 4 px; a wall, water or the other player may
@@ -95,16 +85,7 @@ func _test_two_player_smoke() -> int:
 				printerr("FAIL two_player_smoke peer %s logged errors: %s" % [i, errors])
 				fail += 1
 
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(probes, 10000)
 	_remove_dir(dir)
 	if fail == 0:
 		print("PASS test_two_player_smoke (%s walked, seen by server and %s)" % [a, b])

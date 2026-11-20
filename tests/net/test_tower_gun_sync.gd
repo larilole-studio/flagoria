@@ -126,37 +126,26 @@ func _open() -> Dictionary:
 	if port == 0:
 		printerr("FAIL tower gun found no free UDP port")
 		return {}
-	var dir := OS.get_user_data_dir().path_join("tower_gun_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var dir := make_probe_dir("tower_gun_%d_%d" % [OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
 	var saved := MapSave.save_world(WorldSave.new(params), "test_tower_gun_%d_%d" % [OS.get_process_id(), port])
 	if saved["error"] != "":
 		printerr("FAIL tower gun could not save the map: %s" % saved["error"])
 		return {}
 	var outs: Array[String] = []
-	var pids: Array[int] = []
+	var probes: Array[Dictionary] = []
 	var launch := func(as_host: bool, peer_mode: String) -> void:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args: Array = ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", PROBE, "--", "--port=%d" % port, "--out=" + outs[-1], "--mode=" + peer_mode]
+		var args: Array = ["--port=%d" % port, "--mode=" + peer_mode]
 		if as_host:
 			args.append("--host")
 			args.append("--save=" + ProjectSettings.globalize_path(saved["path"]))
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		if i >= outs.size() or not FileAccess.file_exists(outs[i]):
-			return {}
-		var data = JSON.parse_string(FileAccess.get_file_as_string(outs[i]))
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+		probes.append(spawn_probe(PROBE, outs[-1], args))
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 	launch.call(true, "host")
 	return {
-		"dir": dir, "outs": outs, "pids": pids, "saved": saved["path"],
+		"dir": dir, "outs": outs, "probes": probes, "saved": saved["path"],
 		"launch": launch, "read": read, "wait_for": wait_for,
 	}
 
@@ -164,16 +153,6 @@ func _open() -> Dictionary:
 func _close(session: Dictionary) -> void:
 	if session.is_empty():
 		return
-	for out in session["outs"]:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	var wait: Callable = session["wait_for"]
-	await wait.call(func() -> bool:
-		for pid in session["pids"]:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in session["pids"]:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(session["probes"], 10000)
 	_remove_dir(session["dir"])
 	DirAccess.remove_absolute(session["saved"])

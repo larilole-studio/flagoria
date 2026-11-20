@@ -1,13 +1,10 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a mob-band session. The host sets the ambient delay to 0 and
 ## calls run_ambient_tick once the test drops a .tick file.
 ##   -- --port=N --out=PATH --role=host --seed=11
 ##   -- --port=N --out=PATH --role=join
 
 
-var _out := ""
-var _errors := _ErrorLog.new()
 var _ticking := false
 var _ticked := false
 var _pinned := ""
@@ -18,76 +15,35 @@ var _players: Array = []
 var _note := ""
 
 
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
-
-
 func _run() -> void:
-	var port := 0
-	var role := "join"
-	var seed_value := 11
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--out="):
-			_out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--role="):
-			role = arg.trim_prefix("--role=")
-		elif arg.begins_with("--seed="):
-			seed_value = arg.trim_prefix("--seed=").to_int()
-	if role == "host":
-		HostListen.arm_host(_out)
-	if port == 0 or _out == "" or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	var role := option("--role", "join")
+	var seed_value := option("--seed", "11").to_int()
+	var main = await open_game(role == "host")
+	if main == null:
 		printerr("mob_band_probe: needs --port, --out and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if role == "host":
 		root.get_node("GameSettings").set_mob_rate(1.0, false)
-		if main.setup_server(_params(seed_value), port) != OK:
+		if host_game(main, _params(seed_value)) != OK:
 			printerr("mob_band_probe: could not host")
 			quit(1)
 			return
-		main.add_player(1)
-		HostListen.mark_host_listening(_out)
+		host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, _out)
+		await join_game(main)
 	var deadline := Time.get_ticks_msec() + 45000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):
-		if role == "host" and not _ticked and not _ticking and FileAccess.file_exists(_out + ".tick"):
+	while game_active(main, deadline):
+		if role == "host" and not _ticked and not _ticking and FileAccess.file_exists(probe_out + ".tick"):
 			_ticking = true
 			_arm(main)
 			await process_frame
 			_ticked = true
-		if Time.get_ticks_msec() >= next_write:
+		if snapshot_due(main):
 			_write(main)
-			next_write = Time.get_ticks_msec() + 100
 		await process_frame
-	_write(main)
-	quit(0)
+	finish(main, func() -> void: _write(main))
 
 
 func _params(seed_value: int) -> MapGenParams:
@@ -182,12 +138,4 @@ func _write(main) -> void:
 		"note": _note,
 		"errors": _errors.snapshot(),
 	}
-	var tmp := _out + ".tmp"
-	var file := FileAccess.open(tmp, FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify(data))
-	file.close()
-	if FileAccess.file_exists(_out):
-		DirAccess.remove_absolute(_out)
-	DirAccess.rename_absolute(tmp, _out)
+	write_result(data)
