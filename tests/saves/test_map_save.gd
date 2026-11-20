@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Save files (Scripts/map_save.gd) and the saved maps list.
+## Save files (Scripts/saves/map_save.gd) and the saved maps list.
 
 
 func _test_map_save_round_trip() -> int:
