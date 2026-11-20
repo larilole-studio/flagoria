@@ -69,29 +69,17 @@ func _spawn_session(mode: String, joiners: int) -> int:
 		return 1
 	# A fresh folder: a .stop file left by an earlier run would stop a peer
 	# at once, and its old JSON would read as this run's.
-	var dir := OS.get_user_data_dir().path_join("late_join_%s_%d_%d" % [mode, OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var pids: Array[int] = []
+	var dir := make_probe_dir("late_join_%s_%d_%d" % [mode, OS.get_process_id(), port])
+	var probes: Array[Dictionary] = []
 	var outs: Array[String] = []
 	var start := func(extra: Array) -> void:
 		var out := dir.path_join("p%d.json" % outs.size())
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", "res://tests/late_join_probe.gd", "--", "--port=%d" % port, "--out=" + out]
+		var args: Array = ["--port=%d" % port]
 		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
+		probes.append(spawn_probe("res://tests/late_join_probe.gd", out, args))
 		outs.append(out)
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i])
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
-	var pause := func(ms: int) -> void:
-		await wait_for.call(func() -> bool: return false, ms)
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 
 	var tile_map: Script = load("res://Scripts/TileMap.gd")
 	# A spot is a cell centre, and the 8 x 10 body reaches 2 px into the cell
@@ -197,7 +185,6 @@ func _spawn_session(mode: String, joiners: int) -> int:
 			printerr("FAIL spawn_late_join %s joiner %s did not get its player and the map: %s, server %s"
 					% [mode, n, read.call(n), read.call(0)])
 			fail += 1
-		await pause.call(300)
 	if fail == 0:
 		# Every peer must already hold every player (server spots, #352), not
 		# wait for each owner's MultiplayerSynchronizer. A short hold still
@@ -252,16 +239,7 @@ func _spawn_session(mode: String, joiners: int) -> int:
 			fail += check.call("respawn landing", func(s: Dictionary, _server: Dictionary) -> Variant:
 				return s.get("respawned_at"))
 
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(probes, 10000)
 	_remove_dir(dir)
 	return fail
 
@@ -729,3 +707,63 @@ static func _host_listen_path(out_path: String) -> String:
 
 static func _host_pending_path(out_path: String) -> String:
 	return out_path.get_base_dir().path_join("host_pending")
+
+
+func make_probe_dir(label: String) -> String:
+	var dir := OS.get_user_data_dir().path_join(label)
+	_remove_dir(dir)
+	DirAccess.make_dir_recursive_absolute(dir)
+	return dir
+
+
+func spawn_probe(script: String, out: String, args: Array) -> Dictionary:
+	# The child inherits FLAGORIA_VERIFY_RUN and the runner's isolated user dirs.
+	var command := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
+			"--script", script, "--", "--out=" + out]
+	command.append_array(args)
+	return {"pid": OS.create_process(OS.get_executable_path(), command), "out": out}
+
+
+func read_probe_result(out: String) -> Dictionary:
+	if not FileAccess.file_exists(out):
+		return {}
+	var data = JSON.parse_string(FileAccess.get_file_as_string(out))
+	return data if data is Dictionary else {}
+
+
+func wait_result(probe: Dictionary, timeout_ms: int) -> Dictionary:
+	var out: String = probe["out"]
+	await wait_until(func() -> bool:
+		return FileAccess.file_exists(out) or probe["pid"] <= 0 or not OS.is_process_running(probe["pid"]),
+		timeout_ms)
+	return read_probe_result(out)
+
+
+func read_probe_at(index: int, probes: Array[Dictionary]) -> Dictionary:
+	if index < 0 or index >= probes.size():
+		return {}
+	return read_probe_result(probes[index]["out"])
+
+
+func wait_until(predicate: Callable, timeout_ms: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while not predicate.call():
+		if Time.get_ticks_msec() >= deadline:
+			return false
+		await process_frame
+	return true
+
+
+func stop_probes(probes: Array[Dictionary], timeout_ms: int) -> void:
+	for probe in probes:
+		var marker := FileAccess.open(probe["out"] + ".stop", FileAccess.WRITE)
+		if marker != null:
+			marker.close()
+	await wait_until(func() -> bool:
+		for probe in probes:
+			if probe["pid"] > 0 and OS.is_process_running(probe["pid"]):
+				return false
+		return true, timeout_ms)
+	for probe in probes:
+		if probe["pid"] > 0 and OS.is_process_running(probe["pid"]):
+			OS.kill(probe["pid"])

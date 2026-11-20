@@ -1,5 +1,4 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a bow-shot session, started by test_ranged_two_players.
 ##   -- --port=N --out=PATH --host --seed=11   listen host on seed 11
 ##   -- --port=N --out=PATH --seed=11          join localhost:N
@@ -9,58 +8,25 @@ const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## "away" aims the other way). Every 100 ms it writes PATH. PATH.stop ends it.
 
 
-var _out := ""
 var _id := 0
 var _host := false
 var _seed := 0
 var _marks: Array = []
 var _fired := ""
-var _errors := _ErrorLog.new()
-
-
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
 
 
 func _run() -> void:
-	var port := 0
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--out="):
-			_out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--seed="):
-			_seed = arg.trim_prefix("--seed=").to_int()
-		elif arg == "--host":
-			_host = true
-	if _host:
-		HostListen.arm_host(_out)
-	if port == 0 or _out == "" or _seed == 0 or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	_seed = option("--seed").to_int()
+	_host = has_option("--host")
+	if _seed == 0:
 		printerr("ranged_probe: needs --port, --out, --seed and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
+	var main = await open_game(_host)
+	if main == null:
+		printerr("ranged_probe: needs --port, --out, --seed and the main scene")
+		quit(1)
+		return
 	if _host:
 		var params := MapGenParams.make_defaults()
 		params.biome_frequency = 0.0
@@ -69,16 +35,14 @@ func _run() -> void:
 		params.temperature_seed = _seed
 		params.items_seed = _seed
 		params.biome_seed = _seed
-		if main.setup_server(params, port) == OK:
-			main.add_player(1)
+		if host_game(main, params) == OK:
 			_quiet_mobs(main)
-			HostListen.mark_host_listening(_out)
+			host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, _out)
+		await join_game(main)
 	var world: Node = main.get_node("World")
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):
+	while game_active(main, deadline):
 		_note_self(world)
 		if _host:
 			_stop_regen(world)
@@ -86,12 +50,10 @@ func _run() -> void:
 				_marks = _find_marks(main)
 		_stand(world)
 		_fire(main, world)
-		if Time.get_ticks_msec() >= next_write:
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
 			_write(main, world)
 		await process_frame
-	_write(main, world)
-	quit(0)
+	finish(main, func() -> void: _write(main, world))
 
 
 func _note_self(world: Node) -> void:
@@ -120,9 +82,9 @@ func _stop_regen(world: Node) -> void:
 
 
 func _stand(world: Node) -> void:
-	if not FileAccess.file_exists(_out + ".stand"):
+	if not FileAccess.file_exists(probe_out + ".stand"):
 		return
-	var text := FileAccess.get_file_as_string(_out + ".stand").strip_edges()
+	var text := FileAccess.get_file_as_string(probe_out + ".stand").strip_edges()
 	var parts := text.split(",")
 	if parts.size() != 2:
 		return
@@ -135,9 +97,9 @@ func _stand(world: Node) -> void:
 
 
 func _fire(main: Node, world: Node) -> void:
-	if _host or not FileAccess.file_exists(_out + ".fire"):
+	if _host or not FileAccess.file_exists(probe_out + ".fire"):
 		return
-	var token := FileAccess.get_file_as_string(_out + ".fire").strip_edges()
+	var token := FileAccess.get_file_as_string(probe_out + ".fire").strip_edges()
 	if token == "" or token == _fired:
 		return
 	_fired = token
@@ -228,10 +190,4 @@ func _write(main: Node, world: Node) -> void:
 		"players": players,
 		"errors": _errors.snapshot(),
 	}
-	var tmp := _out + ".tmp"
-	var f := FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify(state))
-	f.close()
-	DirAccess.rename_absolute(tmp, _out)
+	write_result(state)

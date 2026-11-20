@@ -8,49 +8,35 @@ var _fight_spawn_at := -1
 
 
 func _run() -> void:
-	var port := 0
-	var save := ""
-	var out := ""
-	var host := false
-	var mode := "watch"
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--save="):
-			save = arg.trim_prefix("--save=")
-		elif arg.begins_with("--out="):
-			out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--mode="):
-			mode = arg.trim_prefix("--mode=")
-		elif arg == "--host":
-			host = true
-	_out = out
-	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	var save := option("--save")
+	var host := has_option("--host")
+	var mode := option("--mode", "watch")
+	if host and save == "":
 		printerr("soldier_fight_probe: needs --port, --out, --save with --host, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
+	var main = await open_game(host)
+	if main == null:
+		printerr("soldier_fight_probe: needs --port, --out, --save with --host, and the main scene")
+		quit(1)
+		return
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		var map_gen = root.get_node("MapGen")
-		var error: String = map_gen.load_map_inputs(save)
-		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
+		var error := host_saved_game(main, save)
+		if error != "":
 			printerr("soldier_fight_probe: could not host %s: %s" % [save, error])
 			quit(1)
 			return
-		main.add_player(1)
+		host_listening()
 	else:
-		main.add_player_joined(port)
+		await join_game(main)
 	var world = main.get_node("World/worldMap")
 	var requests: SoldierRequests = main.get_node("World/Soldiers")
 	var mobs: MobSpawner = main.get_node("World/Mobs")
 	var phase := "idle"
 	var me: Node2D = null
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
+	while game_active(main, deadline):
 		if main.multiplayer == null:
 			break
 		me = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id())) as Node2D
@@ -67,12 +53,10 @@ func _run() -> void:
 			elif Time.get_ticks_msec() >= _fight_spawn_at:
 				_fight_started = true
 				_spawn_fight_mob(requests, mobs)
-		if Time.get_ticks_msec() >= next_write:
-			_write_fight(out, main, world, me, requests, mobs)
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
+			_write_fight(main, world, me, requests, mobs)
 		await process_frame
-	_write_fight(out, main, world, me, requests, mobs)
-	quit(0)
+	finish(main, func() -> void: _write_fight(main, world, local_player(main), requests, mobs))
 
 
 func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
@@ -136,8 +120,8 @@ func _fight_hp(mobs: MobSpawner) -> Dictionary:
 	return {"hp": best, "start": MobCatalog.stat(MobCatalog.SLIME, "hp")}
 
 
-func _write_fight(out: String, main, world, me: Node2D, requests: SoldierRequests, mobs: MobSpawner) -> void:
-	if out == "":
+func _write_fight(main, world, me: Node2D, requests: SoldierRequests, mobs: MobSpawner) -> void:
+	if probe_out == "":
 		return
 	var peers := {}
 	var world_root: Node = null
@@ -148,10 +132,7 @@ func _write_fight(out: String, main, world, me: Node2D, requests: SoldierRequest
 			if child is CharacterBody2D and str(child.name).is_valid_int():
 				peers[str(child.name)] = [child.global_position.x, child.global_position.y]
 	var fight := _fight_hp(mobs)
-	var file := FileAccess.open(out + ".tmp", FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify({
+	write_result({
 		"id": _peer_id(main),
 		"ready": main != null and main.world_params != null and me != null,
 		"place_error": _place_error,
@@ -162,6 +143,4 @@ func _write_fight(out: String, main, world, me: Node2D, requests: SoldierRequest
 		"fight_mob_start_hp": MobCatalog.stat(MobCatalog.SLIME, "hp"),
 		"mob_count": mobs.mobs().size(),
 		"errors": _errors.snapshot(),
-	}))
-	file.close()
-	DirAccess.rename_absolute(out + ".tmp", out)
+	})

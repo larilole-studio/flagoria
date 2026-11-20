@@ -43,29 +43,19 @@ func _test_regrow_sync_two_players() -> int:
 	if port == 0:
 		printerr("FAIL regrow_sync_two_players found no free UDP port")
 		return 1
-	var dir := OS.get_user_data_dir().path_join("regrow_sync_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
+	var dir := make_probe_dir("regrow_sync_%d_%d" % [OS.get_process_id(), port])
 	var saved := MapSave.save_world(WorldSave.new(params), "test_regrow_sync_%d_%d" % [OS.get_process_id(), port])
 	var cells: Array = [found["tree"][0], found["bush"][0]]  # cut by the host, by the client
 	var keys: Array = cells.map(func(c: Vector2i) -> String: return WorldSave.cell_key(c))
 	var outs: Array[String] = []
-	var pids: Array[int] = []
+	var probes: Array[Dictionary] = []
 	var launch := func(extra: Array) -> void:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", PROBE,
-				"--", "--port=%d" % port, "--out=" + outs[-1], "--cells=" + ";".join(keys)]
+		var args: Array = ["--port=%d" % port, "--cells=" + ";".join(keys)]
 		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i]) if FileAccess.file_exists(outs[i]) else ""
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
+		probes.append(spawn_probe(PROBE, outs[-1], args))
+	var read := read_probe_at.bind(probes)
+	var wait_for := wait_until
 	var ages := func(i: int) -> Dictionary:
 		## Cell key -> age in seconds, for each cut peer i holds.
 		var out := {}
@@ -160,16 +150,7 @@ func _test_regrow_sync_two_players() -> int:
 						fail += 1
 						break
 
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
+	await stop_probes(probes, 10000)
 	_remove_dir(dir)
 	DirAccess.remove_absolute(saved["path"])
 	if fail == 0:

@@ -1,5 +1,4 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a multi-peer spawn session, run as its own headless process by
 ## test_spawn_late_join in tests/world/test_spawn.gd.
 ##   -- --port=N --out=PATH              join localhost:N through the Join path
@@ -15,7 +14,6 @@ const HostListen = preload("res://tests/helpers/test_helpers.gd")
 ## this peer holds the input action named in it (for example ui_right), so
 ## its own player walks through the normal movement code.
 
-var _out := ""
 var _id := 0
 var _picked := {}
 var _respawned_at := Vector2.INF
@@ -24,52 +22,15 @@ var _kill_text = null
 var _deaths := 0
 var _walking := ""
 var _points_before_map := false
-var _errors := _ErrorLog.new()
-
-
-class _ErrorLog extends Logger:
-	## Keeps the first few errors; Godot may log from any thread.
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
 
 
 func _run() -> void:
-	var port := 0
-	var mode := "join"
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--out="):
-			_out = arg.trim_prefix("--out=")
-		elif arg in ["--host", "--dedicated"]:
-			mode = arg.trim_prefix("--")
-	if mode != "join":
-		HostListen.arm_host(_out)
-	if port == 0 or _out == "" or change_scene_to_file("res://flagoria_main.tscn") != OK:
+	var mode := "host" if has_option("--host") else ("dedicated" if has_option("--dedicated") else "join")
+	var main = await open_game(mode != "join")
+	if main == null:
 		printerr("late_join_probe: needs --port=N, --out=PATH and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
 	var world: Node = main.get_node("World")
 	if mode != "join":
 		# The server sets a player's spot before adding it to the tree.
@@ -77,14 +38,13 @@ func _run() -> void:
 			if node is CharacterBody2D:
 				_picked[str(node.name)] = [node.position.x, node.position.y])
 	if mode == "host":
-		if main.setup_server(root.get_node("MapGen").params, port) == OK:
-			main.add_player(1)
-			HostListen.mark_host_listening(_out)
+		if host_game(main, _session_params()) == OK:
+			host_listening()
 	elif mode == "dedicated":
-		if main.start_dedicated_server(port) == OK:
-			HostListen.mark_host_listening(_out)
+		if host_dedicated(main, _session_params()) == OK:
+			host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, _out)
+		await join_game(main)
 	var points := main.get_node_or_null("Points") as Points
 	if points:
 		# The kill snapshot must not ride ahead of the map: totals_received
@@ -94,39 +54,39 @@ func _run() -> void:
 				_points_before_map = true)
 	_id = main.multiplayer.get_unique_id()
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):
-		# A dropped peer reloads the main scene and frees World. Leaving the
-		# loop on that error used to skip quit(), so the process held the
-		# stress runner's pipe until the job timed out.
-		if not is_instance_valid(world):
-			printerr("late_join_probe: world freed, peer %s left the match" % _id)
-			quit(1)
-			return
+	while game_active(main, deadline):
 		var me: Node = world.get_node_or_null(str(_id))
 		if me and not me.health.respawned.is_connected(_on_respawned):
 			me.health.respawned.connect(_on_respawned)
 			me.health.health_changed.connect(_on_health_changed)
-		if mode != "join" and FileAccess.file_exists(_out + ".kill") \
-				and FileAccess.get_file_as_string(_out + ".kill") != _kill_text:
-			_kill_text = FileAccess.get_file_as_string(_out + ".kill")
+		if mode != "join" and FileAccess.file_exists(probe_out + ".kill") \
+				and FileAccess.get_file_as_string(probe_out + ".kill") != _kill_text:
+			_kill_text = FileAccess.get_file_as_string(probe_out + ".kill")
 			for child in world.get_children():
 				if child is CharacterBody2D:
 					child.health.set_health_now(0)
-		var walk := FileAccess.get_file_as_string(_out + ".walk").strip_edges() \
-				if FileAccess.file_exists(_out + ".walk") else ""
+		var walk := FileAccess.get_file_as_string(probe_out + ".walk").strip_edges() \
+				if FileAccess.file_exists(probe_out + ".walk") else ""
 		if walk != _walking:
 			if _walking != "":
 				Input.action_release(_walking)
 			if walk != "" and InputMap.has_action(walk):
 				Input.action_press(walk)
 			_walking = walk
-		if Time.get_ticks_msec() >= next_write:
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
 			_write(main, world)
 		await process_frame
-	_write(main, world)
-	quit(0)
+	finish(main, func() -> void: _write(main, world))
+
+
+func _session_params() -> MapGenParams:
+	var params: MapGenParams = root.get_node("MapGen").params.duplicate_params()
+	params.altitude_seed = 11
+	params.moisture_seed = 11
+	params.temperature_seed = 11
+	params.items_seed = 11
+	params.biome_seed = 11
+	return params
 
 
 func _on_respawned(at: Vector2) -> void:
@@ -168,10 +128,4 @@ func _write(main: Node, world: Node) -> void:
 		"host_points": points.total_of(1) if points else 0,
 		"points_before_map": _points_before_map,
 	}
-	var tmp := _out + ".tmp"
-	var f := FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify(state))
-	f.close()
-	DirAccess.rename_absolute(tmp, _out)
+	write_result(state)
