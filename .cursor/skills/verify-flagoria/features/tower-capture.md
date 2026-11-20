@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+The map node delegates `predict_cell` to `Scripts/world_chunks.gd`.
+
 Also driven by: `drives/tower_capture.gd`.
 
 Flag towers change hands (#274). Every placement with a `team` flag (the castle's main tower, a guard post) is a tower. `TowerCapture` (`Scripts/mechanics/conquest/tower_capture.gd`, the `World/TowerCapture` node in `flagoria_main.tscn`) checks each tower every physics tick against a tower list refreshed on `ground_changed` and a player list gathered once per tick (#378). Living players count for their peer id. Mobs that are not dying count for the mobs (`StructurePlacer.OWNER_MOBS`, -1). Only those within `CAPTURE_RADIUS` (32 px, two cells) of the flag cell's centre take part. When progress reaches `CAPTURE_TIME` (5 s), `StructurePlacer.set_owner` hands the tower over: the placement's `owner` entry and its flag tile change, nothing else. Flags: host blue, other peers red, neutral grey (`OWNER_NEUTRAL`, 0), mobs purple; the neutral and mob flags are placeholders drawn by `tools/art/gen_flag_tiles.py`. A bar above the flag shows progress in the capturing side's colour. In multiplayer only the host advances progress and sends owner and progress to every peer, including a late joiner ([Conquest sync](./conquest-sync.md), #497). A client does not advance a tower on its own.

@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+The map node delegates `resolve_player_spawn` to `Scripts/world_cell_queries.gd` and `generate_chunk` to `Scripts/world_chunks.gd`.
+
 A dead hero cannot cut trees or bushes (#349). In interact mode an attack-button press or drag does nothing while the local player is dead (`ChopStick` in `Scripts/mechanics/interact/chop_stick.gd`), and on the host `request_cut` refuses a cut from a peer whose player is dead, so a client that skips its own check still gets nothing. A chop already under way when the hero dies is cancelled by `ChopAction.step_chop` (`chop-death` in [Chopping trees and bushes](./chop-trees-and-bushes.md)); both use `Interaction.player_dead`. Cuts in two-player play are in [Cut sync](./cut-sync.md).
 
 ## Sub-features
