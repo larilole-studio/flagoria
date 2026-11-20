@@ -1,89 +1,42 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## Two-player wall damage probe (#35).
 ## Host: --host --save --port --out. Client: --port --out [--phase=...].
 
 
-var _errors := _ErrorLog.new()
 var _place_error := ""
-var _out := ""
 var _target := Vector2i(1 << 20, 0)
 var _phase_done := ""
 var _saw_hp2 := false
 var _break_done := false
 
 
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
-
-
 func _run() -> void:
-	var port := 0
-	var save := ""
-	var out := ""
-	var host := false
-	var phase := "work"
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--save="):
-			save = arg.trim_prefix("--save=")
-		elif arg.begins_with("--out="):
-			out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--phase="):
-			phase = arg.trim_prefix("--phase=")
-		elif arg == "--host":
-			host = true
-	_out = out
-	if host:
-		HostListen.arm_host(out)
-	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
-		printerr("wall_break_probe: needs --port, --out, --save with --host, and the main scene")
+	var phase := option("--phase", "work")
+	var host := has_option("--host")
+	var save := option("--save")
+	var main = await open_game(host)
+	if main == null:
+		printerr("wall_break_probe: needs --port, --out, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		var map_gen = root.get_node("MapGen")
-		var error: String = map_gen.load_map_inputs(save)
-		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
+		var error := host_saved_game(main, save)
+		if error != "":
 			printerr("wall_break_probe: could not host %s: %s" % [save, error])
 			quit(1)
 			return
-		main.add_player(1)
-		_park_mobs(main)
-		HostListen.mark_host_listening(out)
+		park_mobs(main)
+		host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, out)
+		await join_game(main)
 	var world = main.get_node("World/worldMap")
 	var work := "idle"
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
+	while game_active(main, deadline):
 		if main.multiplayer == null:
 			break
-		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
+		var me: Node2D = local_player(main)
 		var ready := main.world_params != null and me != null
 		if not host and work == "idle" and ready and phase == "work":
 			work = "busy"
@@ -92,15 +45,10 @@ func _run() -> void:
 				_phase_done = await _break_sequence(main, world, me)
 				_break_done = _phase_done == ""
 			work = "done"
-		if Time.get_ticks_msec() >= next_write:
-			_write(out, main, world, me)
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
+			_write(main, world, me)
 		await process_frame
-	var fin: Node2D = null
-	if main.multiplayer != null:
-		fin = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-	_write(out, main, world, fin)
-	quit(0)
+	finish(main, func() -> void: _write(main, world, local_player(main)))
 
 
 func _prepare_break(main, world, me: Node2D) -> String:
@@ -108,22 +56,23 @@ func _prepare_break(main, world, me: Node2D) -> String:
 	var requests = main.get_node("World/StructureRequests")
 	var interaction: Interaction = main.get_node("World/Interaction")
 	inventory.add(Inventory.WOOD, 4)
-	if not await _until(func() -> bool: return _has_castle(world), 15000):
+	if not await wait_for_state(func() -> bool: return _has_castle(world), 15000):
 		return "no castle on the map"
 	world.generate_chunk(world.map_to_local(world.resolve_player_spawn()))
-	var spot: Vector2i = _castle_touch(world)
+	var spot: Vector2i = castle_touch(world)
 	if spot.x == 1 << 20:
 		spot = _spawn_touch(world)
 	if spot.x == 1 << 20:
 		return "no wall spot"
 	_target = spot
 	me.global_position = interaction.cell_center(spot) + Vector2(0, 48)
-	if not await _until(func() -> bool: return _host_sees(me), 8000):
+	var peer_id := str(main.multiplayer.get_unique_id())
+	if not await wait_for_state(func() -> bool: return host_sees_position(peer_id, me.global_position), 8000):
 		return "host did not ack position"
 	var one: Array[Vector2i] = [spot]
 	if not requests.place(BuildCosts.WALL_BLOCK, one):
 		return "wall place not sent"
-	if not await _until(func() -> bool: return world.has_wall(spot), 8000):
+	if not await wait_for_state(func() -> bool: return world.has_wall(spot), 8000):
 		return "wall not applied"
 	return ""
 
@@ -132,14 +81,15 @@ func _break_sequence(main, world, me: Node2D) -> String:
 	var spot: Vector2i = _target
 	var interaction: Interaction = main.get_node("World/Interaction")
 	me.global_position = interaction.cell_center(spot + Vector2i(0, 1))
-	if not await _until(func() -> bool: return _host_sees(me), 5000):
+	var peer_id := str(main.multiplayer.get_unique_id())
+	if not await wait_for_state(func() -> bool: return host_sees_position(peer_id, me.global_position), 5000):
 		return "could not stand south"
 	if not await _swing(me, "Down", PI / 2.0) or _wall_hp(world, spot) != 3:
 		return "away swing did not finish with hp 3"
 	for hp in [2, 1, -1]:
 		if not await _swing(me, "Up", -PI / 2.0):
 			return "swing did not finish"
-		if not await _until(func() -> bool: return _wall_hp(world, spot) == hp, 5000):
+		if not await wait_for_state(func() -> bool: return _wall_hp(world, spot) == hp, 5000):
 			return "wall hp want %d got %d" % [hp, _wall_hp(world, spot)]
 		if hp == 2:
 			_saw_hp2 = true
@@ -148,7 +98,7 @@ func _break_sequence(main, world, me: Node2D) -> String:
 
 func _swing(me: Node2D, direction: String, angle: float) -> bool:
 	me.attack_animation.rpc(direction, angle)
-	return await _until(func() -> bool: return not me.isAttacking, 3000)
+	return await wait_for_state(func() -> bool: return not me.isAttacking, 3000)
 
 
 func _wall_hp(world, cell: Vector2i) -> int:
@@ -184,62 +134,7 @@ func _has_castle(world) -> bool:
 	return false
 
 
-func _castle_touch(world) -> Vector2i:
-	var anchor := Vector2i.ZERO
-	var found := false
-	for id in world.placed_structures():
-		if str(world.placed_structures()[id]["name"]) == "castle":
-			anchor = world.placed_structures()[id]["anchor"]
-			found = true
-			break
-	if not found:
-		return Vector2i(1 << 20, 0)
-	var placer := ConstructionPlacer.new(world)
-	for dy in range(-8, 9):
-		for dx in range(-8, 9):
-			var cell := anchor + Vector2i(dx, dy)
-			if world.has_wall(cell):
-				continue
-			if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
-				continue
-			var one: Array[Vector2i] = [cell]
-			if placer.can_place_geometry(BuildCosts.WALL_BLOCK, one).is_empty():
-				return cell
-	return Vector2i(1 << 20, 0)
-
-
-func _host_sees(me: Node2D) -> bool:
-	var path := _out.get_base_dir().path_join("p0.json")
-	if not FileAccess.file_exists(path):
-		return false
-	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not data is Dictionary:
-		return false
-	var peer := str(me.get_parent().multiplayer.get_unique_id())
-	var pos = data.get("peers", {}).get(peer, null)
-	if not pos is Array or pos.size() < 2:
-		return false
-	return Vector2(float(pos[0]), float(pos[1])).distance_to(me.global_position) <= 4.0
-
-
-func _until(cond: Callable, ms: int) -> bool:
-	var until := Time.get_ticks_msec() + ms
-	while Time.get_ticks_msec() < until:
-		if cond.call():
-			return true
-		await process_frame
-	return cond.call()
-
-
-func _park_mobs(main) -> void:
-	for node in main.get_node("World/Mobs").get_children():
-		if node is Mob:
-			node.global_position = Vector2(100000, 100000)
-
-
-func _write(out: String, main, world, me: Node2D) -> void:
-	if out == "":
-		return
+func _write(main, world, me: Node2D) -> void:
 	var walls := {}
 	if main != null and main.world_params != null:
 		for chunk: Dictionary in StructureSaves.to_changes(world).values():
@@ -252,16 +147,7 @@ func _write(out: String, main, world, me: Node2D) -> void:
 				var atlas: Vector2i = world.get_cell_atlas_coords(1, cell)
 				walls[key] = [hp, atlas.x, atlas.y]
 				_saw_hp2 = _saw_hp2 or hp == 2
-	var peers := {}
-	var world_root: Node = main.get_node_or_null("World") if main != null else null
-	if world_root != null:
-		for child in world_root.get_children():
-			if child is CharacterBody2D and str(child.name).is_valid_int():
-				peers[str(child.name)] = [child.global_position.x, child.global_position.y]
-	var file := FileAccess.open(out + ".tmp", FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify({
+	write_result({
 		"id": str(main.multiplayer.get_unique_id()) if main != null and main.multiplayer != null else "",
 		"ready": main != null and main.world_params != null and me != null,
 		"place_error": _place_error,
@@ -270,8 +156,6 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		"target": WorldSave.cell_key(_target),
 		"break_done": _break_done,
 		"walls": walls,
-		"peers": peers,
+		"peers": peer_positions(main),
 		"errors": _errors.snapshot(),
-	}))
-	file.close()
-	DirAccess.rename_absolute(out + ".tmp", out)
+	})

@@ -20,9 +20,8 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_dead_cut_alone` about 0.1
 
 - **Run.** `godot --headless --path . --script res://tests/run_tests.gd -- --only=dead_cut_alone,painted_tree_survives_respawn,dead_cut_client` with scratch `XDG_*` dirs, or `./.cursor/skills/verify-flagoria/bin/drive-verify.sh`. Stress: `python3 tools/stress_netcode.py -n 10 --only dead_cut_client`.
 - **What the client scenario does.** `tests/net/test_cut_sync.gd` starts a host and a client of `tests/cut_sync_probe.gd` on seed 7. The host kills the client's player (`PATH.kill`, 600 s respawn delay). The dead client (`PATH.dead_cut`) steps next to a tree, drags a selection over it with screen touch events, then sends `request_cut` for it straight to the host.
-- **Proof.** `PASS test_dead_cut_alone`, `PASS test_painted_tree_survives_respawn` and `PASS test_dead_cut_client (tree (x, y))`. The client test fails unless the drag covered at least one tree in reach, the client is still dead, and 1 s later neither peer holds a cut, the client has 0 wood and no peer logged an engine error.
+- **Proof.** `PASS test_dead_cut_alone`, `PASS test_painted_tree_survives_respawn` and `PASS test_dead_cut_client (tree (x, y))`. The client test fails unless the drag covered at least one tree in reach, the client is still dead, and neither peer holds a cut after the host acknowledges the ordered RPC round trip, the client has 0 wood and no peer logged an engine error.
 
 ## Gotchas
 
 - Health is the server's, so the host knows a client's player is dead from its own copy; the client learns it through the health RPC.
-- The client test checks an absence after a fixed 1 s wait. On a build without the host check the forged cut lands within a few ms locally, so the wait is ample.

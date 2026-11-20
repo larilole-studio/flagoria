@@ -766,7 +766,7 @@ func spawn_probe(script: String, out: String, args: Array) -> Dictionary:
 	return {"pid": OS.create_process(OS.get_executable_path(), command), "out": out}
 
 
-func read_probe_result(out: String) -> Dictionary:
+static func read_probe_result(out: String) -> Dictionary:
 	if not FileAccess.file_exists(out):
 		return {}
 	var data = JSON.parse_string(FileAccess.get_file_as_string(out))
@@ -809,3 +809,58 @@ func stop_probes(probes: Array[Dictionary], timeout_ms: int) -> void:
 	for probe in probes:
 		if probe["pid"] > 0 and OS.is_process_running(probe["pid"]):
 			OS.kill(probe["pid"])
+
+
+func saved_probe_session(label: String, script: String, params: MapGenParams, args: Array) -> Dictionary:
+	var port := _free_udp_port()
+	if port == 0:
+		printerr("FAIL %s: no free UDP port" % label)
+		return {}
+	var unique := "%s_%d_%d" % [label, OS.get_process_id(), port]
+	var saved := MapSave.save_world(WorldSave.new(params), "test_" + unique)
+	if saved["error"] != "":
+		printerr("FAIL %s: could not save the map: %s" % [label, saved["error"]])
+		return {}
+	var dir := make_probe_dir(unique)
+	var probes: Array[Dictionary] = []
+	var launch := func(extra: Array) -> void:
+		var peer_args := ["--port=%d" % port]
+		peer_args.append_array(args)
+		peer_args.append_array(extra)
+		probes.append(spawn_probe(script, dir.path_join("p%d.json" % probes.size()), peer_args))
+	return {
+		"dir": dir, "saved": saved["path"], "probes": probes,
+		"launch": launch, "read": read_probe_at.bind(probes),
+		"host_args": ["--host", "--save=" + ProjectSettings.globalize_path(saved["path"])],
+	}
+
+
+func close_probe_session(session: Dictionary) -> void:
+	await stop_probes(session["probes"], 10000)
+	_remove_dir(session["dir"])
+	DirAccess.remove_absolute(session["saved"])
+
+
+func publish_probe_command(path: String, text: String) -> bool:
+	var tmp := path + ".tmp"
+	var file := FileAccess.open(tmp, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(text)
+	file.close()
+	return DirAccess.rename_absolute(tmp, path) == OK
+
+
+func open_rpc_test_scene(api: MultiplayerAPI) -> Node:
+	var scene = load("res://flagoria_main.tscn").instantiate()
+	root.add_child(scene)
+	scene.get_node("CanvasLayer2/MainMenu").hide()
+	set_multiplayer(api, scene.get_path())
+	scene.get_node("World/worldMap").set_process(false)
+	return scene
+
+
+func close_rpc_test_scene(scene: Node) -> void:
+	set_multiplayer(null, scene.get_path())
+	scene.queue_free()
+	await process_frame

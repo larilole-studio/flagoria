@@ -2,6 +2,11 @@ extends "res://tests/helpers/test_helpers.gd"
 ## Tree and bush cuts during two-player play (#223).
 
 const PROBE := "res://tests/cut_sync_probe.gd"
+const ROWS := {
+	"test_cut_sync_two_players": {"plants": 2, "radius": 0, "action": "cut"},
+	"test_dead_cut_client": {"plants": 1, "radius": 2, "action": "dead_cut"},
+	"test_cut_refused_two_players": {"plants": 0, "radius": 0, "action": "swing"},
+}
 
 
 func _test_cut_sync_two_players() -> int:
@@ -11,227 +16,16 @@ func _test_cut_sync_two_players() -> int:
 	## open ground on both peers, both hold the same cut list, and each got
 	## its own wood (3 per tree, 1 per bush). A second client joining after
 	## those cuts sees the same set.
-	print("-- test_cut_sync_two_players")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
-	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
-	var params := _spawn_params(7, 0.0)
-	params.ensure_seeds()
-	scene._apply_params_to_world(params)
-	var spawn: Vector2i = world.resolve_player_spawn()
-	var found := {"tree": [], "bush": []}
-	for r in range(0, 40):
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				if maxi(absi(dx), absi(dy)) != r:
-					continue
-				var cell := spawn + Vector2i(dx, dy)
-				var type := InteractableCatalog.type_at(world.predict_cell(cell)[1])
-				if type != null and found.has(type.id) and found[type.id].size() < 2:
-					found[type.id].append(cell)
-	scene.queue_free()
-	await process_frame
-	if found["tree"].size() < 2 or found["bush"].size() < 2:
-		printerr("FAIL cut_sync_two_players: seed 7 has too few trees and bushes near the spawn: %s" % found)
-		return 1
-	var port := _free_udp_port()
-	if port == 0:
-		printerr("FAIL cut_sync_two_players found no free UDP port")
-		return 1
-	var dir := OS.get_user_data_dir().path_join("cut_sync_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_cut_sync_%d_%d" % [OS.get_process_id(), port])
-	var cuts_of := [[found["tree"][0], found["bush"][0]], [found["tree"][1], found["bush"][1]]]  # host, client
-	var all: Array = cuts_of[0] + cuts_of[1]
-	var cells_arg := ";".join(all.map(func(c: Vector2i) -> String: return WorldSave.cell_key(c)))
-	var outs: Array[String] = []
-	var pids: Array[int] = []
-	var launch := func(extra: Array) -> void:
-		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", PROBE,
-				"--", "--port=%d" % port, "--out=" + outs[-1], "--cells=" + cells_arg]
-		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i]) if FileAccess.file_exists(outs[i]) else ""
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
-	var cut_set := func(i: int) -> Array:
-		var keys := []
-		var cuts: Dictionary = read.call(i).get("cuts", {})
-		for chunk in cuts:
-			for key in cuts[chunk]:
-				keys.append(key)
-		keys.sort()
-		return keys
-	var want_keys := all.map(func(c: Vector2i) -> String: return WorldSave.cell_key(c))
-	want_keys.sort()
-	var same := func(i: int) -> bool:
-		## Peer i has every cut, and each cell shows what the host shows: a
-		## stump and open ground.
-		if cut_set.call(i) != want_keys or cut_set.call(0) != want_keys:
-			return false
-		for key in want_keys:
-			var here = read.call(i).get("cells", {}).get(key)
-			if here == null or here != read.call(0).get("cells", {}).get(key) or here["clear"] != true:
-				return false
-		return true
-
-	var fail := 0
-	launch.call(["--host", "--save=" + ProjectSettings.globalize_path(saved["path"])])
-	if saved["error"] != "" or not await wait_for.call(func() -> bool: return read.call(0).get("ready", false), 30000):
-		printerr("FAIL cut_sync_two_players: the host did not start: save %s, %s" % [saved["error"], read.call(0)])
-		fail += 1
-	else:
-		launch.call([])
-		if not await wait_for.call(func() -> bool: return read.call(1).get("ready", false), 30000):
-			printerr("FAIL cut_sync_two_players: the client did not join: %s" % read.call(1))
-			fail += 1
-		else:
-			for i in 2:  # both cut at once
-				var f := FileAccess.open(outs[i] + ".cut", FileAccess.WRITE)
-				f.store_string(";".join(cuts_of[i].map(func(c: Vector2i) -> String: return WorldSave.cell_key(c))))
-				f.close()
-			var wood := InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD) \
-					+ InteractableCatalog.by_id("bush").amount_of(Inventory.WOOD)
-			if not await wait_for.call(func() -> bool: return same.call(1) and read.call(0).get("wood", 0) == wood \
-					and read.call(1).get("wood", 0) == wood, 20000):
-				printerr("FAIL cut_sync_two_players: after both cut %s, host %s, client %s" % [cuts_of, read.call(0), read.call(1)])
-				fail += 1
-			launch.call([])
-			if not await wait_for.call(func() -> bool: return read.call(2).get("ready", false) and same.call(2), 30000):
-				printerr("FAIL cut_sync_two_players: the late joiner %s, host %s" % [read.call(2), read.call(0)])
-				fail += 1
-			for i in outs.size():
-				if not read.call(i).get("errors", []).is_empty():
-					printerr("FAIL cut_sync_two_players: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
-					fail += 1
-
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
-	_remove_dir(dir)
-	DirAccess.remove_absolute(saved["path"])
-	if fail == 0:
-		print("PASS test_cut_sync_two_players (host cut %s, client cut %s)" % cuts_of)
-	return fail
+	return await _run_row("test_cut_sync_two_players")
 
 
 func _test_dead_cut_client() -> int:
 	## A host and a client (tests/cut_sync_probe.gd) on seed 7 (#349). The
 	## host kills the client's player; the dead client drags a selection over
 	## a tree in reach, then sends the host request_cut for it directly. The
-	## host refuses both: 1 s later neither peer holds a cut and the client's
-	## wood is unchanged.
-	print("-- test_dead_cut_client")
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
-	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
-	var params := _spawn_params(7, 0.0)
-	params.ensure_seeds()
-	scene._apply_params_to_world(params)
-	var spawn: Vector2i = world.resolve_player_spawn()
-	var tree := Vector2i.MAX
-	for r in range(2, 40):
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				var cell := spawn + Vector2i(dx, dy)
-				var type := InteractableCatalog.type_at(world.predict_cell(cell)[1])
-				if tree == Vector2i.MAX and maxi(absi(dx), absi(dy)) == r and type != null and type.id == "tree":
-					tree = cell
-	scene.queue_free()
-	await process_frame
-	var port := _free_udp_port()
-	if tree == Vector2i.MAX or port == 0:
-		printerr("FAIL dead_cut_client: tree %s near the spawn, port %d" % [tree, port])
-		return 1
-	var saved := MapSave.save_world(WorldSave.new(params), "test_dead_cut_%d_%d" % [OS.get_process_id(), port])
-	var dir := OS.get_user_data_dir().path_join("dead_cut_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var outs: Array[String] = []
-	var pids: Array[int] = []
-	var launch := func(extra: Array) -> void:
-		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", PROBE,
-				"--", "--port=%d" % port, "--out=" + outs[-1], "--cells=" + WorldSave.cell_key(tree)]
-		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i]) if FileAccess.file_exists(outs[i]) else ""
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
-	var write := func(path: String, text: String) -> void:
-		var f := FileAccess.open(path, FileAccess.WRITE)
-		f.store_string(text)
-		f.close()
-
-	var fail := 0
-	launch.call(["--host", "--save=" + ProjectSettings.globalize_path(saved["path"])])
-	launch.call([])
-	if saved["error"] != "" or not await wait_for.call(func() -> bool:
-			return read.call(0).get("ready", false) and read.call(1).get("ready", false), 30000):
-		printerr("FAIL dead_cut_client: the session did not start: save %s, host %s, client %s"
-				% [saved["error"], read.call(0), read.call(1)])
-		fail += 1
-	else:
-		write.call(outs[1] + ".dead_cut", WorldSave.cell_key(tree))
-		write.call(outs[0] + ".kill", read.call(1)["id"])
-		if not await wait_for.call(func() -> bool: return read.call(1).get("dead_cut", -1) >= 0, 10000):
-			printerr("FAIL dead_cut_client: the client never cut while dead: %s" % read.call(1))
-			fail += 1
-		else:
-			var until := Time.get_ticks_msec() + 1000  # the host's answer would be back by now
-			while Time.get_ticks_msec() < until:
-				await process_frame
-			var host: Dictionary = read.call(0)
-			var client: Dictionary = read.call(1)
-			if client.get("dead_cut", 0) < 1 or not client.get("dead", false) or not host.get("cuts", {}).is_empty() \
-					or not client.get("cuts", {}).is_empty() or client.get("wood", -1) != 0:
-				printerr("FAIL dead_cut_client: tree %s, host %s, client %s" % [tree, host, client])
-				fail += 1
-		for i in outs.size():
-			if not read.call(i).get("errors", []).is_empty():
-				printerr("FAIL dead_cut_client: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
-				fail += 1
-
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
-	_remove_dir(dir)
-	DirAccess.remove_absolute(saved["path"])
-	if fail == 0:
-		print("PASS test_dead_cut_client (tree %s)" % tree)
-	return fail
+	## host refuses both. Once it processes the requests, neither peer holds
+	## a cut and the client's wood is unchanged.
+	return await _run_row("test_dead_cut_client")
 
 
 func _test_cut_refused_two_players() -> int:
@@ -239,104 +33,185 @@ func _test_cut_refused_two_players() -> int:
 	## host still sees it at spawn, out of reach: the plant stays, wood stays
 	## 0 and no fall or pickup plays. It then chops a tree the host can see:
 	## that one falls, pays its wood and leaves a stump on the client.
-	print("-- test_cut_refused_two_players")
+	return await _run_row("test_cut_refused_two_players")
+
+
+func _run_row(label: String) -> int:
+	print("-- " + label)
+	var row: Dictionary = ROWS[label]
 	var params := _spawn_params(7, 0.0)
 	params.ensure_seeds()
-	var port := _free_udp_port()
-	if port == 0:
-		printerr("FAIL cut_refused_two_players found no free UDP port")
+	var targets: Array = []
+	if row["plants"] > 0:
+		targets = await _cut_targets(params, row["plants"], row["radius"])
+		if targets.is_empty():
+			return 1
+	var keys := PackedStringArray()
+	for cells in targets:
+		keys.append_array(cells)
+	var session := saved_probe_session(label, PROBE, params, ["--cells=" + ";".join(keys)])
+	if session.is_empty():
 		return 1
-	var saved := MapSave.save_world(WorldSave.new(params), "test_cut_refused_%d_%d" % [OS.get_process_id(), port])
-	var dir := OS.get_user_data_dir().path_join("cut_refused_%d_%d" % [OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var outs: Array[String] = []
-	var pids: Array[int] = []
-	var launch := func(extra: Array) -> void:
-		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", PROBE,
-				"--", "--port=%d" % port, "--out=" + outs[-1]]
-		args.append_array(extra)
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		var text := FileAccess.get_file_as_string(outs[i]) if FileAccess.file_exists(outs[i]) else ""
-		var data = JSON.parse_string(text) if text != "" else null
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
-	var names := func(sounds: Variant, prefix: String) -> int:
-		var n := 0
-		if sounds is Array:
-			for item in sounds:
-				if str(item).begins_with(prefix):
-					n += 1
-		return n
-	var cut_keys := func(peer: Dictionary) -> Array:
-		var keys := []
-		var cuts: Dictionary = peer.get("cuts", {})
-		for chunk in cuts:
-			for key in cuts[chunk]:
-				keys.append(str(key))
-		keys.sort()
-		return keys
-
-	var fail := 0
-	launch.call(["--host", "--save=" + ProjectSettings.globalize_path(saved["path"])])
+	var read: Callable = session["read"]
+	var launch: Callable = session["launch"]
+	var probes: Array[Dictionary] = session["probes"]
+	launch.call(session["host_args"])
 	launch.call([])
-	if saved["error"] != "" or not await wait_for.call(func() -> bool:
-			return read.call(0).get("ready", false) and read.call(1).get("ready", false), 30000):
-		printerr("FAIL cut_refused_two_players: the session did not start: save %s, host %s, client %s"
-				% [saved["error"], read.call(0), read.call(1)])
+	var fail := 0
+	if not await wait_until(func() -> bool:
+		return read.call(0).get("ready", false) and read.call(1).get("ready", false), 30000):
+		printerr("FAIL %s: session did not start: host %s, client %s" % [label, read.call(0), read.call(1)])
 		fail += 1
 	else:
-		FileAccess.open(outs[1] + ".swing", FileAccess.WRITE).close()
-		if not await wait_for.call(func() -> bool: return read.call(1).get("swing_done", false), 30000):
-			printerr("FAIL cut_refused_two_players: the client did not finish: %s" % read.call(1))
-			fail += 1
-		else:
-			var host: Dictionary = read.call(0)
-			var client: Dictionary = read.call(1)
-			var wood := InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD)
-			var far := str(client.get("far", ""))
-			var near := str(client.get("near", ""))
-			var far_cell: Dictionary = client.get("cells", {}).get(far, {})
-			var near_cell: Dictionary = client.get("cells", {}).get(near, {})
-			var refused: Array = client.get("refused_sounds", [])
-			var sounds: Array = client.get("sounds", [])
-			var keys: Array = cut_keys.call(client)
-			var host_keys: Array = cut_keys.call(host)
-			if client.get("swing_error", "") != "" or client.get("refused_fells", -1) != 0 \
-					or names.call(refused, "tree_fall") != 0 or names.call(refused, "wood_pickup") != 0 \
-					or far_cell.get("clear", true) or far_cell.get("plant", [-1, -1]) == [-1, -1] \
-					or keys.has(far) or host_keys.has(far) or host.get("wood", -1) != 0:
-				printerr("FAIL cut_refused_two_players: refused cut changed the world: %s" % client)
+		match row["action"]:
+			"cut":
+				fail += await _both_cut(read, launch, probes, targets, Array(keys))
+			"dead_cut":
+				fail += await _dead_cut(read, probes, targets[0][0])
+			"swing":
+				fail += await _refused_cut(read, probes[1]["out"])
+		for i in probes.size():
+			var errors: Array = read.call(i).get("errors", [])
+			if not errors.is_empty():
+				printerr("FAIL %s: peer %d logged errors: %s" % [label, i, errors])
 				fail += 1
-			if client.get("fells", 0) != 1 or names.call(sounds, "tree_fall") != 1 \
-					or names.call(sounds, "wood_pickup") != 1 or client.get("wood", -1) != wood \
-					or not near_cell.get("clear", false) or not keys.has(near) or not host_keys.has(near) \
-					or keys.has(far):
-				printerr("FAIL cut_refused_two_players: accepted cut far %s near %s host %s client %s" % [far, near, host, client])
-				fail += 1
-		for i in outs.size():
-			if not read.call(i).get("errors", []).is_empty():
-				printerr("FAIL cut_refused_two_players: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
-				fail += 1
-
-	for out in outs:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await wait_for.call(func() -> bool:
-		for pid in pids:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in pids:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
-	_remove_dir(dir)
-	DirAccess.remove_absolute(saved["path"])
+	await close_probe_session(session)
 	if fail == 0:
-		print("PASS test_cut_refused_two_players")
+		var detail := ""
+		if row["action"] == "cut":
+			detail = " (host cut %s, client cut %s)" % targets
+		elif row["action"] == "dead_cut":
+			detail = " (tree %s)" % targets[0][0]
+		print("PASS " + label + detail)
+	return fail
+
+
+func _cut_targets(params: MapGenParams, count: int, first_radius: int) -> Array:
+	var scene = load("res://flagoria_main.tscn").instantiate()
+	root.add_child(scene)
+	scene.get_node("CanvasLayer2/MainMenu").hide()
+	var world = scene.get_node("World/worldMap")
+	world.set_process(false)
+	scene._apply_params_to_world(params)
+	var spawn: Vector2i = world.resolve_player_spawn()
+	var found := {"tree": [], "bush": []} if count == 2 else {"tree": []}
+	for r in range(first_radius, 40):
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r:
+					continue
+				var cell := spawn + Vector2i(dx, dy)
+				var type := InteractableCatalog.type_at(world.predict_cell(cell)[1])
+				if type != null and found.has(type.id) and found[type.id].size() < count:
+					found[type.id].append(WorldSave.cell_key(cell))
+	scene.queue_free()
+	await process_frame
+	var targets := []
+	for kind in found:
+		if found[kind].size() < count:
+			printerr("FAIL cut sync: seed 7 has too few %s near spawn: %s" % [kind, found])
+			return []
+	for i in count:
+		var cells := PackedStringArray()
+		for kind in found:
+			cells.append(found[kind][i])
+		targets.append(cells)
+	return targets
+
+
+func _cut_keys(peer: Dictionary) -> Array:
+	var keys := []
+	for chunk in peer.get("cuts", {}).values():
+		keys.append_array(chunk.keys())
+	keys.sort()
+	return keys
+
+
+func _same_cuts(read: Callable, index: int, keys: Array) -> bool:
+	var host: Dictionary = read.call(0)
+	var peer: Dictionary = read.call(index)
+	if _cut_keys(host) != keys or _cut_keys(peer) != keys:
+		return false
+	for key in keys:
+		var here = peer.get("cells", {}).get(key)
+		if here == null or here != host.get("cells", {}).get(key) or here["clear"] != true:
+			return false
+	return true
+
+
+func _both_cut(read: Callable, launch: Callable, probes: Array[Dictionary], targets: Array, keys: Array) -> int:
+	for i in 2:
+		if not publish_probe_command(probes[i]["out"] + ".cut", ";".join(targets[i])):
+			printerr("FAIL cut_sync_two_players: could not publish cut command for peer %d" % i)
+			return 1
+	keys.sort()
+	var wood := 4
+	var fail := 0
+	if not await wait_until(func() -> bool: return _same_cuts(read, 1, keys) and read.call(0).get("wood", 0) == wood \
+			and read.call(1).get("wood", 0) == wood, 20000):
+		printerr("FAIL cut_sync_two_players: after both cut %s, host %s, client %s" % [targets, read.call(0), read.call(1)])
+		fail += 1
+	launch.call([])
+	if not await wait_until(func() -> bool: return read.call(2).get("ready", false) and _same_cuts(read, 2, keys), 30000):
+		printerr("FAIL cut_sync_two_players: late joiner %s, host %s" % [read.call(2), read.call(0)])
+		fail += 1
+	return fail
+
+
+func _dead_cut(read: Callable, probes: Array[Dictionary], tree: String) -> int:
+	if not publish_probe_command(probes[1]["out"] + ".dead_cut", tree) \
+			or not publish_probe_command(probes[0]["out"] + ".kill", read.call(1)["id"]):
+		printerr("FAIL dead_cut_client: could not publish death or cut command")
+		return 1
+	if not await wait_until(func() -> bool: return read.call(1).get("dead_cut", -1) >= 0, 10000):
+		printerr("FAIL dead_cut_client: the client never cut while dead: %s" % read.call(1))
+		return 1
+	var host: Dictionary = read.call(0)
+	var client: Dictionary = read.call(1)
+	if client.get("dead_cut", 0) < 1 or not client.get("dead", false) or not host.get("cuts", {}).is_empty() \
+			or not client.get("cuts", {}).is_empty() or client.get("wood", -1) != 0:
+		printerr("FAIL dead_cut_client: tree %s, host %s, client %s" % [tree, host, client])
+		return 1
+	return 0
+
+
+func _count_sounds(sounds: Array, prefix: String) -> int:
+	var count := 0
+	for sound in sounds:
+		if str(sound).begins_with(prefix):
+			count += 1
+	return count
+
+
+func _refused_cut(read: Callable, out: String) -> int:
+	FileAccess.open(out + ".swing", FileAccess.WRITE).close()
+	if not await wait_until(func() -> bool: return read.call(1).get("swing_done", false), 30000):
+		printerr("FAIL cut_refused_two_players: the client did not finish: %s" % read.call(1))
+		return 1
+	var fail := 0
+	var client: Dictionary = read.call(1)
+	var wood := 3
+	var far := str(client.get("far", ""))
+	var near := str(client.get("near", ""))
+	var far_cell: Dictionary = client.get("cells", {}).get(far, {})
+	var near_cell: Dictionary = client.get("cells", {}).get(near, {})
+	var refused: Array = client.get("refused_sounds", [])
+	var sounds: Array = client.get("sounds", [])
+	var keys: Array = _cut_keys(client)
+	if not near.is_empty() and keys.has(near):
+		await wait_until(func() -> bool: return _cut_keys(read.call(0)).has(near), 5000)
+	var host: Dictionary = read.call(0)
+	var host_keys: Array = _cut_keys(host)
+	if client.get("swing_error", "") != "" or client.get("refused_fells", -1) != 0 \
+			or _count_sounds(refused, "tree_fall") != 0 or _count_sounds(refused, "wood_pickup") != 0 \
+			or far_cell.get("clear", true) or far_cell.get("plant", [-1, -1]) == [-1, -1] \
+			or keys.has(far) or host_keys.has(far) or host.get("wood", -1) != 0:
+		printerr("FAIL cut_refused_two_players: refused cut changed the world: %s" % client)
+		fail += 1
+	if client.get("fells", 0) != 1 or _count_sounds(sounds, "tree_fall") != 1 \
+			or _count_sounds(sounds, "wood_pickup") != 1 or client.get("wood", -1) != wood \
+			or not near_cell.get("clear", false) or not keys.has(near) or not host_keys.has(near) \
+			or keys.has(far):
+		printerr("FAIL cut_refused_two_players: accepted cut far %s near %s host %s client %s" % [far, near, host, client])
+		fail += 1
 	return fail

@@ -50,11 +50,18 @@ func host_game(main, params: MapGenParams) -> Error:
 	return error
 
 
-func host_saved_game(main, path: String) -> String:
+func host_saved_game(main, path: String, before_player: Callable = Callable()) -> String:
 	var map_gen = root.get_node("MapGen")
 	var error: String = map_gen.load_map_inputs(path)
-	if error.is_empty() and host_game(main, map_gen.params.duplicate_params()) != OK:
+	if not error.is_empty():
+		return error
+	if not before_player.is_valid():
+		return "" if host_game(main, map_gen.params.duplicate_params()) == OK else "could not start listening"
+	if main.setup_server(map_gen.params.duplicate_params(), probe_port) != OK:
 		return "could not start listening"
+	error = before_player.call()
+	if error.is_empty():
+		main.add_player(1)
 	return error
 
 
@@ -116,6 +123,85 @@ func finish(main, snapshot: Callable) -> void:
 		return
 	snapshot.call()
 	quit(0)
+
+
+func wait_for_state(predicate: Callable, timeout_ms: int) -> bool:
+	var deadline := Time.get_ticks_msec() + timeout_ms
+	while not predicate.call():
+		if Time.get_ticks_msec() >= deadline or FileAccess.file_exists(probe_out + ".stop"):
+			return false
+		await process_frame
+	return true
+
+
+func host_snapshot() -> Dictionary:
+	return HostListen.read_probe_result(probe_out.get_base_dir().path_join("p0.json"))
+
+
+func install_round_trip(main: Node) -> void:
+	var peer := ReliableRoundTrip.new()
+	peer.name = "ProbeRoundTrip"
+	main.add_child(peer)
+
+
+func wait_for_round_trip(main: Node) -> bool:
+	# The default reliable channel orders this after earlier gameplay RPCs.
+	var peer: ReliableRoundTrip = main.get_node("ProbeRoundTrip")
+	var sequence := peer.reply + 1
+	peer.acknowledge.rpc_id(1, sequence)
+	return await wait_for_state(func() -> bool: return peer.reply == sequence, 5000)
+
+
+func park_mobs(main: Node) -> void:
+	for node in main.get_node("World/Mobs").get_children():
+		if node is Mob:
+			node.global_position = Vector2(100000, 100000)
+
+
+func castle_touch(world) -> Vector2i:
+	# Both wall probes build from the first castle's existing footprint.
+	var placer := ConstructionPlacer.new(world)
+	for entry in world.placed_structures().values():
+		if str(entry["name"]) != "castle":
+			continue
+		var anchor: Vector2i = entry["anchor"]
+		for dy in range(-8, 9):
+			for dx in range(-8, 9):
+				var cell := anchor + Vector2i(dx, dy)
+				if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
+					continue
+				var one: Array[Vector2i] = [cell]
+				if placer.can_place_geometry(BuildCosts.WALL_BLOCK, one).is_empty():
+					return cell
+		break
+	return Vector2i(1 << 20, 0)
+
+
+func host_sees_position(peer_id: String, where: Vector2) -> bool:
+	var pos = host_snapshot().get("peers", {}).get(peer_id)
+	if not pos is Array or pos.size() < 2:
+		return false
+	return Vector2(float(pos[0]), float(pos[1])).distance_to(where) <= 4.0
+
+
+func peer_positions(main: Node) -> Dictionary:
+	var positions := {}
+	for child in main.get_node("World").get_children():
+		if child is CharacterBody2D and str(child.name).is_valid_int():
+			positions[str(child.name)] = [child.global_position.x, child.global_position.y]
+	return positions
+
+
+class ReliableRoundTrip extends Node:
+	var reply := 0
+
+	@rpc("any_peer", "call_remote", "reliable")
+	func acknowledge(sequence: int) -> void:
+		var sender := multiplayer.get_remote_sender_id()
+		if multiplayer.is_server():
+			acknowledge.rpc_id(sender, sequence)
+		elif sender == 1:
+			reply = sequence
 
 
 class _ErrorLog extends Logger:
