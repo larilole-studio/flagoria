@@ -62,7 +62,7 @@ GAMEPLAY = [
     "Scripts/shell/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
     "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
     "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",  # score awards
-    "Scripts/inventory.gd",  # gathered wood
+    "Scripts/mechanics/trees/inventory.gd",  # gathered wood
     "Scripts/shell/game_settings.gd",  # mob spawn rate
     "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
     "Scripts/saves/world_save.gd",  # what a saved world keeps
