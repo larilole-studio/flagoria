@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The map node delegates `predict_cell` to `Scripts/world_chunks.gd`.
+The map node delegates `predict_cell` to `Scripts/world/world_chunks.gd`.
 
 Also driven by: `drives/tower_capture.gd`.
 

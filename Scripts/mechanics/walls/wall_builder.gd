@@ -4,7 +4,7 @@ extends RefCounted
 ## Pieces on layer 1. Each stone side draws its own CAP_COLLAR_* on the next
 ## cap layer, in N, E, S, W order. Caps add no collision.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 const CAP_LAYER := 3
 const CAP_LAYER_2 := 4

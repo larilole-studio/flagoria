@@ -1,7 +1,7 @@
 class_name BridgeBuilder
 extends RefCounted
 ## Plank bridges on the world map: laying a straight run over water and the
-## placed pieces. Moved from Scripts/TileMap.gd (#261). The map keeps wrappers
+## placed pieces. Moved from Scripts/world/TileMap.gd (#261). The map keeps wrappers
 ## with the same names and asks has_bridge / piece / piece_or when it draws a chunk.
 ## A cell's piece follows the planks and land next to it (#416): plain deck
 ## where two runs meet, a land joint only against walkable ground, a tip only
@@ -11,7 +11,7 @@ extends RefCounted
 ## World saves (#226): to_changes / from_changes turn that same list into
 ## world.tile_edits entries and back (docs/world-saves.md).
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 ## Plank bridge cells (build_bridge) -> layer-0 piece. generate_chunk draws
 ## the piece instead of the generated water; a new map clears them.

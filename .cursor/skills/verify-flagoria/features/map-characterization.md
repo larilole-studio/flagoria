@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-TileMap delegates `generate_chunk` to `Scripts/world_chunks.gd` and `apply_map_params` to `Scripts/world_map_params.gd`.
+TileMap delegates `generate_chunk` to `Scripts/world/world_chunks.gd` and `apply_map_params` to `Scripts/world/world_map_params.gd`.
 
 Assertion owner for the seed-42 render golden: the Map render golden step in `tools/verify.sh` runs the real CLI and compares its output.
 

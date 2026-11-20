@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Pinned map output for fixed seeds (Scripts/TileMap.gd).
+## Pinned map output for fixed seeds (Scripts/world/TileMap.gd).
 
 
 func _test_map_characterization() -> int:

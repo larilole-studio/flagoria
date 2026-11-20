@@ -5,7 +5,7 @@ extends RefCounted
 ## WORK_MS of work, counting squares not yet counted around the players or
 ## going on with the pass in progress square by square.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 ## Milliseconds of work a due() call may start: counting squares not yet
 ## counted around the players (_count_squares), or the next squares of the
