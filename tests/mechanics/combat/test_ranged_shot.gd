@@ -28,7 +28,7 @@ func _test_ranged_shot() -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var world = scene.get_node("World/worldMap")
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = "1"
 	scene.get_node("World").add_child(player)
 	player.set_physics_process(false)
@@ -81,7 +81,7 @@ func _test_ranged_shot() -> int:
 	world.erase_cell(1, mid)
 	await physics_frame
 	await physics_frame
-	var other = load("res://Player/character_body_2d.tscn").instantiate()
+	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	other.name = "2"
 	scene.get_node("World").add_child(other)
 	other.set_physics_process(false)

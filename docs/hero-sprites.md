@@ -21,7 +21,7 @@ Requires Python 3 and Pillow, like `tools/icon/make_icon.py`.
 
 ## Sheet layout
 
-The sheet matches the layout that `Player/character_body_2d.tscn` already
+The sheet matches the layout that `Scripts/player/character_body_2d.tscn` already
 reads (`hframes = 8`, `vframes = 16`, 16×16 frames), so switching the player
 to a generated hero only changes the `Sprite2D` texture.
 
@@ -35,7 +35,7 @@ the body origin, so the feet line up with the 8×10 collision box.
 
 ## In-game hero
 
-The player (`Player/character_body_2d.tscn`) uses the Flagbearer sheet,
+The player (`Scripts/player/character_body_2d.tscn`) uses the Flagbearer sheet,
 committed at `art/hero/sheets/flagbearer_sheet.png`. To rebuild it after
 changing its parts or recipe:
 

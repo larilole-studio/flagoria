@@ -21,7 +21,7 @@ Open **Actions > android-apk > Run workflow** on `main`. Pull requests that touc
 
 ## Pull request debug builds
 
-The `pr-debug-apk` workflow exports a debug APK for each pull request whose change reaches the game: gameplay as `tools/play_review_paths.py` decides it (or the `needs-play-review` label), shipped assets and scripts (`art/`, `Scripts/`, `addons/`, `structures/`, `Player/`, `Mobs/`, top-level `.gd`/`.tscn`/`.tres`), `project.godot`, `export_presets.cfg` or the workflow itself. Docs, tests, tools and other CI changes skip the build.
+The `pr-debug-apk` workflow exports a debug APK for each pull request whose change reaches the game: gameplay as `tools/play_review_paths.py` decides it (or the `needs-play-review` label), shipped assets and scripts (`art/`, `Scripts/`, `addons/`, `structures/`, `Mobs/`, top-level `.gd`/`.tscn`/`.tres`), `project.godot`, `export_presets.cfg` or the workflow itself. Docs, tests, tools and other CI changes skip the build.
 
 - **Package:** `org.flagoria.game.debug`, named "Flagoria (debug)". It installs next to the test build instead of replacing it and has its own save data.
 - **Version:** the version code is the workflow run number; the version name is `pr<number>-<short sha>`.

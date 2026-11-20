@@ -1,11 +1,11 @@
 [gd_scene load_steps=21 format=3 uid="uid://4h3b7gksl7a1"]
 
-[ext_resource type="Script" path="res://Scripts/player.gd" id="1_npi18"]
+[ext_resource type="Script" path="res://Scripts/player/player.gd" id="1_npi18"]
 [ext_resource type="Texture2D" uid="uid://di7lvt1805we1" path="res://art/hero/sheets/flagbearer_sheet.png" id="2_2dbro"]
-[ext_resource type="PackedScene" uid="uid://criufo7hcxa3y" path="res://Player/sword.tscn" id="3_yc3si"]
+[ext_resource type="PackedScene" uid="uid://criufo7hcxa3y" path="res://Scripts/player/sword.tscn" id="3_yc3si"]
 [ext_resource type="Script" path="res://Scripts/audio/combat_sfx.gd" id="4_combat"]
 [ext_resource type="Script" path="res://Scripts/audio/footsteps.gd" id="5_steps"]
-[ext_resource type="Script" path="res://Scripts/player_health.gd" id="6_health"]
+[ext_resource type="Script" path="res://Scripts/player/player_health.gd" id="6_health"]
 [ext_resource type="Texture2D" uid="uid://bhb11qja5v5y1" path="res://art/hero/sheets/flagbearer_chop_sheet.png" id="7_chop"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5iwvh"]

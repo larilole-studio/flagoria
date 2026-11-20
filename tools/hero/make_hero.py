@@ -10,7 +10,7 @@ so a later swap only changes the texture of the player's Sprite2D.
 Sheet layout (16x16 frames, 8 columns x 16 rows, 128x256 px):
   rows 0-3: walk down, left, right, up; columns 0-3 = walk frames
   rows 4-7: attack down, left, right, up; columns 0-3 = the same lunge pose
-Everything else is transparent. Player/character_body_2d.tscn reads rows 0-3
+Everything else is transparent. Scripts/player/character_body_2d.tscn reads rows 0-3
 for walking and column 2 of rows 5-7 for attacks.
 
 Usage:

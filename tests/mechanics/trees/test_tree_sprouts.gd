@@ -244,7 +244,7 @@ func _test_sprouts_skip_blocked_cells() -> int:
 	# A player and a mob each standing on a free cell.
 	var at_player: Vector2i = free[0]
 	var at_mob: Vector2i = free[free.size() - 1]
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = "1"
 	player.position = world.to_global(world.map_to_local(at_player))
 	scene.get_node("World").add_child(player)
@@ -411,7 +411,7 @@ func _time_due(scene, world, sprouts, anchor: Vector2i) -> Array:
 	## call of the first sprouts or -1, cells sprouted].
 	var players := []
 	for at: Vector2i in [anchor, anchor + Vector2i(40, 12)]:
-		players.append(load("res://Player/character_body_2d.tscn").instantiate())
+		players.append(load("res://Scripts/player/character_body_2d.tscn").instantiate())
 		players[-1].name = str(players.size())
 		players[-1].position = world.to_global(world.map_to_local(at))
 	scene.get_node("World").add_child(players[0])

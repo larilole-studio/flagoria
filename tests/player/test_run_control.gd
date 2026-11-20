@@ -14,7 +14,7 @@ func _test_run_control() -> int:
 	menu.hide()
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
-	var body = load("res://Player/character_body_2d.tscn").instantiate()
+	var body = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	body.name = str(scene.multiplayer.get_unique_id())
 	body.collision_layer = 0
 	body.collision_mask = 0
@@ -273,7 +273,7 @@ func _run_on(button: Button) -> bool:
 
 
 func _run_body(world: Node, id: String, at: Vector2) -> CharacterBody2D:
-	var body := load("res://Player/character_body_2d.tscn").instantiate() as CharacterBody2D
+	var body := load("res://Scripts/player/character_body_2d.tscn").instantiate() as CharacterBody2D
 	body.name = id
 	body.position = at
 	body.collision_layer = 0

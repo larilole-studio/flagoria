@@ -90,7 +90,7 @@ func run() -> void:
 		return
 	soldier.set_order("hold")
 	soldier._hold_pos = soldier.global_position
-	var other = load("res://Player/character_body_2d.tscn").instantiate()
+	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	other.name = "2"
 	current_scene.get_node("World").add_child(other)
 	other.global_position = soldier.global_position + Vector2(6, 0)

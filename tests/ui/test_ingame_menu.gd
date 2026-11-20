@@ -12,7 +12,7 @@ func _test_ingame_menu_open_resume() -> int:
 	root.add_child(scene)
 	var cam := Camera2D.new()
 	var zoom := Node.new()
-	zoom.set_script(load("res://Scripts/map_zoom.gd"))
+	zoom.set_script(load("res://Scripts/player/map_zoom.gd"))
 	cam.add_child(zoom)
 	root.add_child(cam)
 	await process_frame

@@ -77,7 +77,7 @@ func _paint_and_button() -> int:
 		fail += 1
 	else:
 		panel._spin_boxes["building_width"].value = 6
-		var player: CharacterBody2D = load("res://Player/character_body_2d.tscn").instantiate()
+		var player: CharacterBody2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 		player.name = "1"
 		scene.get_node("World").add_child(player)
 		player.position = world.map_to_local(Vector2i(10, 8))

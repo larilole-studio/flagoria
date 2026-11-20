@@ -59,7 +59,7 @@ jobs:
           GAMEPLAY: ${{ steps.classify.outputs.gameplay }}
         run: |
           set -euo pipefail
-          shipped='^(art|Scripts|addons|structures|Player|Mobs)/|^[^/]+\.(gd|tscn|tres)$|^project\.godot$|^export_presets\.cfg$|^\.github/workflows/(android-apk|pr-debug-apk)\.yml$|^\.github/actions/android-apk-prelude/|^tools/ci_(export_android_apk|godot_android_editor_settings)\.sh$'
+          shipped='^(art|Scripts|addons|structures|Mobs)/|^[^/]+\.(gd|tscn|tres)$|^project\.godot$|^export_presets\.cfg$|^\.github/workflows/(android-apk|pr-debug-apk)\.yml$|^\.github/actions/android-apk-prelude/|^tools/ci_(export_android_apk|godot_android_editor_settings)\.sh$'
           if [ "$GAMEPLAY" = "true" ]; then
             build=true
           elif grep -E "$shipped" "$PATHS_FILE" | sed 's/^/shipped: /' | grep .; then

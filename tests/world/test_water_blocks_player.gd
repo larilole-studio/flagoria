@@ -12,7 +12,7 @@ func _test_water_blocks_player() -> int:
 		{"name": "high_water", "alt": 2, "moist": 7, "temp": 12, "items": 17, "water": 0.45, "sand": 0.5},
 		{"name": "seed_set_c_high_water", "alt": 4242, "moist": 5252, "temp": 6262, "items": 7272, "water": 0.4, "sand": 0.48},
 	]
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	var point := PhysicsPointQueryParameters2D.new()
 	point.collision_mask = player.collision_mask
 	player.free()

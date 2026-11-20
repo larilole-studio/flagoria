@@ -39,7 +39,7 @@ func _boot_wall_scene() -> Dictionary:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var inventory: Inventory = scene.get_node("Inventory")
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	var place_cell: Vector2i = run[0] if not run.is_empty() else Vector2i(10, 10)
 	var stand: Vector2 = world.to_global(world.map_to_local(place_cell + Vector2i(0, 2)))

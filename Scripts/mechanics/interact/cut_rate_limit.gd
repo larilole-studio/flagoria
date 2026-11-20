@@ -18,7 +18,7 @@ extends RefCounted
 ## after a network stall. test_cut_rate_numbers recounts both figures.
 
 const TILE := 16.0  ## px per map cell (the tile set's tile_size)
-const PlayerScript := preload("res://Scripts/player.gd")
+const PlayerScript := preload("res://Scripts/player/player.gd")
 const DRAG_CELLS := 81  ## most cell centres within Interaction.REACH of one point
 const SWEEP_CELLS := 2.0 * Interaction.REACH * PlayerScript.MAX_SPEED / (TILE * TILE)  ## 81.25 cells/s
 const HEADROOM := 2.0

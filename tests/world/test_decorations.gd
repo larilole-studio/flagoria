@@ -96,7 +96,7 @@ func _test_forest_walls() -> int:
 	## between whole-pixel lanes. With one free cell between plants the
 	## player must still pass.
 	print("-- test_forest_walls")
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	var body: CollisionShape2D = player.get_node("CollisionShape2D")
 	var query := PhysicsShapeQueryParameters2D.new()
 	query.shape = body.shape

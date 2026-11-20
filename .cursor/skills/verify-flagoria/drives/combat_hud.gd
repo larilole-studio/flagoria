@@ -8,7 +8,7 @@ const HEARTS := "CanvasLayer1/HeartsHud"
 const SCORE := "CanvasLayer1/ScoreHud"
 const ATTACK_BUTTON := "CanvasLayer1/TouchScreenButton"
 const RESUME_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/Resume"
-const FULL_HEALTH := 6  ## half-hearts (Scripts/player_health.gd)
+const FULL_HEALTH := 6  ## half-hearts (Scripts/player/player_health.gd)
 ## The aimed swing: a drag this far from the button's centre (viewport px,
 ## past the 8 px dead zone) at this angle. -60 degrees is 30 degrees right of
 ## Up, so the hero faces Up and the swing turns +30 degrees.

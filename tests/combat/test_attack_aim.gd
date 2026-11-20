@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Attack aim by mouse and touch (Scripts/attack_aim.gd).
+## Attack aim by mouse and touch (Scripts/player/attack_aim.gd).
 
 
 func _test_attack_aim_mouse() -> int:
@@ -23,7 +23,7 @@ func _test_attack_aim_mouse() -> int:
 	menu.hide()
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(player)
 	player.position = player.spawn_position()
@@ -216,7 +216,7 @@ func _test_attack_aim_touch() -> int:
 	menu.hide()
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(player)
 	player.position = player.spawn_position()
@@ -413,7 +413,7 @@ func _test_attack_aim_touch_guards() -> int:
 	menu.hide()
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(player)
 	player.position = player.spawn_position()
@@ -563,7 +563,7 @@ func _test_attack_angle_two_players() -> int:
 		fail += 1
 	else:
 		var copy := func(world: Node) -> CharacterBody2D:
-			var p = load("res://Player/character_body_2d.tscn").instantiate()
+			var p = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 			p.name = str(cpeer.get_unique_id())
 			p.get_node("MultiplayerSynchronizer").free()
 			world.add_child(p)
