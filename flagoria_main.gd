@@ -1,7 +1,7 @@
 extends Node2D
 
-const JoinAddress = preload("res://Scripts/join_address.gd")
-const JoinDial = preload("res://Scripts/join_dial.gd")
+const JoinAddress = preload("res://Scripts/net/join_address.gd")
+const JoinDial = preload("res://Scripts/net/join_dial.gd")
 const PORT = 9786
 ## Most cuts in one join message (#354); see _sync_map_params_to_peer.
 const JOIN_CUTS_PER_MESSAGE := 500
