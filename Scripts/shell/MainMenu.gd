@@ -1,6 +1,6 @@
 extends PanelContainer
 
-const JoinAddress = preload("res://Scripts/join_address.gd")
+const JoinAddress = preload("res://Scripts/net/join_address.gd")
 const WorldsSaveList = preload("res://Scripts/shell/worlds_save_list.gd")
 const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
 
