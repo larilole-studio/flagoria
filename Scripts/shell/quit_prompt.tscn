@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://quitprompt01"]
 
-[ext_resource type="Script" path="res://Scripts/quit_prompt.gd" id="1_quit"]
+[ext_resource type="Script" path="res://Scripts/shell/quit_prompt.gd" id="1_quit"]
 [ext_resource type="Theme" path="res://art/ui/main_menu_theme.tres" id="2_theme"]
 
 [node name="QuitPrompt" type="Control"]

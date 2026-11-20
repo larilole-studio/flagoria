@@ -8,7 +8,7 @@ A Join that never connects (wrong address, host not running, port blocked) retur
 
 ## Sub-features
 
-- `join-fail-no-host` `multiplayer.connection_failed` and a non-`OK` `create_client` close the peer, hide the HUD, show the main menu, restore menu music, and set `JoinStatus` to `Could not join <address>` (`Scripts/MainMenu.gd` `show_join_failed`, `flagoria_main.gd` `_on_join_failed`).
+- `join-fail-no-host` `multiplayer.connection_failed` and a non-`OK` `create_client` close the peer, hide the HUD, show the main menu, restore menu music, and set `JoinStatus` to `Could not join <address>` (`Scripts/shell/MainMenu.gd` `show_join_failed`, `flagoria_main.gd` `_on_join_failed`).
 - `join-fail-host-quits` `multiplayer.server_disconnected` calls `leave_to_main_menu()` (scene reload), same as the in-game Main menu button.
 
 ## How to get to it (user POV)

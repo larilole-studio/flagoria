@@ -6,7 +6,7 @@ The main menu Worlds screen lists every world save by name and the time the file
 
 ## Sub-features
 
-- `worlds-list` `CanvasLayer2/WorldsPanel` (`Scripts/MainMenu.gd`) lists `MapSave.list_saves()`, newest first, as the file name and `YYYY-MM-DD HH:MM`, with a 64×40 terrain thumbnail per row, in a scroll box when the list overflows.
+- `worlds-list` `CanvasLayer2/WorldsPanel` (`Scripts/shell/MainMenu.gd`) lists `MapSave.list_saves()`, newest first, as the file name and `YYYY-MM-DD HH:MM`, with a 64×40 terrain thumbnail per row, in a scroll box when the list overflows.
 - `worlds-load` Load calls `MapGen.load_map_inputs` for the selected file and hosts it. Later saves of that match replace the same file.
 - `worlds-new` Host and New world clear any loaded world and pick a new file name. The file is written on the first Save.
 - `worlds-delete` Delete asks "Delete this world?" and Yes calls `MapSave.delete_save`.
