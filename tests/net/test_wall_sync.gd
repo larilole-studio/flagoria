@@ -1,45 +1,87 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Free-form walls and cities during two-player play (#498).
+## Free-form wall placement, city changes, and wall damage.
 
-const PROBE := "res://tests/wall_sync_probe.gd"
-const SEED := 11
+const WALL_PROBE := "res://tests/wall_sync_probe.gd"
+const ROWS := {
+	"wall": {"probe": WALL_PROBE, "option": "--mode=", "mode": "wall", "timeout": 25000},
+	"city": {"probe": WALL_PROBE, "option": "--mode=", "mode": "city", "timeout": 30000},
+	"break": {"probe": "res://tests/wall_break_probe.gd", "option": "--phase=", "mode": "work", "timeout": 25000},
+}
 
 
 func _test_wall_place_two_players() -> int:
-	## A water request leaves wood unchanged. A wall on the castle matches
-	## piece, caps and auto junctions on both peers and a late joiner.
-	## About 8 s alone; stress runs it at the job's tier.
-	print("-- test_wall_place_two_players")
-	var session := _open("wall")
+	return await run_wall_row("test_wall_place_two_players", "wall", _wall_placed, _same_built)
+
+
+func _test_city_change_two_players() -> int:
+	return await run_wall_row("test_city_change_two_players", "city", _city_closed, _same_city_build, Callable(), _open_city)
+
+
+func run_wall_row(label: String, kind: String, changed: Callable, joined: Callable,
+		after_change: Callable = Callable(), after_join: Callable = Callable()) -> int:
+	print("-- " + label)
+	var row: Dictionary = ROWS[kind]
+	var session := saved_probe_session(label, row["probe"], _spawn_params(11, 0.0), [])
 	if session.is_empty():
 		return 1
-	var fail := 0
 	var read: Callable = session["read"]
 	var launch: Callable = session["launch"]
-	var wait_for: Callable = session["wait_for"]
-	if not await wait_for.call(func() -> bool: return read.call(0).get("ready", false), 30000):
-		printerr("FAIL wall_place_two_players: the host did not start: %s" % read.call(0))
+	var probes: Array[Dictionary] = session["probes"]
+	var host_args: Array = session["host_args"] + [row["option"] + row["mode"]]
+	launch.call(host_args)
+	var fail := 0
+	var host: Dictionary = await wait_result(probes[0], 30000)
+	if not host.get("ready", false):
+		printerr("FAIL %s: host did not start: %s" % [label, read.call(0)])
 		fail = 1
 	else:
-		launch.call(false, "wall")
-		if not await wait_for.call(func() -> bool: return _wall_placed(read), 25000):
-			printerr("FAIL wall_place_two_players: after place host %s client %s"
-					% [read.call(0), read.call(1)])
+		launch.call([row["option"] + row["mode"]])
+		if not await wait_until(changed.bind(read), row["timeout"]):
+			printerr("FAIL %s: wall change did not sync: host %s client %s" % [label, read.call(0), read.call(1)])
+			fail = 1
+		elif after_change.is_valid() and not await after_change.call(read):
 			fail = 1
 		else:
-			launch.call(false, "watch")
-			if not await wait_for.call(func() -> bool:
-				return read.call(2).get("ready", false) and _same_built(read.call(2), read.call(0)), 30000):
-				printerr("FAIL wall_place_two_players: the late joiner %s host %s"
-						% [read.call(2), read.call(0)])
+			launch.call([row["option"] + "watch"])
+			if not await wait_until(func() -> bool:
+				var peer: Dictionary = read.call(2)
+				return peer.get("ready", false) and joined.call(peer, read.call(0)), 30000):
+				printerr("FAIL %s: late joiner %s host %s" % [label, read.call(2), read.call(0)])
 				fail = 1
-		_note_errors(read, session, "wall_place_two_players")
-		if _any_errors(read, session):
-			fail = 1
-	await _close(session)
+			elif after_join.is_valid():
+				fail = await after_join.call(read, probes[0]["out"])
+		for i in probes.size():
+			var data: Dictionary = read.call(i)
+			if not data.get("errors", []).is_empty() or str(data.get("place_error", "")) != "" \
+					or str(data.get("phase_done", "")) != "":
+				printerr("FAIL %s: peer %d errors %s place %s phase %s" % [
+					label, i, data.get("errors", []), data.get("place_error", ""), data.get("phase_done", "")])
+				fail = 1
+	await close_probe_session(session)
 	if fail == 0:
-		print("PASS test_wall_place_two_players")
+		print("PASS " + label)
 	return fail
+
+
+func _open_city(read: Callable, host_out: String) -> int:
+	var gap: Array = read.call(1).get("gap", [])
+	if gap.size() < 2:
+		printerr("FAIL city_change_two_players: no gap cell")
+		return 1
+	if not publish_probe_command(host_out + ".open", "%d %d\n" % [int(gap[0]), int(gap[1])]):
+		printerr("FAIL city_change_two_players: could not publish the open request")
+		return 1
+	var opened_or_error := await wait_until(func() -> bool:
+		return str(read.call(0).get("place_error", "")) != "" or _city_opened(read), 15000)
+	if not opened_or_error or not _city_opened(read):
+		printerr("FAIL city_change_two_players: after open host %s client %s joiner %s"
+				% [read.call(0), read.call(1), read.call(2)])
+		return 1
+	return 0
+
+
+func _same_city_build(peer: Dictionary, host: Dictionary) -> bool:
+	return _same_cities(peer, host) and _same_built(peer, host)
 
 
 func _wall_placed(read: Callable) -> bool:
@@ -67,65 +109,6 @@ func _wall_connects(data: Dictionary) -> bool:
 			and not data.get("autos", []).is_empty()
 
 
-func _test_city_change_two_players() -> int:
-	## A client closes a wall loop around a tower. Both peers and a late
-	## joiner share cities keys. Opening one cell drops that city on all three.
-	## Seed 11. The open request is one atomic file. Stress runs it at the job's tier.
-	print("-- test_city_change_two_players")
-	var session := _open("city")
-	if session.is_empty():
-		return 1
-	var fail := 0
-	var read: Callable = session["read"]
-	var launch: Callable = session["launch"]
-	var wait_for: Callable = session["wait_for"]
-	if not await wait_for.call(func() -> bool: return read.call(0).get("ready", false), 30000):
-		printerr("FAIL city_change_two_players: the host did not start: %s" % read.call(0))
-		fail = 1
-	else:
-		launch.call(false, "city")
-		if not await wait_for.call(func() -> bool: return _city_closed(read), 30000):
-			printerr("FAIL city_change_two_players: after close host %s client %s"
-					% [read.call(0), read.call(1)])
-			fail = 1
-		else:
-			launch.call(false, "watch")
-			if not await wait_for.call(func() -> bool:
-				return read.call(2).get("ready", false) and _same_cities(read.call(2), read.call(0)) \
-						and _same_built(read.call(2), read.call(0)), 30000):
-				printerr("FAIL city_change_two_players: the late joiner %s host %s"
-						% [read.call(2), read.call(0)])
-				fail = 1
-			else:
-				var gap: Array = read.call(1).get("gap", [])
-				if gap.size() < 2:
-					printerr("FAIL city_change_two_players: no gap cell")
-					fail = 1
-				else:
-					# Publish the coordinates in one rename. Opening the destination
-					# first truncates it, and the host used to read that empty
-					# file, skip the erase, and never try again.
-					if not _publish_text(session["outs"][0] + ".open", "%d %d\n" % [int(gap[0]), int(gap[1])]):
-						printerr("FAIL city_change_two_players: could not publish the open request")
-						fail = 1
-					else:
-						var opened_or_err: bool = await wait_for.call(func() -> bool:
-							if str(read.call(0).get("place_error", "")) != "":
-								return true
-							return _city_opened(read), 15000)
-						if not opened_or_err or not _city_opened(read):
-							printerr("FAIL city_change_two_players: after open host %s client %s joiner %s"
-									% [read.call(0), read.call(1), read.call(2)])
-							fail = 1
-		_note_errors(read, session, "city_change_two_players")
-		if _any_errors(read, session):
-			fail = 1
-	await _close(session)
-	if fail == 0:
-		print("PASS test_city_change_two_players")
-	return fail
-
-
 func _city_closed(read: Callable) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
@@ -137,19 +120,6 @@ func _city_closed(read: Callable) -> bool:
 	if int(client.get("wood", -1)) != 8:
 		return false
 	return _has_city(host, tower) and _same_cities(client, host) and _same_built(client, host)
-
-
-func _publish_text(path: String, text: String) -> bool:
-	## The reader must not see a truncated file. Write aside, then rename.
-	var tmp := path + ".tmp"
-	var file := FileAccess.open(tmp, FileAccess.WRITE)
-	if file == null:
-		return false
-	file.store_string(text)
-	file.close()
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(path)
-	return DirAccess.rename_absolute(tmp, path) == OK
 
 
 func _city_opened(read: Callable) -> bool:
@@ -186,76 +156,3 @@ func _key(rows: Array) -> String:
 	for row in rows:
 		parts.append(str(row))
 	return "|".join(parts)
-
-
-func _note_errors(read: Callable, session: Dictionary, label: String) -> void:
-	for i in session["outs"].size():
-		var data: Dictionary = read.call(i)
-		if not data.get("errors", []).is_empty() or str(data.get("place_error", "")) != "":
-			printerr("FAIL %s: peer %d errors %s place %s" % [label, i, data.get("errors", []), data.get("place_error", "")])
-
-
-func _any_errors(read: Callable, session: Dictionary) -> bool:
-	for i in session["outs"].size():
-		var data: Dictionary = read.call(i)
-		if not data.get("errors", []).is_empty() or str(data.get("place_error", "")) != "":
-			return true
-	return false
-
-
-func _open(mode: String) -> Dictionary:
-	var port := _free_udp_port()
-	if port == 0:
-		printerr("FAIL wall sync found no free UDP port")
-		return {}
-	var dir := OS.get_user_data_dir().path_join("wall_sync_%s_%d_%d" % [mode, OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_wall_%s_%d_%d" % [mode, OS.get_process_id(), port])
-	if saved["error"] != "":
-		printerr("FAIL wall sync could not save the map: %s" % saved["error"])
-		return {}
-	var outs: Array[String] = []
-	var pids: Array[int] = []
-	var launch := func(as_host: bool, peer_mode: String) -> void:
-		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args: Array = ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-				"--script", PROBE, "--", "--port=%d" % port, "--out=" + outs[-1], "--mode=" + peer_mode]
-		if as_host:
-			args.append("--host")
-			args.append("--save=" + ProjectSettings.globalize_path(saved["path"]))
-		pids.append(OS.create_process(OS.get_executable_path(), args))
-	var read := func(i: int) -> Dictionary:
-		if i >= outs.size() or not FileAccess.file_exists(outs[i]):
-			return {}
-		var data = JSON.parse_string(FileAccess.get_file_as_string(outs[i]))
-		return data if data is Dictionary else {}
-	var wait_for := func(cond: Callable, ms: int) -> bool:
-		var until := Time.get_ticks_msec() + ms
-		while Time.get_ticks_msec() < until and not cond.call():
-			await process_frame
-		return cond.call()
-	launch.call(true, mode)
-	return {
-		"dir": dir, "outs": outs, "pids": pids, "saved": saved["path"],
-		"launch": launch, "read": read, "wait_for": wait_for,
-	}
-
-
-func _close(session: Dictionary) -> void:
-	if session.is_empty():
-		return
-	for out in session["outs"]:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	var wait: Callable = session["wait_for"]
-	await wait.call(func() -> bool:
-		for pid in session["pids"]:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in session["pids"]:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
-	_remove_dir(session["dir"])
-	DirAccess.remove_absolute(session["saved"])

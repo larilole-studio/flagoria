@@ -35,7 +35,7 @@
 1 tests/mobs/test_mob_spawn.gd
 1 tests/mobs/test_mob_sync.gd
 1 tests/net/test_build_sync.gd
-2 tests/net/test_cut_sync.gd
+1 tests/net/test_cut_sync.gd
 1 tests/net/test_join_cuts.gd
 1 tests/net/test_regrow_sync.gd
 3 tests/net/test_sprout_sync.gd
@@ -59,6 +59,6 @@
 15 tests/ui/test_parchment_map.gd
 17 tests/ui/test_saved_worlds.gd
 2 tests/ui/test_worlds_list_scroll.gd
-8 tests/wall_sync_probe.gd
+7 tests/wall_sync_probe.gd
 2 tests/world/test_chunk_refresh_frames.gd
 2 tests/world/test_random_specs.gd

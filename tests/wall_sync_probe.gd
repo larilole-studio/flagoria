@@ -1,94 +1,47 @@
-extends SceneTree
-const HostListen = preload("res://tests/helpers/test_helpers.gd")
+extends "res://tests/helpers/probe_base.gd"
 ## One peer of a wall and city sync session (#498).
 ## Host: --host --save --port --out --mode. Client: --port --out --mode [--shot].
 
 
-var _errors := _ErrorLog.new()
 var _refused_wood := -1
 var _place_error := ""
 var _shot := false
 var _gap := Vector2i(1 << 20, 0)
-var _out := ""
 ## Cell the host erased after the open request. The sentinel means it has not.
 var _erased := Vector2i(1 << 20, 0)
 
 
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
-
-
 func _run() -> void:
-	var port := 0
-	var save := ""
-	var out := ""
-	var host := false
-	var mode := "watch"
-	var shot := ""
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--save="):
-			save = arg.trim_prefix("--save=")
-		elif arg.begins_with("--out="):
-			out = arg.trim_prefix("--out=")
-		elif arg.begins_with("--mode="):
-			mode = arg.trim_prefix("--mode=")
-		elif arg.begins_with("--shot="):
-			shot = arg.trim_prefix("--shot=")
-		elif arg == "--host":
-			host = true
-	_out = out
-	if host:
-		HostListen.arm_host(out)
-	if port == 0 or out == "" or (host and save == "") or change_scene_to_file("res://flagoria_main.tscn") != OK:
-		printerr("wall_sync_probe: needs --port, --out, --save with --host, and the main scene")
+	var mode := option("--mode", "watch")
+	var shot := option("--shot")
+	var host := has_option("--host")
+	var save := option("--save")
+	var main = await open_game(host)
+	if main == null:
+		printerr("wall_sync_probe: needs --port, --out, and the main scene")
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main = current_scene
 	main.get_node("CanvasLayer2/MainMenu").hide()
+	if mode == "wall":
+		install_round_trip(main)
 	if host:
-		var map_gen = root.get_node("MapGen")
-		var error: String = map_gen.load_map_inputs(save)
-		if error != "" or main.setup_server(map_gen.params.duplicate_params(), port) != OK:
+		var error := host_saved_game(main, save)
+		if error != "":
 			printerr("wall_sync_probe: could not host %s: %s" % [save, error])
 			quit(1)
 			return
-		main.add_player(1)
-		_park_mobs(main)
-		HostListen.mark_host_listening(out)
+		park_mobs(main)
+		host_listening()
 	else:
-		await HostListen.join_when_host_listening(main, port, out)
+		await join_game(main)
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var opened := false
 	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(out + ".stop"):
+	while game_active(main, deadline):
 		if main.multiplayer == null:
 			break
-		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
+		var me: Node2D = local_player(main)
 		var ready := main.world_params != null and me != null
 		if not host and mode in ["wall", "city", "drive"] and phase == "idle" and ready:
 			phase = "working"
@@ -97,8 +50,8 @@ func _run() -> void:
 		# The open file appears only once it has both coordinates (atomic rename).
 		# An empty file is ignored: latching on create-before-write missed the
 		# erase and the test then sat on its 15 s bound (one run, 22.9 s).
-		if host and mode == "city" and not opened and FileAccess.file_exists(out + ".open"):
-			var text := FileAccess.get_file_as_string(out + ".open").strip_edges()
+		if host and mode == "city" and not opened and FileAccess.file_exists(probe_out + ".open"):
+			var text := FileAccess.get_file_as_string(probe_out + ".open").strip_edges()
 			var bits := text.replace(",", " ").split(" ", false)
 			if bits.size() >= 2 and bits[0].is_valid_int() and bits[1].is_valid_int():
 				opened = true
@@ -114,15 +67,10 @@ func _run() -> void:
 				_shot = root.get_texture().get_image().save_png(shot) == OK
 			else:
 				_shot = true
-		if Time.get_ticks_msec() >= next_write:
-			_write(out, main, world, me)
-			next_write = Time.get_ticks_msec() + 100
+		if snapshot_due(main):
+			_write(main, world, me)
 		await process_frame
-	var fin: Node2D = null
-	if main.multiplayer != null:
-		fin = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-	_write(out, main, world, fin)
-	quit(0)
+	finish(main, func() -> void: _write(main, world, local_player(main)))
 
 
 func _peer_id(main) -> String:
@@ -136,29 +84,33 @@ func _do_place(main, world, me: Node2D, mode: String) -> String:
 	var requests = main.get_node("World/StructureRequests")
 	var interaction: Interaction = main.get_node("World/Interaction")
 	if mode == "wall":
-		return await _place_one_wall(world, me, inventory, requests, interaction)
+		return await _place_one_wall(main, world, me, inventory, requests, interaction)
 	return await _place_city(main, world, me, inventory, requests, interaction, mode)
 
 
-func _place_one_wall(world, me: Node2D, inventory: Inventory, requests, interaction: Interaction) -> String:
+func _place_one_wall(main, world, me: Node2D, inventory: Inventory, requests, interaction: Interaction) -> String:
 	inventory.add(Inventory.WOOD, 4)
 	var water: Vector2i = _find_water(world)
 	if water.x == 1 << 20:
 		return "no water cell"
-	me.global_position = interaction.cell_center(water)
-	await _wait(400)
+	var error := await _wait_host_position(main, me, interaction.cell_center(water), 5000)
+	if error != "":
+		return error
 	var before := inventory.count_of(Inventory.WOOD)
 	var bad: Array[Vector2i] = [water]
-	requests.place(BuildCosts.WALL_BLOCK, bad)
-	await _wait(600)
+	if not requests.place(BuildCosts.WALL_BLOCK, bad):
+		return "water request was not sent"
+	if not await wait_for_round_trip(main):
+		return "host did not acknowledge the water request"
 	_refused_wood = inventory.count_of(Inventory.WOOD)
 	if _refused_wood != before:
 		return "refused request spent wood (%d -> %d)" % [before, _refused_wood]
-	var spot: Vector2i = _castle_touch(world)
+	var spot: Vector2i = castle_touch(world)
 	if spot.x == 1 << 20:
 		return "no clear cell touching the castle"
-	me.global_position = interaction.cell_center(spot) + Vector2(0, 48)
-	await _wait(500)
+	error = await _wait_host_position(main, me, interaction.cell_center(spot) + Vector2(0, 48), 5000)
+	if error != "":
+		return error
 	var one: Array[Vector2i] = [spot]
 	if not requests.place(BuildCosts.WALL_BLOCK, one):
 		return "wall place was not sent"
@@ -187,7 +139,7 @@ func _place_city(main, world, me: Node2D, inventory: Inventory, requests, intera
 	var tower_cell: Array[Vector2i] = [anchor]
 	if not requests.place(BuildCosts.TOWER, tower_cell):
 		return "tower place was not sent"
-	if not await _until(func() -> bool: return _tower_id(world) >= 0, 8000):
+	if not await wait_for_state(func() -> bool: return _tower_id(world) >= 0, 8000):
 		return "tower was not applied"
 	var flag: Vector2i = _tower_flag(world)
 	err = await _ready_to_build(main, me, interaction.cell_center(flag), mode)
@@ -197,7 +149,7 @@ func _place_city(main, world, me: Node2D, inventory: Inventory, requests, intera
 		var run: Array[Vector2i] = side
 		if not requests.place(BuildCosts.WALL_BLOCK, run):
 			return "wall side was not sent"
-		if not await _until(func() -> bool: return _cells_walled(world, run), 8000):
+		if not await wait_for_state(func() -> bool: return _cells_walled(world, run), 8000):
 			return "wall side was not applied"
 	if not _ring_applied(world, spot["ring"]):
 		return "ring was not applied"
@@ -227,7 +179,7 @@ func _wait_host_position(main, me: Node2D, where: Vector2, ms: int) -> String:
 	var until := Time.get_ticks_msec() + ms
 	while Time.get_ticks_msec() < until:
 		_pin(me, where)
-		if _host_sees_position(peer_id, where, 4.0):
+		if host_sees_position(peer_id, where):
 			return ""
 		await process_frame
 	return "host did not ack the player at %s" % where
@@ -239,39 +191,11 @@ func _pin(me: Node2D, where: Vector2) -> void:
 		(me as CharacterBody2D).velocity = Vector2.ZERO
 
 
-func _host_sees_position(peer_id: String, where: Vector2, slack: float) -> bool:
-	var path := _out.get_base_dir().path_join("p0.json")
-	if not FileAccess.file_exists(path):
-		return false
-	var data = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not data is Dictionary:
-		return false
-	var pos = data.get("peers", {}).get(peer_id, null)
-	if not pos is Array or pos.size() < 2:
-		return false
-	return Vector2(float(pos[0]), float(pos[1])).distance_to(where) <= slack
-
-
-func _until(cond: Callable, ms: int) -> bool:
-	var until := Time.get_ticks_msec() + ms
-	while Time.get_ticks_msec() < until:
-		if cond.call():
-			return true
-		await process_frame
-	return cond.call()
-
-
 func _cells_walled(world, cells: Array) -> bool:
 	for cell in cells:
 		if not world.has_wall(cell):
 			return false
 	return true
-
-
-func _park_mobs(main) -> void:
-	for node in main.get_node("World/Mobs").get_children():
-		if node is Mob:
-			node.global_position = Vector2(100000, 100000)
 
 
 func _find_water(world) -> Vector2i:
@@ -284,31 +208,6 @@ func _find_water(world) -> Vector2i:
 				var cell := spawn + Vector2i(dx, dy)
 				if world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell):
 					return cell
-	return Vector2i(1 << 20, 0)
-
-
-func _castle_touch(world) -> Vector2i:
-	var anchor := Vector2i.ZERO
-	var found := false
-	var placed: Dictionary = world.placed_structures()
-	for id in placed:
-		if str(placed[id]["name"]) == "castle":
-			anchor = placed[id]["anchor"]
-			found = true
-			break
-	if not found:
-		return Vector2i(1 << 20, 0)
-	var placer := ConstructionPlacer.new(world)
-	for dy in range(-8, 9):
-		for dx in range(-8, 9):
-			var cell := anchor + Vector2i(dx, dy)
-			if world.has_wall(cell) or world._structures.has_cell(cell):
-				continue
-			if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
-				continue
-			var one: Array[Vector2i] = [cell]
-			if placer.can_place_geometry(BuildCosts.WALL_BLOCK, one).is_empty():
-				return cell
 	return Vector2i(1 << 20, 0)
 
 
@@ -423,9 +322,7 @@ func _frames(n: int) -> void:
 		await process_frame
 
 
-func _write(out: String, main, world, me: Node2D) -> void:
-	if out == "":
-		return
+func _write(main, world, me: Node2D) -> void:
 	var walls: Array = []
 	var autos: Array = []
 	var cities: Array = []
@@ -449,18 +346,7 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		for id in ids:
 			cities.append([int(id), node.cities[id]["walls"].size(), node.cities[id]["interior"].size()])
 	var inventory: Inventory = main.get_node("Inventory") if main != null else null
-	var peers := {}
-	var world_root: Node = null
-	if main != null:
-		world_root = main.get_node_or_null("World")
-	if world_root != null:
-		for child in world_root.get_children():
-			if child is CharacterBody2D and str(child.name).is_valid_int():
-				peers[str(child.name)] = [child.global_position.x, child.global_position.y]
-	var file := FileAccess.open(out + ".tmp", FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(JSON.stringify({
+	write_result({
 		"id": _peer_id(main),
 		"ready": main != null and main.world_params != null and me != null,
 		"wood": inventory.count_of(Inventory.WOOD) if inventory != null else -1,
@@ -470,11 +356,9 @@ func _write(out: String, main, world, me: Node2D) -> void:
 		"tower_id": tower,
 		"gap": [_gap.x, _gap.y],
 		"erased": [_erased.x, _erased.y],
-		"peers": peers,
+		"peers": peer_positions(main),
 		"walls": walls,
 		"autos": autos,
 		"cities": cities,
 		"errors": _errors.snapshot(),
-	}))
-	file.close()
-	DirAccess.rename_absolute(out + ".tmp", out)
+	})

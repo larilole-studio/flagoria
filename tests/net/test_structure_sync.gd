@@ -39,14 +39,12 @@ func _test_structure_sync_join() -> int:
 	var foot: Array = StructurePlacer.footprint(guard, anchor).keys()
 	var keys: Array = foot.map(func(c: Vector2i) -> String: return WorldSave.cell_key(c))
 	var want := [["guard_post", 1.0, float(anchor.x), float(anchor.y)]]  # as JSON reads it back
-	var peers := _start_peers("structure_sync", params, keys)
+	var peers := saved_probe_session("structure_sync", PROBE, params, ["--cells=" + ";".join(keys)])
 	if peers.is_empty():
-		printerr("FAIL structure_sync_join found no free UDP port")
 		return 1
-	var saved: Dictionary = peers["saved"]
-	var launch := func(extra: Array) -> void: _launch(peers, extra)
-	var read := func(i: int) -> Dictionary: return _read(peers, i)
-	var wait_for := _wait_for
+	var launch: Callable = peers["launch"]
+	var read: Callable = peers["read"]
+	var probes: Array[Dictionary] = peers["probes"]
 	var like_host := func(i: int) -> bool:
 		## Peer i holds the host's placement, and each footprint cell is
 		## predicted, drawn and blocks as on the host, with a wall somewhere.
@@ -65,14 +63,14 @@ func _test_structure_sync_join() -> int:
 		return blocked
 
 	var fail := 0
-	launch.call(["--host", "--place=guard_post@%s" % WorldSave.cell_key(anchor),
-			"--save=" + ProjectSettings.globalize_path(saved["path"])])
-	if saved["error"] != "" or not await wait_for.call(func() -> bool: return read.call(0).get("ready", false), 30000):
-		printerr("FAIL structure_sync_join: the host did not start: save %s, %s" % [saved["error"], read.call(0)])
+	var host_args: Array = peers["host_args"] + ["--place=guard_post@%s" % WorldSave.cell_key(anchor)]
+	launch.call(host_args)
+	if not await wait_until(func() -> bool: return read.call(0).get("ready", false), 30000):
+		printerr("FAIL structure_sync_join: the host did not start: %s" % read.call(0))
 		fail += 1
 	else:
 		launch.call([])
-		if not await wait_for.call(func() -> bool: return like_host.call(1), 30000):
+		if not await wait_until(func() -> bool: return like_host.call(1), 30000):
 			printerr("FAIL structure_sync_join: the joiner %s, host %s" % [read.call(1), read.call(0)])
 			fail += 1
 		elif not "multiplayer on" in read.call(1).get("place_refused", []):
@@ -80,16 +78,16 @@ func _test_structure_sync_join() -> int:
 			fail += 1
 		else:
 			launch.call([])
-			if not await wait_for.call(func() -> bool: return like_host.call(2), 30000):
+			if not await wait_until(func() -> bool: return like_host.call(2), 30000):
 				printerr("FAIL structure_sync_join: the second joiner %s, host %s" % [read.call(2), read.call(0)])
 				fail += 1
 			else:
-				FileAccess.open(peers["outs"][1] + ".forge_place", FileAccess.WRITE).close()
-				await wait_for.call(func() -> bool: return str(read.call(2).get("errors", [])).contains("receive_map_params"), 5000)
+				FileAccess.open(probes[1]["out"] + ".forge_place", FileAccess.WRITE).close()
+				await wait_until(func() -> bool: return str(read.call(2).get("errors", [])).contains("receive_map_params"), 5000)
 				if not str(read.call(2).get("errors", [])).contains("receive_map_params") or not like_host.call(2):
 					printerr("FAIL structure_sync_join: after a forged placement from a client, second joiner %s" % read.call(2))
 					fail += 1
-		for i in peers["outs"].size():
+		for i in probes.size():
 			# The second joiner refuses the forged receive_map_params with an
 			# engine error; any other error fails.
 			for line in read.call(i).get("errors", []):
@@ -98,7 +96,7 @@ func _test_structure_sync_join() -> int:
 					fail += 1
 					break
 
-	await _stop_peers(peers)
+	await close_probe_session(peers)
 	if fail == 0:
 		print("PASS test_structure_sync_join (guard post at %s, %d footprint cells)" % [anchor, keys.size()])
 	return fail
@@ -139,25 +137,26 @@ func _test_castle_sync_join() -> int:
 	var keys: Array = foot.map(func(c: Vector2i) -> String: return WorldSave.cell_key(c))
 	keys.append_array([WorldSave.cell_key(front), WorldSave.cell_key(spot_cell)])
 	var want := [["castle", 1.0, float(anchor.x), float(anchor.y)]]  # as JSON reads it back
-	var peers := _start_peers("castle_sync", params, keys)
+	var peers := saved_probe_session("castle_sync", PROBE, params, ["--cells=" + ";".join(keys)])
 	if peers.is_empty():
-		printerr("FAIL castle_sync_join found no free UDP port")
 		return 1
-	var saved: Dictionary = peers["saved"]
+	var launch: Callable = peers["launch"]
+	var read: Callable = peers["read"]
+	var probes: Array[Dictionary] = peers["probes"]
 	var fail := 0
-	_launch(peers, ["--host", "--save=" + ProjectSettings.globalize_path(saved["path"])])
-	if saved["error"] != "" or not await _wait_for(func() -> bool: return _read(peers, 0).get("ready", false), 30000):
-		printerr("FAIL castle_sync_join: the host did not start: save %s, %s" % [saved["error"], _read(peers, 0)])
+	launch.call(peers["host_args"])
+	if not await wait_until(func() -> bool: return read.call(0).get("ready", false), 30000):
+		printerr("FAIL castle_sync_join: the host did not start: %s" % read.call(0))
 		fail += 1
 	else:
-		_launch(peers, [])
+		launch.call([])
 		var joined := func() -> bool:
-			var data := _read(peers, 1)
+			var data: Dictionary = read.call(1)
 			var id := str(data.get("id"))
-			return data.get("ready", false) and data.get("players", {}).has(id) and _read(peers, 0).get("players", {}).has(id)
-		await _wait_for(joined, 30000)
-		var host := _read(peers, 0)
-		var peer := _read(peers, 1)
+			return data.get("ready", false) and data.get("players", {}).has(id) and read.call(0).get("players", {}).has(id)
+		await wait_until(joined, 30000)
+		var host: Dictionary = read.call(0)
+		var peer: Dictionary = read.call(1)
 		var me := str(peer.get("id"))
 		var joiner_id := int(str(peer.get("id")))
 		var castles := _castle_rows(host.get("placements"))
@@ -198,11 +197,11 @@ func _test_castle_sync_join() -> int:
 		elif cell_on.call(host, "1") != front:
 			printerr("FAIL castle_sync_join: host player at %s, want the gate front %s" % [cell_on.call(host, "1"), front])
 			fail += 1
-		for i in peers["outs"].size():
-			if not _read(peers, i).get("errors", []).is_empty():
-				printerr("FAIL castle_sync_join: peer %d logged errors: %s" % [i, _read(peers, i)["errors"]])
+		for i in probes.size():
+			if not read.call(i).get("errors", []).is_empty():
+				printerr("FAIL castle_sync_join: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
 				fail += 1
-	await _stop_peers(peers)
+	await close_probe_session(peers)
 	if fail == 0:
 		print("PASS test_castle_sync_join (castle at %s, %d footprint cells, joiner at %s)" % [anchor, foot.size(), spot_cell])
 	return fail
@@ -227,58 +226,3 @@ func _has_owner(rows: Array, owner: int) -> bool:
 		if int(row[0]) == owner:
 			return true
 	return false
-
-
-func _start_peers(label: String, params: MapGenParams, keys: Array) -> Dictionary:
-	## A session dir and a saved world for tests/cut_sync_probe.gd peers on
-	## a free port, reporting `keys`; {} when no port is free.
-	var port := _free_udp_port()
-	if port == 0:
-		return {}
-	var dir := OS.get_user_data_dir().path_join("%s_%d_%d" % [label, OS.get_process_id(), port])
-	_remove_dir(dir)
-	DirAccess.make_dir_recursive_absolute(dir)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_%s_%d_%d" % [label, OS.get_process_id(), port])
-	var outs: Array[String] = []
-	var pids: Array[int] = []
-	return {"port": port, "dir": dir, "saved": saved, "keys": keys, "outs": outs, "pids": pids}
-
-
-func _launch(peers: Dictionary, extra: Array) -> void:
-	## Start one more probe peer; its JSON goes to peers["outs"][-1].
-	peers["outs"].append(peers["dir"].path_join("p%d.json" % peers["outs"].size()))
-	var args := ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", PROBE,
-			"--", "--port=%d" % peers["port"], "--out=" + peers["outs"][-1], "--cells=" + ";".join(peers["keys"])]
-	args.append_array(extra)
-	peers["pids"].append(OS.create_process(OS.get_executable_path(), args))
-
-
-func _read(peers: Dictionary, i: int) -> Dictionary:
-	var out: String = peers["outs"][i]
-	var text := FileAccess.get_file_as_string(out) if FileAccess.file_exists(out) else ""
-	var data = JSON.parse_string(text) if text != "" else null
-	return data if data is Dictionary else {}
-
-
-func _wait_for(cond: Callable, ms: int) -> bool:
-	var until := Time.get_ticks_msec() + ms
-	while Time.get_ticks_msec() < until and not cond.call():
-		await process_frame
-	return cond.call()
-
-
-func _stop_peers(peers: Dictionary) -> void:
-	## Ask every probe to stop, kill any still running after 10 s, and
-	## remove the session dir and the saved world.
-	for out in peers["outs"]:
-		FileAccess.open(out + ".stop", FileAccess.WRITE).close()
-	await _wait_for(func() -> bool:
-		for pid in peers["pids"]:
-			if OS.is_process_running(pid):
-				return false
-		return true, 10000)
-	for pid in peers["pids"]:
-		if OS.is_process_running(pid):
-			OS.kill(pid)
-	_remove_dir(peers["dir"])
-	DirAccess.remove_absolute(peers["saved"]["path"])

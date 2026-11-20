@@ -13,22 +13,12 @@ const MESSAGE_BYTES := 64 * 1024  ## the most one join message may encode to
 
 func _join_scene(api: MultiplayerAPI) -> Dictionary:
 	## A main scene with the stand-in, on the seed-7 map, at play time 100.
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	scene.get_node("CanvasLayer2/MainMenu").hide()
-	set_multiplayer(api, scene.get_path())
+	var scene = open_rpc_test_scene(api)
 	var world = scene.get_node("World/worldMap")
-	world.set_process(false)
 	scene.world_params = _spawn_params(7, 0.0)
 	world.apply_map_params(scene.world_params)
 	world.play_time = 100.0
 	return {"scene": scene, "world": world}
-
-
-func _drop(s: Dictionary) -> void:
-	set_multiplayer(null, s["scene"].get_path())
-	s["scene"].queue_free()
-	await process_frame
 
 
 func _cut_many(world, count: int) -> int:
@@ -71,12 +61,12 @@ func _test_join_cuts_split() -> int:
 	var cap := _cap(host["scene"])
 	if _cut_many(host["world"], CUTS) != CUTS:
 		printerr("FAIL join_cuts_split: found fewer than %d plants to cut" % CUTS)
-		await _drop(host)
+		await close_rpc_test_scene(host["scene"])
 		return 1
 	var want: Dictionary = host["world"].cut_changes()
 	host["scene"]._sync_map_params_to_peer(2)
 	var msgs: Array = host_api.sent.filter(func(r: Array) -> bool: return r[0] == 2 and str(r[1]) in ["receive_map_params", "receive_join_cuts"])
-	await _drop(host)
+	await close_rpc_test_scene(host["scene"])
 	var counts: Array[int] = []
 	var biggest := 0
 	for m in msgs:
@@ -105,7 +95,7 @@ func _test_join_cuts_split() -> int:
 		printerr("FAIL join_cuts_split: the client holds %d cuts, the host %d (or ages differ)"
 				% [_cut_count(got), _cut_count(want)])
 		fail += 1
-	await _drop(client)
+	await close_rpc_test_scene(client["scene"])
 	if fail == 0:
 		print("PASS test_join_cuts_split (%d cuts in %d messages of %s, biggest %d bytes)"
 				% [CUTS, msgs.size(), counts, biggest])
@@ -121,13 +111,13 @@ func _test_join_cuts_host_only() -> int:
 	var host := _join_scene(Batch.FakeApi.new())
 	_cut_many(host["world"], 3)
 	var cuts: Dictionary = host["world"].cut_changes()
-	await _drop(host)
+	await close_rpc_test_scene(host["scene"])
 	var api := Batch.FakeApi.new()
 	api.id = 2
 	var s := _join_scene(api)
 	if not s["scene"].has_method("receive_join_cuts"):
 		printerr("FAIL join_cuts_host_only: the main scene has no receive_join_cuts handler")
-		await _drop(s)
+		await close_rpc_test_scene(s["scene"])
 		return 1
 	for from in [3, 0]:
 		api.sender = from
@@ -141,7 +131,7 @@ func _test_join_cuts_host_only() -> int:
 	if s["world"].cut_changes() != cuts:
 		printerr("FAIL join_cuts_host_only: the host's message gave %s, want %s" % [s["world"].cut_changes(), cuts])
 		fail += 1
-	await _drop(s)
+	await close_rpc_test_scene(s["scene"])
 	if fail == 0:
 		print("PASS test_join_cuts_host_only")
 	return fail
