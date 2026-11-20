@@ -21,7 +21,7 @@ down, left, right, up.
 | 12-15 | hurt | 0-1 (white flash, recoil) | 10 |
 
 The frame layout is the same for every mob and lives in
-`Scripts/mob_catalog.gd`. Each mob type names exactly one sheet path there, so a
+`Scripts/mechanics/mobs/mob_catalog.gd`. Each mob type names exactly one sheet path there, so a
 recoloured sheet (for example a different crab shell colour) is a file swap:
 replace the PNG with the same name, or change that one path.
 

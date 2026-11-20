@@ -6,13 +6,13 @@ Slimes, crabs and piglets are placed from the world seed, wander near home, chas
 
 ## Sub-features
 
-- `mob-plan` seeded placement (`Scripts/mob_spawner.gd`): at 1x one mob per `CELLS_PER_MOB` (300) island cells, up to `MAX_PER_ISLAND` (3) per island and `MAX_MOBS` (10) in all, none within `SAFE_RADIUS` (6) cells of the player spawn, crabs only on beaches.
+- `mob-plan` seeded placement (`Scripts/mechanics/mobs/mob_spawner.gd`): at 1x one mob per `CELLS_PER_MOB` (300) island cells, up to `MAX_PER_ISLAND` (3) per island and `MAX_MOBS` (10) in all, none within `SAFE_RADIUS` (6) cells of the player spawn, crabs only on beaches.
 - `mob-rate` the host's Mob spawns slider (`GameSettings.mob_rate`, default 2.0, see [Main menu](./main-menu.md)) divides `CELLS_PER_MOB` and multiplies both caps; a client never spawns mobs from its own rate.
-- `mob-wander` idle and walk around home (`Scripts/mob.gd`).
+- `mob-wander` idle and walk around home (`Scripts/mechanics/mobs/mob.gd`).
 - `mob-chase` chase within `CHASE_RADIUS`, give up past `GIVE_UP_RADIUS` or the home leash.
 - `mob-contact` touching a mob costs `CONTACT_DAMAGE` half-hearts.
 - `mob-sword` a swing costs a mob 1 HP once per swing, with a hurt window; a second attacker's swing in that window is not used up.
-- `mob-art` one sheet path per type in `MobCatalog.TYPES` (`Scripts/mob_catalog.gd`): 8x16 grid of 16x16 frames.
+- `mob-art` one sheet path per type in `MobCatalog.TYPES` (`Scripts/mechanics/mobs/mob_catalog.gd`): 8x16 grid of 16x16 frames.
 - `mob-sync` mobs replicate to a joining client of a dedicated server.
 - `mob-uncharted` a mob is drawn only on ground this peer has generated (#163); it shows in the same frame its chunk is drawn, and a type flagged `visible_in_uncharted` always shows. Hiding never changes its position, state or hurt box.
 - `mob-sfx` `Scripts/audio/mob_sfx.gd` plays `notice`, `attack`, `hurt`, `death` and `idle` once per event on each peer (see [Audio](./audio.md)).
