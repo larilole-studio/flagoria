@@ -50,7 +50,9 @@ GAMEPLAY = [
     "Player/*", "Mobs/*", "*.tscn",
     "flagoria_main.gd",  # host, join, spawn and sync
     "TouchScreenButton.gd", "addons/virtual_joystick/*",  # touch input
-    "Scripts/player.gd", "Scripts/player_health.gd",
+    "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
+    "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
+    "Scripts/player_health.gd",
     "Scripts/mob.gd", "Scripts/mob_spawner.gd", "Scripts/mob_catalog.gd",
     "Scripts/TileMap.gd",  # chunk loading, collision, ground sync
     "Scripts/world/*.gd",  # terrain shape and spawn search for the world map
@@ -99,7 +101,9 @@ NETCODE = [
 NETCODE_MIXED = [
     "flagoria_main.gd", "flagoria_main.tscn",
     "Player/character_body_2d.tscn", "Mobs/mob.tscn",
-    "Scripts/player.gd", "Scripts/player_health.gd", "Scripts/mob.gd", "Scripts/TileMap.gd",
+    "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
+    "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
+    "Scripts/player_health.gd", "Scripts/mob.gd", "Scripts/TileMap.gd",
 ]
 NET_LINE = re.compile(r"rpc|multiplayer|peer|authority|replicat|synchroniz|spawner|is_server|enet", re.I)
 
