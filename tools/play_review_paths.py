@@ -59,11 +59,11 @@ GAMEPLAY = [
     "Scripts/MapGenParams.gd",  # map generation defaults and value ranges
     "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
     "Scripts/ui/hearts_hud.gd", "Scripts/map_zoom.gd",
-    "Scripts/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
+    "Scripts/shell/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
     "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
     "Scripts/points.gd", "Scripts/discovery_points.gd",  # score awards
     "Scripts/inventory.gd",  # gathered wood
-    "Scripts/game_settings.gd",  # mob spawn rate
+    "Scripts/shell/game_settings.gd",  # mob spawn rate
     "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
     "Scripts/saves/world_save.gd",  # what a saved world keeps
     "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
@@ -71,8 +71,8 @@ GAMEPLAY = [
     "Scripts/ui/parchment_map.gd", "Scripts/ui/map_wood_button.gd",  # parchment full map and its wood controls
     "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd", "Scripts/ui/scoreboard_toggle.gd",
     "Scripts/ui/scoreboard_panel.gd",
-    "Scripts/ingame_menu.gd", "Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd",
-    "Scripts/quit_prompt.gd", "Scripts/ui/number_pad.gd", "Scripts/ui/hud_layout_edit.tscn",
+    "Scripts/shell/ingame_menu.gd", "Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd",
+    "Scripts/shell/quit_prompt.gd", "Scripts/ui/number_pad.gd", "Scripts/ui/hud_layout_edit.tscn",
     "data/interactables/*.tres",  # choppable types: hits, yields, regrowth, art and sounds
 ]
 
@@ -229,7 +229,7 @@ def self_test() -> int:
         (["Scripts/points.gd"], None, None, True),
         (["Scripts/saves/world_save.gd"], None, None, True),
         (["Scripts/saves/player_save.gd"], None, None, True),
-        (["Scripts/ingame_menu.gd"], None, None, True),
+        (["Scripts/shell/ingame_menu.gd"], None, None, True),
         (["Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd", "Scripts/ui/hud_layout_edit.tscn"], None, None, True),
         (["data/interactables/tree.tres"], None, None, True),
         (["Scripts/attack_aim.gd.uid", "data/interactables/tree.tres.uid"], None, None, False),

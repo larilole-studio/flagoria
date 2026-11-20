@@ -1,7 +1,7 @@
 extends PanelContainer
 
 const JoinAddress = preload("res://Scripts/join_address.gd")
-const WorldsSaveList = preload("res://Scripts/worlds_save_list.gd")
+const WorldsSaveList = preload("res://Scripts/shell/worlds_save_list.gd")
 const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
 
 @onready var main_menu = $"."
@@ -156,7 +156,7 @@ func _on_host_button_pressed():
 	var map_gen = get_node("/root/MapGen")
 	var game = get_node("/root/Flagoria")
 	if not map_gen.has_loaded_world():
-		var menu_script: GDScript = load("res://Scripts/ingame_menu.gd")
+		var menu_script: GDScript = load("res://Scripts/shell/ingame_menu.gd")
 		game.save_name = menu_script.unused_save_name(
 				menu_script.auto_save_name(Time.get_datetime_dict_from_system()))
 	_begin_host()
