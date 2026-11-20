@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Mob placement, spawn rate, wandering and sprite sheets (Scripts/mob_spawner.gd, Scripts/mob.gd).
+## Mob placement, spawn rate, wandering and sprite sheets (Scripts/mechanics/mobs/mob_spawner.gd, Scripts/mechanics/mobs/mob.gd).
 
 
 func _test_mob_predict_matches_chunks() -> int:

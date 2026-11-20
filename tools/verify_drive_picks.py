@@ -150,7 +150,7 @@ def self_test() -> int:
             finalize(True, collect_from_paths(paths_nested, tmproot), dispatch=False),
             [DEFAULT_SMOKE],
         )
-        paths_npf = [feat + "npf.md", "Scripts/mob.gd"]
+        paths_npf = [feat + "npf.md", "Scripts/mechanics/mobs/mob.gd"]
         check(
             "not player-facing feature",
             finalize(True, collect_from_paths(paths_npf, tmproot), dispatch=False),
