@@ -2,7 +2,7 @@
 
 Drive: drives/map_settings_random.gd
 
-Map Settings opens the **Map Generation** panel (`map_admin_panel.tscn`, `Scripts/MapAdminPanel.gd`). The scrolling form starts with five seed fields and a noise-type selector. The host can open the same panel from the in-game menu, where **Host with these** is disabled.
+Map Settings opens the **Map Generation** panel (`Scripts/ui/map_admin_panel.tscn`, `Scripts/ui/MapAdminPanel.gd`). The scrolling form starts with five seed fields and a noise-type selector. The host can open the same panel from the in-game menu, where **Host with these** is disabled.
 
 ## Sub-features
 
@@ -12,7 +12,7 @@ Map Settings opens the **Map Generation** panel (`map_admin_panel.tscn`, `Script
 - `settings-persist` restores last-used values from `user://` across restarts, and shows the in-use value on reopen even when a field still holds a dirty string.
 - `settings-rows` exported booleans get switches, including **Day and night**, and numeric parameters with `@export_range` get spin boxes, including **Birch min chance**. The arranged rows have a 140 px label and 140 px field. The host sends generation parameters to clients through `to_dict`.
 - `settings-generate-building` **Generate building** is at the end of the scrolling form. In a hosted world it uses the current building size and style fields (see [Generated building](./generated-building.md)).
-- `settings-number-pad` tapping a seed or number field opens the on-screen number pad (`Scripts/number_pad.gd`, see [Touch controls](./touch-controls.md)), and on a phone it stays open after the tap.
+- `settings-number-pad` tapping a seed or number field opens the on-screen number pad (`Scripts/ui/number_pad.gd`, see [Touch controls](./touch-controls.md)), and on a phone it stays open after the tap.
 - `settings-bottom-visible` the five action buttons stay fully inside the 480×270 layout space, which the 1280×720 window and the 854×480 landscape window both show (stretch aspect keep). They are two equal pairs (Random seeds / Random specs, then Defaults / Back) and Host with these centered on its own row, pinned below the scroll area (#406 kept that pin; #217 is the five-button arrangement). Headless: `-- test_map_settings_bottom_buttons_visible`.
 - `settings-random-specs` **Random specs** sets every map-gen property (except `chunk_*`) inside `MapGenParams.PLAYABLE_RANGES`, randomises seeds, keeps ordered thresholds, and picks island or archipelago so the map stays playable (#335). **Random seeds** still only changes seeds. Headless: `-- test_random_specs_playable`, `-- test_random_seed_unchanged_by_specs_contract`, `-- test_random_specs_panel_button`.
 

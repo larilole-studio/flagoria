@@ -23,6 +23,20 @@ extends Resource
 # the world, so 0.2 gives each outer biome about a fifth of it; at the old
 # 0.5 they covered under 2 % each. Map saves without the field load as 0.5.
 @export_range(0.05, 1.0, 0.05) var biome_edge: float = 0.2
+# Per-biome land amount (biomes on, #510). altitude_bias is added to each
+# cell's altitude on the default continuous map, so higher means more land;
+# island_density is the share of archipelago squares that keep an island
+# (archipelago_spacing > 0 only). TEMPERATE at 0 and 1.0 matches biomes off.
+# Map saves without these fields load the defaults, which are the values
+# that were fixed before they became settings.
+@export_range(-0.5, 0.5, 0.05) var oceanic_altitude_bias: float = -0.15
+@export_range(-0.5, 0.5, 0.05) var temperate_altitude_bias: float = 0.0
+@export_range(-0.5, 0.5, 0.05) var continental_altitude_bias: float = 0.1
+@export_range(-0.5, 0.5, 0.05) var archipelago_dense_altitude_bias: float = 0.05
+@export_range(0.0, 1.0, 0.05) var oceanic_island_density: float = 0.2
+@export_range(0.0, 1.0, 0.05) var temperate_island_density: float = 1.0
+@export_range(0.0, 1.0, 0.05) var continental_island_density: float = 1.0
+@export_range(0.0, 1.0, 0.05) var archipelago_dense_island_density: float = 1.0
 @export_range(1, 10) var fractal_octaves: int = 5
 @export_range(0.1, 4.0, 0.1) var fractal_lacunarity: float = 2.0
 @export_range(0.0, 2.0, 0.05) var fractal_gain: float = 0.5
@@ -148,7 +162,22 @@ const RANDOM_SPECS_SKIP := [
 	"chunk_width", "chunk_height", "chunk_refresh_frames",
 	"building_width", "building_height", "building_style",
 	"day_night_cycle",
+	"oceanic_altitude_bias", "temperate_altitude_bias", "continental_altitude_bias",
+	"archipelago_dense_altitude_bias", "oceanic_island_density", "temperate_island_density",
+	"continental_island_density", "archipelago_dense_island_density",
 ]
+
+
+func biome_altitude_biases() -> PackedFloat32Array:
+	## Per-biome altitude bias, indexed by BiomeCatalog biome id.
+	return PackedFloat32Array([oceanic_altitude_bias, temperate_altitude_bias,
+			continental_altitude_bias, archipelago_dense_altitude_bias])
+
+
+func biome_island_densities() -> PackedFloat32Array:
+	## Per-biome archipelago island density, indexed by BiomeCatalog biome id.
+	return PackedFloat32Array([oceanic_island_density, temperate_island_density,
+			continental_island_density, archipelago_dense_island_density])
 
 
 static func make_defaults() -> MapGenParams:

@@ -222,7 +222,7 @@ func _test_random_specs_panel_button() -> int:
 	## Time cost: ~0.2 s in verify.
 	print("-- test_random_specs_panel_button")
 	var fail := 0
-	var panel = load("res://map_admin_panel.tscn").instantiate()
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	await process_frame
 	var btn: Button = panel.get_node_or_null("Margin/VBox/Buttons/RandomSpecs")

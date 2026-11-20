@@ -7,7 +7,7 @@ func _test_number_pad_first_key_replaces() -> int:
 	## old value instead of adding to it; later keys add as usual. A field left
 	## holding only "-" or "." when the pad closes gets its old value back.
 	print("-- test_number_pad_first_key_replaces")
-	var panel = await mount_ui_scene(preload("res://map_admin_panel.tscn"), root.size, 1)
+	var panel = await mount_ui_scene(preload("res://Scripts/ui/map_admin_panel.tscn"), root.size, 1)
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
 	var seed_field: LineEdit = panel.find_child("ItemsSeed")
@@ -58,7 +58,7 @@ func _test_number_pad_selected_value_edit_keys() -> int:
 	## Del removes one character and the first "-" negates the value, as they
 	## do once the field is not selected.
 	print("-- test_number_pad_selected_value_edit_keys")
-	var pad: NumberPad = load("res://number_pad.tscn").instantiate()
+	var pad: NumberPad = load("res://Scripts/ui/number_pad.tscn").instantiate()
 	var field := LineEdit.new()
 	root.add_child(field)
 	root.add_child(pad)
@@ -92,7 +92,7 @@ func _test_number_pad_keycap_style() -> int:
 	## The pad has its own keyboard look from the menu theme: keycaps for the
 	## digits, a red Delete and a gold OK key, and a framed panel.
 	print("-- test_number_pad_keycap_style")
-	var panel = await mount_ui_scene(preload("res://map_admin_panel.tscn"), root.size, 1)
+	var panel = await mount_ui_scene(preload("res://Scripts/ui/map_admin_panel.tscn"), root.size, 1)
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
 	var theme: Theme = load("res://art/ui/main_menu_theme.tres")
@@ -121,7 +121,7 @@ func _test_number_pad_minus_zero_commits_zero() -> int:
 	## A number field holding "-0" commits as 0 when the pad closes (#356).
 	## Time cost: ~0.1 s in verify (~1.5 s alone with --only=).
 	print("-- test_number_pad_minus_zero_commits_zero")
-	var pad: NumberPad = load("res://number_pad.tscn").instantiate()
+	var pad: NumberPad = load("res://Scripts/ui/number_pad.tscn").instantiate()
 	var field := LineEdit.new()
 	var committed := {"v": NAN}
 	root.add_child(field)

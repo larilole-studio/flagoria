@@ -58,8 +58,8 @@ GAMEPLAY = [
     "Scripts/map_gen.gd",  # session map parameters applied to the world map
     "Scripts/MapGenParams.gd",  # map generation defaults and value ranges
     "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
-    "Scripts/hearts_hud.gd", "Scripts/map_zoom.gd",
-    "Scripts/MainMenu.gd", "Scripts/MapAdminPanel.gd", "Scripts/world_save_preview.gd",
+    "Scripts/ui/hearts_hud.gd", "Scripts/map_zoom.gd",
+    "Scripts/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
     "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
     "Scripts/points.gd", "Scripts/discovery_points.gd",  # score awards
     "Scripts/inventory.gd",  # gathered wood
@@ -67,12 +67,12 @@ GAMEPLAY = [
     "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
     "Scripts/saves/world_save.gd",  # what a saved world keeps
     "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
-    "Scripts/explored_map.gd", "Scripts/minimap_panel.gd",  # explored map and its HUD panel
-    "Scripts/parchment_map.gd", "Scripts/map_wood_button.gd",  # parchment full map and its wood controls
-    "Scripts/resource_hud.gd", "Scripts/score_hud.gd", "Scripts/scoreboard_toggle.gd",
-    "Scripts/scoreboard_panel.gd",
-    "Scripts/ingame_menu.gd", "Scripts/hud_layout.gd", "Scripts/hud_layout_edit.gd",
-    "Scripts/quit_prompt.gd", "Scripts/number_pad.gd", "hud_layout_edit.tscn",
+    "Scripts/explored_map.gd", "Scripts/ui/minimap_panel.gd",  # explored map and its HUD panel
+    "Scripts/ui/parchment_map.gd", "Scripts/ui/map_wood_button.gd",  # parchment full map and its wood controls
+    "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd", "Scripts/ui/scoreboard_toggle.gd",
+    "Scripts/ui/scoreboard_panel.gd",
+    "Scripts/ingame_menu.gd", "Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd",
+    "Scripts/quit_prompt.gd", "Scripts/ui/number_pad.gd", "Scripts/ui/hud_layout_edit.tscn",
     "data/interactables/*.tres",  # choppable types: hits, yields, regrowth, art and sounds
 ]
 
@@ -201,7 +201,7 @@ def self_test() -> int:
     cases = [
         (["Player/sword.tscn"], None, None, True),
         (["Scripts/mob.gd", "README.md"], None, None, True),
-        (["map_admin_panel.tscn"], None, None, True),
+        (["Scripts/ui/map_admin_panel.tscn"], None, None, True),
         (["Scripts/map_gen.gd"], None, None, True),
         (["Scripts/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
         (["Scripts/MapGenParams.gd"], None, None, True),
@@ -230,7 +230,7 @@ def self_test() -> int:
         (["Scripts/saves/world_save.gd"], None, None, True),
         (["Scripts/saves/player_save.gd"], None, None, True),
         (["Scripts/ingame_menu.gd"], None, None, True),
-        (["Scripts/hud_layout.gd", "Scripts/hud_layout_edit.gd", "hud_layout_edit.tscn"], None, None, True),
+        (["Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd", "Scripts/ui/hud_layout_edit.tscn"], None, None, True),
         (["data/interactables/tree.tres"], None, None, True),
         (["Scripts/attack_aim.gd.uid", "data/interactables/tree.tres.uid"], None, None, False),
         (["Scripts/audio/combat_sfx.gd", "Scripts/audio/music_player.gd", "tools/render_biomes.gd"], None, None, False),
@@ -264,8 +264,8 @@ def self_test() -> int:
         ("pull_request", ["flagoria_main.tscn"], scene_net, FULL_RUNS),
         ("pull_request", ["Scripts/player.gd"], None, FULL_RUNS),
         ("pull_request", ["Scripts/player.gd", "Player/sword.tscn"], play, LIGHT_RUNS),
-        ("pull_request", ["Scripts/hearts_hud.gd"], diff("Scripts/hearts_hud.gd", "+rpc()"), LIGHT_RUNS),
-        ("push", ["Scripts/hearts_hud.gd"], "", FULL_RUNS),
+        ("pull_request", ["Scripts/ui/hearts_hud.gd"], diff("Scripts/ui/hearts_hud.gd", "+rpc()"), LIGHT_RUNS),
+        ("push", ["Scripts/ui/hearts_hud.gd"], "", FULL_RUNS),
     ]
     for event, paths, text, want in tiers:
         got = stress_tier(event, paths, text)[0]
@@ -277,8 +277,8 @@ def self_test() -> int:
     parity = [
         (["docs/ci-required-checks.md", "tools/required_checks.py"], "", False, LIGHT_RUNS),
         (["docs/ci-required-checks.md", "tools/required_checks.py"], None, False, LIGHT_RUNS),
-        (["Scripts/hearts_hud.gd"], play, True, LIGHT_RUNS),
-        (["Scripts/hearts_hud.gd"], None, True, LIGHT_RUNS),
+        (["Scripts/ui/hearts_hud.gd"], play, True, LIGHT_RUNS),
+        (["Scripts/ui/hearts_hud.gd"], None, True, LIGHT_RUNS),
         (["Scripts/player.gd"], play, True, LIGHT_RUNS),
         (["Scripts/player.gd"], None, True, FULL_RUNS),
     ]
@@ -320,11 +320,11 @@ def self_test() -> int:
         if runs_stress(got_play, paths):
             print("FAIL stress matrix should skip %s" % paths, file=sys.stderr)
             fail += 1
-    if not runs_stress(True, ["Scripts/hearts_hud.gd"]):
+    if not runs_stress(True, ["Scripts/ui/hearts_hud.gd"]):
         print("FAIL gameplay change should run stress", file=sys.stderr)
         fail += 1
     docs = ["docs/architecture.md", "README.md"]
-    hud = ["Scripts/hearts_hud.gd"]
+    hud = ["Scripts/ui/hearts_hud.gd"]
     for paths in (docs, hud):
         with_diff = classify(paths, diff="")
         without = classify(paths, diff=None)

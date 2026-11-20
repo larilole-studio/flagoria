@@ -13,7 +13,7 @@ signal start_host_requested
 @onready var seed_biome: LineEdit = $Margin/VBox/Scroll/Form/SeedRow5/BiomeSeed
 @onready var noise_type_opt: OptionButton = $Margin/VBox/Scroll/Form/NoiseTypeRow/NoiseType
 
-## Fields with their own controls in map_admin_panel.tscn.
+## Fields with their own controls in Scripts/ui/map_admin_panel.tscn.
 const HAND_WIRED := ["altitude_seed", "moisture_seed", "temperature_seed", "items_seed", "biome_seed", "noise_type"]
 ## Abbreviations in property names, spelled out in row labels.
 const LABEL_WORDS := {"alt": "altitude"}
@@ -28,7 +28,7 @@ func _ready() -> void:
 	_populate_noise_types()
 	load_from_params(get_node("/root/MapGen").params)
 	# Every number field is typed on an in-game pad instead of the OS keyboard.
-	var pad: NumberPad = preload("res://number_pad.tscn").instantiate()
+	var pad: NumberPad = preload("res://Scripts/ui/number_pad.tscn").instantiate()
 	add_child(pad)
 	for field in [seed_alt, seed_moist, seed_temp, seed_items, seed_biome]:
 		pad.attach(field)
@@ -99,7 +99,7 @@ func _add_int(key: String, label_text: String, min_v: int, max_v: int, default_v
 
 
 func _add_spin_row(key: String, label_text: String, spin: SpinBox) -> void:
-	## Same layout as the seed rows in map_admin_panel.tscn: a centered row of a
+	## Same layout as the seed rows in Scripts/ui/map_admin_panel.tscn: a centered row of a
 	## 140 px centered label and a 140 px field.
 	var row := HBoxContainer.new()
 	row.name = key

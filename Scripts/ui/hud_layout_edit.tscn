@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://hudlayoutedit1"]
 
-[ext_resource type="Script" path="res://Scripts/hud_layout_edit.gd" id="1_edit"]
+[ext_resource type="Script" path="res://Scripts/ui/hud_layout_edit.gd" id="1_edit"]
 [ext_resource type="Theme" path="res://art/ui/main_menu_theme.tres" id="2_theme"]
 
 [node name="HudLayoutEdit" type="Control"]
