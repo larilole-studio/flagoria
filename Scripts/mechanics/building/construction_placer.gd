@@ -1,12 +1,9 @@
 class_name ConstructionPlacer
 extends RefCounted
 ## Shared construction placement (#296): one API for every buildable kind.
-## Checks, wood cost and the writer live here so bridges, walls and towers
-## share the same path. Plank bridges, wooden towers (#273) and free-form
-## wall blocks (#276) are registered. The placement UI (#225) only talks to
-## this module.
-## Plank bridges sync between peers (#297). Towers and free-form walls ask
-## the host through StructureRequests (#497, #498).
+## The preview, local purchase and host-authoritative write share placement
+## rules and costs. Interaction transports plank requests (#297);
+## StructureRequests transports the other builds (#497, #498).
 
 const _WorldMap := preload("res://Scripts/TileMap.gd")
 
@@ -53,30 +50,17 @@ func can_place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, q
 	## once, in `_REASON_ORDER`. Wood and multiplayer come from BuildCosts.
 	## A tower takes exactly one cell (its anchor); a plank or wall run takes
 	## every cell in `cells`.
-	var found := {}
-	if cells.is_empty():
-		found[EMPTY_CELLS] = true
-	if not KINDS.has(kind):
-		found[UNKNOWN_KIND] = true
-	else:
-		match kind:
-			BuildCosts.PLANK:
-				_check_plank(cells, found)
-			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST, BuildCosts.BARRACKS:
-				_check_named(kind, cells, found, quarter_turns)
-			BuildCosts.WALL_BLOCK:
-				_check_wall(cells, found)
+	var reasons := can_place_geometry(kind, cells, quarter_turns)
 	if not cells.is_empty() and KINDS.has(kind):
-		var units := _units(kind, cells)
-		var why := BuildCosts.refusal(inventory, kind, units)
+		var why := BuildCosts.refusal(inventory, kind, _units(kind, cells))
 		if why != "":
-			found[why] = true
-	return _ordered(found)
+			reasons.append(why)
+	return reasons
 
 
 func can_place_geometry(kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0) -> Array[String]:
 	## Why `kind` cannot go on `cells` from the map alone (no wood, no
-	## multiplayer gate). The host uses this to check a peer's request (#297).
+	## multiplayer gate). Used for previews and host-authoritative writes.
 	var found := {}
 	if cells.is_empty():
 		found[EMPTY_CELLS] = true
@@ -98,50 +82,6 @@ func plank_ends(cells: Array[Vector2i]) -> Array[Vector2i]:
 	return _straight_ends(cells)
 
 
-func write_plank(cells: Array[Vector2i]) -> Array[Vector2i]:
-	## Write a plank run with no wood spend. Returns `[from, to]` when written,
-	## or empty when geometry refuses or the writer fails. Used by the host
-	## when placing for a remote peer (#297).
-	if not can_place_geometry(BuildCosts.PLANK, cells).is_empty():
-		return []
-	var ends := _straight_ends(cells)
-	if ends.is_empty() or not _map.build_bridge(ends[0], ends[1]):
-		return []
-	return ends
-
-
-func write_wall(cells: Array[Vector2i]) -> bool:
-	## Write a free-form run with no wood spend. False when geometry refuses.
-	## The host uses this for a peer's wall request (#498).
-	if not can_place_geometry(BuildCosts.WALL_BLOCK, cells).is_empty():
-		return false
-	return _map.place_wall_cells(cells)
-
-
-func write_named(kind: StringName, anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
-	## Write one named footprint structure for `owner` with no wood spend.
-	## Returns the placement id, or -1 when the footprint refuses or the write fails.
-	var one: Array[Vector2i] = [anchor]
-	if not can_place_geometry(kind, one, quarter_turns).is_empty():
-		return -1
-	var structure := _load_named(kind)
-	if structure == null:
-		return -1
-	return _map._structures.place_from_host(structure, anchor, owner, quarter_turns)
-
-
-func write_castle(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
-	return write_named(BuildCosts.CASTLE, anchor, owner, quarter_turns)
-
-
-func write_tower(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
-	return write_named(BuildCosts.TOWER, anchor, owner, quarter_turns)
-
-
-func write_guard_post(anchor: Vector2i, owner: int, quarter_turns: int = 0) -> int:
-	return write_named(BuildCosts.GUARD_POST, anchor, owner, quarter_turns)
-
-
 func cost(kind: StringName, cells: Array) -> int:
 	## Wood for placing `kind` on `cells`; -1 for an unknown kind. A tower is
 	## always one unit (10 wood) regardless of footprint size; a wall block is
@@ -152,19 +92,61 @@ func cost(kind: StringName, cells: Array) -> int:
 
 
 func place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> bool:
-	## Check, then buy through BuildCosts (spend then writer). True only when
-	## the cells are written and the wood is taken. A refusal or a failed
-	## charge writes nothing; a writer refusal puts the wood back (#380).
+	## True when the purchase succeeds or a connected client submits a request.
+	## A refused writer refunds the charge (#380).
 	if not can_place(kind, cells, inventory, quarter_turns).is_empty():
 		return false
-	match kind:
-		BuildCosts.PLANK:
-			return _place_plank(cells, inventory)
-		BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST, BuildCosts.BARRACKS:
-			return _place_named(kind, cells, inventory, quarter_turns)
-		BuildCosts.WALL_BLOCK:
-			return _place_wall(cells, inventory)
-	return false
+	if kind != BuildCosts.PLANK and Interaction.multiplayer_on(_map.multiplayer):
+		var requests := _map.get_node_or_null("../StructureRequests")
+		return requests != null and requests.place(kind, cells, quarter_turns)
+	var owner := 0 if kind == BuildCosts.PLANK or kind == BuildCosts.WALL_BLOCK \
+			else inventory.multiplayer.get_unique_id()
+	return _purchase(kind, cells, inventory, owner, quarter_turns, false)
+
+
+func place_for_peer(kind: StringName, cells: Array[Vector2i], owner: int,
+		inventory: Inventory, quarter_turns: int = 0) -> bool:
+	## Host-only write after reach checks. Supply inventory for the host's own
+	## purchase; a remote buyer is charged by the request handler after success.
+	if not _map.multiplayer.is_server() or not KINDS.has(kind) or cells.is_empty():
+		return false
+	if kind == BuildCosts.PLANK and inventory != null and not can_place(kind, cells, inventory).is_empty():
+		return false
+	return _purchase(kind, cells, inventory, owner, quarter_turns, kind != BuildCosts.PLANK or inventory == null)
+
+
+func apply_replica(structure_name: String, anchor: Vector2i, owner: int, quarter_turns: int) -> void:
+	var turns := posmod(quarter_turns, 4)
+	for entry in _map.placed_structures().values():
+		if str(entry["name"]) == structure_name and int(entry["owner"]) == owner \
+				and entry["anchor"] == anchor and int(entry.get("rotation", 0)) == turns:
+			return
+	var structure := StructurePlacer.load_named(structure_name)
+	if structure != null:
+		_map._structures.place_from_host(structure, anchor, owner, quarter_turns)
+
+
+func _purchase(kind: StringName, cells: Array[Vector2i], inventory: Inventory,
+		owner: int, turns: int, from_host: bool) -> bool:
+	var write := func() -> bool:
+		if from_host and not can_place_geometry(kind, cells, turns).is_empty():
+			return false
+		match kind:
+			BuildCosts.PLANK:
+				var ends := _straight_ends(cells)
+				return not ends.is_empty() and _map.build_bridge(ends[0], ends[1])
+			BuildCosts.WALL_BLOCK:
+				return _map.place_wall_cells(cells)
+			_:
+				var structure := _load_named(kind)
+				if structure == null:
+					return false
+				if from_host:
+					return _map._structures.place_from_host(structure, cells[0], owner, turns) > 0
+				return _map.place_structure(structure, cells[0], owner, turns) > 0
+	if inventory == null:
+		return write.call()
+	return BuildCosts.buy(inventory, kind, _units(kind, cells), write) == ""
 
 
 static func named_structure_file(kind: StringName) -> String:
@@ -216,17 +198,6 @@ func _units(kind: StringName, cells: Array) -> int:
 			or kind == BuildCosts.GUARD_POST or kind == BuildCosts.BARRACKS else cells.size()
 
 
-func _place_wall(cells: Array[Vector2i], inventory: Inventory) -> bool:
-	## Spend 2 wood per cell, then WallBuilder writes plain palisade pieces.
-	## With peers connected, StructureRequests asks the host instead of writing.
-	if Interaction.multiplayer_on(_map.multiplayer):
-		var requests := _map.get_node_or_null("../StructureRequests")
-		return requests != null and requests.place(BuildCosts.WALL_BLOCK, cells)
-	var why := BuildCosts.buy(inventory, BuildCosts.WALL_BLOCK, cells.size(), func() -> bool:
-		return _map.place_wall_cells(cells))
-	return why == ""
-
-
 func _check_wall(cells: Array[Vector2i], found: Dictionary) -> void:
 	## Land only; refuse structures, existing walls, players, mobs, trees and
 	## bushes. A multi-cell run must be one contiguous H/V segment (no gaps,
@@ -253,36 +224,6 @@ func _check_wall(cells: Array[Vector2i], found: Dictionary) -> void:
 			found[OCCUPIED] = true
 		elif _map.player_on_cell(cell) or _map.mob_on_cell(cell):
 			found[OCCUPIED] = true
-
-
-func _place_plank(cells: Array[Vector2i], inventory: Inventory) -> bool:
-	var ends := _straight_ends(cells)
-	if ends.is_empty():
-		return false
-	var from: Vector2i = ends[0]
-	var to: Vector2i = ends[1]
-	var why := BuildCosts.buy(inventory, BuildCosts.PLANK, cells.size(), func() -> bool:
-		return _map.build_bridge(from, to))
-	return why == ""
-
-
-func _place_named(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> bool:
-	## One named structure: spend, then StructurePlacer writes it owned by the
-	## local peer. With peers connected, StructureRequests asks the host instead.
-	if cells.size() != 1:
-		return false
-	if Interaction.multiplayer_on(_map.multiplayer):
-		var requests := _map.get_node_or_null("../StructureRequests")
-		return requests != null and requests.place(kind, cells, quarter_turns)
-	var structure := _load_named(kind)
-	if structure == null:
-		return false
-	var anchor: Vector2i = cells[0]
-	var owner := inventory.multiplayer.get_unique_id()
-	var turns := quarter_turns
-	var why := BuildCosts.buy(inventory, kind, 1, func() -> bool:
-		return _map.place_structure(structure, anchor, owner, turns) > 0)
-	return why == ""
 
 
 func _check_plank(cells: Array[Vector2i], found: Dictionary) -> void:

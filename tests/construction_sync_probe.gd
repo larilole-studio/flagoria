@@ -1,7 +1,8 @@
 extends "res://tests/helpers/probe_base.gd"
-## The building client receives --wood. The other peers only watch.
+## The builder receives --wood. A host builder waits for a .build command.
 
 var _structure: StringName
+var _turns := 0
 var _refused_wood := -1
 var _place_error := ""
 
@@ -11,6 +12,7 @@ func _run() -> void:
 	var host := has_option("--host")
 	var save := option("--save")
 	var wood := option("--wood").to_int()
+	_turns = option("--turns").to_int()
 	if _structure not in [BuildCosts.CASTLE, BuildCosts.BARRACKS, BuildCosts.GUARD_POST] \
 			or (host and save.is_empty()):
 		printerr("construction_sync_probe: needs a supported --structure and --save with --host")
@@ -32,13 +34,14 @@ func _run() -> void:
 	else:
 		await join_game(main)
 	var world = main.get_node("World/worldMap")
-	var should_place := not host and wood > 0
+	var should_place := wood > 0
 	var deadline := Time.get_ticks_msec() + 90000
 	while game_active(main, deadline):
 		var me := local_player(main)
 		if snapshot_due(main):
 			_write(main, world, me)
-		if should_place and main.world_params != null and me != null:
+		if should_place and main.world_params != null and me != null \
+				and (not host or FileAccess.file_exists(probe_out + ".build")):
 			should_place = false
 			_place_error = await _do_place(main, world, me, wood)
 		await process_frame
@@ -69,13 +72,13 @@ func _do_place(main, world, me: Node2D, wood: int) -> String:
 	_refused_wood = inventory.count_of(Inventory.WOOD)
 	if _refused_wood != before + wood:
 		return "refused request spent wood (%d -> %d)" % [before + wood, _refused_wood]
-	err = await _wait_host_position(main, me, interaction.cell_center(land) + Vector2(0, 48), 5000)
+	err = await _wait_host_position(main, me, interaction.cell_center(land) + (Vector2(-48, 0) if _turns == 1 else Vector2(0, 48)), 5000)
 	if err != "":
 		return err
 	var one: Array[Vector2i] = [land]
 	var builder: int = main.multiplayer.get_unique_id()
 	var before_count := _owned_count(world, builder)
-	if not requests.place(_structure, one):
+	if not requests.place(_structure, one, _turns):
 		return "place was not sent"
 	if not await _until(func() -> bool: return _owned_count(world, builder) > before_count, 8000):
 		return "built %s was not applied" % _structure
@@ -92,7 +95,7 @@ func _wait_host_position(main, me: Node2D, where: Vector2, ms: int) -> String:
 		me.global_position = where
 		if me is CharacterBody2D:
 			me.velocity = Vector2.ZERO
-		if _host_sees_position(peer_id, where, 4.0):
+		if main.multiplayer.is_server() or _host_sees_position(peer_id, where, 4.0):
 			return ""
 		await process_frame
 	return "host did not ack the player at %s" % where
@@ -147,7 +150,7 @@ func _anchor_ok(world, cell: Vector2i) -> bool:
 			if str(entry["name"]) == "castle" and entry["anchor"].distance_to(cell) < 14:
 				return false
 	var one: Array[Vector2i] = [cell]
-	return ConstructionPlacer.new(world).can_place_geometry(_structure, one).is_empty()
+	return ConstructionPlacer.new(world).can_place_geometry(_structure, one, _turns).is_empty()
 
 
 func _write(main, world, me: Node2D) -> void:

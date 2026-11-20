@@ -53,7 +53,7 @@ GAMEPLAY = [
     "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
     "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
     "Scripts/player_health.gd",
-    "Scripts/mob.gd", "Scripts/mob_spawner.gd", "Scripts/mob_catalog.gd",
+    "Scripts/mechanics/mobs/mob.gd", "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/mobs/mob_catalog.gd",
     "Scripts/TileMap.gd",  # chunk loading, collision, ground sync
     "Scripts/world/*.gd",  # terrain shape and spawn search for the world map
     "Scripts/mechanics/*.gd",  # cuts, bridges, walls, structures, choppable types (all subfolders)
@@ -92,7 +92,7 @@ STRESS_MATRIX = [
 # Netcode files: spawners, RPC-only scripts, and the stress matrix above.
 # Any change to them gets the full stress tier.
 NETCODE = [
-    "Scripts/mob_spawner.gd", "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",
+    "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",
     "tilemap_dynamic.tscn",
     *STRESS_MATRIX,
 ]
@@ -103,7 +103,7 @@ NETCODE_MIXED = [
     "Player/character_body_2d.tscn", "Mobs/mob.tscn",
     "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
     "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
-    "Scripts/player_health.gd", "Scripts/mob.gd", "Scripts/TileMap.gd",
+    "Scripts/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/TileMap.gd",
 ]
 NET_LINE = re.compile(r"rpc|multiplayer|peer|authority|replicat|synchroniz|spawner|is_server|enet", re.I)
 
@@ -204,7 +204,7 @@ def self_test() -> int:
     inp = "[input]\n\nattack={}\n"
     cases = [
         (["Player/sword.tscn"], None, None, True),
-        (["Scripts/mob.gd", "README.md"], None, None, True),
+        (["Scripts/mechanics/mobs/mob.gd", "README.md"], None, None, True),
         (["Scripts/ui/map_admin_panel.tscn"], None, None, True),
         (["Scripts/map_gen.gd"], None, None, True),
         (["Scripts/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
@@ -255,7 +255,7 @@ def self_test() -> int:
     play_net = diff("Scripts/player.gd", "+@rpc(\"any_peer\")", "+func hit():")
     scene_net = diff("flagoria_main.tscn", "+[node name=\"MultiplayerSpawner\" type=\"MultiplayerSpawner\"]")
     tiers = [
-        ("pull_request", ["Scripts/mob_spawner.gd", "README.md"], "", FULL_RUNS),
+        ("pull_request", ["Scripts/mechanics/mobs/mob_spawner.gd", "README.md"], "", FULL_RUNS),
         ("pull_request", ["tools/stress_netcode.py"], "", FULL_RUNS),
         ("pull_request", ["tools/stress_scenario_lint.py"], "", FULL_RUNS),
         ("pull_request", ["tests/late_join_probe.gd"], "", FULL_RUNS),

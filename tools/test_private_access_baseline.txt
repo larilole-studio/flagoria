@@ -13,9 +13,7 @@
 1 tests/mechanics/building/test_build_tower.gd
 8 tests/mechanics/building/test_build_wall.gd
 5 tests/mechanics/building/test_construction_castle.gd
-3 tests/mechanics/building/test_construction_placer.gd
-2 tests/mechanics/building/test_construction_tower.gd
-4 tests/mechanics/building/test_construction_wall.gd
+2 tests/mechanics/building/test_construction_placer.gd
 3 tests/mechanics/building_blocks/test_generated_building.gd
 7 tests/mechanics/conquest/test_cities.gd
 3 tests/mechanics/conquest/test_flags_held_points.gd
