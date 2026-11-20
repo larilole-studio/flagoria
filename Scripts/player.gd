@@ -1,5 +1,12 @@
 extends CharacterBody2D
 
+const PlayerCamera := preload("res://Scripts/player_camera.gd")
+const PlayerCombat := preload("res://Scripts/player_combat.gd")
+const PlayerHud := preload("res://Scripts/player_hud.gd")
+const PlayerInput := preload("res://Scripts/player_input.gd")
+const AttackAimScript := preload("res://Scripts/attack_aim.gd")
+const PlayerWallDraw := preload("res://Scripts/player_wall_draw.gd")
+
 const MAX_SPEED = 130
 const ACCEL = 120
 const FRICTION = 95
@@ -9,6 +16,7 @@ const FRICTION = 95
 const JOYSTICK_MAX_SPEED = 60
 
 var input = Vector2.ZERO
+var _wall_draw := PlayerWallDraw.new()
 
 @onready var camera = $Camera2D
 @onready var joystick = get_node_or_null(^"/root/Flagoria/CanvasLayer1/player_joystick")  # none when the hero runs outside the game scene, as in tests
@@ -22,21 +30,7 @@ var input = Vector2.ZERO
 @onready var sword_shape: CollisionShape2D = $weapon/sword/CollisionShape2D
 @onready var body_shape: CollisionShape2D = $CollisionShape2D
 
-const HUD_LAYER_PATH := "/root/Flagoria/CanvasLayer1"
-const POINTS_PATH := "/root/Flagoria/Points"
-const INVENTORY_PATH := "/root/Flagoria/Inventory"
 const INTERACTION_PATH := "/root/Flagoria/World/Interaction"
-const MAP_PATH := "/root/Flagoria/World/worldMap"
-const TOOL_WHEEL_PATH := "/root/Flagoria/CanvasLayer1/ToolWheel"
-const RANGED_PATH := "/root/Flagoria/World/RangedShots"
-## Walk frame is 16 px, centred on Sprite2D at (0, -8), so the body runs from
-## the feet (this node's origin) up 16 px. Wall caps sit at z 2 through 5.
-const BODY_RECT := Rect2(-8, -16, 16, 16)
-const WALL_CAP_LAYER := 6
-## The hero draws over a wall until about two thirds of the body is on it.
-const WALL_COVER_FRACTION := 2.0 / 3.0
-const MapZoom := preload("res://Scripts/map_zoom.gd")
-const AttackAimScript := preload("res://Scripts/attack_aim.gd")
 const SWORD_DAMAGE := 1  ## half-hearts per sword hit
 const REGEN_AMOUNT := 1  ## half-hearts per regen_timer tick
 const BLINK_PERIOD_MS := 100  ## invulnerability blink: this long shown, this long faded
@@ -91,51 +85,14 @@ func _ready():
 	camera.make_current()
 	# A peer that joins later gets the current walk facing on the next frame.
 	multiplayer.peer_connected.connect(func(_id): _sent_walk_direction = "")
-	var map_zoom := MapZoom.new()  # local camera only; zoom is never synced
-	map_zoom.name = "MapZoom"
-	camera.add_child(map_zoom)
+	PlayerCamera.attach_zoom(camera)
 	var aim := AttackAimScript.new()  # local mouse aim; only the attack is sent
 	aim.name = "AttackAim"
 	add_child(aim)
-	var hud := _hud_node("HeartsHud")
-	if hud:
-		hud.bind(health)
-	var score_hud := _hud_node("ScoreHud") as ScoreHud
-	var points = get_node_or_null(POINTS_PATH)
-	if score_hud and points:
-		score_hud.bind(points, str(name).to_int())
-	var resource_hud := _hud_node("ResourceHud") as ResourceHud
-	var inventory = get_node_or_null(INVENTORY_PATH)
-	if resource_hud and inventory:
-		resource_hud.bind(inventory)
-	var plate := _hud_node("StatusPlate") as StatusPlateHud
-	if plate != null and hud != null and score_hud != null and resource_hud != null:
-		plate.show()
-		plate.bind_nodes(hud, score_hud, resource_hud)
-	var scoreboard := _hud_node("ScoreboardPanel") as ScoreboardPanel
-	var score_toggle := _hud_node("ScoreboardToggle") as ScoreboardToggle
-	if scoreboard and points:
-		scoreboard.bind(points, str(name).to_int())
-	if score_toggle:
-		score_toggle.show()
+	PlayerHud.bind(self, health)
 	var interaction = get_node_or_null(INTERACTION_PATH)
 	if interaction:
 		interaction.bind(self)
-
-var _wall_atlases: Dictionary = {}
-
-
-func _hud_node(node_name: String) -> Node:
-	var layer := get_node_or_null(HUD_LAYER_PATH)
-	if layer == null:
-		return null
-	var node := layer.get_node_or_null(node_name)
-	if node != null:
-		return node
-	var plate := layer.get_node_or_null("StatusPlate") as StatusPlateHud
-	if plate != null:
-		return plate.get_node_or_null(node_name)
-	return null
 
 
 func _process(_delta):
@@ -144,65 +101,12 @@ func _process(_delta):
 	var faded := health.is_invulnerable() and (Time.get_ticks_msec() / BLINK_PERIOD_MS) % 2 == 1
 	sprite.modulate.a = 0.3 if faded else 1.0
 	chop_sprite.modulate.a = sprite.modulate.a
-	_apply_wall_draw()
-
-
-func _apply_wall_draw() -> void:
-	## Walls are z 1 and their caps are z 2 through 5, so a body that only
-	## overlaps the face of a wall would lose its head. Stay above the caps
-	## until most of the body is on a wall, then drop behind the wall layer.
-	var map := get_node_or_null(MAP_PATH) as TileMap
-	if map == null:
-		z_index = 0
-		return
-	var cover := _wall_cover(map)
-	# No wall contact keeps the old order (trees stay above the hero). A
-	# graze lifts the hero over the wall. Most of the body on the wall drops
-	# the hero behind it again.
-	if cover <= 0.0 or cover >= WALL_COVER_FRACTION:
-		z_index = 0
-	else:
-		z_index = map.get_layer_z_index(WALL_CAP_LAYER) + 1
+	_wall_draw.apply(self)
 
 
 func _wall_cover(map: TileMap) -> float:
-	## Share of the body rect that lies on a wall tile. 0 when clear.
-	var body := Rect2(global_position + BODY_RECT.position, BODY_RECT.size)
-	var area := body.size.x * body.size.y
-	if area <= 0.0:
-		return 0.0
-	var covered := 0.0
-	var top_left := map.local_to_map(map.to_local(body.position))
-	var bottom_right := map.local_to_map(map.to_local(body.end - Vector2(0.01, 0.01)))
-	for y in range(mini(top_left.y, bottom_right.y), maxi(top_left.y, bottom_right.y) + 1):
-		for x in range(mini(top_left.x, bottom_right.x), maxi(top_left.x, bottom_right.x) + 1):
-			var cell := Vector2i(x, y)
-			if not _is_wall(map, cell):
-				continue
-			var center := map.to_global(map.map_to_local(cell))
-			var tile := Vector2(map.tile_set.tile_size)
-			var wall := Rect2(center - tile * 0.5, tile)
-			var hit := body.intersection(wall)
-			if hit.size.x > 0.0 and hit.size.y > 0.0:
-				covered += hit.size.x * hit.size.y
-	return covered / area
+	return _wall_draw._wall_cover(map, global_position)
 
-
-func _is_wall(map: TileMap, cell: Vector2i) -> bool:
-	if map.get_cell_source_id(1, cell) == -1:
-		return false
-	_ensure_wall_atlases()
-	return _wall_atlases.has(map.get_cell_atlas_coords(1, cell))
-
-
-func _ensure_wall_atlases() -> void:
-	if not _wall_atlases.is_empty():
-		return
-	for tile_name: String in TileCatalog.TILES:
-		if not tile_name.begins_with("WALL_") and not tile_name.begins_with("PALISADE_") \
-				and not tile_name.begins_with("TOWER_STONE_"):
-			continue
-		_wall_atlases[TileCatalog.TILES[tile_name]["atlas"]] = true
 
 func set_chop_pose(direction: String, col: int) -> void:
 	## Interaction's chop (local only): show chop sheet column `col` facing
@@ -222,7 +126,7 @@ func _physics_process(delta):
 	if health.is_dead():
 		velocity = Vector2.ZERO
 		return
-	if _map_covers_play():
+	if PlayerCamera.map_covers_play(get_tree()):
 		velocity = Vector2.ZERO
 		return
 	player_movement(delta)
@@ -230,84 +134,30 @@ func _physics_process(delta):
 	if direction != _sent_walk_direction:
 		_sent_walk_direction = direction
 		updateAnimation.rpc(direction)
-	
+
 
 func _unhandled_input(event):
 	if not is_multiplayer_authority(): return
 	if health.is_dead(): return
-	if _map_covers_play(): return
-	
+	if PlayerCamera.map_covers_play(get_tree()): return
+
 	if Input.is_action_just_pressed("attack"):
 		attack_animation.rpc()
 
 func attack_toward(direction: String, angle := NAN):
 	## An aimed attack (AttackAim). The bow tool sends one shot and does
 	## not swing. The sword path is the same call as before.
-	if _bow_armed():
-		var shots := get_node_or_null(RANGED_PATH)
-		if shots != null and shots.has_method("send_shot"):
-			shots.send_shot(global_position + AttackAimScript.ORIGIN, _bow_aim(direction, angle))
-		return
-	attack_animation.rpc(direction, angle)
+	if not PlayerCombat.try_bow_shot(self, direction, angle):
+		attack_animation.rpc(direction, angle)
 
-
-func _bow_armed() -> bool:
-	var wheel := get_node_or_null(TOOL_WHEEL_PATH)
-	return wheel != null and wheel.has_method("bow_armed") and bool(wheel.bow_armed())
-
-
-func _bow_aim(direction: String, angle: float) -> Vector2:
-	if not is_nan(angle):
-		return Vector2.from_angle(angle)
-	var named := AttackAimScript.direction_vector(direction)
-	if named != Vector2.ZERO:
-		return named
-	return AttackAimScript.direction_vector(lastAnimDirection)
 
 @rpc("call_local")  # the call local calls in all remotes and the local too
 func attack_animation(direction: String = "", angle: float = NAN):
-	# `direction` is Up, Down, Left or Right from an aimed attack; anything
-	# else, or none (Space, the touch button), swings in the facing direction.
-	# `angle` (radians) is the exact aim: the swing plays `direction`'s
-	# animation turned to it, and the sprite still faces `direction`. An angle
-	# that is not finite or not within 45 degrees of `direction` is rejected:
-	# the swing goes the facing direction, as for an unknown direction.
-	# Every peer, the server included, checks and swings the same way, and
-	# the server's copy still decides what the sword hits.
-	swing_turn = 0.0
-	if direction in AttackAimScript.DIRECTIONS:
-		var turn := 0.0 if is_nan(angle) else AttackAimScript.turn_to(direction, angle)
-		if not is_nan(turn):
-			lastAnimDirection = direction
-			swing_turn = turn
-	animations.stop()
-	combat_sfx.play_event("swing")
-	animations.play("attack" + lastAnimDirection)
-	isAttacking = true
-	weapon.visible = true
-	sword_shape.set_deferred("disabled", false)  # the sword only hits during a swing
-	_swing_world_decor(direction, angle)
-	await animations.animation_finished
-	weapon.visible = false
-	sword_shape.set_deferred("disabled", true)
-	isAttacking = false
-	swing_turn = 0.0
+	await PlayerCombat.swing(self, direction, angle)
 
 
 func _turn_swing() -> void:
-	## After each animation step: turn the swing's weapon about the aim
-	## origin by swing_turn, so its hitbox follows the exact aim angle.
-	if swing_turn == 0.0 or not str(animations.current_animation).begins_with("attack"):
-		return
-	var origin := AttackAimScript.ORIGIN
-	weapon.position = origin + (weapon.position - origin).rotated(swing_turn)
-	weapon.rotation += swing_turn
-
-
-func _map_covers_play() -> bool:
-	## The parchment full map is open: this hero does not move or attack.
-	var node := get_tree().get_first_node_in_group(ParchmentMap.GROUP)
-	return node != null and node.is_open()
+	PlayerCombat.turn_swing(weapon, animations, swing_turn)
 
 
 func sword_active() -> bool:
@@ -315,89 +165,23 @@ func sword_active() -> bool:
 	return isAttacking and not health.is_dead()
 
 
-func _swing_world_decor(direction: String, angle: float) -> void:
-	## Combat swing: destroy walkable stones in the aim arc (#198).
-	var map := get_node_or_null(MAP_PATH)
-	if map == null or health.is_dead():
-		return
-	var facing := direction if direction in AttackAimScript.DIRECTIONS else str(lastAnimDirection)
-	var swing := _facing_to_angle(facing)
-	if not is_nan(angle) and facing in AttackAimScript.DIRECTIONS:
-		var turn := AttackAimScript.turn_to(facing, angle)
-		if not is_nan(turn):
-			swing += turn
-	map._object_removals.cells_in_arc(global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC, true)
-	if not multiplayer.is_server():
-		return
-	var requests := get_node_or_null("../StructureRequests") as StructureRequests
-	if requests == null:
-		return
-	var cell: Vector2i = map._walls.nearest_in_arc(global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC)
-	if cell == WallBuilder.NO_WALL:
-		return
-	requests.host_damage_wall(cell)
-
-
-func _facing_to_angle(facing: String) -> float:
-	match facing:
-		"Up": return Vector2.UP.angle()
-		"Left": return Vector2.LEFT.angle()
-		"Right": return Vector2.RIGHT.angle()
-		_: return Vector2.DOWN.angle()
-
 func _enter_tree():
 	set_multiplayer_authority(str(name).to_int())
 
 func get_input_axis():
-	input.x = int(Input.is_action_pressed("ui_right")) - int(Input.is_action_pressed("ui_left"))
-	input.y = int(Input.is_action_pressed("ui_down")) - int(Input.is_action_pressed("ui_up"))
+	input = PlayerInput.keyboard_axis()
 	return input.normalized()
 
 func get_joystick_axis() -> Vector2:
-	## The touch joystick's direction while a finger holds it, read every
-	## physics frame: the joystick only signals on touch and drag events, so a
-	## finger held still sends nothing.
-	if not is_instance_valid(joystick) or joystick.ongoing_drag == -1:
-		return Vector2.ZERO
-	return joystick.get_button_pos().normalized()
-
-func _speed_scale() -> float:
-	## Run button on this hero's HUD. Missing when a hero is built on its own,
-	## which keeps the walk cap. Joystick direction is not part of this scale.
-	var button := get_node_or_null(^"../../CanvasLayer1/RunButton")
-	if button != null and button.has_method("speed_scale"):
-		return float(button.speed_scale())
-	return 1.0
+	return PlayerInput.joystick_axis(joystick)
 
 
 func player_movement(delta):
-	input = get_input_axis()
-	var max_speed := MAX_SPEED
-	if input == Vector2.ZERO:
-		input = get_joystick_axis()
-		if input != Vector2.ZERO:
-			max_speed = JOYSTICK_MAX_SPEED
-	var scale := _speed_scale()
-	max_speed *= scale
+	PlayerInput.move_player(self, delta)
 
-	if input == Vector2.ZERO:  # no input
-		if velocity.length() > (FRICTION * delta):
-			# if we are moving we will slow down
-			velocity -= velocity.normalized() * (FRICTION * delta)
-		else:
-			velocity = Vector2.ZERO
-	else:  # moving the player
-		velocity += (input * ACCEL * scale * delta)
-		velocity = velocity.limit_length(max_speed)
-
-	move_and_slide()
 
 func walk_direction() -> String:
-	## The walk animation's facing for the owner's current velocity.
-	if velocity.x < 0: return "Left"
-	if velocity.x > 0: return "Right"
-	if velocity.y < 0: return "Up"
-	return "Down"
+	return PlayerInput.walk_direction(velocity)
 
 @rpc("call_local")
 func updateAnimation(direction: String):

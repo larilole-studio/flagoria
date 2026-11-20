@@ -2,6 +2,8 @@
 
 Drive: not player-facing
 
+The map node delegates `predict_cell` to `Scripts/world_chunks.gd`.
+
 In a two-player game a tree or bush cut by any player becomes the same walkable stump on every peer (#223), and grows back on every peer at the same moment (#298). The cutter asks the host, the host decides and tells everyone, and only the cutter gets the wood. The host alone decides when a stump regrows. A player joining later gets the host's exact cut set with each cut's age. Chopping itself (taps, swings, sounds, regrowth offline) is in [Chopping trees and bushes](./chop-trees-and-bushes.md) and [Chop trees (live drive)](./chop-trees.md).
 
 ## Sub-features

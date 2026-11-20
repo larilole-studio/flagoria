@@ -1,5 +1,9 @@
 extends TileMap
 
+const WORLD_MAP_PARAMS = preload("res://Scripts/world_map_params.gd")
+const WORLD_CHUNKS = preload("res://Scripts/world_chunks.gd")
+const WORLD_CELL_QUERIES = preload("res://Scripts/world_cell_queries.gd")
+
 ## Emitted as the cells change, so local visuals update in that frame.
 signal ground_changed(cells: Rect2i)
 signal plants_regrown(cells: Array[Vector2i])  # one regrow tick (#353)
@@ -88,298 +92,106 @@ const SPAWN_MIN_REACHABLE := SpawnFinder.SPAWN_MIN_REACHABLE
 const SPAWN_RADIUS := SpawnFinder.SPAWN_RADIUS
 const SPAWN_CLEARANCE := SpawnFinder.SPAWN_CLEARANCE
 
-
 func _ready():
 	apply_map_params(get_node("/root/MapGen").params)
 
-
 func apply_map_params(p: MapGenParams) -> void:
-	## Apply the full parameter set and clear existing tiles so the next chunk regen is clean.
-	var working = p.duplicate_params()
-	working.ensure_seeds()
-
-	_configure_noise(altitude, working.altitude_seed, working.altitude_frequency, working)
-	_configure_noise(moisture, working.moisture_seed, working.moisture_frequency, working)
-	_configure_noise(temperature, working.temperature_seed, working.temperature_frequency, working)
-	_configure_noise(items_chance, working.items_seed, working.items_frequency, working)
-
-	biome_frequency = working.biome_frequency
-	biome_seed = working.biome_seed
-	biome_edge = working.biome_edge
-	biome_altitude_bias = working.biome_altitude_biases()
-	biome_island_density = working.biome_island_densities()
-	if biome_frequency > 0.0:
-		_configure_noise(biome, working.biome_seed, working.biome_frequency, working)
-
-	chunk_width = working.chunk_width
-	chunk_height = working.chunk_height
-	chunk_refresh_frames = maxi(1, working.chunk_refresh_frames)
-	water_max_alt = working.water_max_alt
-	sand_max_alt = working.sand_max_alt
-	swamp_special_alt = working.swamp_special_alt
-	island_radius = working.island_radius
-	island_falloff = working.island_falloff
-	archipelago_spacing = working.archipelago_spacing
-	archipelago_island_radius = maxi(1, working.archipelago_island_radius)
-	archipelago_jitter = working.archipelago_jitter
-	archipelago_seed = working.altitude_seed
-	archipelago_world_extent = maxi(0, working.archipelago_world_extent)
-	archipelago_island_count = maxi(0, working.archipelago_island_count)
-	_terrain._rebuild_archipelago_active_squares()
-	ground_chance_a = working.ground_chance_a
-	ground_chance_b = working.ground_chance_b
-	ground_chance_c = working.ground_chance_c
-	for key in PlantPicker.PARAMS:
-		set(key, working.get(key))
-
-	clear()
-	_sky.clear()
-	_predict_cache.clear()
-	_tree_cuts.clear()
-	_object_removals.clear()
-	_bridges.clear()
-	_structures.clear()
-	_walls.clear()
-	_castle_front = null
-	spawn_point = Vector2i(0, 0)
-	if has_meta(&"resolved_spawn"): remove_meta(&"resolved_spawn")
-	ground_changed.emit(Rect2i())
-
-
+	WORLD_MAP_PARAMS.apply_map_params(self, p)
 func invalidate_painted_cell(cell: Vector2i) -> void:
-	_predict_cache.erase(cell)
-	_sky.invalidate_cell(cell)
-
-
-func _configure_noise(noise: FastNoiseLite, seed_value: int, frequency: float, p: MapGenParams) -> void:
-	noise.seed = seed_value
-	noise.noise_type = p.noise_type
-	noise.frequency = frequency
-	noise.fractal_octaves = p.fractal_octaves
-	noise.fractal_lacunarity = p.fractal_lacunarity
-	noise.fractal_gain = p.fractal_gain
-
+	WORLD_CHUNKS.invalidate_painted_cell(self, cell)
 
 func _process(delta):
-	play_time += delta
-	count += 1
-	if (count % chunk_refresh_frames) == 0:
-		regrow_due()
-		_tree_cuts.sprouts.due()
-	if (count % chunk_refresh_frames) == 0 and player_spawned:
-		var current_player_id = str(multiplayer.get_unique_id())
-		count = 0
-
-		var curr_player = get_node_or_null("/root/Flagoria/World/" + str(current_player_id))
-		if curr_player:
-			generate_chunk(curr_player.position)
-
-
+	WORLD_CHUNKS.refresh(self, delta)
 func generate_chunk(position) -> void:
-	_sky.paint_window(self, local_to_map(position), Vector2i(chunk_width, chunk_height))
-
+	WORLD_CHUNKS.generate_chunk(self, position)
 
 func cell_altitude(cell: Vector2i, biome_id: int) -> float:
 	return _terrain.cell_altitude(cell, biome_id)
-
-
 func island_altitude(cell: Vector2i, alt: float) -> float:
 	return _terrain.island_altitude(cell, alt)
-
-
 func archipelago_altitude(cell: Vector2i, alt: float) -> float:
 	return _terrain.archipelago_altitude(cell, alt)
-
-
 func archipelago_centre(square: Vector2i) -> Vector2:
 	return _terrain.archipelago_centre(square)
-
-
 func archipelago_square_active(square: Vector2i) -> bool:
 	return _terrain.archipelago_square_active(square)
-
-
 func biome_at(cell: Vector2i) -> int:
-	## Biome id at a cell. Frequency 0 keeps everything temperate (biomes off).
-	if biome_frequency <= 0.0:
-		return BiomeCatalog.TEMPERATE
-	return BiomeCatalog.from_noise(biome.get_noise_2d(cell.x, cell.y), biome_edge)
-
-
+	return WORLD_CHUNKS.biome_at(self, cell)
 func ground_tile(alt: float, moist: float, chance: float, biome_id: int = BiomeCatalog.TEMPERATE) -> Vector2i:
 	return _sky.ground_tile(self, alt, moist, chance, biome_id)
-
-
 func get_random_ground_vec(chance):
-	if chance < ground_chance_a:
-		return TileCatalog.GRASS_A
-	if chance < ground_chance_b:
-		return TileCatalog.GRASS_B
-	if chance < ground_chance_c:
-		return TileCatalog.GRASS_C
-	return TileCatalog.GRASS_D
-
-
+	return WORLD_CHUNKS.get_random_ground_vec(self, chance)
 func set_tile_type_z1(pos_vec, alt, moist, _temp, chance, biome_id: int = BiomeCatalog.TEMPERATE):
-	if _object_removals.has_removed(pos_vec):
-		return
-	if _structures.has_cell(pos_vec):
-		if _structures.object_at(pos_vec) != NO_PLANT:
-			set_cell(1, pos_vec, TileCatalog.SOURCE_ID, _structures.object_at(pos_vec))
-		return
-	if _walls.has_wall(pos_vec):
-		_walls.paint_cell(pos_vec)
-		return
-	if not is_walkable_land(pos_vec) or _bridges.has_bridge(pos_vec):
-		return
-	if _tree_cuts.has_cut(pos_vec):
-		set_cell(GROUND_DECOR_LAYER, pos_vec, TileCatalog.SOURCE_ID, _tree_cuts.leftover(pos_vec))
-		return
-	var tile := BirchTrees.foliage_tile(self, pos_vec, alt, moist, chance, biome_id, get_cell_atlas_coords(0, pos_vec) == TileCatalog.SAND or _sky.logical_ground(self, pos_vec) == TileCatalog.SAND)
-	if tile == NO_PLANT:
-		tile = _tree_cuts.sprouts.tile_or(pos_vec, structure_tile(chance, biome_id))
-	if tile != NO_PLANT and BirchTrees.is_tree_tile(tile):
-		BirchTrees.paint_bottom(self, pos_vec)
-		return
-	if tile == TileCatalog.FLOWER or tile == TileCatalog.STONES:
-		set_cell(GROUND_DECOR_LAYER, pos_vec, TileCatalog.SOURCE_ID, tile)
-	elif tile != NO_PLANT:
-		set_cell(1, pos_vec, TileCatalog.SOURCE_ID, tile)
-
-
+	WORLD_CHUNKS.set_tile_type_z1(self, pos_vec, alt, moist, _temp, chance, biome_id)
 func plant_tile(alt: float, moist: float, chance: float, biome_id: int = BiomeCatalog.TEMPERATE) -> Vector2i:
 	## Bush, tree, bushy tree, pine, flower or NO_PLANT for one walkable cell (PlantPicker).
 	return PlantPicker.plant_tile(self, alt, moist, chance, biome_id)
-
-
 func structure_tile(chance: float, biome_id: int = BiomeCatalog.TEMPERATE) -> Vector2i:
 	## Stones or NO_PLANT for one walkable cell with no plant (PlantPicker).
 	return PlantPicker.structure_tile(self, chance, biome_id)
-
-
 func predict_cell(cell: Vector2i) -> Array:
-	## [ground atlas, plant or structure atlas or NO_PLANT] that generate_chunk puts at `cell`,
-	## from the noise alone (no tiles placed), so code away from players can read terrain.
-	if _predict_cache.has(cell):
-		return _predict_cache[cell]
-	var moist := moisture.get_noise_2d(cell.x, cell.y)
-	var chance := items_chance.get_noise_2d(cell.x, cell.y)
-	var b := biome_at(cell)
-	var alt := cell_altitude(cell, b)
-	var ground: Vector2i = _bridges.piece_or(cell, _structures.ground_at(cell, _sky.display_ground(self, cell)))
-	var top := NO_PLANT
-	if _structures.has_cell(cell):
-		top = _structures.object_at(cell)
-	elif _walls.has_wall(cell):
-		top = _walls.piece(cell)
-	elif _object_removals.has_removed(cell):
-		top = NO_PLANT
-	elif ground_is_walkable(ground) and not _bridges.has_bridge(cell):
-		top = BirchTrees.foliage_tile(self, cell, alt, moist, chance, b, ground == TileCatalog.SAND or _sky.logical_ground(self, cell) == TileCatalog.SAND)
-		if top == NO_PLANT:
-			top = _tree_cuts.sprouts.tile_or(cell, structure_tile(chance, b))
-		if _tree_cuts.has_cut(cell):
-			top = _tree_cuts.leftover(cell)
-	var out := [ground, top]
-	_predict_cache[cell] = out
-	return out
-
-
+	return WORLD_CHUNKS.predict_cell(self, cell)
 func predicted_clear(cell: Vector2i) -> bool:
-	## is_clear_ground from predict_cell: walkable, no tree, bush or stones.
-	var p := predict_cell(cell)
-	if not ground_is_walkable(p[0]):
-		return false
-	return p[1] == NO_PLANT or p[1] == TileCatalog.FLOWER or InteractableCatalog.is_leftover(p[1])
-
+	return WORLD_CHUNKS.predicted_clear(self, cell)
 
 func choppable(cell: Vector2i) -> InteractableType:
 	return _tree_cuts.choppable(cell)
-
-
 func has_tree(cell: Vector2i) -> bool:
 	return _tree_cuts.has_tree(cell)
-
-
 func cut_choppable(cell: Vector2i) -> InteractableType:
 	return _tree_cuts.cut_choppable(cell)
-
-
 func regrow_due() -> int:
 	var cells := _tree_cuts.regrow_due()
 	if not cells.is_empty():
 		plants_regrown.emit(cells)
 	return cells.size()
-
-
 func grow_back(cell: Vector2i) -> bool:
 	return _tree_cuts.grow_back(cell)
-
-
 func cut_changes() -> Dictionary[String, Dictionary]:
 	return _tree_cuts.to_changes()
-
 func object_changes() -> Dictionary[String, Dictionary]:
 	return _object_removals.object_changes_with(_tree_cuts)
-
 func restore_cuts(changes: Dictionary) -> int:
 	return _tree_cuts.restore(changes)
-
 func restore_object_changes(changes: Dictionary) -> int:
 	return _object_removals.restore_with(_tree_cuts, changes)
-
 func replace_cuts(changes: Dictionary) -> int:
 	return _tree_cuts.replace(changes)
-
 func replace_object_changes(changes: Dictionary) -> int:
 	return _object_removals.replace_with(_tree_cuts, changes)
-
 func pick_decor(cell: Vector2i) -> bool:
 	return _object_removals.pick(cell)
-
 func destroy_decor(cell: Vector2i) -> bool:
 	return _object_removals.destroy(cell)
-
 func cut_grown(cell: Vector2i) -> InteractableType:
 	return _tree_cuts.cut_grown(cell)
 
 func build_bridge(from: Vector2i, to: Vector2i) -> bool:
 	return _bridges.build_bridge(from, to)
-
 func has_bridge(cell: Vector2i) -> bool:
 	return _bridges.has_bridge(cell)
-
 func set_bridge_cell(cell: Vector2i, atlas: Vector2i) -> void:
 	## Bridge piece with no adjacency checks (tests: occupied mid-run cell).
 	_bridges.set_cell(cell, atlas)
 
-
 func forget_cut(cell: Vector2i) -> void:
 	## Drop stump/sprout on `cell` without regrowing (structure or wall covers it).
 	_tree_cuts.forget(cell)
-
-
 func has_cut(cell: Vector2i) -> bool:
 	return _tree_cuts.has_cut(cell)
-
 func cut_type(cell: Vector2i) -> InteractableType:
 	return _tree_cuts.cut_type(cell)
-
 func tree_sprouts() -> TreeSprouts:
 	return _tree_cuts.sprouts
 
 func place_wall_cells(cells: Array[Vector2i]) -> bool:
 	return _walls.place_cells(cells)
-
 func has_wall(cell: Vector2i) -> bool:
 	return _walls.has_wall(cell)
-
 func can_place_structure(structure: Structure, anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[String]:
 	return _structures.can_place(structure, anchor_cell, quarter_turns)
-
 func place_structure(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turns: int = 0) -> int:
 	return _structures.place(structure, anchor_cell, owner, quarter_turns)
-
 func placed_structures() -> Dictionary:
 	return _structures.placements()
 
@@ -389,109 +201,49 @@ func place_start_castle(owner: int) -> bool:
 	if _castle_front != null: spawn_point = _castle_front
 	return _castle_front != null
 
-
 func structures_for_sync() -> Array:
 	return _structures.to_sync()
-
 func replace_structures(list: Array) -> int:
 	return _structures.replace_from_host(list)
-
 func bridges_for_sync() -> Array:
 	return _bridges.to_sync()
-
 func replace_bridges(list: Array) -> int:
 	return _bridges.replace_from_host(list)
-
 static func bridge_pieces(length: int, horizontal: bool, land_before: bool, land_after: bool) -> Array[Vector2i]:
 	return BridgeBuilder.bridge_pieces(length, horizontal, land_before, land_after)
 
-
 func player_on_cell(cell: Vector2i) -> bool:
-	## True when a player's body box (a CharacterBody2D next to this map) overlaps the cell.
-	var cell_rect := Rect2(to_global(map_to_local(cell) - Vector2(8, 8)), Vector2(16, 16) * global_scale)
-	for node in get_parent().get_children():
-		if not node is CharacterBody2D:
-			continue
-		var body := node.get_node_or_null("CollisionShape2D") as CollisionShape2D
-		if body and body.shape and (body.global_transform * body.shape.get_rect()).intersects(cell_rect):
-			return true
-	return false
-
-
+	return WORLD_CELL_QUERIES.player_on_cell(self, cell)
 func mob_cells() -> Dictionary:
-	## The cells under any mob's feet box (Mob.cells_under World/Mobs, next to
-	## this map): a plant regrowing on one would trap that mob (#232).
-	return Mob.cells_under(get_parent().get_node_or_null("Mobs"))
-
-
+	return WORLD_CELL_QUERIES.mob_cells(self)
 func mob_on_cell(cell: Vector2i) -> bool:
 	return mob_cells().has(cell)
 
-
 func ground_is_walkable(atlas: Vector2i) -> bool:
-	## True when the layer-0 tile at `atlas` has no collision.
-	var src := tile_set.get_source(TileCatalog.SOURCE_ID) as TileSetAtlasSource
-	var td := src.get_tile_data(atlas, 0) if src and src.has_tile(atlas) else null
-	return td != null and td.get_collision_polygons_count(0) == 0
-
+	return WORLD_CELL_QUERIES.ground_is_walkable(self, atlas)
 
 func is_drawn(cell: Vector2i) -> bool:
 	return _sky.is_drawn(self, cell)
-
 func is_open_sea(cell: Vector2i) -> bool:
 	return _sky.is_open_sea(self, cell)
-
 func repaint_ground_cell(cell: Vector2i) -> void:
-	_predict_cache.erase(cell)
-	_sky.repaint_cell(self, cell)
-
+	WORLD_CHUNKS.repaint_ground_cell(self, cell)
 func sea_cells() -> Array:
 	return _sky.sea_cells()
-
 func claim_ground(cell: Vector2i, atlas: Vector2i) -> void:
 	_sky.claim(self, cell, atlas)
-
-
 func is_walkable_land(cell: Vector2i) -> bool:
-	if get_cell_source_id(0, cell) == -1:
-		return false
-	var td = get_cell_tile_data(0, cell)
-	if td == null:
-		return false
-	return td.get_collision_polygons_count(0) == 0
-
+	return WORLD_CELL_QUERIES.is_walkable_land(self, cell)
 
 func count_walkable_neighbors(cell: Vector2i) -> int:
 	return SpawnFinder.count_walkable_neighbors(self, cell)
-
-
 func is_clear_ground(cell: Vector2i) -> bool:
-	## Walkable ground with no tree, bush or stones on it; generates the cell's chunk first.
-	if not is_drawn(cell):
-		generate_chunk(map_to_local(cell))
-	if not is_walkable_land(cell):
-		return false
-	if get_cell_source_id(1, cell) != -1:
-		return false
-	return get_cell_atlas_coords(GROUND_DECOR_LAYER, cell) != TileCatalog.STONES
-
-
+	return WORLD_CELL_QUERIES.is_clear_ground(self, cell)
 func reachable_clear_cells(start: Vector2i, limit: int = SpawnFinder.SPAWN_MIN_REACHABLE) -> Array[Vector2i]:
 	return SpawnFinder.reachable_clear_cells(self, start, limit)
-
 func resolve_player_spawn(origin_cell: Vector2i = Vector2i(0, 0), max_radius: int = 192) -> Vector2i:
-	## Gate front, else the first search. A later castle must not move it.
-	if _castle_front != null:
-		return _castle_front
-	if not has_meta(&"resolved_spawn"):
-		set_meta(&"resolved_spawn", SpawnFinder.resolve_player_spawn(self, origin_cell, max_radius))
-	return get_meta(&"resolved_spawn")
-
-
+	return WORLD_CELL_QUERIES.resolve_player_spawn(self, origin_cell, max_radius)
 func spawn_spots(origin_cell: Vector2i, limit: int = SpawnFinder.SPAWN_SEARCH_LIMIT) -> Array[Vector2]:
 	return SpawnFinder.spawn_spots(self, origin_cell, limit)
-
-
 func free_spawn_position(origin_cell: Vector2i, taken: Array[Vector2]) -> Vector2:
 	return SpawnFinder.free_spawn_position(self, origin_cell, taken)
-

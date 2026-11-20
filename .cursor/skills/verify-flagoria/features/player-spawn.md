@@ -2,11 +2,13 @@
 
 Drive: not player-facing
 
+The map node delegates `resolve_player_spawn` to `Scripts/world_cell_queries.gd`, which caches the result and uses `Scripts/world/spawn_finder.gd` for the search.
+
 Players spawn on walkable land from which they can reach at least 200 clear cells, so they never start in water or boxed in by trees.
 
 ## Sub-features
 
-- `spawn-land` `resolve_player_spawn` (`Scripts/world/spawn_finder.gd`, called through `Scripts/TileMap.gd`) picks walkable land.
+- `spawn-land` `resolve_player_spawn` picks walkable land.
 - `spawn-reachable` the spawn has 200+ reachable clear cells.
 - `spawn-nodes` spawning a player finds every node it needs.
 - `spawn-free-spot` each player gets its own clear walkable spot within `SPAWN_RADIUS` (64 px) of the spawn point, at least `SPAWN_CLEARANCE` (16 px) from every other player, on join and on respawn (#164). The search walks at least `SPAWN_SEARCH_LIMIT` (400) clear cells and keeps going outward when every spot is taken.
