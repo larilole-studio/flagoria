@@ -107,6 +107,9 @@ func setup(type: String, at: Vector2, rng_seed: int) -> void:
 
 
 func _ready() -> void:
+	# Soldiers share this path. Only the server simulates movement in physics.
+	physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_ON if multiplayer.is_server() else PHYSICS_INTERPOLATION_MODE_OFF
+	reset_physics_interpolation()
 	sprite.texture = MobCatalog.sheet(mob_type)
 	puff.texture = load(MobCatalog.PUFF_SHEET)
 	var shape := RectangleShape2D.new()

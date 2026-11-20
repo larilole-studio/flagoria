@@ -18,11 +18,11 @@ config/icon="res://art/icon/icon.png"
 [autoload]
 
 MapGen="*res://Scripts/map_gen.gd"
-AudioSettings="*res://Scripts/audio_settings.gd"
+AudioSettings="*res://Scripts/audio/audio_settings.gd"
 GameSettings="*res://Scripts/game_settings.gd"
 HudLayout="*res://Scripts/hud_layout.gd"
-MusicPlayer="*res://Scripts/music_player.gd"
-UiSfx="*res://Scripts/ui_sfx.gd"
+MusicPlayer="*res://Scripts/audio/music_player.gd"
+UiSfx="*res://Scripts/audio/ui_sfx.gd"
 DayNight="*res://Scripts/mechanics/day_night/day_night.gd"
 
 [display]
@@ -65,6 +65,7 @@ pointing/emulate_touch_from_mouse=true
 [physics]
 
 common/physics_ticks_per_second=45
+common/physics_interpolation=true
 
 [rendering]
 

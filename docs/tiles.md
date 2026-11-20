@@ -13,7 +13,7 @@ The map uses the in-house Flagoria tileset v3.1 (Solaria replacement, #97 / #100
 | `flagoria_main.tscn` | `World/worldMap` uses `art/flagoria/flagoria_tiles_v3.tres` as its `tile_set`. |
 | `tilemap_dynamic.tscn` | Uses the same TileSet. No scene or script loads this file. Its embedded script places tiles through `TileCatalog`. |
 | `Scripts/TileMap.gd` | Chunk drawing. Ground paint is `Scripts/world/sky_islands.gd`: open sea stays an empty cell, land goes through `set_cells_terrain_connect`, then each land cell is set to its grass, inland sand, inland swamp or island-edge piece. |
-| `Scripts/footsteps.gd` | Maps the cell under the player to a footstep surface through `TileCatalog.TILES`. |
+| `Scripts/audio/footsteps.gd` | Maps the cell under the player to a footstep surface through `TileCatalog.TILES`. |
 | `tools/audio_check.gd`, `tools/render_biomes.gd` | Use `TileCatalog` names. |
 | `tests/world/test_map_characterization.gd` and other tests | Pinned characterization data and a few fixtures compare against the raw coordinates of the map fill tiles below, on purpose: a cell move must fail them. |
 

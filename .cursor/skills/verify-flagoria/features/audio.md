@@ -7,11 +7,11 @@ Music loops in the menu and in game, and combat and footstep sounds play on the 
 ## Sub-features
 
 - `audio-buses` Music and SFX buses under Master (`default_bus_layout.tres`), sliders persisted in `user://audio_settings.cfg`.
-- `audio-music` looping menu and game tracks (`Scripts/music_player.gd`).
-- `audio-sfx` swing, hit, hurt and kill sounds (`Scripts/combat_sfx.gd`).
-- `audio-footsteps` per-terrain footsteps (`Scripts/footsteps.gd`).
-- `audio-ui` UI sounds (`Scripts/ui_sfx.gd`): `click` on every button, `back` on Back, `menu_open` / `menu_close` when a menu shows or hides, `saved` on a map save; each press plays once and outlives its button, and every clip under `art/audio/sfx/ui/` is used.
-- `audio-mobs` mob `notice`, `attack`, `hurt`, `death`, `idle` (`Scripts/mob_sfx.gd`, see [Mobs](./mobs.md)).
+- `audio-music` looping menu and game tracks (`Scripts/audio/music_player.gd`).
+- `audio-sfx` swing, hit, hurt and kill sounds (`Scripts/audio/combat_sfx.gd`).
+- `audio-footsteps` per-terrain footsteps (`Scripts/audio/footsteps.gd`).
+- `audio-ui` UI sounds (`Scripts/audio/ui_sfx.gd`): `click` on every button, `back` on Back, `menu_open` / `menu_close` when a menu shows or hides, `saved` on a map save; each press plays once and outlives its button, and every clip under `art/audio/sfx/ui/` is used.
+- `audio-mobs` mob `notice`, `attack`, `hurt`, `death`, `idle` (`Scripts/audio/mob_sfx.gd`, see [Mobs](./mobs.md)).
 - `audio-chop` tree and bush chop sounds (see [Chopping trees and bushes](./chop-trees-and-bushes.md)).
 - `audio-check` in-game check that every wired sound is heard (`tools/audio_check.gd`, run by verify.sh).
 

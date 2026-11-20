@@ -45,7 +45,8 @@ func _test_ingame_menu_open_resume() -> int:
 	var score_rect: Rect2 = (_hud_on_canvas(scene, "ScoreHud") as Control).get_global_rect()
 	var menu_box := menu.menu_button.get_theme_stylebox("normal") as StyleBoxTexture
 	if menu.menu_button.text != "" or menu_box == null or menu_box.texture == null \
-			or not str(menu_box.texture.resource_path).contains("ui_menu") \
+			or menu_box.texture.get_size() != Vector2(24, 24) \
+			or menu.menu_button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS \
 			or button_rect.size.x != button_rect.size.y or tap_px < 40.0 \
 			or button_rect.intersects(hearts_rect) or button_rect.intersects(score_rect):
 		printerr(

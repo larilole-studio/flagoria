@@ -30,8 +30,8 @@ func _test_points_award() -> int:
 	if seen != [[7, 3, 3, "test"], [7, 5, 2, "test"], [9, 4, 4, "other"]]:
 		printerr("FAIL points_award signals %s" % [seen])
 		fail += 1
-	if hud.text != "5 pts" or not hud.visible:
-		printerr("FAIL points_award HUD shows '%s' (visible %s), want own total '5 pts'" % [hud.text, hud.visible])
+	if hud.text != "5" or not hud.visible:
+		printerr("FAIL points_award HUD shows '%s' (visible %s), want own total '5'" % [hud.text, hud.visible])
 		fail += 1
 	hud.queue_free()
 	points.queue_free()
@@ -56,7 +56,7 @@ func _test_points_hud_in_scene() -> int:
 	await process_frame
 	var hud: ScoreHud = scene.find_child("ScoreHud", true, false) as ScoreHud
 	var hearts: Control = scene.find_child("HeartsHud", true, false) as Control
-	if not hud.visible or hud.text != "0 pts":
+	if not hud.visible or hud.text != "0":
 		printerr("FAIL points_hud_in_scene counter visible %s, text '%s'" % [hud.visible, hud.text])
 		fail += 1
 	if hud.position.x < hearts.position.x + hearts.size.x - 1.0 or hud.scale != hearts.scale:
@@ -64,7 +64,7 @@ func _test_points_hud_in_scene() -> int:
 				% [hud.position, hud.scale, hearts.position, hearts.size, hearts.scale])
 		fail += 1
 	scene.get_node("Points").award(me, 4, "test")
-	if hud.text != "4 pts":
+	if hud.text != "4":
 		printerr("FAIL points_hud_in_scene counter '%s' after an award of 4" % hud.text)
 		fail += 1
 	scene.queue_free()

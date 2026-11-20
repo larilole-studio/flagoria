@@ -37,9 +37,10 @@ func _test_hud_round_buttons() -> int:
 	if interaction.build.tool != BuildPlacement.Tool.CUT or plank.visible or tower.visible or wall.visible:
 		printerr("FAIL hud_round_buttons: list starts open, tool %s" % interaction.build.tool)
 		fail += 1
+	var build_closed := _face(buildings, "normal")
 	buildings.set_pressed(true)
 	await process_frame
-	if not plank.visible or not tower.visible or not wall.visible:
+	if _face(buildings, "normal") == build_closed or not plank.visible or not tower.visible or not wall.visible:
 		printerr("FAIL hud_round_buttons: Buildings did not open the picker")
 		fail += 1
 	buildings.set_pressed(false)
@@ -80,19 +81,22 @@ func _test_hud_round_buttons() -> int:
 		printerr("FAIL hud_round_buttons: second press left the panel open")
 		fail += 1
 	var before := interaction.mode
+	var tool_button := wheel.get_node("ToolButton") as Button
+	var sword_face := _face(tool_button, "normal")
 	wheel.select(ToolWheel.Tool.CHOP)
-	var tool_icon: Texture2D = wheel.get_node("ToolButton").icon
+	var chop_face := _face(tool_button, "normal")
 	if interaction.mode == before or interaction.mode != Interaction.Mode.INTERACT \
-			or tool_icon == null or not str(tool_icon.resource_path).ends_with("icon_mode_interact.png"):
+			or chop_face == null or chop_face == sword_face:
 		printerr("FAIL hud_round_buttons: chop did not switch to interact (%s)" % interaction.mode)
 		fail += 1
 	if interaction.build.tool != BuildPlacement.Tool.PLANK:
 		printerr("FAIL hud_round_buttons: entering interact cleared the plank tool")
 		fail += 1
 	wheel.select(ToolWheel.Tool.SWORD)
-	tool_icon = wheel.get_node("ToolButton").icon
 	if interaction.mode != Interaction.Mode.COMBAT or interaction.build.tool != BuildPlacement.Tool.CUT \
-			or tool_icon == null or not str(tool_icon.resource_path).ends_with("icon_mode_attack.png"):
+			or _face(tool_button, "normal") != sword_face \
+			or sword_face.get_size() != Vector2(24, 24) \
+			or tool_button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS:
 		printerr("FAIL hud_round_buttons: leaving interact mode %s tool %s"
 				% [interaction.mode, interaction.build.tool])
 		fail += 1
@@ -104,11 +108,9 @@ func _test_hud_round_buttons() -> int:
 
 
 func _is_selected(button: Button) -> bool:
-	if not button.button_pressed:
-		return false
-	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
-	if box == null or box.texture == null:
-		return false
-	var path := str(box.texture.resource_path)
-	return "_selected" in path or "_pressed" in path
+	return button.button_pressed and _face(button, "normal") != _face(button, "hover_pressed")
 
+
+func _face(button: Button, state: String) -> Texture2D:
+	var box := button.get_theme_stylebox(state) as StyleBoxTexture
+	return box.texture if box != null else null

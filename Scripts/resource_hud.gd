@@ -1,10 +1,6 @@
 class_name ResourceHud
 extends HBoxContainer
-## The local player's wood count, centred at the top of the screen: the wood
-## icon and the count. It uses the sibling HeartsHud's pixel scale and top
-## margin, so it stays crisp and lined up with the hearts on any screen.
-
-const ICON := preload("res://art/ui/ui_wood_icon.png")
+## The local player's wood count and log sticker.
 
 var label: Label
 var _inventory: Inventory
@@ -12,14 +8,15 @@ var _inventory: Inventory
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	texture_filter = RoundHudStyle.FILTER
 	add_theme_constant_override("separation", 2)
 	var icon := TextureRect.new()
-	icon.texture = ICON
+	icon.texture = RoundHudStyle.texture("log")
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(icon)
 	label = Label.new()
+	RoundHudStyle.apply_label(label, 10)
 	label.text = "0"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(label)
