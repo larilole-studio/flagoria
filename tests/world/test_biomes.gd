@@ -83,6 +83,40 @@ func _test_biomes() -> int:
 		printerr("FAIL biomes: spawn square (0,0) must stay active")
 		fail += 1
 
+	# Map Settings per-biome fields (#510): defaults are the values fixed before
+	# them, so older saves regenerate unchanged; OCEANIC density 1.0 keeps an
+	# OCEANIC square, 0.0 drops it; a +0.3 altitude bias raises altitude by 0.3.
+	var defaults := MapGenParams.make_defaults()
+	if defaults.oceanic_altitude_bias != -0.15 or defaults.oceanic_island_density != 0.2:
+		printerr("FAIL biomes: per-biome defaults changed from -0.15 / 0.2")
+		fail += 1
+	var probe_sq := Vector2i.ZERO
+	for sq in range(1, 6561):
+		var cand := Vector2i(sq % 81 - 40, sq / 81 - 40)
+		if cand != Vector2i.ZERO and world.biome_at(cand * params.archipelago_spacing + Vector2i(32, 32)) == BiomeCatalog.OCEANIC:
+			probe_sq = cand
+			break
+	if probe_sq == Vector2i.ZERO:
+		printerr("FAIL biomes: no OCEANIC square to probe")
+		fail += 1
+	var probe: Vector2i = probe_sq * params.archipelago_spacing + Vector2i(32, 32)
+	params.oceanic_island_density = 1.0
+	world.apply_map_params(params)
+	var alt_before: float = world.cell_altitude(probe, BiomeCatalog.OCEANIC)
+	if not world.archipelago_square_active(probe_sq):
+		printerr("FAIL biomes: oceanic_island_density 1.0 dropped square %s" % probe_sq)
+		fail += 1
+	params.oceanic_altitude_bias = 0.15
+	world.apply_map_params(params)
+	if absf(world.cell_altitude(probe, BiomeCatalog.OCEANIC) - alt_before - 0.3) > 0.0001:
+		printerr("FAIL biomes: oceanic_altitude_bias +0.3 did not raise altitude by 0.3")
+		fail += 1
+	params.oceanic_island_density = 0.0
+	world.apply_map_params(params)
+	if world.archipelago_square_active(probe_sq):
+		printerr("FAIL biomes: oceanic_island_density 0.0 kept square %s" % probe_sq)
+		fail += 1
+
 	if fail == 0:
 		print(
 			"PASS test_biomes biomes=%s oceanic=%s/%s dense=%s/%s"

@@ -47,6 +47,25 @@ wide render):
 Map saves written before `biome_edge` load with 0.5, so their biome regions
 regenerate where they were.
 
+## Per-biome land amount
+
+Two Map Settings fields per biome set how much land it holds (#510):
+
+| Biome             | Altitude bias (default) | Island density (default) |
+|-------------------|-------------------------|--------------------------|
+| OCEANIC           | `oceanic_altitude_bias` -0.15 | `oceanic_island_density` 0.2 |
+| TEMPERATE         | `temperate_altitude_bias` 0   | `temperate_island_density` 1.0 |
+| CONTINENTAL       | `continental_altitude_bias` 0.1 | `continental_island_density` 1.0 |
+| ARCHIPELAGO_DENSE | `archipelago_dense_altitude_bias` 0.05 | `archipelago_dense_island_density` 1.0 |
+
+The altitude bias is added to every cell's altitude in that biome, so a
+higher value means more land; it is the knob on the default continuous map.
+The island density is the share of archipelago squares that keep an island
+and applies only with `archipelago_spacing` above 0. The defaults are the
+values that were fixed in `BiomeCatalog` before these fields existed, so the
+map is unchanged and map saves without the fields regenerate as they were.
+Random specs leaves them alone. With `biome_frequency = 0` neither applies.
+
 ## Output
 
 - `<out>_seed_<seed>.png`: biome map on the left, terrain in the middle
