@@ -7,7 +7,7 @@ extends RefCounted
 ## colours and cities (rebuilt from the towers and walls) come back with them.
 ## Host alone: a joining peer gets the restored list with the map (#278).
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 const PALISADE := "palisade"
 

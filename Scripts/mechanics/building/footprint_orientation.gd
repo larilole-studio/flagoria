@@ -8,7 +8,7 @@ const MARKER := preload("res://art/ui/map/ui_map_marker_hero_up.png")
 const LAYER_NAME := "FootprintOrientationMarkers"
 const MARKER_SCALE := 0.55
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 
 static func angle_rad(quarter_turns: int) -> float:

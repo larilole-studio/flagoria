@@ -2,11 +2,11 @@
 
 Drive: not player-facing
 
-The world is split into biomes (oceanic, temperate, continental, dense archipelago; ids in `Scripts/BiomeCatalog.gd`) that change island density, terrain, plants and structures.
+The world is split into biomes (oceanic, temperate, continental, dense archipelago; ids in `Scripts/world/BiomeCatalog.gd`) that change island density, terrain, plants and structures.
 
 ## Sub-features
 
-- `biome-map` per-biome altitude bias and island density, Map Settings fields such as `oceanic_altitude_bias` and `oceanic_island_density` (`Scripts/MapGenParams.gd`; defaults are the values fixed before them, `docs/biomes.md`).
+- `biome-map` per-biome altitude bias and island density, Map Settings fields such as `oceanic_altitude_bias` and `oceanic_island_density` (`Scripts/world/MapGenParams.gd`; defaults are the values fixed before them, `docs/biomes.md`).
 - `biome-terrain` beaches, swamps and flowers per biome.
 - `biome-plants` tree and bush density per biome, including swamp scrub (bushes on dense-archipelago swamp; a save from before it loads with none) and CONTINENTAL birches (two-cell trees; a save from before `birch_min_chance` loads with none).
 - `biome-structures` stones on oceanic and continental land.

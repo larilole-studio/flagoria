@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Player health and regeneration (Scripts/player_health.gd).
+## Player health and regeneration (Scripts/player/player_health.gd).
 
 
 func _test_player_regen() -> int:
@@ -13,7 +13,7 @@ func _test_player_regen() -> int:
 	await process_frame
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
-	var me = load("res://Player/character_body_2d.tscn").instantiate()
+	var me = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	me.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(me)
 	var h: PlayerHealth = me.health
@@ -49,7 +49,7 @@ func _test_player_regen() -> int:
 		printerr("FAIL player_regen full player -> %s, regen plays %s" % [h.health, c.plays.get("regen", 0)])
 		fail += 1
 	# Another peer's player heals on this peer too, but only its owner hears it.
-	var other = load("res://Player/character_body_2d.tscn").instantiate()
+	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	other.name = "2"
 	scene.get_node("World").add_child(other)
 	other.health.set_health_now(3)
@@ -82,10 +82,10 @@ func _test_player_health() -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var world: Node = scene.get_node("World")
-	var me = load("res://Player/character_body_2d.tscn").instantiate()
+	var me = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	me.name = str(scene.multiplayer.get_unique_id())  # the local player binds the HUD
 	world.add_child(me)
-	var other = load("res://Player/character_body_2d.tscn").instantiate()
+	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	other.name = "2"
 	world.add_child(other)
 	var h: PlayerHealth = me.health
@@ -357,7 +357,7 @@ func _test_player_health_join_while_dead() -> int:
 		# the server side, so the copies go without theirs.
 		var world: Node = scene.get_node("World")
 		var copy := func(player_name: String) -> CharacterBody2D:
-			var p = load("res://Player/character_body_2d.tscn").instantiate()
+			var p = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 			p.name = player_name
 			p.get_node("MultiplayerSynchronizer").free()
 			world.add_child(p)

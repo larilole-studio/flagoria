@@ -5,7 +5,7 @@ extends RefCounted
 ## rules and costs. Interaction transports plank requests (#297);
 ## StructureRequests transports the other builds (#497, #498).
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 const WRONG_GROUND := "wrong ground"
 const OCCUPIED := "occupied"

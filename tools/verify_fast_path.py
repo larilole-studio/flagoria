@@ -94,7 +94,7 @@ def self_test() -> int:
         True,
         "feature doc",
     )
-    check(["Scripts/player.gd"], False, "gameplay script")
+    check(["Scripts/player/player.gd"], False, "gameplay script")
     check(["tools/verify.sh"], False, "verify script")
     check([".github/workflows/pr-hygiene.yml"], False, "other workflow")
     check([".github/verify-docs-only-allow.txt"], False, "allowlist edit")
@@ -102,7 +102,7 @@ def self_test() -> int:
     check(["tools/verify_fast_path.py"], False, "classifier edit")
     check([], False, "empty paths")
     check(
-        ["docs/audio.md", "Scripts/player.gd"],
+        ["docs/audio.md", "Scripts/player/player.gd"],
         False,
         "mixed docs and code",
     )

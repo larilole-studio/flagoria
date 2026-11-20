@@ -67,7 +67,7 @@ func _test_interact_cut_trees() -> int:
 	world.set_cell(1, Vector2i(12, 8), TileCatalog.SOURCE_ID, TileCatalog.BUSH)
 	world.set_cell(1, Vector2i(13, 8), TileCatalog.SOURCE_ID, TileCatalog.TREE_PINE_SMALL)
 	world.set_cell(1, Vector2i(10, 6), TileCatalog.SOURCE_ID, TileCatalog.TREE)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
 	scene.get_node("World").add_child(player)
@@ -217,7 +217,7 @@ func _test_interact_in_multiplayer() -> int:
 			world.set_cell(0, Vector2i(x, y), TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
 	for x in range(6, 15):
 		world.set_cell(1, Vector2i(x, 8), TileCatalog.SOURCE_ID, TileCatalog.TREE)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
 	scene.get_node("World").add_child(player)

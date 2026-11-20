@@ -50,29 +50,29 @@ GAMEPLAY = [
     "Player/*", "Mobs/*", "*.tscn",
     "flagoria_main.gd",  # host, join, spawn and sync
     "TouchScreenButton.gd", "addons/virtual_joystick/*",  # touch input
-    "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
-    "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
-    "Scripts/player_health.gd",
+    "Scripts/player/player.gd", "Scripts/player/player_input.gd", "Scripts/player/player_combat.gd",
+    "Scripts/player/player_camera.gd", "Scripts/player/player_hud.gd", "Scripts/player/player_wall_draw.gd",
+    "Scripts/player/player_health.gd",
     "Scripts/mechanics/mobs/mob.gd", "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/mobs/mob_catalog.gd",
-    "Scripts/TileMap.gd",  # chunk loading, collision, ground sync
-    "Scripts/world_chunks.gd", "Scripts/world_map_params.gd", "Scripts/world_cell_queries.gd",
+    "Scripts/world/TileMap.gd",  # chunk loading, collision, ground sync
+    "Scripts/world/world_chunks.gd", "Scripts/world/world_map_params.gd", "Scripts/world/world_cell_queries.gd",
     "Scripts/world/*.gd",  # terrain shape and spawn search for the world map
     "Scripts/mechanics/*.gd",  # cuts, bridges, walls, structures, choppable types (all subfolders)
-    "Scripts/map_gen.gd",  # session map parameters applied to the world map
-    "Scripts/MapGenParams.gd",  # map generation defaults and value ranges
+    "Scripts/world/map_gen.gd",  # session map parameters applied to the world map
+    "Scripts/world/MapGenParams.gd",  # map generation defaults and value ranges
     "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
-    "Scripts/ui/hearts_hud.gd", "Scripts/map_zoom.gd",
+    "Scripts/ui/hearts_hud.gd", "Scripts/player/map_zoom.gd",
     "Scripts/shell/MainMenu.gd", "Scripts/shell/menu_join_flow.gd", "Scripts/shell/menu_worlds.gd",
     "Scripts/shell/menu_volume.gd", "Scripts/shell/menu_gameplay_settings.gd",
     "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
-    "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
+    "Scripts/player/attack_aim.gd", "Scripts/player/aim_cone_style.gd",  # aimed attacks and the cone's reach
     "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",  # score awards
     "Scripts/mechanics/trees/inventory.gd",  # gathered wood
     "Scripts/shell/game_settings.gd",  # mob spawn rate
-    "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
+    "Scripts/world/tile_catalog.gd", "Scripts/world/BiomeCatalog.gd",  # tiles and biome tables of the world map
     "Scripts/saves/world_save.gd",  # what a saved world keeps
     "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
-    "Scripts/explored_map.gd", "Scripts/ui/minimap_panel.gd",  # explored map and its HUD panel
+    "Scripts/world/explored_map.gd", "Scripts/ui/minimap_panel.gd",  # explored map and its HUD panel
     "Scripts/ui/parchment_map.gd", "Scripts/ui/map_wood_button.gd",  # parchment full map and its wood controls
     "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd", "Scripts/ui/scoreboard_toggle.gd",
     "Scripts/ui/scoreboard_panel.gd",
@@ -96,18 +96,18 @@ STRESS_MATRIX = [
 # Any change to them gets the full stress tier.
 NETCODE = [
     "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",
-    "tilemap_dynamic.tscn",
+    "Scripts/world/tilemap_dynamic.tscn",
     *STRESS_MATRIX,
 ]
 # Files that mix netcode with other gameplay. They get the full tier only when
 # a changed line names netcode (RPCs, peers, authority, synchronizers).
 NETCODE_MIXED = [
     "flagoria_main.gd", "flagoria_main.tscn",
-    "Player/character_body_2d.tscn", "Mobs/mob.tscn",
-    "Scripts/player.gd", "Scripts/player_input.gd", "Scripts/player_combat.gd",
-    "Scripts/player_camera.gd", "Scripts/player_hud.gd", "Scripts/player_wall_draw.gd",
-    "Scripts/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/TileMap.gd",
-    "Scripts/world_chunks.gd", "Scripts/world_map_params.gd", "Scripts/world_cell_queries.gd",
+    "Scripts/player/character_body_2d.tscn", "Mobs/mob.tscn",
+    "Scripts/player/player.gd", "Scripts/player/player_input.gd", "Scripts/player/player_combat.gd",
+    "Scripts/player/player_camera.gd", "Scripts/player/player_hud.gd", "Scripts/player/player_wall_draw.gd",
+    "Scripts/player/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/world/TileMap.gd",
+    "Scripts/world/world_chunks.gd", "Scripts/world/world_map_params.gd", "Scripts/world/world_cell_queries.gd",
 ]
 NET_LINE = re.compile(r"rpc|multiplayer|peer|authority|replicat|synchroniz|spawner|is_server|enet", re.I)
 
@@ -207,14 +207,14 @@ def gameplay_paths(paths: list[str], base_project: str | None, head_project: str
 def self_test() -> int:
     inp = "[input]\n\nattack={}\n"
     cases = [
-        (["Player/sword.tscn"], None, None, True),
+        (["Scripts/player/sword.tscn"], None, None, True),
         (["Scripts/mechanics/mobs/mob.gd", "README.md"], None, None, True),
         (["Scripts/ui/map_admin_panel.tscn"], None, None, True),
-        (["Scripts/map_gen.gd"], None, None, True),
-        (["Scripts/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
-        (["Scripts/MapGenParams.gd"], None, None, True),
+        (["Scripts/world/map_gen.gd"], None, None, True),
+        (["Scripts/world/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
+        (["Scripts/world/MapGenParams.gd"], None, None, True),
         (["Scripts/saves/map_save.gd"], None, None, True),
-        (["Scripts/MapGenParams.gd.uid", "Scripts/saves/map_save.gd.uid"], None, None, False),
+        (["Scripts/world/MapGenParams.gd.uid", "Scripts/saves/map_save.gd.uid"], None, None, False),
         (["Scripts/world/spawn_finder.gd"], None, None, True),
         (["Scripts/world/terrain_shape.gd.uid"], None, None, False),
         (["debug/building_block_pieces.tscn"], None, None, False),
@@ -223,7 +223,7 @@ def self_test() -> int:
         (["Scripts/mechanics/interact/interaction.gd"], None, None, True),
         (["Scripts/mechanics/trees/chop_action.gd"], None, None, True),
         (["Scripts/mechanics/walls/wall_solver.gd.uid"], None, None, False),
-        (["Scripts/player.gd.uid", "tests/run_tests.gd"], None, None, False),
+        (["Scripts/player/player.gd.uid", "tests/run_tests.gd"], None, None, False),
         (["tests/ui/test_map_zoom.gd", "tests/helpers/test_helpers.gd"], None, None, False),
         # Stress tooling is not player-facing gameplay. runs_stress() still
         # starts the full matrix for these paths; see the matrix cases below.
@@ -232,15 +232,15 @@ def self_test() -> int:
         (["tests/wall_sync_probe.gd", "tests/net/test_wall_sync.gd"], None, None, False),
         (["tests/wall_break_probe.gd", "tests/net/test_wall_break_sync.gd"], None, None, False),
         (["tests/docker_publish_probe.gd"], None, None, False),
-        (["Scripts/attack_aim.gd"], None, None, True),
-        (["Scripts/aim_cone_style.gd"], None, None, True),
+        (["Scripts/player/attack_aim.gd"], None, None, True),
+        (["Scripts/player/aim_cone_style.gd"], None, None, True),
         (["Scripts/mechanics/conquest/points.gd"], None, None, True),
         (["Scripts/saves/world_save.gd"], None, None, True),
         (["Scripts/saves/player_save.gd"], None, None, True),
         (["Scripts/shell/ingame_menu.gd"], None, None, True),
         (["Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd", "Scripts/ui/hud_layout_edit.tscn"], None, None, True),
         (["data/interactables/tree.tres"], None, None, True),
-        (["Scripts/attack_aim.gd.uid", "data/interactables/tree.tres.uid"], None, None, False),
+        (["Scripts/player/attack_aim.gd.uid", "data/interactables/tree.tres.uid"], None, None, False),
         (["Scripts/audio/combat_sfx.gd", "Scripts/audio/music_player.gd", "tools/render_biomes.gd"], None, None, False),
         (["project.godot"], None, None, True),
         (["project.godot"], "[application]\nname=1\n" + inp, "[application]\nname=2\n" + inp, False),
@@ -255,8 +255,8 @@ def self_test() -> int:
     def diff(path: str, *lines: str) -> str:
         return "diff --git a/%s b/%s\n--- a/%s\n+++ b/%s\n@@ -1 +1 @@\n%s\n" % (
             path, path, path, path, "\n".join(lines))
-    play = diff("Scripts/player.gd", "-\tvar speed = 1", "+\tvar speed = 2")
-    play_net = diff("Scripts/player.gd", "+@rpc(\"any_peer\")", "+func hit():")
+    play = diff("Scripts/player/player.gd", "-\tvar speed = 1", "+\tvar speed = 2")
+    play_net = diff("Scripts/player/player.gd", "+@rpc(\"any_peer\")", "+func hit():")
     scene_net = diff("flagoria_main.tscn", "+[node name=\"MultiplayerSpawner\" type=\"MultiplayerSpawner\"]")
     tiers = [
         ("pull_request", ["Scripts/mechanics/mobs/mob_spawner.gd", "README.md"], "", FULL_RUNS),
@@ -268,10 +268,10 @@ def self_test() -> int:
         ("pull_request", ["tests/net/test_wall_sync.gd.uid"], "", FULL_RUNS),
         ("pull_request", ["tests/wall_break_probe.gd"], "", FULL_RUNS),
         ("pull_request", ["tests/net/test_wall_break_sync.gd"], "", FULL_RUNS),
-        ("pull_request", ["Scripts/player.gd"], play_net, FULL_RUNS),
+        ("pull_request", ["Scripts/player/player.gd"], play_net, FULL_RUNS),
         ("pull_request", ["flagoria_main.tscn"], scene_net, FULL_RUNS),
-        ("pull_request", ["Scripts/player.gd"], None, FULL_RUNS),
-        ("pull_request", ["Scripts/player.gd", "Player/sword.tscn"], play, LIGHT_RUNS),
+        ("pull_request", ["Scripts/player/player.gd"], None, FULL_RUNS),
+        ("pull_request", ["Scripts/player/player.gd", "Scripts/player/sword.tscn"], play, LIGHT_RUNS),
         ("pull_request", ["Scripts/ui/hearts_hud.gd"], diff("Scripts/ui/hearts_hud.gd", "+rpc()"), LIGHT_RUNS),
         ("push", ["Scripts/ui/hearts_hud.gd"], "", FULL_RUNS),
     ]
@@ -287,8 +287,8 @@ def self_test() -> int:
         (["docs/ci-required-checks.md", "tools/required_checks.py"], None, False, LIGHT_RUNS),
         (["Scripts/ui/hearts_hud.gd"], play, True, LIGHT_RUNS),
         (["Scripts/ui/hearts_hud.gd"], None, True, LIGHT_RUNS),
-        (["Scripts/player.gd"], play, True, LIGHT_RUNS),
-        (["Scripts/player.gd"], None, True, FULL_RUNS),
+        (["Scripts/player/player.gd"], play, True, LIGHT_RUNS),
+        (["Scripts/player/player.gd"], None, True, FULL_RUNS),
     ]
     for paths, diff, want_play, want_runs in parity:
         got_play, got_runs = classify(paths, diff=diff)

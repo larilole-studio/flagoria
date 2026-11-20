@@ -180,7 +180,7 @@ func _test_structure_place_refused() -> int:
 		var clear: Variant = _find_anchor(world, s, func(cells): return cells.all(world.predicted_clear))
 		if clear != null and not found.has("player"):
 			found["player"] = true
-			var player = load("res://Player/character_body_2d.tscn").instantiate()
+			var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 			player.name = str(scene.multiplayer.get_unique_id())
 			scene.get_node("World").add_child(player)
 			player.global_position = world.to_global(world.map_to_local(clear))

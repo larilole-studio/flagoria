@@ -71,12 +71,12 @@ FIXTURES = [
     ("empty How it was checked", dict(body="## Why\nX\n\n## How it was checked\n\n<!-- only a comment -->\n\nFeature file: not player-facing\n\nSize: ~1 code lines\n"), 1, []),
     ("missing Verify once line", dict(body="## Why\nX\n\n## How it was checked\nDrive: not player-facing\n\nFeature file: not player-facing\n\nSize: ~1 code lines\n"), 1, []),
     ("missing Drive line", dict(body="## Why\nX\n\n## How it was checked\nVerify: once\n\nFeature file: not player-facing\n\nSize: ~1 code lines\n"), 1, []),
-    ("gameplay without Evidence", dict(body=CLEAN_BODY, numstat=[(10, 0, "Scripts/player.gd")]), 1, []),
-    ("gameplay Evidence CI phrase", dict(body=GAMEPLAY_BODY, numstat=[(10, 0, "Scripts/player.gd")]), 0, None),
-    ("gameplay Evidence user-attachments", dict(body=GAMEPLAY_BODY_URL, numstat=[(10, 0, "Scripts/player.gd")]), 0, None),
+    ("gameplay without Evidence", dict(body=CLEAN_BODY, numstat=[(10, 0, "Scripts/player/player.gd")]), 1, []),
+    ("gameplay Evidence CI phrase", dict(body=GAMEPLAY_BODY, numstat=[(10, 0, "Scripts/player/player.gd")]), 0, None),
+    ("gameplay Evidence user-attachments", dict(body=GAMEPLAY_BODY_URL, numstat=[(10, 0, "Scripts/player/player.gd")]), 0, None),
     ("gameplay Evidence empty section", dict(
         body=CLEAN_BODY + "\n## Evidence\n\n<!-- todo -->\n",
-        numstat=[(10, 0, "Scripts/player.gd")]), 1, []),
+        numstat=[(10, 0, "Scripts/player/player.gd")]), 1, []),
 ]
 
 

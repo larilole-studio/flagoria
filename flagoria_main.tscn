@@ -6,7 +6,7 @@
 [ext_resource type="TileSet" path="res://art/flagoria/flagoria_tiles_v3.tres" id="4_tiles"]
 [ext_resource type="Script" path="res://Scripts/shell/MainMenu.gd" id="5_u0yu1"]
 [ext_resource type="Theme" path="res://art/ui/main_menu_theme.tres" id="6_menu"]
-[ext_resource type="Script" path="res://Scripts/TileMap.gd" id="7_n5hto"]
+[ext_resource type="Script" path="res://Scripts/world/TileMap.gd" id="7_n5hto"]
 [ext_resource type="Script" path="res://TouchScreenButton.gd" id="7_vw8yj"]
 [ext_resource type="Script" path="res://Scripts/ui/hearts_hud.gd" id="8_hearts"]
 [ext_resource type="Script" path="res://Scripts/mechanics/mobs/mob_spawner.gd" id="8_mobs"]
@@ -255,7 +255,7 @@ script = ExtResource("25_raid")
 spawn_path = NodePath("..")
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World"]
-_spawnable_scenes = PackedStringArray("res://Player/character_body_2d.tscn")
+_spawnable_scenes = PackedStringArray("res://Scripts/player/character_body_2d.tscn")
 spawn_path = NodePath("..")
 
 [node name="CanvasLayer2" type="CanvasLayer" parent="."]

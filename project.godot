@@ -17,7 +17,7 @@ config/icon="res://art/icon/icon.png"
 
 [autoload]
 
-MapGen="*res://Scripts/map_gen.gd"
+MapGen="*res://Scripts/world/map_gen.gd"
 AudioSettings="*res://Scripts/audio/audio_settings.gd"
 GameSettings="*res://Scripts/shell/game_settings.gd"
 HudLayout="*res://Scripts/ui/hud_layout.gd"

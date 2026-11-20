@@ -4,7 +4,7 @@ extends RefCounted
 
 const PREVIEW_DIR := MapSave.SAVE_DIR + "_previews/v2/"
 const TILE_SET := "res://art/flagoria/flagoria_tiles_v3.tres"
-const MAP_SCRIPT := "res://Scripts/TileMap.gd"
+const MAP_SCRIPT := "res://Scripts/world/TileMap.gd"
 const ICON_SIZE := Vector2i(64, 40)
 const MIN_LAND_FRACTION := 0.02
 const PLACEHOLDER := Color(0.32, 0.34, 0.4)

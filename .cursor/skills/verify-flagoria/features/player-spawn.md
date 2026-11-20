@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The map node delegates `resolve_player_spawn` to `Scripts/world_cell_queries.gd`, which caches the result and uses `Scripts/world/spawn_finder.gd` for the search.
+The map node delegates `resolve_player_spawn` to `Scripts/world/world_cell_queries.gd`, which caches the result and uses `Scripts/world/spawn_finder.gd` for the search.
 
 Players spawn on walkable land from which they can reach at least 200 clear cells, so they never start in water or boxed in by trees.
 

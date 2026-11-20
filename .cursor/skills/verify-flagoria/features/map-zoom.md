@@ -6,7 +6,7 @@ Pinch with two fingers on open map to zoom the local camera in or out; the defau
 
 ## Sub-features
 
-- `zoom-pinch` two touches on open map zoom between `MIN_FACTOR` 0.75 and `MAX_FACTOR` 2.0 of the default (`Scripts/map_zoom.gd`).
+- `zoom-pinch` two touches on open map zoom between `MIN_FACTOR` 0.75 and `MAX_FACTOR` 2.0 of the default (`Scripts/player/map_zoom.gd`).
 - `zoom-hud-safe` touches that start on HUD controls (joystick, attack) do not zoom.
 - `zoom-desktop` wheel or Ctrl +/- steps by `STEP`.
 

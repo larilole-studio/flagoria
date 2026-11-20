@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Tile names (Scripts/tile_catalog.gd).
+## Tile names (Scripts/world/tile_catalog.gd).
 
 
 func _test_tile_catalog() -> int:
@@ -18,7 +18,7 @@ func _test_tile_catalog() -> int:
 			dirs.append(dir + "/" + sub)
 		for base in DirAccess.get_files_at(dir):
 			var file := (dir + "/" + base).trim_prefix("res://Scripts/")
-			if not file.ends_with(".gd") or file == "tile_catalog.gd":
+			if not file.ends_with(".gd") or file == "world/tile_catalog.gd":
 				continue
 			var text := FileAccess.get_file_as_string(dir + "/" + base)
 			for m in name_re.search_all(text):

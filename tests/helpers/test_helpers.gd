@@ -59,7 +59,7 @@ func free_ui_scene(scene: Node) -> void:
 
 func add_combat_actor(scene: Node, position: Vector2) -> CharacterBody2D:
 	## Attach the local player after the caller has prepared the arena.
-	var player := load("res://Player/character_body_2d.tscn").instantiate() as CharacterBody2D
+	var player := load("res://Scripts/player/character_body_2d.tscn").instantiate() as CharacterBody2D
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = position
 	scene.get_node("World").add_child(player)
@@ -123,7 +123,7 @@ func _spawn_session(mode: String, joiners: int) -> int:
 	var read := read_probe_at.bind(probes)
 	var wait_for := wait_until
 
-	var tile_map: Script = load("res://Scripts/TileMap.gd")
+	var tile_map: Script = load("res://Scripts/world/TileMap.gd")
 	# A spot is a cell centre, and the 8 x 10 body reaches 2 px into the cell
 	# above: with a wall there, physics pushes the player about 2 px down.
 	var settle := 3.0
@@ -368,7 +368,7 @@ func _respawn_follow_case(label: String, death: Vector2, spawn: Vector2, walk: V
 		printerr("FAIL respawn_hold %s client did not connect" % label)
 		fail += 1
 	else:
-		var player_scene := load("res://Player/character_body_2d.tscn")
+		var player_scene := load("res://Scripts/player/character_body_2d.tscn")
 		var id := str(cpeer.get_unique_id())
 		var s_copy = player_scene.instantiate()
 		s_copy.name = id

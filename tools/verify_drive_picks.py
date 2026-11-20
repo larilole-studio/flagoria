@@ -126,13 +126,13 @@ def self_test() -> int:
             p.parent.mkdir(parents=True, exist_ok=True)
             p.write_text(body, encoding="utf-8")
 
-        paths_gameplay_only = ["Scripts/player.gd"]
+        paths_gameplay_only = ["Scripts/player/player.gd"]
         check(
             "gameplay no features",
             finalize(True, collect_from_paths(paths_gameplay_only, tmproot), dispatch=False),
             [DEFAULT_SMOKE],
         )
-        paths_chop = [feat + "chop-trees.md", "Scripts/player.gd"]
+        paths_chop = [feat + "chop-trees.md", "Scripts/player/player.gd"]
         check(
             "feature drive",
             finalize(True, collect_from_paths(paths_chop, tmproot), dispatch=False),

@@ -54,7 +54,7 @@ The frosted move stick uses a 56-unit base and a 24-unit pink knob. The
 40-unit Attack sprite is scaled to the joystick's diameter and switches
 between idle, pressed, aim and disabled frames. `RoundHudStyle` supplies both
 controls' textures. The aim cone is drawn with the `AimConeStyle` resource
-(`Scripts/aim_cone_style.gd`).
+(`Scripts/player/aim_cone_style.gd`).
 
 ## Credits
 

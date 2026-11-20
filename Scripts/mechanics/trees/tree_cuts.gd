@@ -1,10 +1,10 @@
 class_name TreeCuts
 extends RefCounted
 ## Tree and bush cuts on the world map: the cut cells, regrowth and what each
-## cut leaves. Moved from Scripts/TileMap.gd (#261). The map keeps wrappers
+## cut leaves. Moved from Scripts/world/TileMap.gd (#261). The map keeps wrappers
 ## with the same names and asks has_cut / leftover when it draws a chunk.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 # Cells whose tree or bush was cut (Vector2i -> [play_time at the cut, atlas
 # of what it left, the InteractableType cut]). Drawing the chunk again puts that STUMP or BUSH_STUMP

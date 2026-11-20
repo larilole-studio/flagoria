@@ -238,7 +238,7 @@ func _test_chop_sweep_bounds_and_cancel() -> int:
 	var side := Vector2i(16, 10)      # 96 px east, outside a north cone
 	for cell in [near, mid, edge, past, side]:
 		world.set_cell(1, cell, TileCatalog.SOURCE_ID, TileCatalog.TREE)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
 	player.lastAnimDirection = "Up"

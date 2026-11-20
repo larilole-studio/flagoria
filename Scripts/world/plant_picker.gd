@@ -1,11 +1,11 @@
 class_name PlantPicker
 extends RefCounted
 ## Which plant or stones one walkable cell gets, from its altitude, moisture,
-## chance and biome. Moved from Scripts/TileMap.gd, which keeps wrappers with
+## chance and biome. Moved from Scripts/world/TileMap.gd, which keeps wrappers with
 ## the same names (plant_tile, structure_tile) and passes itself as `map` for
 ## the Map Settings values.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 ## MapGenParams fields the picker reads from `map`; TileMap.apply_map_params copies them.
 const PARAMS := [
 	"bush_min_alt", "bush_max_alt", "bush_min_chance", "tree_min_alt", "tree_min_chance",

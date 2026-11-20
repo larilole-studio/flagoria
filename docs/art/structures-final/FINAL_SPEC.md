@@ -11,7 +11,7 @@ These 8 structures were picked for final art: archer post, neutral outpost, barr
 - **Drop-in:**
   1. Point source 0 of `flagoria_tiles_v3.tres` at v4.
   2. Append `tileset_lines.tres.txt`.
-  3. Add `tile_catalog_lines.gd.txt` to `Scripts/tile_catalog.gd`.
+  3. Add `tile_catalog_lines.gd.txt` to `Scripts/world/tile_catalog.gd`.
   4. Read the placement rules from `placement.json` or from this file.
 - **Collision:** rectangles are in tile-local pixels with the origin at the cell centre (-8..8), in the same format as the walls-junctions final. A cell listed as "none" has no polygon.
 - **Team cells:** only cells that carry team colour have a `_BLUE` and a `_RED` version. Owner 1 (the host) uses `_BLUE` and any other player uses `_RED`, the same rule as `StructurePlacer.OWNER_FLAGS` / `OTHER_OWNER_FLAG`. When the owner changes, swap them like `PROP_FLAG_*`.

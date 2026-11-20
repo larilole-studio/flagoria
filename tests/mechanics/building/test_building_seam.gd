@@ -1,6 +1,6 @@
 extends "res://tests/helpers/test_helpers.gd"
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 const _SHORE := Vector2i(-29, -28)
 const _TOWER := Vector2i(-34, -35)
 const _BLOCKED_TOWER := Vector2i(-32, -35)

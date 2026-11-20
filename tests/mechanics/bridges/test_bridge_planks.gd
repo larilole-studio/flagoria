@@ -43,7 +43,7 @@ func _test_bridge_planks() -> int:
 			printerr("FAIL bridge_planks: %s is a mob home" % c)
 			fail += 1
 	# The hero's body walks the whole bridge; the water row next to it blocks.
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(player)
 	var free_row := func(row: Vector2i) -> bool:

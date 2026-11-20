@@ -8,7 +8,7 @@ const JOIN_CUTS_PER_MESSAGE := 500
 var enet_peer = ENetMultiplayerPeer.new()
 ## UDP port the main menu's Host button listens on.
 var host_port := PORT
-const Player = preload("res://Player/character_body_2d.tscn")
+const Player = preload("res://Scripts/player/character_body_2d.tscn")
 @onready var address_entry = $CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry
 var world_params: MapGenParams
 ## The world save this match writes. Empty until Host or Load chooses one.

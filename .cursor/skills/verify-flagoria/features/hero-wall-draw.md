@@ -4,7 +4,7 @@ Drive: drives/hero_wall_draw.gd
 
 A wall tile is drawn above the hero (`World/worldMap` layer 1 is z 1, wall caps are z 2 through 5). The hero's body is 16 px tall and reaches up into that tile, so the head used to disappear behind the wall while the hero was still standing in front of it.
 
-`Scripts/player_wall_draw.gd` measures how much of that body rect lies on a `WALL_`, `PALISADE_` or `TOWER_STONE_` cell, including an open gate's lintel. Under about two thirds, the hero's `z_index` is one above the upper cap layer, so the whole sprite, head included, draws over the wall. At or above two thirds, `z_index` drops to 0 and the wall draws over the hero. Open ground stays at 0, so trees still draw over the hero.
+`Scripts/player/player_wall_draw.gd` measures how much of that body rect lies on a `WALL_`, `PALISADE_` or `TOWER_STONE_` cell, including an open gate's lintel. Under about two thirds, the hero's `z_index` is one above the upper cap layer, so the whole sprite, head included, draws over the wall. At or above two thirds, `z_index` drops to 0 and the wall draws over the hero. Open ground stays at 0, so trees still draw over the hero.
 
 ## Sub-features
 

@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Pinch and wheel zoom on the player camera (Scripts/map_zoom.gd).
+## Pinch and wheel zoom on the player camera (Scripts/player/map_zoom.gd).
 
 
 func _test_map_zoom() -> int:
@@ -19,10 +19,10 @@ func _test_map_zoom() -> int:
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
 	var world: Node = scene.get_node("World")
-	var local = load("res://Player/character_body_2d.tscn").instantiate()
+	var local = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	local.name = str(scene.multiplayer.get_unique_id())  # this peer's player
 	world.add_child(local)
-	var remote = load("res://Player/character_body_2d.tscn").instantiate()
+	var remote = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	remote.name = str(scene.multiplayer.get_unique_id() + 1)
 	world.add_child(remote)
 	await process_frame

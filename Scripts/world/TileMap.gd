@@ -1,8 +1,8 @@
 extends TileMap
 
-const WORLD_MAP_PARAMS = preload("res://Scripts/world_map_params.gd")
-const WORLD_CHUNKS = preload("res://Scripts/world_chunks.gd")
-const WORLD_CELL_QUERIES = preload("res://Scripts/world_cell_queries.gd")
+const WORLD_MAP_PARAMS = preload("res://Scripts/world/world_map_params.gd")
+const WORLD_CHUNKS = preload("res://Scripts/world/world_chunks.gd")
+const WORLD_CELL_QUERIES = preload("res://Scripts/world/world_cell_queries.gd")
 
 ## Emitted as the cells change, so local visuals update in that frame.
 signal ground_changed(cells: Rect2i)

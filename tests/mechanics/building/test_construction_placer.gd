@@ -86,7 +86,7 @@ func _test_construction_placer_plank_occupied() -> int:
 		var occupier: Node = null
 		match what:
 			"player":
-				occupier = load("res://Player/character_body_2d.tscn").instantiate()
+				occupier = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 				occupier.name = "occupier"
 				occupier.global_position = at
 				scene.get_node("World").add_child(occupier)
