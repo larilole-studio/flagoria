@@ -62,7 +62,9 @@ GAMEPLAY = [
     "Scripts/world/MapGenParams.gd",  # map generation defaults and value ranges
     "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
     "Scripts/ui/hearts_hud.gd", "Scripts/map_zoom.gd",
-    "Scripts/shell/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
+    "Scripts/shell/MainMenu.gd", "Scripts/shell/menu_join_flow.gd", "Scripts/shell/menu_worlds.gd",
+    "Scripts/shell/menu_volume.gd", "Scripts/shell/menu_gameplay_settings.gd",
+    "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
     "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
     "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",  # score awards
     "Scripts/mechanics/trees/inventory.gd",  # gathered wood
