@@ -1,6 +1,6 @@
 [gd_scene load_steps=4 format=3 uid="uid://ingamemenu01"]
 
-[ext_resource type="Script" path="res://Scripts/ingame_menu.gd" id="1_menu"]
+[ext_resource type="Script" path="res://Scripts/shell/ingame_menu.gd" id="1_menu"]
 [ext_resource type="Theme" path="res://art/ui/main_menu_theme.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://Scripts/ui/hud_layout_edit.tscn" id="4_hud_edit"]
 
