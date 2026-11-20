@@ -1,8 +1,9 @@
 extends PanelContainer
 
-const JoinAddress = preload("res://Scripts/net/join_address.gd")
-const WorldsSaveList = preload("res://Scripts/shell/worlds_save_list.gd")
-const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
+const MenuVolume = preload("res://Scripts/shell/menu_volume.gd")
+const MenuGameplaySettings = preload("res://Scripts/shell/menu_gameplay_settings.gd")
+const MenuJoinFlow = preload("res://Scripts/shell/menu_join_flow.gd")
+const MenuWorlds = preload("res://Scripts/shell/menu_worlds.gd")
 
 @onready var main_menu = $"."
 @onready var address_entry = $MarginContainer/VBoxContainer/AddressEntry
@@ -30,6 +31,7 @@ const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
 
 var admin_panel: PanelContainer
 var _settings_over_match := false
+var _worlds := MenuWorlds.new(self)
 
 signal new_server_created
 signal new_player_added
@@ -39,81 +41,8 @@ signal new_player_joined(port: int)
 func _ready() -> void:
 	var music = get_node("/root/MusicPlayer")
 	music.play(music.MENU_TRACK)
-	var audio = get_node("/root/AudioSettings")
-	music_volume.value = audio.get_volume("Music")
-	sfx_volume.value = audio.get_volume("SFX")
-	music_value.text = percent(music_volume.value)
-	sfx_value.text = percent(sfx_volume.value)
-	music_volume.value_changed.connect(func(v: float) -> void:
-		audio.set_volume("Music", v)
-		music_value.text = percent(v))
-	sfx_volume.value_changed.connect(func(v: float) -> void:
-		audio.set_volume("SFX", v)
-		sfx_value.text = percent(v))
-	# Mob spawn rate: used when this game hosts; a joining client gets the
-	# host's mobs.
-	var game = get_node("/root/GameSettings")
-	mob_rate.min_value = game.MOB_RATE_MIN
-	mob_rate.max_value = game.MOB_RATE_MAX
-	mob_rate.step = game.MOB_RATE_STEP
-	mob_rate.value = game.mob_rate
-	mob_rate_value.text = game.rate_label(game.mob_rate)
-	mob_rate.value_changed.connect(func(v: float) -> void:
-		game.set_mob_rate(v)
-		mob_rate_value.text = game.rate_label(game.mob_rate))
-	# Tower guns read these on the host. A client's saved values are not the match.
-	tower_range.min_value = game.TOWER_RANGE_MIN
-	tower_range.max_value = game.TOWER_RANGE_MAX
-	tower_range.step = game.TOWER_RANGE_STEP
-	tower_range.value = game.tower_range
-	tower_range_value.text = game.px_label(game.tower_range)
-	tower_range.value_changed.connect(func(v: float) -> void:
-		game.set_tower_range(v)
-		tower_range_value.text = game.px_label(game.tower_range))
-	tower_damage.min_value = game.TOWER_DAMAGE_MIN
-	tower_damage.max_value = game.TOWER_DAMAGE_MAX
-	tower_damage.step = 1
-	tower_damage.value = game.tower_damage
-	tower_damage_value.text = str(game.tower_damage)
-	tower_damage.value_changed.connect(func(v: float) -> void:
-		game.set_tower_damage(v)
-		tower_damage_value.text = str(game.tower_damage))
-	tower_cooldown.min_value = game.TOWER_COOLDOWN_MIN
-	tower_cooldown.max_value = game.TOWER_COOLDOWN_MAX
-	tower_cooldown.step = game.TOWER_COOLDOWN_STEP
-	tower_cooldown.value = game.tower_cooldown
-	tower_cooldown_value.text = game.seconds_label(game.tower_cooldown)
-	tower_cooldown.value_changed.connect(func(v: float) -> void:
-		game.set_tower_cooldown(v)
-		tower_cooldown_value.text = game.seconds_label(game.tower_cooldown))
-	# Raids stay off until the host turns them on. The sliders are the
-	# interval, the group size and the target radius (#529).
-	raids_enabled.button_pressed = game.raids_enabled
-	raids_enabled.toggled.connect(func(on: bool) -> void: game.set_raids_enabled(on))
-	raid_interval.min_value = game.RAID_INTERVAL_MIN
-	raid_interval.max_value = game.RAID_INTERVAL_MAX
-	raid_interval.step = game.RAID_INTERVAL_STEP
-	raid_interval.value = game.raid_interval_s
-	raid_interval_value.text = _seconds(game.raid_interval_s)
-	raid_interval.value_changed.connect(func(v: float) -> void:
-		game.set_raid_interval_s(v)
-		raid_interval_value.text = _seconds(game.raid_interval_s))
-	raid_group.min_value = game.RAID_GROUP_MIN
-	raid_group.max_value = game.RAID_GROUP_MAX
-	raid_group.step = 1.0
-	raid_group.value = game.raid_group
-	raid_group_value.text = str(game.raid_group)
-	raid_group.value_changed.connect(func(v: float) -> void:
-		game.set_raid_group(int(round(v)))
-		raid_group_value.text = str(game.raid_group))
-	raid_radius.min_value = game.RAID_RADIUS_MIN
-	raid_radius.max_value = game.RAID_RADIUS_MAX
-	raid_radius.step = 1.0
-	raid_radius.value = game.raid_radius_cells
-	raid_radius_value.text = str(game.raid_radius_cells)
-	raid_radius.value_changed.connect(func(v: float) -> void:
-		game.set_raid_radius_cells(int(round(v)))
-		raid_radius_value.text = str(game.raid_radius_cells))
+	MenuVolume.bind_controls(self)
+	MenuGameplaySettings.bind_controls(self)
 	# The join address is typed on the in-game letter keyboard, not the OS one.
 	var keyboard: NumberPad = preload("res://Scripts/ui/number_pad.tscn").instantiate()
 	keyboard.name = "LetterKeyboard"
@@ -129,11 +58,7 @@ func _ready() -> void:
 
 
 static func percent(v: float) -> String:
-	return "%d%%" % roundi(v * 100.0)
-
-
-static func _seconds(v: float) -> String:
-	return "%ds" % roundi(v)
+	return MenuVolume.percent(v)
 
 
 func _unhandled_input(_event):
@@ -144,278 +69,51 @@ func _unhandled_input(_event):
 
 
 func _on_new_world_pressed() -> void:
-	## A new match, even if a save was loaded and not hosted yet.
-	get_node("/root/MapGen").clear_loaded_world()
-	get_node("/root/Flagoria").save_name = ""
-	_on_host_button_pressed()
+	MenuJoinFlow._on_new_world_pressed(self)
 
 
 func _on_host_button_pressed():
-	## Host the loaded world when there is one. Otherwise start a new match
-	## in its own save file.
-	var map_gen = get_node("/root/MapGen")
-	var game = get_node("/root/Flagoria")
-	if not map_gen.has_loaded_world():
-		var menu_script: GDScript = load("res://Scripts/shell/ingame_menu.gd")
-		game.save_name = menu_script.unused_save_name(
-				menu_script.auto_save_name(Time.get_datetime_dict_from_system()))
-	_begin_host()
+	MenuJoinFlow._on_host_button_pressed(self)
 
 
 func _begin_host() -> void:
-	var map_gen = get_node("/root/MapGen")
-	map_gen.save_to_disk()
-	emit_signal("new_server_created", map_gen.params.duplicate_params())
-	main_menu.hide()
-	if admin_panel:
-		admin_panel.hide()
-	var worlds := get_parent().get_node_or_null("WorldsPanel")
-	if worlds:
-		worlds.hide()
-	ux_layer.show()
-	get_node("/root/MusicPlayer").play(get_node("/root/MusicPlayer").GAME_TRACK)
-	emit_signal("new_player_added", multiplayer.get_unique_id())
+	MenuJoinFlow._begin_host(self)
 
 
 func _on_join_button_pressed():
-	var parsed: Dictionary = JoinAddress.parse(address_entry.text)
-	if not parsed["ok"]:
-		# Stay on the menu. A bad address never opens an ENet client.
-		show_address_error(str(parsed["error"]))
-		return
-	join_status.visible = false
-	join_status.text = ""
-	main_menu.hide()
-	if admin_panel:
-		admin_panel.hide()
-	ux_layer.show()
-	get_node("/root/MusicPlayer").play(get_node("/root/MusicPlayer").GAME_TRACK)
-	emit_signal("new_player_joined", int(parsed["port"]))
+	MenuJoinFlow._on_join_button_pressed(self)
 
 
 func _on_worlds_pressed() -> void:
-	var panel := _worlds_panel()
-	main_menu.hide()
-	panel.show()
-	_refresh_worlds()
-	var scroll := panel.get_node_or_null("Margin/VBox/Scroll") as ScrollContainer
-	if scroll:
-		scroll.scroll_vertical = 0
-
-
-func _worlds_list() -> ItemList:
-	return _worlds_panel().get_node("Margin/VBox/Scroll/List") as ItemList
-
-
-func _worlds_panel() -> PanelContainer:
-	var existing := get_parent().get_node_or_null("WorldsPanel") as PanelContainer
-	if existing:
-		return existing
-	var panel := PanelContainer.new()
-	panel.name = "WorldsPanel"
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.theme = theme
-	panel.visible = false
-	var margin := MarginContainer.new()
-	margin.name = "Margin"
-	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
-	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	panel.add_child(margin)
-	var box := VBoxContainer.new()
-	box.name = "VBox"
-	box.custom_minimum_size = Vector2(240, 0)
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_child(box)
-	var title := Label.new()
-	title.text = "Worlds"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(title)
-	var scroll := ScrollContainer.new()
-	scroll.name = "Scroll"
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 96)
-	box.add_child(scroll)
-	var list := WorldsSaveList.new()
-	list.name = "List"
-	list.auto_height = true
-	list.fixed_icon_size = WorldSavePreview.ICON_SIZE
-	list.icon_mode = ItemList.ICON_MODE_LEFT
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(list)
-	var buttons := HBoxContainer.new()
-	buttons.name = "Buttons"
-	box.add_child(buttons)
-	_world_button(buttons, "Load", _on_load_world_pressed)
-	_world_button(buttons, "Delete", _on_delete_world_pressed)
-	_world_button(buttons, "Rename", _on_rename_world_pressed)
-	_world_button(buttons, "NewWorld", _on_new_world_pressed).text = "New world"
-	var confirm := HBoxContainer.new()
-	confirm.name = "Confirm"
-	confirm.visible = false
-	box.add_child(confirm)
-	var ask := Label.new()
-	ask.name = "Ask"
-	ask.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	ask.text = "Delete this world?"
-	confirm.add_child(ask)
-	_world_button(confirm, "Yes", _on_delete_yes_pressed)
-	_world_button(confirm, "No", _on_delete_no_pressed)
-	var rename := HBoxContainer.new()
-	rename.name = "Rename"
-	rename.visible = false
-	box.add_child(rename)
-	var rename_field := LineEdit.new()
-	rename_field.name = "Name"
-	rename_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	rename_field.text_submitted.connect(_on_rename_yes_pressed)
-	rename.add_child(rename_field)
-	var keyboard := get_node_or_null("LetterKeyboard")
-	if keyboard:
-		keyboard.attach_text(rename_field)
-	_world_button(rename, "Confirm", _on_rename_yes_pressed)
-	_world_button(rename, "Cancel", _on_rename_no_pressed)
-	var status := Label.new()
-	status.name = "Status"
-	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(status)
-	_world_button(box, "Back", _on_worlds_back_pressed)
-	get_parent().add_child(panel)
-	return panel
-
-
-func _world_button(parent: Node, node_name: String, handler: Callable) -> Button:
-	var button := Button.new()
-	button.name = node_name
-	button.text = node_name
-	button.pressed.connect(handler)
-	parent.add_child(button)
-	return button
-
-
-func _refresh_worlds() -> void:
-	var list := _worlds_list()
-	list.clear()
-	list.fixed_icon_size = WorldSavePreview.ICON_SIZE
-	for row in MapSave.list_saves():
-		var when: Dictionary = Time.get_datetime_dict_from_unix_time(int(row["modified"]))
-		var stamp := "%04d-%02d-%02d %02d:%02d" % [when["year"], when["month"], when["day"], when["hour"], when["minute"]]
-		list.add_item("%s  %s" % [row["name"], stamp])
-		var i := list.item_count - 1
-		list.set_item_icon(i, WorldSavePreview.icon_for(get_tree(), str(row["path"]), str(row["name"])))
-		list.set_item_metadata(i, row["name"])
-
-
-func _selected_world() -> String:
-	var list := _worlds_list()
-	var picked := list.get_selected_items()
-	if picked.is_empty():
-		return ""
-	return str(list.get_item_metadata(picked[0]))
-
-
-func _world_status(text: String) -> void:
-	var status := _worlds_panel().get_node("Margin/VBox/Status") as Label
-	status.text = text
+	_worlds._on_worlds_pressed()
 
 
 func _on_load_world_pressed() -> void:
-	var save_name := _selected_world()
-	if save_name == "":
-		_world_status("Select a world")
-		return
-	var err := str(get_node("/root/MapGen").load_map_inputs(MapSave.path_for(save_name)))
-	if err != "":
-		_world_status(err)
-		return
-	get_node("/root/Flagoria").save_name = save_name
-	_begin_host()
+	_worlds._on_load_world_pressed()
 
 
 func _on_delete_world_pressed() -> void:
-	if _selected_world() == "":
-		_world_status("Select a world")
-		return
-	_on_rename_no_pressed()
-	var panel := _worlds_panel()
-	panel.get_node("Margin/VBox/Buttons").hide()
-	panel.get_node("Margin/VBox/Confirm").show()
-	_world_status("")
+	_worlds._on_delete_world_pressed()
 
 
 func _on_rename_world_pressed() -> void:
-	var save_name := _selected_world()
-	if save_name == "":
-		_world_status("Select a world")
-		return
-	_on_delete_no_pressed()
-	var panel := _worlds_panel()
-	panel.get_node("Margin/VBox/Buttons").hide()
-	var rename := panel.get_node("Margin/VBox/Rename")
-	rename.show()
-	var field := rename.get_node("Name") as LineEdit
-	field.text = save_name
-	field.grab_focus()
-	_world_status("")
+	_worlds._on_rename_world_pressed()
 
 
 func _on_rename_yes_pressed(_new_text: String = "") -> void:
-	var save_name := _selected_world()
-	var rename := _worlds_panel().get_node("Margin/VBox/Rename")
-	var field := rename.get_node("Name") as LineEdit
-	var new_name := field.text
-	var err := str(MapSave.rename_save(save_name, new_name) if save_name != "" else "Select a world")
-	if err != "":
-		_world_status(err)
-		return
-	var clean := new_name.strip_edges().validate_filename()
-	_on_rename_no_pressed()
-	_refresh_worlds()
-	_select_world_named(clean)
-	_world_status("")
+	_worlds._on_rename_yes_pressed(_new_text)
 
 
 func _on_rename_no_pressed() -> void:
-	var panel := _worlds_panel()
-	var rename := panel.get_node_or_null("Margin/VBox/Rename")
-	if rename:
-		rename.hide()
-	panel.get_node("Margin/VBox/Buttons").show()
-
-
-func _select_world_named(save_name: String) -> void:
-	if save_name == "":
-		return
-	var list := _worlds_list()
-	for i in list.item_count:
-		if str(list.get_item_metadata(i)) == save_name:
-			list.select(i)
-			list.ensure_current_is_visible()
-			return
+	_worlds._on_rename_no_pressed()
 
 
 func _on_delete_yes_pressed() -> void:
-	var save_name := _selected_world()
-	var err := str(MapSave.delete_save(save_name) if save_name != "" else "Select a world")
-	_on_delete_no_pressed()
-	_refresh_worlds()
-	_world_status("" if err == "" else err)
-
-
-func _on_delete_no_pressed() -> void:
-	var panel := _worlds_panel()
-	panel.get_node("Margin/VBox/Confirm").hide()
-	panel.get_node("Margin/VBox/Buttons").show()
+	_worlds._on_delete_yes_pressed()
 
 
 func _on_worlds_back_pressed() -> void:
-	_on_delete_no_pressed()
-	_on_rename_no_pressed()
-	_worlds_panel().hide()
-	main_menu.show()
+	_worlds._on_worlds_back_pressed()
 
 
 func open_settings_over_match() -> void:
@@ -455,23 +153,8 @@ func _on_admin_closed() -> void:
 
 
 func show_join_failed(address: String) -> void:
-	## Bring the main menu back after a join that never connected (#348).
-	## Message copy is fixed in the issue: "Could not join <address>".
-	_show_status("Could not join %s" % address)
+	MenuJoinFlow.show_join_failed(self, address)
 
 
 func show_address_error(message: String) -> void:
-	## A typed address that Join will not dial. Shown at once, with no
-	## connection attempt. The address field is left as typed.
-	_show_status(message)
-
-
-func _show_status(message: String) -> void:
-	if admin_panel:
-		admin_panel.hide()
-	ux_layer.hide()
-	main_menu.show()
-	join_status.text = message
-	join_status.visible = true
-	get_node("/root/MusicPlayer").play(get_node("/root/MusicPlayer").MENU_TRACK)
-
+	MenuJoinFlow.show_address_error(self, message)
