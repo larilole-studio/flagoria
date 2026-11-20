@@ -6,7 +6,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 
 | Entry | What starts there |
 |---|---|
-| `project.godot` | Main scene `flagoria_main.tscn`, and seven autoloads: `MapGen` (`Scripts/map_gen.gd`), `AudioSettings` (`Scripts/audio_settings.gd`), `GameSettings` (`Scripts/game_settings.gd`), `HudLayout` (`Scripts/hud_layout.gd`), `MusicPlayer` (`Scripts/music_player.gd`), `UiSfx` (`Scripts/ui_sfx.gd`), `DayNight` (`Scripts/mechanics/day_night/day_night.gd`). |
+| `project.godot` | Main scene `flagoria_main.tscn`, and seven autoloads: `MapGen` (`Scripts/map_gen.gd`), `AudioSettings` (`Scripts/audio/audio_settings.gd`), `GameSettings` (`Scripts/game_settings.gd`), `HudLayout` (`Scripts/hud_layout.gd`), `MusicPlayer` (`Scripts/audio/music_player.gd`), `UiSfx` (`Scripts/audio/ui_sfx.gd`), `DayNight` (`Scripts/mechanics/day_night/day_night.gd`). |
 | `flagoria_main.tscn` + `flagoria_main.gd` | The game: main menu, HUD, `World/worldMap` (the `TileMap`), `World/Mobs`, `World/Interaction`, `World/RangedShots`, `World/TowerGuns`, `Inventory`, `Points`, `Discovery`. Host, join, the dedicated server (`-- --server`), player spawn and the map-parameter sync. Join re-dials in `Scripts/join_dial.gd`. |
 | `tests/run_tests.gd` | Headless test runner (`--only`, `--list`). It finds every `tests/**/test_*.gd` file; see `tests/README.md`. |
 | `tools/verify.sh` | What CI's verify job runs: import, parse every script in one process (`tools/parse_scripts.gd`), run every test. |
@@ -22,7 +22,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 - **Netcode.** ENet on UDP 9786 in `flagoria_main.gd`. The server owns the map params, mobs, health and points. A joining peer gets the full params, the host's tree and bush cuts and its placed structures through the `receive_map_params` RPC (cuts past the first 500 follow in `receive_join_cuts`, #354) and builds the same map locally. A tower or free-form wall placed after the join is a request to the host (`StructureRequests`, #497, #498), which writes it and sends it to every peer. A joining peer's starting castle is placed by the host outside the shared spawn and sent the same way (#278). Capture progress and cities ride with that join. A late joiner also receives the solved auto junction cells. A building the host generates after the match starts is a seed, size, style and cell (`GeneratedBuildings`, #26); every peer, including one that joins later, runs the same solver and paints that building on its own map layer. Players spawn through the `MultiplayerSpawner` under `World`. A cut during play is asked of the host (`Interaction.request_cut`, limited per peer by `CutRateLimit`, #355), which decides it and sends the stump to every peer (`apply_cut`) and the wood to the cutter; the host also decides regrowth and sends the plants that regrew in each tick to every peer in one message (`apply_regrow_cells`, #298, #353). The multiplayer tests are stress-run by `tools/stress_netcode.py`. The day/night clock (`DayNight`) is host-owned: clients and a late joiner are sent the host's elapsed time (#558).
 - **UI and menus.** `Scripts/MainMenu.gd` (main menu, Host/Join, volumes, mob rate, tower range/damage/cooldown, raid tunables) opens `map_admin_panel.tscn`. `number_pad.tscn` gives touch keys for number fields. In play: `ingame_menu.tscn`, `quit_prompt.tscn`, `Scripts/hearts_hud.gd`, `Scripts/hud_tool_row.gd` (Map beside Menu, Attack mirrored from the joystick, Run and the tool wheel around Attack, and Buildings beside that cluster with a two-ring picker over a dimmed playfield, #480, #574, #575), `Scripts/tool_wheel.gd` (hold to arm sword, bow or chop; the arc stays on screen), `Scripts/hud_layout.gd` (per-device touch control layout in `user://`, #492, #575), `Scripts/minimap_panel.gd` (draws `Scripts/explored_map.gd`; starts closed; header collapse and maximize), `Scripts/parchment_map.gd` (the full parchment sheet) and `Scripts/map_wood_button.gd` (those wood controls). The theme is `art/ui/main_menu_theme.tres`.
 - **Saves.** `Scripts/map_save.gd` reads and writes versioned saves in `user://saves/` (gzip of one JSON document; older plain JSON still loads), written by the in-game menu's Save through `MapGen.save_world`. Each match has its own file: the main menu lists them and loads one, and Save replaces that file. `Scripts/world_save.gd` is one save in memory: the generation inputs plus the world's changes. The dedicated server loads one with `--params`. The day/night elapsed time is the `clock` object (#558). See `docs/world-saves.md`.
-- **Audio.** Buses are in `default_bus_layout.tres` and volumes in `Scripts/audio_settings.gd`. Music comes from `Scripts/music_player.gd` and UI sounds from `Scripts/ui_sfx.gd`. Per-instance sounds come from `Scripts/combat_sfx.gd`, `Scripts/footsteps.gd` and `Scripts/mob_sfx.gd`, with files in `art/audio/` (made by `tools/audio/`). See `docs/audio.md`.
+- **Audio.** Buses are in `default_bus_layout.tres` and volumes in `Scripts/audio/audio_settings.gd`. Music comes from `Scripts/audio/music_player.gd` and UI sounds from `Scripts/audio/ui_sfx.gd`. Per-instance sounds come from `Scripts/audio/combat_sfx.gd`, `Scripts/audio/footsteps.gd` and `Scripts/audio/mob_sfx.gd`, with files in `art/audio/` (made by `tools/audio/`). See `docs/audio.md`.
 
 ## Folders today
 
@@ -152,12 +152,12 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/hud_layout_visual.gd` | HUD control visual rects for edit overlap | stays (#492) |
 | `Scripts/quit_prompt.gd` | Quit prompt | stays |
 | `Scripts/game_settings.gd` | Autoload: mob spawn rate and raid tunables | stays (autoload) |
-| `Scripts/audio_settings.gd` | Autoload: bus volumes | stays (autoload) |
-| `Scripts/music_player.gd` | Autoload: music | stays (autoload) |
-| `Scripts/ui_sfx.gd` | Autoload: UI sounds | stays (autoload) |
-| `Scripts/combat_sfx.gd` | Player combat and health sounds | stays |
-| `Scripts/footsteps.gd` | Terrain footsteps | stays |
-| `Scripts/mob_sfx.gd` | Mob sounds | stays |
+| `Scripts/audio/audio_settings.gd` | Autoload: bus volumes | stays (autoload) |
+| `Scripts/audio/music_player.gd` | Autoload: music | stays (autoload) |
+| `Scripts/audio/ui_sfx.gd` | Autoload: UI sounds | stays (autoload) |
+| `Scripts/audio/combat_sfx.gd` | Player combat and health sounds | stays |
+| `Scripts/audio/footsteps.gd` | Terrain footsteps | stays |
+| `Scripts/audio/mob_sfx.gd` | Mob sounds | stays |
 
 ## Where does X go
 

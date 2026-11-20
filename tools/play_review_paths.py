@@ -233,7 +233,7 @@ def self_test() -> int:
         (["Scripts/hud_layout.gd", "Scripts/hud_layout_edit.gd", "hud_layout_edit.tscn"], None, None, True),
         (["data/interactables/tree.tres"], None, None, True),
         (["Scripts/attack_aim.gd.uid", "data/interactables/tree.tres.uid"], None, None, False),
-        (["Scripts/combat_sfx.gd", "Scripts/music_player.gd", "tools/render_biomes.gd"], None, None, False),
+        (["Scripts/audio/combat_sfx.gd", "Scripts/audio/music_player.gd", "tools/render_biomes.gd"], None, None, False),
         (["project.godot"], None, None, True),
         (["project.godot"], "[application]\nname=1\n" + inp, "[application]\nname=2\n" + inp, False),
         (["project.godot"], inp + "[physics]\n", inp + "jump={}\n[physics]\n", True),
