@@ -1,10 +1,10 @@
 class_name SpawnFinder
 extends RefCounted
-## Player spawn search on the world map (Scripts/TileMap.gd): a spawn cell the
+## Player spawn search on the world map (Scripts/world/TileMap.gd): a spawn cell the
 ## player can walk away from, and free spots around it so players never stand
 ## on one another. Every function takes the map it searches.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 const SPAWN_NEIGHBORS := [
 	Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1),

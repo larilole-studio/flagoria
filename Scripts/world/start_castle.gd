@@ -7,7 +7,7 @@ extends RefCounted
 ## placed by the host outside the shared spawn disk and sent to every peer
 ## (StructurePlacer, #278). Players still spawn beside the host's gate.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 const PATH := "res://structures/castle.txt"
 ## The cell outside the gate, from the gate (the anchor).

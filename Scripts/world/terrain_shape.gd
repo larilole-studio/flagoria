@@ -1,11 +1,11 @@
 class_name TerrainShape
 extends RefCounted
-## Altitude shaping for the world map (Scripts/TileMap.gd): altitude noise,
+## Altitude shaping for the world map (Scripts/world/TileMap.gd): altitude noise,
 ## the biome bias, one island around the origin and the archipelago squares.
 ## The map owns the noise and the Map Settings values; this reads them from
 ## the map it was made for and keeps the archipelago square cache.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 # Kept Vector2i squares when archipelago_island_count > 0.
 var _archipelago_active_squares: Dictionary = {}

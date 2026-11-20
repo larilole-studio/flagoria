@@ -10,7 +10,7 @@ extends RefCounted
 ## Interaction.apply_sprout_cells). Saves and joining peers get them in the
 ## cut list (TreeCuts.to_changes, "sprout" entries).
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 ## Seconds of play between two sprout passes on the host. Each pass, each
 ## missing tree sprouts with chance PASS_SECONDS / regrow delay, so a

@@ -3,7 +3,7 @@ extends RefCounted
 ## Picked-up flowers and destroyed stones on the world map (#198). The map
 ## keeps wrappers with the same names; TreeCuts.restore skips these entries.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 
 var _removed: Dictionary = {}

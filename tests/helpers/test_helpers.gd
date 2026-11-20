@@ -123,7 +123,7 @@ func _spawn_session(mode: String, joiners: int) -> int:
 	var read := read_probe_at.bind(probes)
 	var wait_for := wait_until
 
-	var tile_map: Script = load("res://Scripts/TileMap.gd")
+	var tile_map: Script = load("res://Scripts/world/TileMap.gd")
 	# A spot is a cell centre, and the 8 x 10 body reaches 2 px into the cell
 	# above: with a wall there, physics pushes the player about 2 px down.
 	var settle := 3.0

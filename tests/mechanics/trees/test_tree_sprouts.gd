@@ -62,7 +62,7 @@ static func share_target(world, window: Rect2i) -> int:
 		for x in range(window.position.x, window.end.x):
 			if world.predict_cell(Vector2i(x, y))[0] != TileCatalog.WATER:
 				land += 1
-	var shares: Dictionary = (load("res://Scripts/BiomeCatalog.gd") as GDScript).get_script_constant_map().get("TREE_SHARE", {})
+	var shares: Dictionary = (load("res://Scripts/world/BiomeCatalog.gd") as GDScript).get_script_constant_map().get("TREE_SHARE", {})
 	return floori(shares.get(BiomeCatalog.TEMPERATE, 0.0) * land)
 
 

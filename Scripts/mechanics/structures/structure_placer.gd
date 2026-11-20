@@ -10,7 +10,7 @@ extends RefCounted
 ## list with the map (to_sync, replace_from_host). Free-form walls placed
 ## after a join go through StructureRequests (#498).
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
 
 const WATER := "water"

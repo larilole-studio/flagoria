@@ -54,12 +54,12 @@ GAMEPLAY = [
     "Scripts/player/player_camera.gd", "Scripts/player/player_hud.gd", "Scripts/player/player_wall_draw.gd",
     "Scripts/player/player_health.gd",
     "Scripts/mechanics/mobs/mob.gd", "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/mobs/mob_catalog.gd",
-    "Scripts/TileMap.gd",  # chunk loading, collision, ground sync
-    "Scripts/world_chunks.gd", "Scripts/world_map_params.gd", "Scripts/world_cell_queries.gd",
+    "Scripts/world/TileMap.gd",  # chunk loading, collision, ground sync
+    "Scripts/world/world_chunks.gd", "Scripts/world/world_map_params.gd", "Scripts/world/world_cell_queries.gd",
     "Scripts/world/*.gd",  # terrain shape and spawn search for the world map
     "Scripts/mechanics/*.gd",  # cuts, bridges, walls, structures, choppable types (all subfolders)
-    "Scripts/map_gen.gd",  # session map parameters applied to the world map
-    "Scripts/MapGenParams.gd",  # map generation defaults and value ranges
+    "Scripts/world/map_gen.gd",  # session map parameters applied to the world map
+    "Scripts/world/MapGenParams.gd",  # map generation defaults and value ranges
     "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
     "Scripts/ui/hearts_hud.gd", "Scripts/player/map_zoom.gd",
     "Scripts/shell/MainMenu.gd", "Scripts/shell/menu_join_flow.gd", "Scripts/shell/menu_worlds.gd",
@@ -69,10 +69,10 @@ GAMEPLAY = [
     "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",  # score awards
     "Scripts/mechanics/trees/inventory.gd",  # gathered wood
     "Scripts/shell/game_settings.gd",  # mob spawn rate
-    "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
+    "Scripts/world/tile_catalog.gd", "Scripts/world/BiomeCatalog.gd",  # tiles and biome tables of the world map
     "Scripts/saves/world_save.gd",  # what a saved world keeps
     "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
-    "Scripts/explored_map.gd", "Scripts/ui/minimap_panel.gd",  # explored map and its HUD panel
+    "Scripts/world/explored_map.gd", "Scripts/ui/minimap_panel.gd",  # explored map and its HUD panel
     "Scripts/ui/parchment_map.gd", "Scripts/ui/map_wood_button.gd",  # parchment full map and its wood controls
     "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd", "Scripts/ui/scoreboard_toggle.gd",
     "Scripts/ui/scoreboard_panel.gd",
@@ -96,7 +96,7 @@ STRESS_MATRIX = [
 # Any change to them gets the full stress tier.
 NETCODE = [
     "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",
-    "tilemap_dynamic.tscn",
+    "Scripts/world/tilemap_dynamic.tscn",
     *STRESS_MATRIX,
 ]
 # Files that mix netcode with other gameplay. They get the full tier only when
@@ -106,8 +106,8 @@ NETCODE_MIXED = [
     "Scripts/player/character_body_2d.tscn", "Mobs/mob.tscn",
     "Scripts/player/player.gd", "Scripts/player/player_input.gd", "Scripts/player/player_combat.gd",
     "Scripts/player/player_camera.gd", "Scripts/player/player_hud.gd", "Scripts/player/player_wall_draw.gd",
-    "Scripts/player/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/TileMap.gd",
-    "Scripts/world_chunks.gd", "Scripts/world_map_params.gd", "Scripts/world_cell_queries.gd",
+    "Scripts/player/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/world/TileMap.gd",
+    "Scripts/world/world_chunks.gd", "Scripts/world/world_map_params.gd", "Scripts/world/world_cell_queries.gd",
 ]
 NET_LINE = re.compile(r"rpc|multiplayer|peer|authority|replicat|synchroniz|spawner|is_server|enet", re.I)
 
@@ -210,11 +210,11 @@ def self_test() -> int:
         (["Scripts/player/sword.tscn"], None, None, True),
         (["Scripts/mechanics/mobs/mob.gd", "README.md"], None, None, True),
         (["Scripts/ui/map_admin_panel.tscn"], None, None, True),
-        (["Scripts/map_gen.gd"], None, None, True),
-        (["Scripts/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
-        (["Scripts/MapGenParams.gd"], None, None, True),
+        (["Scripts/world/map_gen.gd"], None, None, True),
+        (["Scripts/world/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
+        (["Scripts/world/MapGenParams.gd"], None, None, True),
         (["Scripts/saves/map_save.gd"], None, None, True),
-        (["Scripts/MapGenParams.gd.uid", "Scripts/saves/map_save.gd.uid"], None, None, False),
+        (["Scripts/world/MapGenParams.gd.uid", "Scripts/saves/map_save.gd.uid"], None, None, False),
         (["Scripts/world/spawn_finder.gd"], None, None, True),
         (["Scripts/world/terrain_shape.gd.uid"], None, None, False),
         (["debug/building_block_pieces.tscn"], None, None, False),

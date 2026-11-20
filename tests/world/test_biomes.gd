@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Biomes (Scripts/BiomeCatalog.gd) and their terrain, plants and structures.
+## Biomes (Scripts/world/BiomeCatalog.gd) and their terrain, plants and structures.
 
 
 func _test_biomes() -> int:

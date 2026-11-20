@@ -6,7 +6,7 @@ The world map uses the v3 TileSet resource `art/flagoria/flagoria_tiles_v3.tres`
 
 ## Sub-features
 
-- `tiles-catalog` every tile is looked up by name through `TileCatalog` (`Scripts/tile_catalog.gd`; inventory in `docs/tiles.md`).
+- `tiles-catalog` every tile is looked up by name through `TileCatalog` (`Scripts/world/tile_catalog.gd`; inventory in `docs/tiles.md`).
 - `tiles-water` cells that are not walkable land have collision.
 - `tiles-forest-walls` adjacent trees or bushes form a wall.
 - `tiles-no-deco-on-water` no trees or flowers on water.

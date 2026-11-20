@@ -34,7 +34,7 @@ const INTERACTION := "World/Interaction"
 const INVENTORY := "Inventory"
 const MINIMAP := "CanvasLayer1/MinimapPanel"
 const FOLIAGE_LAYER := 1
-const GROUND_DECOR_LAYER := 2  ## stumps, stones and flowers (Scripts/TileMap.gd)
+const GROUND_DECOR_LAYER := 2  ## stumps, stones and flowers (Scripts/world/TileMap.gd)
 ## snapshot() records the foliage layer in a square this many cells from the
 ## hero on each side: 9x9.
 const SNAPSHOT_RADIUS := 4
@@ -243,7 +243,7 @@ func snapshot_state() -> Dictionary:
 ## bottom, around `center` on `layer`.
 func _layer_names(map: TileMap, layer: int, center: Vector2i) -> Array:
 	var names := {}
-	var catalog: Dictionary = (load("res://Scripts/tile_catalog.gd") as Script).get_script_constant_map()
+	var catalog: Dictionary = (load("res://Scripts/world/tile_catalog.gd") as Script).get_script_constant_map()
 	for key in catalog:
 		if catalog[key] is Vector2i and not names.has(catalog[key]):
 			names[catalog[key]] = key  # first declared name wins for shared coords

@@ -4,15 +4,15 @@ The map uses the in-house Flagoria tileset v3.1 (Solaria replacement, #97 / #100
 
 - Atlas: `art/flagoria/flagoria_tiles_v4.png`, 448×304 px, 28×19 cells (same grid as v3; every v3 cell is pixel-identical). Rows 15-18 hold the wood pieces; the plank bridge cells (columns 8-15) are named, the railed bridge cells (columns 16-23) are not named yet. Rows 3-4 and 6 hold the eight structure finals (#499).
 - TileSet: `art/flagoria/flagoria_tiles_v3.tres`, one `TileSetAtlasSource` (source id `0`) with the v4 atlas texture, 296+ named cells, one physics layer, and terrain set `0` (Match Corners and Sides) with terrain `0` "Island".
-- Names: `Scripts/tile_catalog.gd` (`TileCatalog`) is the only place that maps names to source id and atlas coords. Credits: `art/flagoria/CREDITS.md`.
+- Names: `Scripts/world/tile_catalog.gd` (`TileCatalog`) is the only place that maps names to source id and atlas coords. Credits: `art/flagoria/CREDITS.md`.
 
 ## Where tiles are referenced
 
 | File | Use |
 |---|---|
 | `flagoria_main.tscn` | `World/worldMap` uses `art/flagoria/flagoria_tiles_v3.tres` as its `tile_set`. |
-| `tilemap_dynamic.tscn` | Uses the same TileSet. No scene or script loads this file. Its embedded script places tiles through `TileCatalog`. |
-| `Scripts/TileMap.gd` | Chunk drawing. Ground paint is `Scripts/world/sky_islands.gd`: open sea stays an empty cell, land goes through `set_cells_terrain_connect`, then each land cell is set to its grass, inland sand, inland swamp or island-edge piece. |
+| `Scripts/world/tilemap_dynamic.tscn` | Uses the same TileSet. No scene or script loads this file. Its embedded script places tiles through `TileCatalog`. |
+| `Scripts/world/TileMap.gd` | Chunk drawing. Ground paint is `Scripts/world/sky_islands.gd`: open sea stays an empty cell, land goes through `set_cells_terrain_connect`, then each land cell is set to its grass, inland sand, inland swamp or island-edge piece. |
 | `Scripts/audio/footsteps.gd` | Maps the cell under the player to a footstep surface through `TileCatalog.TILES`. |
 | `tools/audio_check.gd`, `tools/render_biomes.gd` | Use `TileCatalog` names. |
 | `tests/world/test_map_characterization.gd` and other tests | Pinned characterization data and a few fixtures compare against the raw coordinates of the map fill tiles below, on purpose: a cell move must fail them. |
@@ -37,7 +37,7 @@ The first 11 names kept their cells when the Solaria atlas was replaced. STONES 
 | TREE_BUSHY | Bushy broadleaf tree on wet land (biomes on only, see `docs/biomes.md`) | 1 | (7, 1) | 1×1 | Same polygon as TREE, and the same alternative 1 |
 | FLOWER | Walkable flower in the flower altitude band | 2 (`GROUND_DECOR_LAYER`) | (9, 3) | 1×1 | None |
 | STONES | Walkable stones on bare land and beaches in some biomes (`BiomeCatalog.STRUCTURES`, biomes on only) | 2 (`GROUND_DECOR_LAYER`) | (0, 7) | 1×1 | None |
-| STUMP | What a tree cut in interact mode leaves (`cut_choppable` in `Scripts/mechanics/trees/tree_cuts.gd`, called through `Scripts/TileMap.gd`); the map keeps it when the chunk is drawn again, until the tree regrows after its type's `regrow_delay` | 2 (`GROUND_DECOR_LAYER`) | (8, 2) | 1×1 | None |
+| STUMP | What a tree cut in interact mode leaves (`cut_choppable` in `Scripts/mechanics/trees/tree_cuts.gd`, called through `Scripts/world/TileMap.gd`); the map keeps it when the chunk is drawn again, until the tree regrows after its type's `regrow_delay` | 2 (`GROUND_DECOR_LAYER`) | (8, 2) | 1×1 | None |
 | BUSH_STUMP | What a bush cut in interact mode leaves; kept and regrown like STUMP | 2 (`GROUND_DECOR_LAYER`) | (8, 3) | 1×1 | None |
 
 With Solaria, TREE was 3×3 cells and BUSH 1×2. Both are now 1×1, so they draw smaller and their collision polygons were redrawn. The TREE and BUSH polygons are wide and tall enough that adjacent plants leave no gap the player (8×10 box) fits through. On the 16 px grid, trees and pines leave 2 px side to side and 5 px top to bottom, and bushes leave 4 px and 5 px. So a row, column or block of trees or bushes is a wall (`test_forest_walls` sweeps half-pixel lanes). One free cell between two plants is still passable.

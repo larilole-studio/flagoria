@@ -5,7 +5,7 @@ extends RefCounted
 ## no collision. TileMap calls these helpers from set_tile_type_z1 and
 ## predict_cell; TreeCuts clears the top when the bottom is chopped.
 
-const _WorldMap := preload("res://Scripts/TileMap.gd")
+const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 const BOTTOM := TileCatalog.TREE_BIRCH_BOTTOM
 const TOP := TileCatalog.TREE_BIRCH_TOP
 const NORTH := Vector2i(0, -1)

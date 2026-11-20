@@ -20,7 +20,7 @@ from PIL import Image
 ATLAS = "art/flagoria/flagoria_tiles_v4.png"
 OUT = "art/flagoria/fx/"
 TILE = 16
-# Atlas cells (Scripts/tile_catalog.gd) and the first row of each trunk.
+# Atlas cells (Scripts/world/tile_catalog.gd) and the first row of each trunk.
 TREE, TREE_BUSHY, TREE_PINE_SMALL = (7, 0), (7, 1), (7, 2)
 TRUNK_FROM = {TREE: 10, TREE_BUSHY: 12, TREE_PINE_SMALL: 12}
 

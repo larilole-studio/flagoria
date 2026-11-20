@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The map node delegates `player_on_cell` and `mob_cells` to `Scripts/world_cell_queries.gd`.
+The map node delegates `player_on_cell` and `mob_cells` to `Scripts/world/world_cell_queries.gd`.
 
 In interact mode the hero chops trees and bushes for wood. Each choppable kind is a data file (`data/interactables/tree.tres`, `pine.tres`, `bush.tres`, script `Scripts/mechanics/interactables/interactable_type.gd`) that sets its tiles, hits, `yields` (wood), what it leaves (STUMP, BUSH_STUMP), `regrow_delay`, `save_key`, sounds and effect frames. The pine (`TREE_PINE_SMALL`, generated as `PINE`) is its own type with the tree's values (#266). `InteractableCatalog` (a preload list) maps a foliage tile to its type. A birch trunk uses the standard tree type. Chopping it clears the canopy one cell north as well.
 
