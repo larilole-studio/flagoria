@@ -1,88 +1,92 @@
-extends SceneTree
-## One peer of a day/night sync session (#558).
-##   -- --port=N --out=PATH           join localhost:N
-##   -- --port=N --out=PATH --host    listen host, then seek the night hold
-## Writes PATH every 100 ms: phase, elapsed, tint, and the first errors.
-## Quits when PATH.stop exists. Waits on that file, never on a timer.
+extends "res://tests/helpers/probe_base.gd"
+## The host seeks night. In mobs mode it also ticks the ambient band once.
 
-var _out := ""
-var _errors := _ErrorLog.new()
-
-
-class _ErrorLog extends Logger:
-	var lines: Array[String] = []
-	var _lock := Mutex.new()
-
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
-		_lock.lock()
-		if lines.size() < 5:
-			lines.append("%s: %s" % [function, rationale if rationale != "" else code])
-		_lock.unlock()
-
-	func snapshot() -> Array[String]:
-		_lock.lock()
-		var copy := lines.duplicate()
-		_lock.unlock()
-		return copy
-
-
-func _initialize() -> void:
-	OS.add_logger(_errors)
-	call_deferred("_run")
+const SEED := 11
+var _ticked := false
 
 
 func _run() -> void:
-	var port := 0
-	var host := false
-	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--port="):
-			port = arg.trim_prefix("--port=").to_int()
-		elif arg.begins_with("--out="):
-			_out = arg.trim_prefix("--out=")
-		elif arg == "--host":
-			host = true
-	if port == 0 or _out == "" or change_scene_to_file("res://flagoria_main.tscn") != OK:
-		printerr("day_night_probe: needs --port, --out and the main scene")
+	var host := has_option("--host")
+	var mobs := option("--mode") == "mobs"
+	var main = await open_game(host)
+	if main == null:
 		quit(1)
 		return
-	await process_frame
-	await process_frame
-	var main := current_scene
+	if mobs:
+		main.get_node("CanvasLayer2/MainMenu").hide()
 	if host:
-		var params := MapGenParams.make_defaults()
-		params.altitude_seed = 11
-		params.moisture_seed = 12
-		params.temperature_seed = 13
-		params.items_seed = 14
-		params.biome_seed = 15
-		main.setup_server(params, port)
-		main.add_player(1)
-		root.get_node("DayNight").seek_phase("night")
-	else:
-		main.add_player_joined(port)
-	var deadline := Time.get_ticks_msec() + 90000
-	var next_write := 0
-	while Time.get_ticks_msec() < deadline and not FileAccess.file_exists(_out + ".stop"):
-		if not is_instance_valid(main):
-			printerr("day_night_probe: match ended")
+		if mobs:
+			root.get_node("GameSettings").set_mob_rate(1.0, false)
+		if host_game(main, _params(mobs)) != OK:
+			printerr("day_night_probe: could not host")
 			quit(1)
 			return
-		if Time.get_ticks_msec() >= next_write:
-			next_write = Time.get_ticks_msec() + 100
-			_write()
+		root.get_node("DayNight").seek_phase("night")
+		host_listening()
+	else:
+		await join_game(main)
+	var snapshot := _write.bind(main, mobs)
+	var deadline := Time.get_ticks_msec() + 60000
+	while game_active(main, deadline):
+		if mobs and host and not _ticked and _player_alive(main):
+			main.get_node("World/Mobs").run_ambient_tick()
+			_ticked = true
+		if snapshot_due(main):
+			snapshot.call()
 		await process_frame
-	_write()
-	quit(0)
+	finish(main, snapshot)
 
 
-func _write() -> void:
-	var state: Dictionary = root.get_node("DayNight").report()
-	state["errors"] = _errors.snapshot()
-	var tmp := _out + ".tmp"
-	var f := FileAccess.open(tmp, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify(state))
-	f.close()
-	DirAccess.rename_absolute(tmp, _out)
+func _params(mobs: bool) -> MapGenParams:
+	var params := MapGenParams.make_defaults()
+	var offset := 0 if mobs else 1
+	if mobs:
+		params.biome_frequency = 0.0
+	params.altitude_seed = SEED
+	params.moisture_seed = SEED + offset
+	params.temperature_seed = SEED + 2 * offset
+	params.items_seed = SEED + 3 * offset
+	params.biome_seed = SEED + 4 * offset
+	return params
+
+
+func _player_alive(main) -> bool:
+	for child in main.get_node("World").get_children():
+		if child is CharacterBody2D and Mob.is_alive(child):
+			return true
+	return false
+
+
+func _rows(main) -> Array:
+	var rows: Array = []
+	var mobs_node: Node = main.get_node_or_null("World/Mobs")
+	if mobs_node == null:
+		return rows
+	for child in mobs_node.get_children():
+		if child is Mob and not child.is_queued_for_deletion():
+			rows.append({
+				"name": str(child.name),
+				"type": str(child.mob_type),
+				"x": int(round(child.home.x)),
+				"y": int(round(child.home.y)),
+			})
+	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return str(a["name"]) < str(b["name"]))
+	return rows
+
+
+func _write(main, mobs: bool) -> void:
+	var clock := root.get_node("DayNight")
+	var data: Dictionary
+	if mobs:
+		data = {
+			"ready": _player_alive(main),
+			"phase": clock.phase(),
+			"scale": clock.spawn_scale(),
+			"ticked": _ticked,
+			"rows": _rows(main),
+		}
+	else:
+		data = clock.report()
+	data["errors"] = _errors.snapshot()
+	write_result(data)
