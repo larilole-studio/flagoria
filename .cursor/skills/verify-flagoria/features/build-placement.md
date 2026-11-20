@@ -22,7 +22,7 @@ when a peer connects; every picker tool stays available in multiplayer (#297,
 #497, #498, #527, #528, #556). `update_preview` skips the snap / `can_place` work
 only when the snapped cells, wood count, player position and map revision are
 unchanged, so a wood spend, a walk out of reach, or a map change cannot leave a
-stale green preview. Build-tool icons live under `art/ui/`.
+stale green preview. The tool wheel and the lilac picker discs use Candy Glass sprites from `art/ui/hud_e4/`.
 
 Reach (`Interaction.REACH`) is the length bound for a drag preview; no separate
 run-length cap was added (#380 item 1 left open).

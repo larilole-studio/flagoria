@@ -133,13 +133,13 @@ func _test_player_health() -> int:
 		var got := ""
 		for slot in 3:
 			var tex := HeartsHud.icon_for(slot, value)
-			got += "F" if tex == HeartsHud.ICON_FULL else ("H" if tex == HeartsHud.ICON_HALF else "E")
+			got += "F" if tex == RoundHudStyle.texture("heart_full") else ("H" if tex == RoundHudStyle.texture("heart_half") else "E")
 		if got != icons[value]:
 			printerr("FAIL player_health: icons at %s = %s, want %s" % [value, got, icons[value]])
 			fail += 1
-	for tex in [HeartsHud.ICON_FULL, HeartsHud.ICON_HALF, HeartsHud.ICON_EMPTY, HeartsHud.ICON_FLASH_0, HeartsHud.ICON_FLASH_1]:
-		if tex.get_size() != Vector2(9, 9):
-			printerr("FAIL player_health: heart icon %s is %s, want 9x9" % [tex.resource_path, tex.get_size()])
+	for tex in [RoundHudStyle.texture("heart_full"), RoundHudStyle.texture("heart_half"), RoundHudStyle.texture("heart_empty"), RoundHudStyle.texture("heart_flash_0"), RoundHudStyle.texture("heart_flash_1")]:
+		if tex.get_size() != Vector2(11, 11):
+			printerr("FAIL player_health: heart icon %s is %s, want 11x11" % [tex.resource_path, tex.get_size()])
 			fail += 1
 	# Losing health flashes only the hearts that changed: flash 0, flash 1, then the new state.
 	hud.set_process(false)
@@ -149,7 +149,7 @@ func _test_player_health() -> int:
 		var out := ""
 		for slot in 3:
 			var tex := hud.shown_icon(slot)
-			out += {HeartsHud.ICON_FULL: "F", HeartsHud.ICON_HALF: "H", HeartsHud.ICON_EMPTY: "E", HeartsHud.ICON_FLASH_0: "0", HeartsHud.ICON_FLASH_1: "1"}[tex]
+			out += {RoundHudStyle.texture("heart_full"): "F", RoundHudStyle.texture("heart_half"): "H", RoundHudStyle.texture("heart_empty"): "E", RoundHudStyle.texture("heart_flash_0"): "0", RoundHudStyle.texture("heart_flash_1"): "1"}[tex]
 		return out
 	var seen: Array[String] = [flash.call()]
 	hud.advance(HeartsHud.FLASH_FRAME + 0.001)
@@ -165,8 +165,8 @@ func _test_player_health() -> int:
 	var plate := hud.get_parent() as StatusPlateHud
 	if plate != null:
 		plate.reflow()
-		var want := StatusPlateHud.HEART_SLOT
-		if not hud.position.is_equal_approx(want):
+		if not is_equal_approx(hud.get_rect().get_center().y, plate.size.y * 0.5) \
+				or hud.scale != Vector2.ONE:
 			printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
 			fail += 1
 	# Death: health stops at 0, the player hides and cannot be hit or healed.
@@ -390,7 +390,7 @@ func _test_player_health_join_while_dead() -> int:
 			fail += 1
 		var flashing := false
 		for slot in 3:
-			flashing = flashing or hud.shown_icon(slot) in [HeartsHud.ICON_FLASH_0, HeartsHud.ICON_FLASH_1]
+			flashing = flashing or hud.shown_icon(slot) in [RoundHudStyle.texture("heart_flash_0"), RoundHudStyle.texture("heart_flash_1")]
 		if flashing:
 			printerr("FAIL health_join_dead the join state reply flashed the HUD")
 			fail += 1
