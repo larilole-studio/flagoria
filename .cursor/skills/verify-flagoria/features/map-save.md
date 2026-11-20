@@ -17,7 +17,7 @@ A world save holds a world's generation inputs (params and seeds) plus what was 
 - `save-reject` newer or unknown versions, another format, a bad clock or game version, a gzip that will not decompress, malformed files or change sections, and a seed left at 0 give clear errors and write no file.
 - `save-size` a fresh world stays within 1024 compressed bytes, and 300 chunk-keyed plank edits stay within 8192. The test prints both measured sizes.
 - `save-replace` a new save is written to `name.json.tmp`, read back, then renamed over `name.json`. A partial temp file or bytes that do not read back leave the previous save loadable, and the worlds list skips `.tmp` files.
-- `save-list` `MapSave` lists saves newest first with name and date, renames and deletes them, and refuses a name outside the saves folder. The main menu Worlds panel renames through `MapSave.rename_save` (`Scripts/shell/MainMenu.gd`) and can load or delete; see [Saved worlds](./saved-worlds.md).
+- `save-list` `MapSave` lists saves newest first with name and date, renames and deletes them, and refuses a name outside the saves folder. The main menu Worlds panel renames through `MapSave.rename_save` (`Scripts/shell/menu_worlds.gd`) and can load or delete; see [Saved worlds](./saved-worlds.md).
 
 ## How to get to it (user POV)
 

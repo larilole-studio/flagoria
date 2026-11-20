@@ -62,7 +62,9 @@ GAMEPLAY = [
     "Scripts/MapGenParams.gd",  # map generation defaults and value ranges
     "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
     "Scripts/ui/hearts_hud.gd", "Scripts/player/map_zoom.gd",
-    "Scripts/shell/MainMenu.gd", "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
+    "Scripts/shell/MainMenu.gd", "Scripts/shell/menu_join_flow.gd", "Scripts/shell/menu_worlds.gd",
+    "Scripts/shell/menu_volume.gd", "Scripts/shell/menu_gameplay_settings.gd",
+    "Scripts/ui/MapAdminPanel.gd", "Scripts/ui/world_save_preview.gd",
     "Scripts/player/attack_aim.gd", "Scripts/player/aim_cone_style.gd",  # aimed attacks and the cone's reach
     "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",  # score awards
     "Scripts/mechanics/trees/inventory.gd",  # gathered wood
@@ -101,7 +103,7 @@ NETCODE = [
 # a changed line names netcode (RPCs, peers, authority, synchronizers).
 NETCODE_MIXED = [
     "flagoria_main.gd", "flagoria_main.tscn",
-    "Scripts/player/character_body_2d.tscn", "Mobs/mob.tscn",
+    "Player/character_body_2d.tscn", "Mobs/mob.tscn",
     "Scripts/player/player.gd", "Scripts/player/player_input.gd", "Scripts/player/player_combat.gd",
     "Scripts/player/player_camera.gd", "Scripts/player/player_hud.gd", "Scripts/player/player_wall_draw.gd",
     "Scripts/player/player_health.gd", "Scripts/mechanics/mobs/mob.gd", "Scripts/TileMap.gd",
@@ -205,7 +207,7 @@ def gameplay_paths(paths: list[str], base_project: str | None, head_project: str
 def self_test() -> int:
     inp = "[input]\n\nattack={}\n"
     cases = [
-        (["Scripts/player/sword.tscn"], None, None, True),
+        (["Player/sword.tscn"], None, None, True),
         (["Scripts/mechanics/mobs/mob.gd", "README.md"], None, None, True),
         (["Scripts/ui/map_admin_panel.tscn"], None, None, True),
         (["Scripts/map_gen.gd"], None, None, True),
@@ -269,7 +271,7 @@ def self_test() -> int:
         ("pull_request", ["Scripts/player/player.gd"], play_net, FULL_RUNS),
         ("pull_request", ["flagoria_main.tscn"], scene_net, FULL_RUNS),
         ("pull_request", ["Scripts/player/player.gd"], None, FULL_RUNS),
-        ("pull_request", ["Scripts/player/player.gd", "Scripts/player/sword.tscn"], play, LIGHT_RUNS),
+        ("pull_request", ["Scripts/player/player.gd", "Player/sword.tscn"], play, LIGHT_RUNS),
         ("pull_request", ["Scripts/ui/hearts_hud.gd"], diff("Scripts/ui/hearts_hud.gd", "+rpc()"), LIGHT_RUNS),
         ("push", ["Scripts/ui/hearts_hud.gd"], "", FULL_RUNS),
     ]
