@@ -1,7 +1,7 @@
 extends RefCounted
 ## Sets up local camera zoom and checks full-map visibility.
 
-const MapZoom := preload("res://Scripts/map_zoom.gd")
+const MapZoom := preload("res://Scripts/player/map_zoom.gd")
 
 
 static func attach_zoom(camera: Camera2D) -> void:

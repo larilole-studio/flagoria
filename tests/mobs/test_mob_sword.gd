@@ -210,7 +210,7 @@ func _test_mob_sword_two_attackers() -> int:
 	scene.spawn_mobs()
 	var players: Array = []
 	for n in ["1", "2"]:
-		var p = load("res://Player/character_body_2d.tscn").instantiate()
+		var p = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 		p.name = n
 		scene.get_node("World").add_child(p)
 		p.set_physics_process(false)  # positions are set by the test

@@ -67,7 +67,7 @@ func _castle_flag(map: TileMap) -> Vector2i:
 
 func _foe() -> CharacterBody2D:
 	## Offline the host is body "1". This body is the other player the tower shoots.
-	var body: CharacterBody2D = load("res://Player/character_body_2d.tscn").instantiate()
+	var body: CharacterBody2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	body.name = "2"
 	body.set_multiplayer_authority(2)
 	var cam := body.get_node_or_null("Camera2D") as Camera2D

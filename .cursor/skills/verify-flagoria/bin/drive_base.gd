@@ -24,7 +24,7 @@ const MENU_BUTTON := "CanvasLayer1/InGameMenu/MenuButton"
 const MENU_PANEL := "CanvasLayer1/InGameMenu/Pause"
 const SAVE_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/Save"
 const WORLD_MAP := "World/worldMap"
-## Movement (Scripts/player.gd) and attack, as named in project.godot.
+## Movement (Scripts/player/player.gd) and attack, as named in project.godot.
 const ACTIONS := ["ui_left", "ui_right", "ui_up", "ui_down", "attack"]
 ## How long start_game() waits for each of the Host button and the hero.
 const START_TIMEOUT_S := 30.0

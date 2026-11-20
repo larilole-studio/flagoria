@@ -30,7 +30,7 @@ func _test_sword_reach() -> int:
 	print("-- test_sword_reach")
 	var fail := 0
 	await process_frame
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	root.add_child(player)
 	player.set_physics_process(false)
 	await process_frame
@@ -83,7 +83,7 @@ func _test_sword_reach_mob() -> int:
 	scene.world_params = _spawn_params(42, 0.003)
 	world.apply_map_params(scene.world_params)
 	scene.spawn_mobs()
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = "1"
 	scene.get_node("World").add_child(player)
 	player.set_physics_process(false)

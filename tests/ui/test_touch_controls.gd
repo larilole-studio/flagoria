@@ -16,7 +16,7 @@ func _test_touch_controls_look() -> int:
 	menu.hide()
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(player)
 	player.position = player.spawn_position()
@@ -101,7 +101,7 @@ func _test_joystick_hold_keeps_moving() -> int:
 	menu.hide()
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
-	var local = load("res://Player/character_body_2d.tscn").instantiate()
+	var local = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	local.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(local)
 	local.collision_mask = 0  # input to velocity only; terrain is not under test

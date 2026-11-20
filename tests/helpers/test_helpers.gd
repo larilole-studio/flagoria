@@ -59,7 +59,7 @@ func free_ui_scene(scene: Node) -> void:
 
 func add_combat_actor(scene: Node, position: Vector2) -> CharacterBody2D:
 	## Attach the local player after the caller has prepared the arena.
-	var player := load("res://Player/character_body_2d.tscn").instantiate() as CharacterBody2D
+	var player := load("res://Scripts/player/character_body_2d.tscn").instantiate() as CharacterBody2D
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = position
 	scene.get_node("World").add_child(player)
@@ -368,7 +368,7 @@ func _respawn_follow_case(label: String, death: Vector2, spawn: Vector2, walk: V
 		printerr("FAIL respawn_hold %s client did not connect" % label)
 		fail += 1
 	else:
-		var player_scene := load("res://Player/character_body_2d.tscn")
+		var player_scene := load("res://Scripts/player/character_body_2d.tscn")
 		var id := str(cpeer.get_unique_id())
 		var s_copy = player_scene.instantiate()
 		s_copy.name = id

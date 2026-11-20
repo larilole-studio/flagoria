@@ -4,7 +4,7 @@ extends RefCounted
 const MAP_PATH := "/root/Flagoria/World/worldMap"
 const TOOL_WHEEL_PATH := "/root/Flagoria/CanvasLayer1/ToolWheel"
 const RANGED_PATH := "/root/Flagoria/World/RangedShots"
-const AttackAimScript := preload("res://Scripts/attack_aim.gd")
+const AttackAimScript := preload("res://Scripts/player/attack_aim.gd")
 
 
 static func try_bow_shot(player, direction: String, angle: float) -> bool:

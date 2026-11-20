@@ -65,7 +65,7 @@ const ATTACK_BUTTON_GROUP := "attack_button"
 const INTERACTION_PATH := "/root/Flagoria/World/Interaction"
 const MENU_PATH := "/root/Flagoria/CanvasLayer1/InGameMenu"
 const MOVE_STICK_PATH := "/root/Flagoria/CanvasLayer1/player_joystick"
-const MapZoomScript := preload("res://Scripts/map_zoom.gd")
+const MapZoomScript := preload("res://Scripts/player/map_zoom.gd")
 
 var player: Node2D  ## the local player; this node is its child
 var aiming := false

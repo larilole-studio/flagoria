@@ -7,7 +7,7 @@ Player sprite sheets come from a layered generator; the Flagbearer sheet is the 
 ## Sub-features
 
 - `hero-generate` `python3 tools/hero/make_hero.py [hero ...]` builds sheets and previews from `art/hero/parts` and `art/hero/heroes/*.ini` (see `docs/hero-sprites.md`).
-- `hero-in-game` `art/hero/sheets/flagbearer_sheet.png` (128x256) is used by `Player/character_body_2d.tscn`.
+- `hero-in-game` `art/hero/sheets/flagbearer_sheet.png` (128x256) is used by `Scripts/player/character_body_2d.tscn`.
 
 ## How to get to it (user POV)
 

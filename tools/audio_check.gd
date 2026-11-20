@@ -174,7 +174,7 @@ func _physics_tick() -> void:
 
 
 func _spawn_player(peer_name: String, pos: Vector2) -> Node2D:
-	var p: Node2D = load("res://Player/character_body_2d.tscn").instantiate()
+	var p: Node2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	p.name = peer_name
 	p.position = pos
 	_scene.get_node("World").add_child(p)

@@ -255,7 +255,7 @@ script = ExtResource("25_raid")
 spawn_path = NodePath("..")
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="World"]
-_spawnable_scenes = PackedStringArray("res://Player/character_body_2d.tscn")
+_spawnable_scenes = PackedStringArray("res://Scripts/player/character_body_2d.tscn")
 spawn_path = NodePath("..")
 
 [node name="CanvasLayer2" type="CanvasLayer" parent="."]
