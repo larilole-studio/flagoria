@@ -2,6 +2,8 @@
 
 Drive: drives/join_fail.gd
 
+Assertion owner for failed-join UI: `drives/join_fail.gd` checks the returned menu, hidden HUD, and exact visible status.
+
 A Join that never connects (wrong address, host not running, port blocked) returns to the main menu with a visible `Could not join <address>` message instead of leaving the player on an empty game screen (#348). A client whose host quits mid-game also lands back on the main menu.
 
 ## Sub-features
@@ -16,11 +18,11 @@ A Join that never connects (wrong address, host not running, port blocked) retur
 
 ## Driving it with verify-flagoria helpers
 
-Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_no_host` ~6 s in verify (~8 s alone with `--only=`); `join_fail_host_quits` ~6–8 s (probe); live drive ~8 s.
+Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_host_quits` ~6–8 s (probe); live drive ~8 s.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_fail_no_host,join_fail_host_quits`, or full `tools/verify.sh`.
-- **Drive (live).** `bin/launch.sh drives/join_fail.gd --display` (## launch: --seed 42). Steps `menu`, `join`: open the main scene, set address `127.0.0.1`, join a free UDP port with nothing listening, wait for the menu and `JoinStatus`, `snapshot("before-join")` then `snapshot("join-failed")`, `done(true)`.
-- **Proof.** Headers `-- test_join_fail_no_host`, `-- test_join_fail_host_quits` with no `FAIL` after them. Drive snapshots show the main menu with `Could not join 127.0.0.1` under the address field.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_fail_host_quits`, or full `tools/verify.sh`.
+- **Drive (live).** `bin/launch.sh drives/join_fail.gd --display` (## launch: --seed 42). Steps `menu`, `join`: open the main scene, enter `127.0.0.1:<free UDP port>`, click Join, and check recovery within 8 s. Snapshots: `before-join` and `join-failed`.
+- **Proof.** Headless prints `PASS test_join_fail_host_quits`. The live drive prints `VERIFY_DONE ok` and captures the menu with `Could not join 127.0.0.1:<port>` under the address field.
 
 ## Gotchas
 
