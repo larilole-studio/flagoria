@@ -199,7 +199,7 @@ func _test_day_night_cycle_off() -> int:
 	if not defaults.day_night_cycle:
 		printerr("FAIL day_night_cycle_off: default is off")
 		fail += 1
-	var panel := load("res://map_admin_panel.tscn").instantiate() as Node
+	var panel := load("res://Scripts/ui/map_admin_panel.tscn").instantiate() as Node
 	root.add_child(panel)
 	var row := panel.find_child("day_night_cycle", true, false)
 	var label: Label = null

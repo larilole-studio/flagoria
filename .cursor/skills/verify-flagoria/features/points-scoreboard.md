@@ -6,8 +6,8 @@ Every connected player's point total opens from the score row trophy at the end 
 
 ## Sub-features
 
-- `points-scoreboard-panel` `ScoreboardPanel` (`Scripts/scoreboard_panel.gd`): lists connected peers using synced `Points` totals.
-- `points-scoreboard-toggle` trophy `ScoreboardToggle` (`Scripts/scoreboard_toggle.gd`) beside the own-total label; layout id `scores` in Customize HUD (#492).
+- `points-scoreboard-panel` `ScoreboardPanel` (`Scripts/ui/scoreboard_panel.gd`): lists connected peers using synced `Points` totals.
+- `points-scoreboard-toggle` trophy `ScoreboardToggle` (`Scripts/ui/scoreboard_toggle.gd`) beside the own-total label; layout id `scores` in Customize HUD (#492).
 
 ## How to get to it (user POV)
 

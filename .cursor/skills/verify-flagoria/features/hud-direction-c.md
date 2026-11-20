@@ -2,7 +2,7 @@
 
 Drive: drives/hud_direction_c.gd
 
-In-match HUD uses `art/ui/hud_e4/` Candy Glass sprites with linear filtering on the fractional 480×270 layout. `Scripts/hud_tool_row.gd` positions the current controls against the visible viewport, with Attack mirrored across from the joystick.
+In-match HUD uses `art/ui/hud_e4/` Candy Glass sprites with linear filtering on the fractional 480×270 layout. `Scripts/ui/hud_tool_row.gd` positions the current controls against the visible viewport, with Attack mirrored across from the joystick.
 
 ## How to get to it (user POV)
 

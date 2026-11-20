@@ -7,7 +7,7 @@ Each player has 3 hearts in half-heart steps. A hit costs half a heart and start
 ## Sub-features
 
 - `hearts-data` `PlayerHealth` (`Scripts/player_health.gd`): `max_health` 6 half-hearts, `invulnerable_time` 1 s, `respawn_delay` 1 s; signals `health_changed`, `damaged`, `died`, `respawned`, `state_received`.
-- `hearts-hud` `HeartsHud` (`Scripts/hearts_hud.gd`): a corner row of full, half and empty icons that follows the local player and flashes on loss.
+- `hearts-hud` `HeartsHud` (`Scripts/ui/hearts_hud.gd`): a corner row of full, half and empty icons that follows the local player and flashes on loss.
 - `hearts-regen` the player's `regen_timer` (`Scripts/player.gd`) gives half a heart back every 5 s, skipping dead and full players.
 - `hearts-sync` health is host-authoritative and replicated to every peer; a joiner sees a dead player as dead (no blocking body).
 - `hearts-respawn` a respawned player's copies do not snap back to the death spot: the server's copy holds the spawn until the first update the player's own client sent after the respawn (at most `RESPAWN_HOLD_MS`, 1 s), a stale update does not pull it back, and two players respawning onto each other's death spots are not pushed off.
