@@ -57,7 +57,7 @@ GAMEPLAY = [
     "Scripts/mechanics/*.gd",  # cuts, bridges, walls, structures, choppable types (all subfolders)
     "Scripts/map_gen.gd",  # session map parameters applied to the world map
     "Scripts/MapGenParams.gd",  # map generation defaults and value ranges
-    "Scripts/map_save.gd",  # saved worlds: which parameters a world loads with
+    "Scripts/saves/map_save.gd",  # saved worlds: which parameters a world loads with
     "Scripts/hearts_hud.gd", "Scripts/map_zoom.gd",
     "Scripts/MainMenu.gd", "Scripts/MapAdminPanel.gd", "Scripts/world_save_preview.gd",
     "Scripts/attack_aim.gd", "Scripts/aim_cone_style.gd",  # aimed attacks and the cone's reach
@@ -65,8 +65,8 @@ GAMEPLAY = [
     "Scripts/inventory.gd",  # gathered wood
     "Scripts/game_settings.gd",  # mob spawn rate
     "Scripts/tile_catalog.gd", "Scripts/BiomeCatalog.gd",  # tiles and biome tables of the world map
-    "Scripts/world_save.gd",  # what a saved world keeps
-    "Scripts/player_save.gd",  # player position, health, wood, score, charted ground
+    "Scripts/saves/world_save.gd",  # what a saved world keeps
+    "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
     "Scripts/explored_map.gd", "Scripts/minimap_panel.gd",  # explored map and its HUD panel
     "Scripts/parchment_map.gd", "Scripts/map_wood_button.gd",  # parchment full map and its wood controls
     "Scripts/resource_hud.gd", "Scripts/score_hud.gd", "Scripts/scoreboard_toggle.gd",
@@ -205,8 +205,8 @@ def self_test() -> int:
         (["Scripts/map_gen.gd"], None, None, True),
         (["Scripts/map_gen.gd.uid", "docs/audio.md", "tools/verify.sh"], None, None, False),
         (["Scripts/MapGenParams.gd"], None, None, True),
-        (["Scripts/map_save.gd"], None, None, True),
-        (["Scripts/MapGenParams.gd.uid", "Scripts/map_save.gd.uid"], None, None, False),
+        (["Scripts/saves/map_save.gd"], None, None, True),
+        (["Scripts/MapGenParams.gd.uid", "Scripts/saves/map_save.gd.uid"], None, None, False),
         (["Scripts/world/spawn_finder.gd"], None, None, True),
         (["Scripts/world/terrain_shape.gd.uid"], None, None, False),
         (["debug/building_block_pieces.tscn"], None, None, False),
@@ -227,8 +227,8 @@ def self_test() -> int:
         (["Scripts/attack_aim.gd"], None, None, True),
         (["Scripts/aim_cone_style.gd"], None, None, True),
         (["Scripts/points.gd"], None, None, True),
-        (["Scripts/world_save.gd"], None, None, True),
-        (["Scripts/player_save.gd"], None, None, True),
+        (["Scripts/saves/world_save.gd"], None, None, True),
+        (["Scripts/saves/player_save.gd"], None, None, True),
         (["Scripts/ingame_menu.gd"], None, None, True),
         (["Scripts/hud_layout.gd", "Scripts/hud_layout_edit.gd", "hud_layout_edit.tscn"], None, None, True),
         (["data/interactables/tree.tres"], None, None, True),
