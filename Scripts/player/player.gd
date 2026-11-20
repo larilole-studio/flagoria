@@ -1,11 +1,11 @@
 extends CharacterBody2D
 
-const PlayerCamera := preload("res://Scripts/player_camera.gd")
-const PlayerCombat := preload("res://Scripts/player_combat.gd")
-const PlayerHud := preload("res://Scripts/player_hud.gd")
-const PlayerInput := preload("res://Scripts/player_input.gd")
-const AttackAimScript := preload("res://Scripts/attack_aim.gd")
-const PlayerWallDraw := preload("res://Scripts/player_wall_draw.gd")
+const PlayerCamera := preload("res://Scripts/player/player_camera.gd")
+const PlayerCombat := preload("res://Scripts/player/player_combat.gd")
+const PlayerHud := preload("res://Scripts/player/player_hud.gd")
+const PlayerInput := preload("res://Scripts/player/player_input.gd")
+const AttackAimScript := preload("res://Scripts/player/attack_aim.gd")
+const PlayerWallDraw := preload("res://Scripts/player/player_wall_draw.gd")
 
 const MAX_SPEED = 130
 const ACCEL = 120

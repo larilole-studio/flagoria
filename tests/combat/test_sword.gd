@@ -12,10 +12,10 @@ func _test_sword_only_hits_mid_swing() -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var world: Node = scene.get_node("World")
-	var a = load("res://Player/character_body_2d.tscn").instantiate()
+	var a = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	a.name = "2"
 	world.add_child(a)
-	var b = load("res://Player/character_body_2d.tscn").instantiate()
+	var b = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	b.name = "3"
 	world.add_child(b)
 	var spawn: Vector2 = a.spawn_position()

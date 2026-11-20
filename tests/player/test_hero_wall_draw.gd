@@ -17,7 +17,7 @@ func _test_hero_draws_over_wall_face() -> int:
 			world.set_cell(0, Vector2i(x, y), TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
 	var wall := Vector2i(10, 8)
 	world.set_cell(1, wall, TileCatalog.SOURCE_ID, TileCatalog.WALL_H)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	scene.get_node("World").add_child(player)
 	await process_frame

@@ -161,7 +161,7 @@ func _test_cut_rate_numbers() -> int:
 	if most != script.DRAG_CELLS:
 		printerr("FAIL cut_rate_numbers: at most %d cells are in reach, DRAG_CELLS is %d" % [most, script.DRAG_CELLS])
 		fail += 1
-	var speed := float(preload("res://Scripts/player.gd").MAX_SPEED)
+	var speed := float(preload("res://Scripts/player/player.gd").MAX_SPEED)
 	for dir in [Vector2.RIGHT, Vector2(1, 1).normalized(), Vector2(2, 1).normalized()]:
 		var limit = script.new()
 		var now := [0.0]

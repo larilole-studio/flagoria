@@ -26,7 +26,7 @@ func _test_chop_bush() -> int:
 		for y in range(9, 12):
 			if Vector2i(x, y) != home:
 				world.set_cell(1, Vector2i(x, y), TileCatalog.SOURCE_ID, TileCatalog.BUSH)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = world.to_global(world.map_to_local(home))
 	scene.get_node("World").add_child(player)

@@ -57,7 +57,7 @@ func _run() -> void:
 		quit(1)
 		return
 
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(flagoria.multiplayer.get_unique_id())
 	player.position = world.to_global(world.map_to_local(anchor + Vector2i(0, 3)))
 	flagoria.get_node("World").add_child(player)

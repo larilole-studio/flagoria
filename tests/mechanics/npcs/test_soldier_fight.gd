@@ -26,7 +26,7 @@ func _test_soldier_fight() -> int:
 	world.apply_map_params(scene.world_params)
 	world.generate_chunk(Vector2(0, 0))
 	var peer := 1
-	var owner: Node2D = load("res://Player/character_body_2d.tscn").instantiate()
+	var owner: Node2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	owner.name = str(peer)
 	scene.get_node("World").add_child(owner)
 	owner.set_physics_process(false)
@@ -122,11 +122,11 @@ func _test_soldier_bow() -> int:
 	})
 	soldier.set_physics_process(false)
 	scene.get_node("World/Soldiers").add_child(soldier)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(peer)
 	scene.get_node("World").add_child(player)
 	player.position = mid_c + Vector2(-40, 80)
-	var other = load("res://Player/character_body_2d.tscn").instantiate()
+	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	other.name = "2"
 	scene.get_node("World").add_child(other)
 	other.position = mid_c + Vector2(-80, 0)

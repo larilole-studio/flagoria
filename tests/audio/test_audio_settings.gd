@@ -68,7 +68,7 @@ func _test_audio_settings() -> int:
 		printerr("FAIL audio_settings: Music saved at 0 is not muted after reload")
 		fail += 1
 
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = "2"
 	scene.get_node("World").add_child(player)
 	var routed: Array = [player.get_node("Footsteps")]

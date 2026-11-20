@@ -12,7 +12,7 @@ extends SceneTree
 
 const HERO_SHEET := "res://art/hero/sheets/flagbearer_sheet.png"
 const HERO_SHEET_SIZE := Vector2i(128, 256)
-const PLAYER_SCENE := "res://Player/character_body_2d.tscn"
+const PLAYER_SCENE := "res://Scripts/player/character_body_2d.tscn"
 const MENU_SCENE := "res://flagoria_main.tscn"
 const MENU_THEME := "res://art/ui/main_menu_theme.tres"
 const BUTTON_STYLES := ["normal", "hover", "pressed", "disabled", "focus"]

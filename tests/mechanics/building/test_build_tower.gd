@@ -28,7 +28,7 @@ func _boot_tower_scene() -> Dictionary:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var inventory: Inventory = scene.get_node("Inventory")
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	var place_cell: Vector2i = anchor if anchor != null else Vector2i(10, 10)
 	# Stand just outside the footprint so the player does not occupy it.

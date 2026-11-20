@@ -63,7 +63,7 @@ func _test_player_respawn_no_snapback() -> int:
 		printerr("FAIL respawn_snapback client did not connect")
 		fail += 1
 	else:
-		var player_scene := load("res://Player/character_body_2d.tscn")
+		var player_scene := load("res://Scripts/player/character_body_2d.tscn")
 		var id := str(cpeer.get_unique_id())
 		var death := Vector2(100, 100)
 		var spawn := Vector2(400, 400)
@@ -157,7 +157,7 @@ func _test_player_respawn_hold_before_first_sync() -> int:
 	await process_frame
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
-	var copy = load("res://Player/character_body_2d.tscn").instantiate()
+	var copy = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	copy.name = "2"  # owned by peer 2; this (offline) peer is the server
 	scene.get_node("World").add_child(copy)
 	copy.set_physics_process(false)
@@ -216,9 +216,9 @@ func _test_respawn_teleport_ghosts() -> int:
 	]
 	for c in cases:
 		var label: String = c[0]
-		var me = load("res://Player/character_body_2d.tscn").instantiate()
+		var me = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 		me.name = str(scene.multiplayer.get_unique_id())
-		var other = load("res://Player/character_body_2d.tscn").instantiate()
+		var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 		other.name = "2"  # a copy: only its owner would move it
 		world.add_child(me)
 		world.add_child(other)

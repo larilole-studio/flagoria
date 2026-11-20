@@ -24,7 +24,7 @@ func _test_combat_sfx() -> int:
 	await process_frame
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = "2"
 	scene.get_node("World").add_child(player)
 	var c: CombatSfx = player.combat_sfx
@@ -36,7 +36,7 @@ func _test_combat_sfx() -> int:
 	# A hit from another player's sword: hit and hurt once each; at half a heart it is a kill.
 	c._last_ms.clear()
 	player.health.set_health_now(1)
-	var other = load("res://Player/character_body_2d.tscn").instantiate()
+	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	other.name = "3"
 	scene.get_node("World").add_child(other)
 	other.attack_animation()  # only a swinging sword hits

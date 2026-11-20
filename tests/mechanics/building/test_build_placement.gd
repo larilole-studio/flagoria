@@ -113,7 +113,7 @@ func _boot_interact_scene(world_seed_finder: bool = true) -> Dictionary:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var inventory: Inventory = scene.get_node("Inventory")
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	var place_cell: Vector2i = found.get("shore", Vector2i(10, 10))
 	player.position = world.to_global(world.map_to_local(place_cell))
@@ -206,7 +206,7 @@ func _test_build_cut_mode_unchanged() -> int:
 		for y in range(-2, 20):
 			world.set_cell(0, Vector2i(x, y), TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
 	world.set_cell(1, Vector2i(10, 6), TileCatalog.SOURCE_ID, TileCatalog.TREE)
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = world.to_global(world.map_to_local(Vector2i(10, 10)))
 	scene.get_node("World").add_child(player)
@@ -332,7 +332,7 @@ func _boot_shore_min(want: int) -> Dictionary:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var inventory: Inventory = scene.get_node("Inventory")
-	var player = load("res://Player/character_body_2d.tscn").instantiate()
+	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	player.name = str(scene.multiplayer.get_unique_id())
 	var place_cell: Vector2i = found.get("shore", Vector2i(10, 10))
 	player.position = world.to_global(world.map_to_local(place_cell))

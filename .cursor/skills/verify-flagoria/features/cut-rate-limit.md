@@ -7,7 +7,7 @@ In multiplayer the host limits how fast each client may ask for cuts (#355). `In
 ## Sub-features
 
 - `cut-rate-burst` a full bucket holds `BURST` (162) tokens: twice `DRAG_CELLS` (81), the most 16 px cell centres within `Interaction.REACH` (80 px) of one point, so the biggest drag a player can make goes through whole. Once the bucket is spent, a request for a plant in reach is dropped: no stump, no yields.
-- `cut-rate-refill` the bucket refills at `RATE` (162.5) tokens a second, up to `BURST`: twice `SWEEP_CELLS` (81.25), the new cells a 2 * `REACH` wide strip brings into reach each second at the keyboard top speed (`MAX_SPEED`, 130 px/s, in `Scripts/player.gd`). A player dragging every frame while walking at top speed through a plant on every cell is never refused; with no headroom (1x) a diagonal walk is refused 25 of 917 requests.
+- `cut-rate-refill` the bucket refills at `RATE` (162.5) tokens a second, up to `BURST`: twice `SWEEP_CELLS` (81.25), the new cells a 2 * `REACH` wide strip brings into reach each second at the keyboard top speed (`MAX_SPEED`, 130 px/s, in `Scripts/player/player.gd`). A player dragging every frame while walking at top speed through a plant on every cell is never refused; with no headroom (1x) a diagonal walk is refused 25 of 917 requests.
 - `cut-rate-per-peer` each peer has its own bucket: a peer that spent its bucket does not hold back another peer's cuts.
 
 ## How to get to it (user POV)

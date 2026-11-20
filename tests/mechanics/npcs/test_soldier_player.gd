@@ -42,8 +42,8 @@ func _test_soldier_player() -> int:
 	var base := Vector2(256, 256)
 	# Owner at 10 px, other peer in contact range: other takes damage, owner does not.
 	var soldier: Soldier = load(Soldier.SOLDIER_SCENE).instantiate()
-	var owner: Node2D = load("res://Player/character_body_2d.tscn").instantiate()
-	var other: Node2D = load("res://Player/character_body_2d.tscn").instantiate()
+	var owner: Node2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
+	var other: Node2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	var built := await _make_scene(soldier, owner, other, null)
 	var scene: Node = built["scene"]
 	owner.position = base + Vector2(10, 0)
@@ -68,8 +68,8 @@ func _test_soldier_player() -> int:
 	await process_frame
 	# Mob at 20 px, other peer at 40 px: mob is struck first.
 	soldier = load(Soldier.SOLDIER_SCENE).instantiate()
-	owner = load("res://Player/character_body_2d.tscn").instantiate()
-	other = load("res://Player/character_body_2d.tscn").instantiate()
+	owner = load("res://Scripts/player/character_body_2d.tscn").instantiate()
+	other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	var slime: Mob = load("res://Mobs/mob.tscn").instantiate()
 	slime.setup(MobCatalog.SLIME, base + Vector2(8, 0), SEED)
 	built = await _make_scene(soldier, owner, other, slime)
@@ -94,8 +94,8 @@ func _test_soldier_player() -> int:
 	await process_frame
 	# Dead peer: no further take_damage.
 	soldier = load(Soldier.SOLDIER_SCENE).instantiate()
-	owner = load("res://Player/character_body_2d.tscn").instantiate()
-	other = load("res://Player/character_body_2d.tscn").instantiate()
+	owner = load("res://Scripts/player/character_body_2d.tscn").instantiate()
+	other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	built = await _make_scene(soldier, owner, other, null)
 	scene = built["scene"]
 	owner.position = base + Vector2(-40, 0)
