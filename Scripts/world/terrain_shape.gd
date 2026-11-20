@@ -22,7 +22,7 @@ func cell_altitude(cell: Vector2i, biome_id: int) -> float:
 	## archipelago shaping. generate_chunk and tools/render_biomes.gd share it.
 	var alt := _map.altitude.get_noise_2d(cell.x, cell.y)
 	if _map.biome_frequency > 0.0:
-		alt += BiomeCatalog.altitude_bias(biome_id)
+		alt += _map.biome_altitude_bias[biome_id]
 	return archipelago_altitude(cell, island_altitude(cell, alt))
 
 
@@ -94,7 +94,7 @@ func _archipelago_square_kept_by_biome(square: Vector2i) -> bool:
 	## Keep the square when a deterministic hash falls under that biome's density.
 	var half := int(_map.archipelago_spacing / 2)
 	var centre_cell := square * _map.archipelago_spacing + Vector2i(half, half)
-	var dens := BiomeCatalog.density(_map.biome_at(centre_cell))
+	var dens: float = _map.biome_island_density[_map.biome_at(centre_cell)]
 	if dens >= 1.0:
 		return true
 	var h: int = hash(Vector3i(square.x, square.y, _map.biome_seed))
