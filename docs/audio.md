@@ -21,7 +21,9 @@ on the `Music` bus, on this client only. Nothing is networked. Tracks:
 
 - **Menu:** `MENU_TRACK`, Ninja Adventure "5 - Peaceful". Started by the
   main menu.
-- **Game:** `GAME_TRACK`, "4 - Village". Started by Host and Join.
+- **Game:** `GAME_TRACK`, "22 - Dream". Started by Host and Join. The 96-second
+  loop measures −22.7 LUFS integrated, 5.8 LU quieter than Village at the
+  same playback gain.
 
 `play(track)` crossfades over 1.5 s on two players. Asking for the track
 that is already playing does nothing, so menus and scene reloads never

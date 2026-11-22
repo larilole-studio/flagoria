@@ -7,7 +7,7 @@ extends Node
 ## change. Nothing here is networked; each client plays its own music.
 
 const MENU_TRACK := "res://art/Sprites/NinjaAdventure/Musics/5 - Peaceful.ogg"
-const GAME_TRACK := "res://art/Sprites/NinjaAdventure/Musics/4 - Village.ogg"
+const GAME_TRACK := "res://art/Sprites/NinjaAdventure/Musics/22 - Dream.ogg"
 const VOLUME_DB := -8.0
 const FADE := 1.5
 

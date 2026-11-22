@@ -33,17 +33,22 @@ func _test_music_player() -> int:
 		printerr("FAIL music: same track restarted")
 		fail += 1
 
+	var match_track := "res://art/Sprites/NinjaAdventure/Musics/22 - Dream.ogg"
 	music.play(music.GAME_TRACK, 0.3)
 	var playing := 0
 	for p in music.players():
 		playing += 1 if p.playing else 0
-	if music.current_track() != music.GAME_TRACK or playing != 2:
-		printerr("FAIL music: crossfade should play both tracks briefly, %d playing" % playing)
+	if music.current_track() != match_track or playing != 2:
+		printerr("FAIL music: expected match track %s during crossfade, got %s with %d players" % [match_track, music.current_track(), playing])
 		fail += 1
 	await create_timer(0.6).timeout
 	playing = 0
 	for p in music.players():
-		playing += 1 if p.playing else 0
+		if p.playing:
+			playing += 1
+			if not p.stream.loop:
+				printerr("FAIL music: match track is not set to loop")
+				fail += 1
 	if playing != 1 or first.playing:
 		printerr("FAIL music: after the crossfade %d players play, old one playing=%s" % [playing, first.playing])
 		fail += 1
