@@ -75,11 +75,11 @@ func _test_ui_sfx_presses() -> int:
 		if first.get_object() != ui:
 			printerr("FAIL ui_sfx_presses: %s press sound is not connected first" % b.name)
 			fail += 1
-		var want := "back" if b.name == "Back" else "click"
+		var want := "back" if b.name in ["Back", "BackButton"] else "click"
 		if ui.sound_for(b) != want:
 			printerr("FAIL ui_sfx_presses: %s plays %s, want %s" % [b.name, ui.sound_for(b), want])
 			fail += 1
-	for n in ["MapSettingsButton", "HostButton", "JoinButton", "RandomSeed", "RandomSpecs", "Reset", "Back", "Start", "NoiseType"]:
+	for n in ["MapSettingsButton", "HostButton", "JoinButton", "SettingsButton", "BackButton", "RandomSeed", "RandomSpecs", "Reset", "Back", "Start", "NoiseType"]:
 		if n not in names:
 			printerr("FAIL ui_sfx_presses: no %s button found" % n)
 			fail += 1
