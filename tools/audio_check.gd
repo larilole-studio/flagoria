@@ -50,11 +50,11 @@ const TIMELINE := [
 	{"name": "chop_tree", "action": "chop_tree", "duration": 1.0, "expect": {"tree_chop": 2, "leaf_rustle": 2, "tree_crack": 1, "tree_fall": 1, "wood_pickup": 1}},
 	# SFX slider at 0: the swing still starts, but nothing reaches Master.
 	{"name": "swing_sfx_off", "action": "swing", "sfx_volume": 0.0, "audible": false, "duration": 0.6, "expect": {"sword_swing": 1}},
-	{"name": "music", "action": "idle", "music": "GAME_TRACK", "duration": 2.0, "expect": {"4 - Village": 1}},
+	{"name": "music", "action": "idle", "music": "GAME_TRACK", "duration": 2.0, "expect": {"22 - Dream": 1}},
 	# Music slider at 0: the track starts, but nothing reaches Master.
-	{"name": "music_slider_off", "action": "idle", "music": "GAME_TRACK", "music_volume": 0.0, "audible": false, "duration": 1.0, "expect": {"4 - Village": 1}},
+	{"name": "music_slider_off", "action": "idle", "music": "GAME_TRACK", "music_volume": 0.0, "audible": false, "duration": 1.0, "expect": {"22 - Dream": 1}},
 	# Music and SFX together must not clip.
-	{"name": "music_with_swing", "action": "swing", "music": "GAME_TRACK", "duration": 1.0, "expect": {"4 - Village": 1, "sword_swing": 1}},
+	{"name": "music_with_swing", "action": "swing", "music": "GAME_TRACK", "duration": 1.0, "expect": {"22 - Dream": 1, "sword_swing": 1}},
 	# One mob of each type next to the walker; each step is one event on all three.
 	{"name": "mob_notice", "action": "mob_notice", "duration": 0.6, "expect": {"slime_notice": 1, "crab_notice": 1, "piglet_notice": 1}},
 	{"name": "mob_attack", "action": "mob_attack", "duration": 0.6, "expect": {"slime_attack": 1, "crab_attack": 1, "piglet_attack": 1}},

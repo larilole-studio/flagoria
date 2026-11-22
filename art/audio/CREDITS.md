@@ -15,7 +15,7 @@
 | `sfx/combat/player_hurt_02.wav` | Ninja Adventure, `Sounds/Game/Hit6.wav`, https://pixel-boy.itch.io/ninja-adventure-asset-pack | pixel-boy and AAA | CC0 1.0 |
 | `sfx/combat/hit_sting_01.wav` | Original, generated (`tools/audio/gen_combat.py`) | Flagoria project | CC0 1.0 |
 | `art/Sprites/NinjaAdventure/Musics/5 - Peaceful.ogg` (menu music, used in place) | Ninja Adventure, `Musics/5 - Peaceful.ogg`, https://pixel-boy.itch.io/ninja-adventure-asset-pack | pixel-boy and AAA | CC0 1.0 |
-| `art/Sprites/NinjaAdventure/Musics/4 - Village.ogg` (game music, used in place) | Ninja Adventure, `Musics/4 - Village.ogg`, https://pixel-boy.itch.io/ninja-adventure-asset-pack | pixel-boy and AAA | CC0 1.0 |
+| `art/Sprites/NinjaAdventure/Musics/22 - Dream.ogg` (game music, used in place) | Ninja Adventure, `Musics/22 - Dream.ogg` | See [pack credits](../Sprites/NinjaAdventure/README.md) | CC0 1.0 |
 | `sfx/mobs/slime/slime_notice_01.wav` | Original, generated (`tools/audio/gen_mobs.py`) | Flagoria project | CC0 1.0 |
 | `sfx/mobs/slime/slime_attack_01.wav` … `_03.wav` | Original, generated (`tools/audio/gen_mobs.py`) | Flagoria project | CC0 1.0 |
 | `sfx/mobs/slime/slime_hurt_01.wav` … `_03.wav` | Original, generated (`tools/audio/gen_mobs.py`) | Flagoria project | CC0 1.0 |
