@@ -159,20 +159,27 @@ func park_mobs(main: Node) -> void:
 
 
 func castle_touch(world) -> Vector2i:
-	# Both wall probes build from the first castle's existing footprint.
+	# A synced castle can be available before the client's first chunk refresh.
+	# Use predicted terrain, as the placement rules do, so painting can lag.
 	var placer := ConstructionPlacer.new(world)
 	for entry in world.placed_structures().values():
 		if str(entry["name"]) != "castle":
 			continue
 		var anchor: Vector2i = entry["anchor"]
+		var rejected := {"predicted_clear false": 0}
 		for dy in range(-8, 9):
 			for dx in range(-8, 9):
 				var cell := anchor + Vector2i(dx, dy)
-				if world.get_cell_source_id(0, cell) == -1 or not world.predicted_clear(cell):
+				if not world.predicted_clear(cell):
+					rejected["predicted_clear false"] += 1
 					continue
 				var one: Array[Vector2i] = [cell]
-				if placer.can_place_geometry(BuildCosts.WALL_BLOCK, one).is_empty():
+				var reasons := placer.can_place_geometry(BuildCosts.WALL_BLOCK, one)
+				if reasons.is_empty():
 					return cell
+				for reason in reasons:
+					rejected[reason] = rejected.get(reason, 0) + 1
+		printerr("castle_touch: no clear cell at castle %s (rejections %s)" % [anchor, rejected])
 		break
 	return Vector2i(1 << 20, 0)
 
