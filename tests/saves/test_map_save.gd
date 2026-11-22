@@ -15,8 +15,9 @@ func _test_map_save_round_trip() -> int:
 			params.set(key, defaults[key] + 3)
 		elif typeof(defaults[key]) == TYPE_BOOL:
 			params.set(key, not bool(defaults[key]))
-		else:
+		elif typeof(defaults[key]) == TYPE_FLOAT:
 			params.set(key, defaults[key] + 1.0 / 3.0)
+	params.starter_grove.assign([12, -8, 13, -9])
 	var saved = MapSave.save_map(params, "test_round_trip")
 	var loaded = MapSave.load_map(saved["path"])
 	if saved["error"] != "" or loaded["error"] != "":
@@ -228,7 +229,8 @@ func _test_biome_seed_panel_round_trip() -> int:
 	root.add_child(panel)
 	map_gen.params = saved_params
 	panel.load_from_params(params)
-	if panel._spin_boxes.has("biome_seed"):
+	panel.find_child("Advanced").button_pressed = true
+	if panel.find_child("biome_seed", true, false) != null:
 		printerr("FAIL biome_seed_panel: biome_seed has a SpinBox row")
 		fail += 1
 	if panel.seed_biome.text != str(big):

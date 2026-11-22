@@ -158,6 +158,11 @@ func setup_server(params: MapGenParams, port: int = PORT, with_castle := true) -
 	if with_castle and not StructureSaves.adopt_start_castle(get_node("World/worldMap"), 1):
 		get_node("World/worldMap").place_start_castle(1)  # the host is peer 1
 
+	if world_params.starter_wood and world_params.starter_grove.is_empty() and not _saved_player_ready:
+		var world = get_node("World/worldMap")
+		world_params.starter_grove = world.ensure_starter_wood(world.resolve_player_spawn())
+		get_node("/root/MapGen").params.starter_grove = world_params.starter_grove.duplicate()
+
 	var err := enet_peer.create_server(port)
 	multiplayer.multiplayer_peer = enet_peer
 	multiplayer.peer_connected.connect(add_player)

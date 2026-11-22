@@ -27,6 +27,7 @@ var sand_max_alt: float = 0.25
 var swamp_special_alt: float = 0.26
 var island_radius: int = 0
 var island_falloff: float = 1.0
+var use_archipelago_preset := false
 var archipelago_spacing: int = 0
 var archipelago_island_radius: int = 24
 var archipelago_jitter: float = 0.5
@@ -73,6 +74,8 @@ var pine_min_chance: float = 0.3
 var bushy_tree_min_moist: float = 0.3
 var swamp_bush_min_chance: float = 0.3
 var birch_min_chance: float = 0.55
+var spawn_biome := MapGenParams.ANY_SPAWN_BIOME
+var starter_grove: Dictionary = {}
 var biome_frequency: float = 0.0
 var biome_seed: int = 0
 var biome_edge: float = 0.2
@@ -243,6 +246,19 @@ func reachable_clear_cells(start: Vector2i, limit: int = SpawnFinder.SPAWN_MIN_R
 	return SpawnFinder.reachable_clear_cells(self, start, limit)
 func resolve_player_spawn(origin_cell: Vector2i = Vector2i(0, 0), max_radius: int = 192) -> Vector2i:
 	return WORLD_CELL_QUERIES.resolve_player_spawn(self, origin_cell, max_radius)
+func ensure_starter_wood(origin_cell: Vector2i) -> Array[int]:
+	var cells := SpawnFinder.starter_wood_cells(self, origin_cell)
+	var coordinates: Array[int] = []
+	for cell in cells:
+		starter_grove[cell] = true
+		erase_cell(GROUND_DECOR_LAYER, cell)
+		invalidate_painted_cell(cell)
+		coordinates.append_array([cell.x, cell.y])
+	if not cells.is_empty():
+		generate_chunk(map_to_local(origin_cell))
+	return coordinates
+
+
 func spawn_spots(origin_cell: Vector2i, limit: int = SpawnFinder.SPAWN_SEARCH_LIMIT) -> Array[Vector2]:
 	return SpawnFinder.spawn_spots(self, origin_cell, limit)
 func free_spawn_position(origin_cell: Vector2i, taken: Array[Vector2]) -> Vector2:

@@ -78,7 +78,7 @@ fi
 if [[ ${display} -eq 1 ]]; then
   xvfb="$(command -v xvfb-run)" || { echo "launch: xvfb-run not available" >&2; exit 2; }
   xvfb="$(readlink -f "${xvfb}")"
-  "${xvfb}" -a -s "-screen 0 1280x720x24" \
+  "${xvfb}" -a -s "-screen 0 ${VERIFY_WINDOW_SIZE:-1280x720}x24" \
     "${GODOT_EXE}" --path "${ROOT}" --rendering-driver opengl3 --script "${drive}" \
     </dev/null >"${log}" 2>&1 &
   pid=$!

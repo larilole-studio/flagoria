@@ -65,6 +65,17 @@ static func reachable_clear_cells(map: _WorldMap, start: Vector2i, limit: int = 
 
 
 static func resolve_player_spawn(map: _WorldMap, origin_cell: Vector2i = Vector2i(0, 0), max_radius: int = 192) -> Vector2i:
+	var preferred := map.spawn_biome
+	if preferred >= BiomeCatalog.OCEANIC and preferred <= BiomeCatalog.ARCHIPELAGO_DENSE \
+			and (map.biome_frequency > 0.0 or preferred == BiomeCatalog.TEMPERATE):
+		var radius := maxi(max_radius, map.archipelago_world_extent + map.archipelago_spacing)
+		var named := _search(map, origin_cell, radius, preferred)
+		if last_fallback_size != 0:
+			return named
+	return _search(map, origin_cell, max_radius, MapGenParams.ANY_SPAWN_BIOME)
+
+
+static func _search(map: _WorldMap, origin_cell: Vector2i, max_radius: int, preferred: int) -> Vector2i:
 	## Nearest clear-ground cell to origin_cell (ring order) from which the
 	## player can walk to at least SPAWN_MIN_REACHABLE clear cells. If none is
 	## within max_radius, the candidate with the largest reachable area (and a
@@ -81,7 +92,10 @@ static func resolve_player_spawn(map: _WorldMap, origin_cell: Vector2i = Vector2
 	while head < queue.size():
 		var cell: Vector2i = queue[head]
 		head += 1
-		if not small_area.has(cell) and map.is_clear_ground(cell):
+		var matches := preferred == MapGenParams.ANY_SPAWN_BIOME or map.biome_at(cell) == preferred
+		if matches and not small_area.has(cell) \
+				and (preferred < 0 or map.cell_altitude(cell, preferred) > map.water_max_alt) \
+				and map.is_clear_ground(cell):
 			var area := reachable_clear_cells(map, cell)
 			if area.size() >= SPAWN_MIN_REACHABLE:
 				map.spawn_point = cell
@@ -101,13 +115,43 @@ static func resolve_player_spawn(map: _WorldMap, origin_cell: Vector2i = Vector2
 			queue.append(next)
 
 	last_fallback_size = best_size
-	if best_size < SPAWN_MIN_REACHABLE:
+	if preferred < 0 and best_size < SPAWN_MIN_REACHABLE:
 		push_warning(
 				"SpawnFinder.resolve_player_spawn: fallback to pocket of %s clear cells at %s (need %s within radius %s)"
 				% [best_size, best, SPAWN_MIN_REACHABLE, max_radius]
 		)
 	map.spawn_point = best
 	return best
+
+
+static func starter_wood_cells(map: _WorldMap, origin: Vector2i) -> Array[Vector2i]:
+	## Look for wood adjacent to clear ground within seven walking steps.
+	## If there is none, put trees on the outermost clear cells reached.
+	const WALK_STEPS := 7
+	var frontier: Array[Vector2i] = []
+	if map.is_clear_ground(origin):
+		frontier.append(origin)
+	var visited := {origin: true}
+	var grove: Array[Vector2i] = []
+	for distance in range(WALK_STEPS + 1):
+		var next_frontier: Array[Vector2i] = []
+		for current in frontier:
+			for offset in SPAWN_STEPS:
+				var next: Vector2i = current + offset
+				if visited.has(next):
+					continue
+				visited[next] = true
+				if map.is_clear_ground(next):
+					if not map.has_bridge(next):
+						next_frontier.append(next)
+				else:
+					var plant := map.choppable(next)
+					if plant != null and plant.amount_of(Inventory.WOOD) > 0:
+						return []
+		if distance > 0 and not frontier.is_empty():
+			grove = frontier.slice(0, 3)
+		frontier = next_frontier
+	return grove
 
 
 static func spawn_spots(map: _WorldMap, origin_cell: Vector2i, limit: int = SPAWN_SEARCH_LIMIT) -> Array[Vector2]:

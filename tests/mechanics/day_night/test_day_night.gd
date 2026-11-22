@@ -201,6 +201,7 @@ func _test_day_night_cycle_off() -> int:
 		fail += 1
 	var panel := load("res://Scripts/ui/map_admin_panel.tscn").instantiate() as Node
 	root.add_child(panel)
+	panel.find_child("Advanced").button_pressed = true
 	var row := panel.find_child("day_night_cycle", true, false)
 	var label: Label = null
 	if row != null and row.get_child_count() > 0:

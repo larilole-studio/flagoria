@@ -18,11 +18,33 @@ const HAND_WIRED := ["altitude_seed", "moisture_seed", "temperature_seed", "item
 ## Abbreviations in property names, spelled out in row labels.
 const LABEL_WORDS := {"alt": "altitude"}
 
+@onready var simple: VBoxContainer = $Margin/VBox/Simple
+@onready var advanced: CheckButton = $Margin/VBox/Advanced
+
+var _draft: MapGenParams
+var _island_size: OptionButton
+var _biome_size: OptionButton
+var _spawn_biome: OptionButton
+var _raw_values: Dictionary = {}
 var _spin_boxes: Dictionary = {}
 var _checks: Dictionary = {}
 
 
 func _ready() -> void:
+	_island_size = _add_choice("IslandSize", "Island size", MapGenParams.SIZE_LABELS)
+	_biome_size = _add_choice("BiomeSize", "Biome size", MapGenParams.SIZE_LABELS)
+	_spawn_biome = _add_choice("SpawnBiome", "Spawn biome",
+			["Any", "Oceanic", "Temperate", "Continental", "Dense archipelago"])
+	_island_size.item_selected.connect(_select_island_size)
+	_biome_size.item_selected.connect(_select_biome_size)
+	_spawn_biome.item_selected.connect(func(choice: int): _draft.spawn_biome = choice - 1)
+	advanced.toggled.connect(_toggle_advanced)
+	visibility_changed.connect(func():
+		if not visible:
+			advanced.set_pressed_no_signal(false)
+			scroll.hide()
+			simple.show()
+	)
 	_build_extra_controls(get_node("/root/MapGen").params)
 	_build_generate_button()
 	_populate_noise_types()
@@ -35,6 +57,64 @@ func _ready() -> void:
 	for spin in _spin_boxes.values():
 		pad.attach_spin_box(spin)
 	visibility_changed.connect(pad.close)
+
+
+func _add_choice(control_name: String, caption: String, labels: Array) -> OptionButton:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	var label := Label.new()
+	label.text = caption
+	label.custom_minimum_size.x = 140
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var option := OptionButton.new()
+	option.name = control_name
+	option.custom_minimum_size = Vector2(160, 26)
+	for text in labels:
+		option.add_item(text)
+	row.add_child(label)
+	row.add_child(option)
+	simple.add_child(row)
+	return option
+
+
+func _select_island_size(choice: int) -> void:
+	_draft.set_island_size(choice)
+	_show_simple_values()
+
+
+func _select_biome_size(choice: int) -> void:
+	_draft.set_biome_size(choice)
+	_show_simple_values()
+
+
+func _toggle_advanced(enabled: bool) -> void:
+	if enabled:
+		_show_raw_values()
+	else:
+		_read_raw_values()
+		_show_simple_values()
+		get_node("NumberPad").close()
+	simple.visible = not enabled
+	scroll.visible = enabled
+
+
+func _show_simple_values() -> void:
+	_show_size_choice(_island_size, _draft.island_size_choice())
+	_show_size_choice(_biome_size, _draft.biome_size_choice())
+	_spawn_biome.select(clampi(_draft.spawn_biome + 1, 0, _spawn_biome.item_count - 1))
+
+
+func _show_size_choice(option: OptionButton, choice: int) -> void:
+	var preset_count := MapGenParams.SIZE_LABELS.size()
+	if choice < 0:
+		if option.item_count == preset_count:
+			option.add_item("Custom")
+			option.set_item_disabled(preset_count, true)
+		option.select(preset_count)
+	else:
+		if option.item_count > preset_count:
+			option.remove_item(preset_count)
+		option.select(choice)
 
 
 func _populate_noise_types() -> void:
@@ -139,6 +219,13 @@ func _add_check(key: String, label_text: String, default_on: bool) -> void:
 func load_from_params(p: MapGenParams) -> void:
 	if seed_alt == null:
 		return
+	_draft = p.duplicate_params()
+	_show_simple_values()
+	_show_raw_values()
+
+
+func _show_raw_values() -> void:
+	var p := _draft
 	seed_alt.text = str(p.altitude_seed)
 	seed_moist.text = str(p.moisture_seed)
 	seed_temp.text = str(p.temperature_seed)
@@ -149,7 +236,8 @@ func load_from_params(p: MapGenParams) -> void:
 		noise_type_opt.select(idx)
 	for key in _spin_boxes.keys():
 		var spin: SpinBox = _spin_boxes[key]
-		spin.value = p.get(key)
+		spin.set_value_no_signal(p.get(key))
+		_raw_values[key] = spin.value
 		# SpinBox leaves LineEdit text unchanged when the numeric value is
 		# already equal, so a typed-but-uncommitted string can survive a reopen.
 		# Int rows show "24", not "24.0", so the pad's digits append cleanly.
@@ -159,16 +247,30 @@ func load_from_params(p: MapGenParams) -> void:
 
 
 func apply_to_params(p: MapGenParams) -> void:
-	p.altitude_seed = int(seed_alt.text) if seed_alt.text.is_valid_int() else 0
-	p.moisture_seed = int(seed_moist.text) if seed_moist.text.is_valid_int() else 0
-	p.temperature_seed = int(seed_temp.text) if seed_temp.text.is_valid_int() else 0
-	p.items_seed = int(seed_items.text) if seed_items.text.is_valid_int() else 0
-	p.biome_seed = int(seed_biome.text) if seed_biome.text.is_valid_int() else 0
-	p.noise_type = noise_type_opt.get_selected_id()
+	if advanced.button_pressed:
+		_read_raw_values()
+	var inputs := _draft.to_dict()
+	var previous := p.to_dict()
+	inputs.erase("starter_grove")
+	previous.erase("starter_grove")
+	if inputs != previous:
+		_draft.starter_grove.clear()
+	p.from_dict(_draft.to_dict())
+
+
+func _read_raw_values() -> void:
+	_draft.altitude_seed = int(seed_alt.text) if seed_alt.text.is_valid_int() else 0
+	_draft.moisture_seed = int(seed_moist.text) if seed_moist.text.is_valid_int() else 0
+	_draft.temperature_seed = int(seed_temp.text) if seed_temp.text.is_valid_int() else 0
+	_draft.items_seed = int(seed_items.text) if seed_items.text.is_valid_int() else 0
+	_draft.biome_seed = int(seed_biome.text) if seed_biome.text.is_valid_int() else 0
+	_draft.noise_type = noise_type_opt.get_selected_id()
 	for key in _spin_boxes.keys():
-		p.set(key, _spin_boxes[key].value)
+		var value: float = _spin_boxes[key].value
+		if value != _raw_values[key]:
+			_draft.set(key, value)
 	for key in _checks.keys():
-		p.set(key, (_checks[key] as CheckButton).button_pressed)
+		_draft.set(key, (_checks[key] as CheckButton).button_pressed)
 
 
 func _on_random_seed_pressed() -> void:
@@ -178,9 +280,16 @@ func _on_random_seed_pressed() -> void:
 
 
 func _on_random_specs_pressed() -> void:
-	## Randomise every map-gen property inside PLAYABLE_RANGES (#335).
+	## Roll only the visible choices unless the raw controls are open.
 	apply_to_params(get_node("/root/MapGen").params)
-	get_node("/root/MapGen").randomize_specs()
+	var params: MapGenParams = get_node("/root/MapGen").params
+	if advanced.button_pressed:
+		params.randomize_specs()
+	else:
+		params.randomize_seeds()
+		params.set_island_size(randi() % MapGenParams.SIZE_LABELS.size())
+		params.set_biome_size(randi() % MapGenParams.SIZE_LABELS.size())
+		params.spawn_biome = randi_range(MapGenParams.ANY_SPAWN_BIOME, BiomeCatalog.ARCHIPELAGO_DENSE)
 	load_from_params(get_node("/root/MapGen").params)
 
 

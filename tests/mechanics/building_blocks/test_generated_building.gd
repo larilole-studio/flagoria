@@ -71,6 +71,7 @@ func _paint_and_button() -> int:
 		printerr("FAIL generated_building_determinism: menu button '%s'" % menu_button.text)
 		fail += 1
 	var panel: Node = scene.get_node("CanvasLayer2/MapAdminPanel")
+	panel.find_child("Advanced").button_pressed = true
 	var button: Button = panel.get_node("Margin/VBox/Scroll/Form/GenerateBuilding")
 	if button.text != "Generate building" or not panel._spin_boxes.has("building_width"):
 		printerr("FAIL generated_building_determinism: generate button missing")

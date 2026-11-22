@@ -42,7 +42,6 @@
 4 tests/player/test_player_respawn.gd
 6 tests/saves/test_bridge_save.gd
 7 tests/saves/test_cut_save.gd
-1 tests/saves/test_map_save.gd
 4 tests/saves/test_object_removals_save.gd
 6 tests/saves/test_player_save.gd
 1 tests/saves/test_world_save.gd
@@ -58,4 +57,3 @@
 2 tests/ui/test_worlds_list_scroll.gd
 7 tests/wall_sync_probe.gd
 2 tests/world/test_chunk_refresh_frames.gd
-2 tests/world/test_random_specs.gd

@@ -12,6 +12,10 @@ static func apply_map_params(map, p: MapGenParams) -> void:
 	_configure_noise(map.temperature, working.temperature_seed, working.temperature_frequency, working)
 	_configure_noise(map.items_chance, working.items_seed, working.items_frequency, working)
 
+	map.spawn_biome = working.spawn_biome
+	map.starter_grove.clear()
+	for index in range(0, working.starter_grove.size(), 2):
+		map.starter_grove[Vector2i(working.starter_grove[index], working.starter_grove[index + 1])] = true
 	map.biome_frequency = working.biome_frequency
 	map.biome_seed = working.biome_seed
 	map.biome_edge = working.biome_edge
@@ -27,6 +31,7 @@ static func apply_map_params(map, p: MapGenParams) -> void:
 	map.sand_max_alt = working.sand_max_alt
 	map.swamp_special_alt = working.swamp_special_alt
 	map.island_radius = working.island_radius
+	map.use_archipelago_preset = working.island_size_choice() >= 0
 	map.island_falloff = working.island_falloff
 	map.archipelago_spacing = working.archipelago_spacing
 	map.archipelago_island_radius = maxi(1, working.archipelago_island_radius)

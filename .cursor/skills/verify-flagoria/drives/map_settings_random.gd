@@ -1,12 +1,15 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
-## launch: (no --seed; Random specs invents its own)
-## Map Settings → five-button layout at 1280x720 and 854x480, then Random specs (#217, #335).
+## launch: --seed 42
+## Check the common and Advanced views, then host with the displayed settings.
 
 
 const MAP_SETTINGS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MapSettingsButton"
 const PANEL := "CanvasLayer2/MapAdminPanel"
-const RANDOM_SPECS := "CanvasLayer2/MapAdminPanel/Margin/VBox/Buttons/RandomSpecs"
-const BACK := "CanvasLayer2/MapAdminPanel/Margin/VBox/ButtonsDefaults/Back"
+const ADVANCED := PANEL + "/Margin/VBox/Advanced"
+const COMMON := PANEL + "/Margin/VBox/Simple"
+const RAW := PANEL + "/Margin/VBox/Scroll"
+const BACK := PANEL + "/Margin/VBox/ButtonsDefaults/Back"
+const START := PANEL + "/Margin/VBox/Buttons2/Start"
 ## The five action buttons, in row order.
 const ACTION_BUTTONS := [
 	"CanvasLayer2/MapAdminPanel/Margin/VBox/Buttons/RandomSeed",
@@ -35,47 +38,42 @@ func run() -> void:
 		_fail("Map Settings panel did not open")
 		return
 	var panel: Node = current_scene.get_node(PANEL)
-	var water_spin: SpinBox = panel._spin_boxes["water_max_alt"]
-	var water_before: float = water_spin.value
-	var seed_before: int = root.get_node("MapGen").params.altitude_seed
-	var layout_ok := _buttons_fit("1280x720")
-	await snapshot("map-settings-before")
-	step("landscape")
-	var landscape := await _resize(854, 480)
-	# Stretch aspect is keep, so this shorter landscape window still lays the
-	# panel out in the 480x270 space. The shot is that window, not a new size.
-	var landscape_ok := landscape.x < 1100 and landscape.y < 600 and landscape.x > landscape.y
-	if DisplayServer.get_name() == "headless":
-		landscape_ok = true
-	layout_ok = _buttons_fit("landscape") and layout_ok and landscape_ok
-	await snapshot("map-settings-landscape")
-	var restored := await _resize(1280, 720)
-	if DisplayServer.get_name() != "headless" and restored.x < 1100:
-		layout_ok = false
-	layout_ok = _buttons_fit("restored") and layout_ok
-	step("random-specs")
-	await click(RANDOM_SPECS)
-	await process_frame
-	await process_frame
-	var water_after: float = water_spin.value
-	var seed_after: int = root.get_node("MapGen").params.altitude_seed
-	var btn: Button = current_scene.get_node(RANDOM_SPECS)
-	var moved := water_after != water_before or seed_after != seed_before
-	if not moved:
-		var p = root.get_node("MapGen").params
-		moved = p.island_radius != 0 or p.archipelago_spacing != 0
-	var ok := btn != null and btn.text == "Random specs" and moved and layout_ok
-	print("map_settings_random: water %s -> %s seed %s -> %s window=%s layout=%s ok=%s"
-			% [water_before, water_after, seed_before, seed_after, landscape, layout_ok, ok])
-	await snapshot("map-settings-after-random")
+	var simple: Control = current_scene.get_node(COMMON)
+	var raw: Control = current_scene.get_node(RAW)
+	var landscape := Vector2i(854, 480)
+	var configured := OS.get_environment("VERIFY_WINDOW_SIZE").split("x")
+	if configured.size() == 2:
+		landscape = Vector2i(int(configured[0]), int(configured[1]))
+	var actual := await _resize(landscape.x, landscape.y)
+	var layout_ok := DisplayServer.get_name() == "headless" or actual == landscape
+	layout_ok = _buttons_fit("common") and simple.visible and not raw.visible and layout_ok
+	for control_name in ["IslandSize", "BiomeSize", "SpawnBiome"]:
+		var option: OptionButton = panel.find_child(control_name, true, false)
+		layout_ok = simple.get_global_rect().encloses(option.get_global_rect()) and layout_ok
+	await snapshot("map-settings-common")
+
+	step("advanced")
+	await click(ADVANCED)
+	layout_ok = _buttons_fit("advanced") and raw.visible and not simple.visible and layout_ok
+	await snapshot("map-settings-advanced")
+	await click(ADVANCED)
+
 	step("back")
 	await click(BACK)
 	var menu_back := await wait_until(func() -> bool:
 		var menu := current_scene.get_node_or_null("CanvasLayer2/MainMenu")
-		var p := current_scene.get_node_or_null(PANEL)
-		return menu != null and menu.visible and p != null and not p.visible, 5.0)
-	print("map_settings_random: back_to_menu=%s" % menu_back)
-	done(ok and menu_back)
+		return menu != null and menu.visible and not panel.visible, 5.0)
+	if not menu_back:
+		_fail("Back did not return to the main menu")
+		return
+	await click(MAP_SETTINGS)
+	step("host-with-these")
+	await click(START)
+	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
+		_fail("Host with these did not start the world")
+		return
+	await snapshot("spawn")
+	done(layout_ok)
 
 
 func _resize(width: int, height: int) -> Vector2i:

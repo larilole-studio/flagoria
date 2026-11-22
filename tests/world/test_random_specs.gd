@@ -231,10 +231,10 @@ func _test_random_specs_panel_button() -> int:
 		fail += 1
 	else:
 		var params: MapGenParams = root.get_node("MapGen").params
-		var before_water: float = params.water_max_alt
-		panel._on_random_specs_pressed()
+		panel.find_child("Advanced").button_pressed = true
+		btn.pressed.emit()
 		# Fields show the new values.
-		var spin: SpinBox = panel._spin_boxes["water_max_alt"]
+		var spin: SpinBox = panel.find_child("water_max_alt", true, false).get_child(1)
 		if absf(spin.value - params.water_max_alt) > 0.001:
 			printerr("FAIL random_specs_panel_button spin %s != params %s"
 					% [spin.value, params.water_max_alt])

@@ -59,6 +59,8 @@ static func set_tile_type_z1(map, pos_vec, alt, moist, _temp, chance, biome_id: 
 		map.set_cell(map.GROUND_DECOR_LAYER, pos_vec, TileCatalog.SOURCE_ID, map._tree_cuts.leftover(pos_vec))
 		return
 	var tile: Vector2i = BirchTrees.foliage_tile(map, pos_vec, alt, moist, chance, biome_id, map.get_cell_atlas_coords(0, pos_vec) == TileCatalog.SAND or map._sky.logical_ground(map, pos_vec) == TileCatalog.SAND)
+	if map.starter_grove.has(pos_vec):
+		tile = TileCatalog.TREE
 	if tile == map.NO_PLANT:
 		tile = map._tree_cuts.sprouts.tile_or(pos_vec, map.structure_tile(chance, biome_id))
 	if tile != map.NO_PLANT and BirchTrees.is_tree_tile(tile):
@@ -89,6 +91,8 @@ static func predict_cell(map, cell: Vector2i) -> Array:
 		top = map.NO_PLANT
 	elif map.ground_is_walkable(ground) and not map._bridges.has_bridge(cell):
 		top = BirchTrees.foliage_tile(map, cell, alt, moist, chance, b, ground == TileCatalog.SAND or map._sky.logical_ground(map, cell) == TileCatalog.SAND)
+		if map.starter_grove.has(cell):
+			top = TileCatalog.TREE
 		if top == map.NO_PLANT:
 			top = map._tree_cuts.sprouts.tile_or(cell, map.structure_tile(chance, b))
 		if map._tree_cuts.has_cut(cell):

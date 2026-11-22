@@ -1,6 +1,19 @@
 class_name MapGenParams
 extends Resource
-## Tunable map-generation parameters. Defaults match the previous hardcoded behaviour.
+## Tunable generation inputs. New games use make_world_defaults(); legacy inputs use make_defaults().
+
+const ANY_SPAWN_BIOME := -1
+const SIZE_LABELS := ["Small", "Medium", "Big"]
+const MEDIUM := 1
+# Island radius, archipelago spacing, archipelago island radius, world extent (tiles).
+const ISLAND_PRESETS := [[80, 80, 40, 512], [140, 112, 52, 768], [200, 144, 64, 1024]]
+const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
+
+@export_storage var island_preset: bool = false
+@export_storage var spawn_biome: int = ANY_SPAWN_BIOME
+@export_storage var starter_wood: bool = false
+# Flat x/y pairs keep the generation override portable across JSON saves and RPC.
+@export_storage var starter_grove: Array[int] = []
 
 # Seeds (0 means "pick a random seed when applied", matching prior randi() behaviour)
 @export var altitude_seed: int = 0
@@ -184,6 +197,42 @@ static func make_defaults() -> MapGenParams:
 	return MapGenParams.new()
 
 
+static func make_world_defaults() -> MapGenParams:
+	var params := make_defaults()
+	params.set_island_size(MEDIUM)
+	params.set_biome_size(MEDIUM)
+	params.starter_wood = true
+	return params
+
+
+func island_size_choice() -> int:
+	if not island_preset or archipelago_island_count != 0:
+		return -1
+	return ISLAND_PRESETS.find([island_radius, archipelago_spacing,
+			archipelago_island_radius, archipelago_world_extent])
+
+
+func set_island_size(choice: int) -> void:
+	island_preset = true
+	var preset: Array = ISLAND_PRESETS[choice]
+	island_radius = preset[0]
+	archipelago_spacing = preset[1]
+	archipelago_island_radius = preset[2]
+	archipelago_world_extent = preset[3]
+	archipelago_island_count = 0
+
+
+func biome_size_choice() -> int:
+	for choice in BIOME_FREQUENCIES.size():
+		if is_equal_approx(biome_frequency, BIOME_FREQUENCIES[choice]):
+			return choice
+	return -1
+
+
+func set_biome_size(choice: int) -> void:
+	biome_frequency = BIOME_FREQUENCIES[choice]
+
+
 func duplicate_params() -> MapGenParams:
 	var copy = MapGenParams.new()
 	copy.from_dict(to_dict())
@@ -191,6 +240,7 @@ func duplicate_params() -> MapGenParams:
 
 
 func randomize_seeds() -> void:
+	starter_grove.clear()
 	altitude_seed = randi()
 	moisture_seed = randi()
 	temperature_seed = randi()
@@ -223,6 +273,7 @@ func randomize_specs() -> void:
 	sand_max_alt = water_max_alt + _rand_range("sand_gap")
 	swamp_special_alt = sand_max_alt + _rand_range("swamp_gap")
 	island_falloff = _rand_range("island_falloff")
+	island_preset = false
 	# Shape: island (most common) or archipelago — mutually exclusive. Open
 	# (island_radius=0 and archipelago_spacing=0) is skipped: unlucky noise near
 	# the origin can still be all water even with a capped water_max_alt (#335).
@@ -301,7 +352,8 @@ func exported_properties() -> Array[Dictionary]:
 
 
 func to_dict() -> Dictionary:
-	var data := {}
+	var data := {"island_preset": island_preset, "spawn_biome": spawn_biome, "starter_wood": starter_wood,
+			"starter_grove": starter_grove.duplicate()}
 	for prop in exported_properties():
 		data[prop["name"]] = get(prop["name"])
 	return data
@@ -309,5 +361,10 @@ func to_dict() -> Dictionary:
 
 func from_dict(data: Dictionary) -> void:
 	for key in to_dict().keys():
-		if data.has(key):
+		if key == "starter_grove":
+			var cells: Variant = data.get(key)
+			if cells is Array and cells.size() <= 6 and cells.size() % 2 == 0 \
+					and cells.all(func(value): return value is int or value is float):
+				starter_grove.assign(cells.map(func(value): return int(value)))
+		elif data.has(key):
 			set(key, data[key])
