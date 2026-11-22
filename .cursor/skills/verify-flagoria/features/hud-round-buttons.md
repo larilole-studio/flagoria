@@ -8,6 +8,7 @@ The match starts with the minimap and build picker closed. Map sits left of Menu
 
 - `hud-round-arc` Map sits beside Menu, and Buildings sits beside the Attack, Run and tool wheel cluster, with clear space around the tap targets (`-- test_hud_no_overlap` and live drive). Run is a smaller neighbour of the attack button. `CanvasLayer1/MapReopen` is absent (`-- test_hud_round_buttons`).
 - `hud-build-list` Buildings opens the picker and a second tap or an outside tap closes it. Each lilac disc has its own baked-in tool icon, with Lilita One captions where space permits. Picking a building selects that tool, collapses the list and keeps the pale-yellow ring (`-- test_hud_round_buttons`, `-- test_build_picker_switches_tool`).
+- `hud-build-saved-layout` If a narrower viewport would put another HUD target over Buildings, Buildings shifts clear. The regression test restores a layout saved at 3840×1080, taps Buildings at 2400×1080, checks that all six tools are visible within the viewport, and taps Buildings again to dismiss (`-- test_build_picker_saved_layout_tap`).
 - `hud-minimap-closed` the wood panel stays hidden until Map opens it, and a second press closes it. While it is open, every arc button sits outside the panel. Selecting chop keeps a picked build tool, and sword clears it back to Cut (`-- test_hud_round_buttons`).
 - `hud-no-overlap` All visible tap targets stay inside the viewport and clear of one another at phone, desktop and tablet sizes. The test opens Buildings, Map, Scores and the tool wheel, and repeats the default and Buildings states with a saved custom layout (`-- test_hud_no_overlap`).
 - `hud-layout-golden` Stock HUD hit rectangles match the saved layout at four window sizes for the default, Buildings, Map and Scores states (`-- test_hud_layout_golden`).
@@ -20,9 +21,9 @@ The match starts with the minimap and build picker closed. Map sits left of Menu
 
 Preconditions: `doctor.sh` exits `0`. Time cost: `test_hud_round_buttons` is about 0.8 s in `tools/verify.sh`. The live drive is about 25 s under xvfb.
 
-- **Run.** `./tools/verify.sh`, or `godot --headless --path . --script res://tests/run_tests.gd -- --only=hud_round_buttons,hud_no_overlap`.
-- **Proof.** `PASS test_hud_round_buttons` and `PASS test_hud_no_overlap`.
-- **Drive (live).** `bin/launch.sh drives/hud_round_buttons.gd --seed 49 --display`. Snapshots: `match-start` (minimap closed, list collapsed), `building-list` (two rings above and inward from Buildings, clear of Attack, with the playfield dimmed), `building-selected` (Plank's ring), `minimap` (panel open, arc clear of it), `interact` (chop icon on the tool button, arc still clear).
+- **Run.** `./tools/verify.sh`, or `godot --headless --path . --script res://tests/run_tests.gd -- --only=hud_round_buttons,hud_no_overlap,build_picker_saved_layout_tap`.
+- **Proof.** `PASS test_hud_round_buttons`, `PASS test_hud_no_overlap` and `PASS test_build_picker_saved_layout_tap`.
+- **Drive (live).** `bin/launch.sh drives/hud_round_buttons.gd --seed 49 --display` captures `match-start` (minimap closed, list collapsed), `building-list` (two rings above and inward from Buildings, clear of Attack, with the playfield dimmed), `building-dismissed` (playfield clear after a second tap), `building-selected` (Plank's ring), `minimap` (panel open, arc clear of it) and `interact` (chop icon on the tool button, arc still clear).
 
 ## Gotchas
 

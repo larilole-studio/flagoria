@@ -56,3 +56,32 @@ static func _joystick_rect(stick: Node2D) -> Rect2:
 		return Rect2(stick.global_position - sz * 0.5, sz)
 	var r: float = stick.start_reach() if stick.has_method("start_reach") else 64.0
 	return Rect2(stick.global_position - Vector2(r, r), Vector2(r, r) * 2.0)
+
+
+static func nearest_clear_rect(rect: Rect2, view: Rect2, occupied: Array[Rect2]) -> Rect2:
+	var last := (view.end - rect.size).max(view.position)
+	rect.position = rect.position.clamp(view.position, last)
+	if rect_clear(rect, view, occupied):
+		return rect
+	var closest := rect
+	var distance := INF
+	for y in range(ceili(view.position.y), floori(last.y) + 1, 4):
+		for x in range(ceili(view.position.x), floori(last.x) + 1, 4):
+			var point := Vector2(x, y)
+			var candidate_distance := point.distance_squared_to(rect.position)
+			if candidate_distance >= distance:
+				continue
+			var candidate := Rect2(point, rect.size)
+			if rect_clear(candidate, view, occupied):
+				closest = candidate
+				distance = candidate_distance
+	return closest
+
+
+static func rect_clear(rect: Rect2, view: Rect2, occupied: Array[Rect2], spacing := 0.0) -> bool:
+	if not view.encloses(rect):
+		return false
+	for other in occupied:
+		if rect.intersects(other) or rect.get_center().distance_to(other.get_center()) < spacing:
+			return false
+	return true
