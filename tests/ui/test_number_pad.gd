@@ -8,6 +8,7 @@ func _test_number_pad_first_key_replaces() -> int:
 	## holding only "-" or "." when the pad closes gets its old value back.
 	print("-- test_number_pad_first_key_replaces")
 	var panel = await mount_ui_scene(preload("res://Scripts/ui/map_admin_panel.tscn"), root.size, 1)
+	panel.find_child("Advanced").button_pressed = true
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
 	var seed_field: LineEdit = panel.find_child("ItemsSeed")
@@ -93,6 +94,7 @@ func _test_number_pad_keycap_style() -> int:
 	## digits, a red Delete and a gold OK key, and a framed panel.
 	print("-- test_number_pad_keycap_style")
 	var panel = await mount_ui_scene(preload("res://Scripts/ui/map_admin_panel.tscn"), root.size, 1)
+	panel.find_child("Advanced").button_pressed = true
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
 	var theme: Theme = load("res://art/ui/main_menu_theme.tres")

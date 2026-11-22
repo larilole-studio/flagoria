@@ -272,3 +272,71 @@ func _test_spawn_late_join() -> int:
 	if fail == 0:
 		print("PASS test_spawn_late_join")
 	return fail
+
+
+func _test_spawn_presets_and_starter_wood() -> int:
+	print("-- test_spawn_presets_and_starter_wood")
+	var map_gen := root.get_node("MapGen")
+	var previous: MapGenParams = map_gen.params
+	var failures := 0
+	for scenario in [[11, 0, 0], [42, 1, 2], [99, 2, 3], [42, 1, 1]]:
+		var params := MapGenParams.make_world_defaults()
+		params.set_island_size(scenario[1])
+		params.spawn_biome = scenario[2]
+		params.altitude_seed = scenario[0]
+		params.moisture_seed = scenario[0] + 1
+		params.temperature_seed = scenario[0] + 2
+		params.items_seed = scenario[0] + 3
+		params.biome_seed = scenario[0] + 4
+		# The last case needs an actual grove, with every natural wood source off.
+		if scenario[2] == 1:
+			params.bush_min_chance = 2.0
+			params.tree_min_chance = 2.0
+			params.pine_min_chance = 2.0
+			params.swamp_bush_min_chance = 2.0
+		var scene = load("res://flagoria_main.tscn").instantiate()
+		root.add_child(scene)
+		await process_frame
+		if scene.setup_server(params, _free_udp_port()) != OK:
+			printerr("FAIL spawn_presets_and_starter_wood: could not host")
+			failures += 1
+		else:
+			var world = scene.get_node("World/worldMap")
+			var spawn: Vector2i = world.resolve_player_spawn()
+			var found_wood := false
+			for stand: Vector2i in world.reachable_clear_cells(spawn, 113):
+				if absi(stand.x - spawn.x) + absi(stand.y - spawn.y) > 7:
+					continue
+				for offset in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
+					var plant: InteractableType = world.choppable(stand + offset)
+					if plant != null and plant.amount_of(Inventory.WOOD) > 0:
+						found_wood = true
+			var beyond := Vector2i([513, 769, 1025][scenario[1]], 0)
+			if world.biome_at(spawn) != scenario[2] or not found_wood \
+					or world.archipelago_island_radius != [40, 52, 64][scenario[1]] \
+					or world.archipelago_spacing != [80, 112, 144][scenario[1]] \
+					or not world.is_open_sea(beyond):
+				printerr("FAIL spawn_presets_and_starter_wood: case %s spawn=%s biome=%s wood=%s"
+						% [scenario, spawn, world.biome_at(spawn), found_wood])
+				failures += 1
+			if scenario[2] == 1:
+				var round_trip := MapGenParams.new()
+				round_trip.from_dict(JSON.parse_string(JSON.stringify(scene.world_params.to_dict())))
+				world.apply_map_params(round_trip)
+				world.generate_chunk(world.map_to_local(spawn))
+				if round_trip.starter_grove.is_empty():
+					printerr("FAIL spawn_presets_and_starter_wood: no persisted fallback grove")
+					failures += 1
+				else:
+					var coordinates := round_trip.starter_grove
+					var tree: InteractableType = world.choppable(Vector2i(coordinates[0], coordinates[1]))
+					if tree == null or tree.amount_of(Inventory.WOOD) == 0:
+						printerr("FAIL spawn_presets_and_starter_wood: grove did not regenerate")
+						failures += 1
+		scene.queue_free()
+		await process_frame
+		root.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	map_gen.params = previous
+	if failures == 0:
+		print("PASS test_spawn_presets_and_starter_wood")
+	return failures

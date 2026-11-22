@@ -1,12 +1,46 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Map Settings input, persistence and generation.
 
+func _test_map_settings_simple_choices() -> int:
+	print("-- test_map_settings_simple_choices")
+	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
+	root.add_child(panel)
+	var island := panel.find_child("IslandSize", true, false) as OptionButton
+	var biome := panel.find_child("BiomeSize", true, false) as OptionButton
+	var spawn := panel.find_child("SpawnBiome", true, false) as OptionButton
+	var raw := panel.find_child("AltitudeSeed") as LineEdit
+	if island == null or biome == null or spawn == null or raw.is_visible_in_tree():
+		printerr("FAIL map_settings_simple_choices: expected three selectors and hidden raw controls")
+		panel.queue_free()
+		return 1
+	var params: MapGenParams = root.get_node("MapGen").params.duplicate_params()
+	panel.load_from_params(params)
+	var failures := 0
+	for size in 3:
+		spawn.select(size + 1)
+		spawn.item_selected.emit(size + 1)
+		island.select(size)
+		island.item_selected.emit(size)
+		biome.select(size)
+		biome.item_selected.emit(size)
+		panel.apply_to_params(params)
+		if [params.island_radius, params.archipelago_spacing, params.archipelago_island_radius,
+				params.archipelago_world_extent] != [[80, 80, 40, 512], [140, 112, 52, 768], [200, 144, 64, 1024]][size] \
+				or not is_equal_approx(params.biome_frequency, [0.006, 0.003, 0.002][size]) \
+				or params.spawn_biome != size:
+			printerr("FAIL map_settings_simple_choices: wrong preset for size ", size)
+			failures += 1
+	panel.queue_free()
+	return failures
+
+
 func _test_map_settings_water_reopen() -> int:
 	## Map Settings must show the in-use water value on reopen, even when a
 	## SpinBox LineEdit still holds a dirty string for the same numeric value.
 	print("-- test_map_settings_water_reopen")
 	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
+	panel.find_child("Advanced").button_pressed = true
 	var spin := _setting_spin(panel, "water_max_alt")
 	var in_use := 0.45
 	spin.value = in_use
@@ -36,11 +70,11 @@ func _test_map_settings_covers_params() -> int:
 	var control_names := {
 		"altitude_seed": "AltitudeSeed", "moisture_seed": "MoistureSeed",
 		"temperature_seed": "TemperatureSeed", "items_seed": "ItemsSeed",
-		"biome_seed": "BiomeSeed", "noise_type": "NoiseType",
+		"biome_seed": "BiomeSeed", "noise_type": "NoiseType", "spawn_biome": "SpawnBiome",
 	}
 	var fail := 0
 	for prop in params.get_property_list():
-		if not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE):
+		if not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE) or prop["name"] in ["island_preset", "starter_grove", "starter_wood"]:
 			continue
 		var key: String = prop["name"]
 		if not data.has(key) or panel.find_child(control_names.get(key, key), true, false) == null:
@@ -57,6 +91,7 @@ func _test_map_settings_number_pad_touch_tap() -> int:
 	print("-- test_map_settings_number_pad_touch_tap")
 	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
+	panel.find_child("Advanced").button_pressed = true
 	await process_frame
 	var field: LineEdit = panel.find_child("AltitudeSeed")
 	field.text = ""
@@ -101,6 +136,7 @@ func _test_map_settings_number_pad_spin_boxes() -> int:
 
 	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
+	panel.find_child("Advanced").button_pressed = true
 	await process_frame
 	var pad = panel.get_node("NumberPad")
 	var fail := 0

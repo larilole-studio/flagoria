@@ -7,7 +7,7 @@ const SAVE_SECTION := "map_gen"
 ## A map save succeeded (save_map_inputs or save_world); UiSfx plays "saved".
 signal map_saved(path: String)
 
-var params: MapGenParams = MapGenParams.make_defaults()
+var params: MapGenParams = MapGenParams.make_world_defaults()
 ## The save load_map_inputs read last, until a host takes it.
 var _loaded_world: WorldSave = null
 
@@ -17,7 +17,7 @@ func _ready() -> void:
 
 
 func reset_to_defaults() -> void:
-	params = MapGenParams.make_defaults()
+	params = MapGenParams.make_world_defaults()
 
 
 func randomize_seeds() -> void:
@@ -45,6 +45,8 @@ func load_from_disk() -> void:
 		if cfg.has_section_key(SAVE_SECTION, key):
 			data[key] = cfg.get_value(SAVE_SECTION, key)
 	if not data.is_empty():
+		params = MapGenParams.make_defaults() if data.has("island_radius") else MapGenParams.make_world_defaults()
+		params.starter_wood = true
 		params.from_dict(data)
 
 

@@ -29,8 +29,9 @@ static func bottom_would_grow(map: _WorldMap, cell: Vector2i, alt: float, moist:
 
 
 static func top_can_hold(map: _WorldMap, top: Vector2i) -> bool:
-	## Walkable land above a birch bottom with no other layer-1 plant there in
-	## the generated map (flowers and stones on decor still allowed).
+	## Walkable land above a birch bottom with no other layer-1 plant there.
+	if map.starter_grove.has(top):
+		return false
 	var ground: Vector2i
 	if map.get_cell_source_id(0, top) != -1:
 		ground = map.get_cell_atlas_coords(0, top)

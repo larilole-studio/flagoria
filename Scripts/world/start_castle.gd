@@ -28,7 +28,7 @@ static func place(map: _WorldMap, owner: int) -> Variant:
 	## the map's spawn. Returns the gate front cell, or null and nothing
 	## placed when no spot fits.
 	var castle := structure()
-	var anchor: Variant = find_anchor(map, castle, SpawnFinder.resolve_player_spawn(map))
+	var anchor: Variant = find_anchor(map, castle, map.resolve_player_spawn())
 	if anchor == null or map.place_structure(castle, anchor, owner) <= 0:
 		return null
 	return anchor + GATE_FRONT
@@ -70,7 +70,10 @@ static func find_anchor(map: _WorldMap, castle: Structure, origin: Vector2i, kee
 		if da != db:
 			return da < db
 		return a.y < b.y if a.y != b.y else a.x < b.x)
+	var restrict_biome := map.spawn_biome >= 0 and map.biome_at(origin) == map.spawn_biome
 	for front in fronts:
+		if restrict_biome and map.biome_at(front) != map.spawn_biome:
+			continue
 		if _fits(map, castle, front, false):
 			return front - GATE_FRONT
 	return null

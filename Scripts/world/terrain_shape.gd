@@ -23,6 +23,12 @@ func cell_altitude(cell: Vector2i, biome_id: int) -> float:
 	var alt := _map.altitude.get_noise_2d(cell.x, cell.y)
 	if _map.biome_frequency > 0.0:
 		alt += _map.biome_altitude_bias[biome_id]
+	if _map.use_archipelago_preset:
+		# Size presets shape independent islands within a bounded world.
+		var extent := _map.archipelago_world_extent
+		if maxi(absi(cell.x), absi(cell.y)) > extent:
+			return _map.water_max_alt - 1.0
+		return archipelago_altitude(cell, alt)
 	return archipelago_altitude(cell, island_altitude(cell, alt))
 
 
@@ -60,7 +66,7 @@ func archipelago_altitude(cell: Vector2i, alt: float) -> float:
 			var centre := archipelago_centre(sq)
 			nearest = minf(nearest, Vector2(cell).distance_to(centre))
 	if nearest == INF:
-		return alt
+		return _map.water_max_alt - 1.0 if _map.use_archipelago_preset else alt
 	var d := nearest / float(_map.archipelago_island_radius)
 	return alt + _map.island_falloff * (1.0 - d * d)
 
