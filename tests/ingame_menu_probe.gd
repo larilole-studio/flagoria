@@ -70,10 +70,25 @@ func _run() -> void:
 	await _frames(3)
 	_check(not current_scene.get_node("CanvasLayer1/InGameMenu").is_visible_in_tree(),
 			"menu button shown on the main menu")
+	var audio = root.get_node("AudioSettings")
+	audio.save_path = "user://test_ingame_menu_volume.cfg"
 	var first: Node = await _host(port, "first game")
+	audio.set_volume("Music", 0.7)
 	var menu = first.get_node("CanvasLayer1/InGameMenu")
 	menu.menu_button.pressed.emit()
 	_check(menu.is_open(), "Menu button did not open the panel")
+	var slider := menu.find_child("MusicVolume") as HSlider
+	_check(slider != null and slider.is_visible_in_tree(), "Music volume slider missing from the open menu")
+	if slider != null:
+		_check(is_equal_approx(slider.value, 0.7), "slider did not show the saved Music volume")
+		slider.value = 0.5
+		_check(is_equal_approx(audio.get_volume("Music"), 0.5), "slider did not update AudioSettings")
+		var bus := AudioServer.get_bus_index("Music")
+		_check(is_equal_approx(AudioServer.get_bus_volume_db(bus), -6.0206)
+				and not AudioServer.is_bus_mute(bus), "slider did not update the Music bus immediately")
+		audio.reset_to_defaults()
+		audio.load_from_disk()
+		_check(is_equal_approx(audio.get_volume("Music"), 0.5), "Music volume did not survive settings reload")
 	menu.main_menu_button.pressed.emit()
 	await _frames(5)
 
@@ -97,6 +112,13 @@ func _run() -> void:
 	var second: Node = await _host(port, "second game")
 	_check(second.get_node("World/Mobs").get_child_count() > 1, "second game spawned no mobs")
 	_check(music.current_track() == music.GAME_TRACK, "game music not playing in the second game")
+
+	var second_menu = second.get_node("CanvasLayer1/InGameMenu")
+	second_menu.menu_button.pressed.emit()
+	var second_slider := second_menu.find_child("MusicVolume") as HSlider
+	_check(second_slider != null and is_equal_approx(second_slider.value, 0.5),
+			"slider did not retain Music volume in the next match")
+	DirAccess.remove_absolute(audio.save_path)
 
 	for line in _errors.snapshot():
 		printerr("ingame_menu_probe: ERROR logged: %s" % line)

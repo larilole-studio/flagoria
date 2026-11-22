@@ -9,7 +9,7 @@ Music 0.6, SFX 1.0). It applies the volume as `volume_db = linear_to_db(v)`,
 mutes the bus at 0, and saves to `user://audio_settings.cfg`. Saved values
 that are not finite numbers, or are negative, load as the default; values
 above 1 are clamped. The main menu has a slider and a percent label for each
-bus.
+bus. The in-game menu also shows and saves the shared Music volume.
 
 New sounds should use `SFX` (or `Music` for music) rather than `Master`, so
 the sliders cover them.

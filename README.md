@@ -7,7 +7,7 @@ Features:
 - multiplayer over ENet (UDP `9786`) with UPnP port mapping; Host/Join from the main menu (Join takes a hostname or an IPv4 address and an optional `:port`), or a headless dedicated server (`-- --server`, see [docs/dedicated-server.md](docs/dedicated-server.md))
 - PVP with hearts: 3 hearts in half-heart steps, a short blink of invulnerability after each hit, respawn on death (half a heart back every 5 s)
 - mobs (slimes, crabs, piglets) that wander, chase, hurt on contact and can be fought with the sword
-- music, combat sound effects and footsteps, with Music and Sound effects volume in the main menu ([docs/audio.md](docs/audio.md))
+- music, combat sound effects and footsteps, with Music volume in both menus and Sound effects volume in the main menu ([docs/audio.md](docs/audio.md))
 - pinch-to-zoom (and mouse wheel or Ctrl +/-) for the local camera
 - generated hero sprites ([docs/hero-sprites.md](docs/hero-sprites.md)) and app icon ([art/icon/README.md](art/icon/README.md))
 - Android debug builds (below)

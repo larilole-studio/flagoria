@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-Music loops in the menu and in game, and combat and footstep sounds play on the SFX bus. Music and SFX volumes are set from the main menu and persist.
+Music loops in the menu and in game, and combat and footstep sounds play on the SFX bus. Music and SFX volumes are set from the main menu and persist. The in-game menu also adjusts the same Music volume setting.
 
 ## Sub-features
 

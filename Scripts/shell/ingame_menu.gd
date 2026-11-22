@@ -9,6 +9,8 @@ extends Control
 ## one line high, and the panel stays open. Main menu leaves the match:
 ## Flagoria closes the network session and reloads the main scene.
 
+const MenuVolume = preload("res://Scripts/shell/menu_volume.gd")
+
 ## The HUD menu button is an 18 px square (48 screen px at 1280x720): big
 ## enough to tap, small enough to keep the corner clear.
 const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
@@ -20,6 +22,8 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var customize_hud_button: Button = $Pause/Panel/Margin/VBox/CustomizeHud
 @onready var map_settings_button: Button = $Pause/Panel/Margin/VBox/MapSettings
 @onready var main_menu_button: Button = $Pause/Panel/Margin/VBox/MainMenu
+@onready var music_volume: HSlider = $Pause/Panel/Margin/VBox/MusicVolumeRow/MusicVolume
+@onready var music_value: Label = $Pause/Panel/Margin/VBox/MusicVolumeRow/MusicValue
 @onready var status_label: Label = $Pause/Panel/Margin/VBox/Status
 @onready var hud_layout_edit: Control = $HudLayoutEdit
 
@@ -34,6 +38,7 @@ func _ready() -> void:
 	customize_hud_button.pressed.connect(_on_customize_hud_pressed)
 	map_settings_button.pressed.connect(_on_map_settings_pressed)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
+	MenuVolume.bind_slider(music_volume, music_value, "Music")
 
 
 static func fit_icon_button(button: Button) -> void:
@@ -50,6 +55,7 @@ func is_open() -> bool:
 
 
 func open() -> void:
+	MenuVolume.refresh_slider(music_volume, music_value, "Music")
 	panel.show()
 	menu_button.hide()
 	map_settings_button.visible = multiplayer.is_server()

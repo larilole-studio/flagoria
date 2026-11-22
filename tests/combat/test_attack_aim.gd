@@ -67,11 +67,14 @@ func _test_attack_aim_mouse() -> int:
 		printerr("FAIL attack_aim_mouse opening the in-game menu did not cancel the aim (aimed %s, aiming %s, attacking %s)"
 				% [aimed_before, aim.aiming, player.isAttacking])
 		fail += 1
-	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(-60, 5)), true)
+	# Click the backdrop so menu layout changes cannot activate a button here.
+	var backdrop := vp.get_visible_rect().get_center()
+	backdrop.x = vp.get_visible_rect().position.x + 8.0
+	mouse.call(MOUSE_BUTTON_LEFT, backdrop, true)
 	if aim.aiming:
 		printerr("FAIL attack_aim_mouse aimed with the in-game menu open")
 		fail += 1
-	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(-60, 5)), false)
+	mouse.call(MOUSE_BUTTON_LEFT, backdrop, false)
 	game_menu.close()
 	await wait_swing.call()
 
