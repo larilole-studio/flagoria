@@ -1,6 +1,8 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Buildings and minimap toggles, selected rings and tool changes.
 
+const HudLayoutDump = preload("res://tools/hud_layout_dump.gd")
+
 
 func _test_hud_round_buttons() -> int:
 	## Buildings and Map toggle their panels, and picked tools keep their rings.
@@ -105,6 +107,55 @@ func _test_hud_round_buttons() -> int:
 	if fail == 0:
 		print("PASS test_hud_round_buttons")
 	return fail
+
+
+func _test_build_picker_saved_layout_tap() -> int:
+	print("-- test_build_picker_saved_layout_tap")
+	var original_size := root.size
+	var layout := root.get_node("HudLayout")
+	var original_path: String = layout.save_path
+	layout.save_path = "user://test_build_picker_saved_layout.cfg"
+	layout.reset_to_defaults()
+	await HudLayoutDump.resize(tree, Vector2i(3840, 1080))
+	var scene := await HudLayoutDump.play_scene(tree)
+	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
+	layout.edit_begin(hud)
+	var placed: bool = layout.try_place("buildings", 0.90, 0.40, 1.0, hud) \
+			and layout.try_place("map", 0.84, 0.40, 1.75, hud)
+	layout.save_to_disk()
+	layout.edit_end()
+	layout.forget_memory()
+	layout.load_from_disk()
+	hud.hide()
+	await HudLayoutDump.resize(tree, Vector2i(2400, 1080))
+	hud.show()
+	await process_frame
+	var buildings: Button = hud.get_node("BuildingsButton")
+	var picker: Control = hud.get_node("BuildPicker")
+	var panel: Control = hud.get_node("MinimapPanel")
+	var at := buildings.get_global_rect().get_center()
+	_tap_sequence(at, ["touch_down", "touch_up"])
+	await process_frame
+	var visible_count := 0
+	for button: Button in picker.get_children():
+		if button.is_visible_in_tree() and root.get_visible_rect().encloses(button.get_global_rect()):
+			visible_count += 1
+	var opened := buildings.button_pressed and not panel.visible and visible_count == 6
+	_tap_sequence(at, ["touch_down", "touch_up"])
+	await process_frame
+	var closed := not buildings.button_pressed
+	scene.queue_free()
+	await process_frame
+	layout.reset_to_defaults()
+	layout.save_path = original_path
+	layout.load_from_disk()
+	await HudLayoutDump.resize(tree, original_size)
+	if not (placed and opened and closed):
+		printerr("FAIL build_picker_saved_layout_tap: setup %s, opened %s (%d in bounds), closed %s"
+				% [placed, opened, visible_count, closed])
+		return 1
+	print("PASS test_build_picker_saved_layout_tap")
+	return 0
 
 
 func _is_selected(button: Button) -> bool:

@@ -34,6 +34,7 @@ func run() -> void:
 	await snapshot("building-list")
 	await click(BUILDINGS)
 	ok = ok and await wait_until(func() -> bool: return not _plank().visible, 2.0)
+	await snapshot("building-dismissed")
 	print("hud round: list closed %s" % (not _plank().visible))
 
 	step("building-selected")

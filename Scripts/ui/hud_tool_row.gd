@@ -51,10 +51,11 @@ func _add_wheel() -> void:
 
 
 func _bind_relayout() -> void:
-	var layer := get_parent()
+	var layer := get_parent() as CanvasLayer
 	if layer == null:
 		return
 	_layout()
+	layer.visibility_changed.connect(relayout, CONNECT_DEFERRED)
 	var map_button := layer.get_node_or_null("MinimapButton") as BaseButton
 	if map_button != null and not map_button.toggled.is_connected(relayout):
 		map_button.toggled.connect(relayout)
@@ -299,12 +300,12 @@ func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, sca
 		var center := (origin + offset).round()
 		var rect := Rect2(center - button.size * 0.5, button.size)
 		if clamp_to_view:
-			rect = _picker_fallback_rect(rect, view, occupied)
+			rect = HudLayoutVisual.nearest_clear_rect(rect, view, occupied)
 		else:
 			var nearest := view.get_center().clamp(rect.position, rect.end)
 			if nearest.distance_to(view.get_center()) < PLAYER_CLEARANCE:
 				return {}
-			if not _picker_rect_clear(rect, view, occupied, PICKER_SPACING):
+			if not HudLayoutVisual.rect_clear(rect, view, occupied, PICKER_SPACING):
 				return {}
 		slots[button] = [rect]
 		occupied.append(rect)
@@ -334,26 +335,6 @@ func _picker_captions(slots: Dictionary, side: float, view: Rect2,
 	return all_fit
 
 
-func _picker_fallback_rect(rect: Rect2, view: Rect2, occupied: Array[Rect2]) -> Rect2:
-	var last := (view.end - rect.size).max(view.position)
-	rect.position = rect.position.clamp(view.position, last)
-	if _picker_rect_clear(rect, view, occupied):
-		return rect
-	var closest := rect
-	var distance := INF
-	for y in range(ceili(view.position.y), floori(last.y) + 1, int(GAP)):
-		for x in range(ceili(view.position.x), floori(last.x) + 1, int(GAP)):
-			var point := Vector2(x, y)
-			var candidate_distance := point.distance_squared_to(rect.position)
-			if candidate_distance >= distance:
-				continue
-			var candidate := Rect2(point, rect.size)
-			if _picker_rect_clear(candidate, view, occupied):
-				closest = candidate
-				distance = candidate_distance
-	return closest
-
-
 func _picker_caption(disc: Rect2, size: Vector2, side: float, view: Rect2,
 		occupied: Array[Rect2]) -> Rect2:
 	var center := disc.get_center()
@@ -364,26 +345,17 @@ func _picker_caption(disc: Rect2, size: Vector2, side: float, view: Rect2,
 		for offset: float in offsets:
 			var rect := Rect2((base + Vector2(0, offset)).round(), size)
 			# Reserve one pixel for the text outline on each side.
-			if _picker_rect_clear(rect.grow(1.0), view, occupied):
+			if HudLayoutVisual.rect_clear(rect.grow(1.0), view, occupied):
 				return rect
 	return Rect2()
 
 
-func _picker_rect_clear(rect: Rect2, view: Rect2, occupied: Array[Rect2], spacing := 0.0) -> bool:
-	if not view.encloses(rect):
-		return false
-	for other in occupied:
-		if rect.intersects(other) or rect.get_center().distance_to(other.get_center()) < spacing:
-			return false
-	return true
-
-
-func _picker_obstacles(layer: Node) -> Array[Rect2]:
+func _picker_obstacles(layer: Node, exclude: CanvasItem = null) -> Array[Rect2]:
 	var blocked: Array[Rect2] = []
 	var layout := get_node("/root/HudLayout")
 	for id in layout.IDS:
 		var control := layer.get_node_or_null(NodePath(layout.PATHS[id])) as CanvasItem
-		if control == null or not control.is_visible_in_tree():
+		if control == null or control == exclude or not control.is_visible_in_tree():
 			continue
 		var rect: Rect2 = layout.control_hit_rect(id, layer)
 		if control is TouchScreenButton and control.shape != null:
@@ -487,6 +459,14 @@ func _left_of(control: Control) -> float:
 func place_custom_popups(layer: Node) -> void:
 	_place_tool(layer, true)
 	_place_panel(layer)
+	var buildings := layer.get_node_or_null("BuildingsButton") as Button
+	if buildings != null and not HudLayoutVisual.blocks_hud_actions():
+		buildings.z_index = 2
+		# Normalized positions can overlap when the saved layout is used at a new aspect ratio.
+		var rect := buildings.get_global_rect()
+		var view := get_viewport().get_visible_rect().grow(-SIDE)
+		var clear_rect := HudLayoutVisual.nearest_clear_rect(rect, view, _picker_obstacles(layer, buildings))
+		buildings.global_position = clear_rect.position
 	place_build_picker(layer)
 
 
