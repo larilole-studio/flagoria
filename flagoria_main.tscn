@@ -305,6 +305,7 @@ layout_mode = 2
 text = "Join"
 
 [node name="AddressEntry" type="LineEdit" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 placeholder_text = "Enter address to join here"
 alignment = 1
@@ -316,57 +317,93 @@ theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="MusicVolumeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="SettingsButton" type="Button" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Settings"
+
+[node name="SettingsPanel" type="MarginContainer" parent="CanvasLayer2/MainMenu"]
+visible = false
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="SettingsLayout" type="VBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout"]
+layout_mode = 2
+theme_type_variation = &"TitleLabel"
+theme_override_font_sizes/font_size = 24
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+follow_focus = true
+horizontal_scroll_mode = 0
+
+[node name="SettingsRows" type="VBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="MusicVolumeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MusicVolumeRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/MusicVolumeRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Music"
 
-[node name="MusicVolume" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MusicVolumeRow"]
+[node name="MusicVolume" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/MusicVolumeRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.05
 
-[node name="MusicValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MusicVolumeRow"]
-custom_minimum_size = Vector2(28, 0)
+[node name="MusicValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/MusicVolumeRow"]
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "100%"
 horizontal_alignment = 2
 
-[node name="SFXVolumeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="SFXVolumeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/SFXVolumeRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/SFXVolumeRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Sound effects"
 
-[node name="SFXVolume" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/SFXVolumeRow"]
+[node name="SFXVolume" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/SFXVolumeRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
 max_value = 1.0
 step = 0.05
 
-[node name="SFXValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/SFXVolumeRow"]
-custom_minimum_size = Vector2(28, 0)
+[node name="SFXValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/SFXVolumeRow"]
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "100%"
 horizontal_alignment = 2
 
-[node name="MobRateRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="MobRateRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MobRateRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/MobRateRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Mob spawns"
 
-[node name="MobRate" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MobRateRow"]
+[node name="MobRate" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/MobRateRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -375,21 +412,22 @@ max_value = 3.0
 step = 0.25
 value = 2.0
 
-[node name="MobRateValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MobRateRow"]
-custom_minimum_size = Vector2(28, 0)
+[node name="MobRateValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/MobRateRow"]
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "2x"
 horizontal_alignment = 2
 
-[node name="TowerRangeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="TowerRangeRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerRangeRow"]
 custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Tower range"
 
-[node name="TowerRange" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+[node name="TowerRange" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerRangeRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -398,21 +436,22 @@ max_value = 160.0
 step = 8.0
 value = 80.0
 
-[node name="TowerRangeValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerRangeRow"]
+[node name="TowerRangeValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerRangeRow"]
 custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "80 px"
 horizontal_alignment = 2
 
-[node name="TowerDamageRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="TowerDamageRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerDamageRow"]
 custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Tower damage"
 
-[node name="TowerDamage" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+[node name="TowerDamage" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerDamageRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -421,21 +460,22 @@ max_value = 3.0
 step = 1.0
 value = 1.0
 
-[node name="TowerDamageValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerDamageRow"]
+[node name="TowerDamageValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerDamageRow"]
 custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "1"
 horizontal_alignment = 2
 
-[node name="TowerCooldownRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="TowerCooldownRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerCooldownRow"]
 custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Tower cooldown"
 
-[node name="TowerCooldown" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+[node name="TowerCooldown" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerCooldownRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -444,33 +484,35 @@ max_value = 5.0
 step = 0.1
 value = 1.5
 
-[node name="TowerCooldownValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/TowerCooldownRow"]
+[node name="TowerCooldownValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/TowerCooldownRow"]
 custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "1.5 s"
 horizontal_alignment = 2
 
-[node name="RaidsRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="RaidsRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidsRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Raids"
 
-[node name="RaidsEnabled" type="CheckButton" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidsRow"]
+[node name="RaidsEnabled" type="CheckButton" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidsRow"]
 layout_mode = 2
 button_pressed = false
 
-[node name="RaidIntervalRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="RaidIntervalRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidIntervalRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Interval"
 
-[node name="RaidInterval" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
+[node name="RaidInterval" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidIntervalRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -479,21 +521,22 @@ max_value = 180.0
 step = 1.0
 value = 45.0
 
-[node name="RaidIntervalValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidIntervalRow"]
-custom_minimum_size = Vector2(36, 0)
+[node name="RaidIntervalValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidIntervalRow"]
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "45s"
 horizontal_alignment = 2
 
-[node name="RaidGroupRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="RaidGroupRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidGroupRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Group"
 
-[node name="RaidGroup" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
+[node name="RaidGroup" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidGroupRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -502,21 +545,22 @@ max_value = 8.0
 step = 1.0
 value = 3.0
 
-[node name="RaidGroupValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidGroupRow"]
-custom_minimum_size = Vector2(36, 0)
+[node name="RaidGroupValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidGroupRow"]
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "3"
 horizontal_alignment = 2
 
-[node name="RaidRadiusRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"]
+[node name="RaidRadiusRow" type="HBoxContainer" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows"]
+custom_minimum_size = Vector2(0, 16)
 layout_mode = 2
 
-[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
-custom_minimum_size = Vector2(72, 0)
+[node name="Label" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidRadiusRow"]
+custom_minimum_size = Vector2(108, 0)
 layout_mode = 2
 text = "Radius"
 
-[node name="RaidRadius" type="HSlider" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
+[node name="RaidRadius" type="HSlider" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidRadiusRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 4
@@ -525,11 +569,15 @@ max_value = 96.0
 step = 1.0
 value = 48.0
 
-[node name="RaidRadiusValue" type="Label" parent="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/RaidRadiusRow"]
-custom_minimum_size = Vector2(36, 0)
+[node name="RaidRadiusValue" type="Label" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/Scroll/SettingsRows/RaidRadiusRow"]
+custom_minimum_size = Vector2(48, 0)
 layout_mode = 2
 text = "48"
 horizontal_alignment = 2
+
+[node name="BackButton" type="Button" parent="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout" groups=["ui_back"]]
+layout_mode = 2
+text = "Back"
 
 [node name="QuitLayer" type="CanvasLayer" parent="."]
 layer = 10
@@ -540,3 +588,5 @@ layer = 10
 [connection signal="pressed" from="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/HostButton" to="CanvasLayer2/MainMenu" method="_on_host_button_pressed"]
 [connection signal="pressed" from="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton" to="CanvasLayer2/MainMenu" method="_on_worlds_pressed"]
 [connection signal="pressed" from="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton" to="CanvasLayer2/MainMenu" method="_on_join_button_pressed"]
+[connection signal="pressed" from="CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/SettingsButton" to="CanvasLayer2/MainMenu" method="_on_settings_pressed"]
+[connection signal="pressed" from="CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout/BackButton" to="CanvasLayer2/MainMenu" method="_on_settings_back_pressed"]

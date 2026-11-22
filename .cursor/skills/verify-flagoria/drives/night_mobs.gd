@@ -6,7 +6,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 
 const RATE := 0.5
 const FRAME_ZOOMS: Array[float] = [0.525, 0.42, 0.34]
-const RATE_SLIDER := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MobRateRow/MobRate"
 
 
 func run() -> void:
@@ -18,7 +17,7 @@ func run() -> void:
 		_fail("no " + HOST_BUTTON)
 		return
 	step("rate")
-	var slider: HSlider = current_scene.get_node(RATE_SLIDER)
+	var slider: HSlider = current_scene.get_node("CanvasLayer2/MainMenu").mob_rate
 	slider.value = RATE
 	await click(HOST_BUTTON)
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):

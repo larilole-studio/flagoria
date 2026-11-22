@@ -9,25 +9,27 @@ const MenuWorlds = preload("res://Scripts/shell/menu_worlds.gd")
 @onready var address_entry = $MarginContainer/VBoxContainer/AddressEntry
 @onready var join_status: Label = $MarginContainer/VBoxContainer/JoinStatus
 @onready var ux_layer = $/root/Flagoria/CanvasLayer1
-@onready var music_volume: HSlider = $MarginContainer/VBoxContainer/MusicVolumeRow/MusicVolume
-@onready var sfx_volume: HSlider = $MarginContainer/VBoxContainer/SFXVolumeRow/SFXVolume
-@onready var music_value: Label = $MarginContainer/VBoxContainer/MusicVolumeRow/MusicValue
-@onready var sfx_value: Label = $MarginContainer/VBoxContainer/SFXVolumeRow/SFXValue
-@onready var mob_rate: HSlider = $MarginContainer/VBoxContainer/MobRateRow/MobRate
-@onready var mob_rate_value: Label = $MarginContainer/VBoxContainer/MobRateRow/MobRateValue
-@onready var tower_range: HSlider = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRange
-@onready var tower_range_value: Label = $MarginContainer/VBoxContainer/TowerRangeRow/TowerRangeValue
-@onready var tower_damage: HSlider = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamage
-@onready var tower_damage_value: Label = $MarginContainer/VBoxContainer/TowerDamageRow/TowerDamageValue
-@onready var tower_cooldown: HSlider = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldown
-@onready var tower_cooldown_value: Label = $MarginContainer/VBoxContainer/TowerCooldownRow/TowerCooldownValue
-@onready var raids_enabled: CheckButton = $MarginContainer/VBoxContainer/RaidsRow/RaidsEnabled
-@onready var raid_interval: HSlider = $MarginContainer/VBoxContainer/RaidIntervalRow/RaidInterval
-@onready var raid_interval_value: Label = $MarginContainer/VBoxContainer/RaidIntervalRow/RaidIntervalValue
-@onready var raid_group: HSlider = $MarginContainer/VBoxContainer/RaidGroupRow/RaidGroup
-@onready var raid_group_value: Label = $MarginContainer/VBoxContainer/RaidGroupRow/RaidGroupValue
-@onready var raid_radius: HSlider = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadius
-@onready var raid_radius_value: Label = $MarginContainer/VBoxContainer/RaidRadiusRow/RaidRadiusValue
+@onready var play_panel: MarginContainer = $MarginContainer
+@onready var settings_panel: MarginContainer = $SettingsPanel
+@onready var music_volume: HSlider = %SettingsRows/MusicVolumeRow/MusicVolume
+@onready var sfx_volume: HSlider = %SettingsRows/SFXVolumeRow/SFXVolume
+@onready var music_value: Label = %SettingsRows/MusicVolumeRow/MusicValue
+@onready var sfx_value: Label = %SettingsRows/SFXVolumeRow/SFXValue
+@onready var mob_rate: HSlider = %SettingsRows/MobRateRow/MobRate
+@onready var mob_rate_value: Label = %SettingsRows/MobRateRow/MobRateValue
+@onready var tower_range: HSlider = %SettingsRows/TowerRangeRow/TowerRange
+@onready var tower_range_value: Label = %SettingsRows/TowerRangeRow/TowerRangeValue
+@onready var tower_damage: HSlider = %SettingsRows/TowerDamageRow/TowerDamage
+@onready var tower_damage_value: Label = %SettingsRows/TowerDamageRow/TowerDamageValue
+@onready var tower_cooldown: HSlider = %SettingsRows/TowerCooldownRow/TowerCooldown
+@onready var tower_cooldown_value: Label = %SettingsRows/TowerCooldownRow/TowerCooldownValue
+@onready var raids_enabled: CheckButton = %SettingsRows/RaidsRow/RaidsEnabled
+@onready var raid_interval: HSlider = %SettingsRows/RaidIntervalRow/RaidInterval
+@onready var raid_interval_value: Label = %SettingsRows/RaidIntervalRow/RaidIntervalValue
+@onready var raid_group: HSlider = %SettingsRows/RaidGroupRow/RaidGroup
+@onready var raid_group_value: Label = %SettingsRows/RaidGroupRow/RaidGroupValue
+@onready var raid_radius: HSlider = %SettingsRows/RaidRadiusRow/RaidRadius
+@onready var raid_radius_value: Label = %SettingsRows/RaidRadiusRow/RaidRadiusValue
 
 var admin_panel: PanelContainer
 var _settings_over_match := false
@@ -127,6 +129,17 @@ func open_settings_over_match() -> void:
 	if start != null:
 		start.disabled = true
 	admin_panel.show()
+
+
+func _on_settings_pressed() -> void:
+	($LetterKeyboard as NumberPad).close()
+	play_panel.hide()
+	settings_panel.show()
+
+
+func _on_settings_back_pressed() -> void:
+	settings_panel.hide()
+	play_panel.show()
 
 
 func _on_map_settings_pressed() -> void:
