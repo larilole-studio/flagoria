@@ -200,7 +200,9 @@ func _tower_pair(map: TileMap, tower: Structure) -> Variant:
 			cell + Vector2i(3, -3), cell + Vector2i(5, -3), cell + Vector2i(4, 1),
 			cell + Vector2i(3, 1), cell + Vector2i(5, 1), cell + Vector2i(4, 2)]
 		if both.all(func(c): return map.get_cell_source_id(0, c) != -1 and map.predicted_clear(c)) \
-				and map.predicted_clear(gap) and _open_land(map, extra):
+				and map.predicted_clear(gap) and _open_land(map, extra) \
+				and map.can_place_structure(tower, cell).is_empty() \
+				and map.can_place_structure(tower, cell + Vector2i(4, 0)).is_empty():
 			return [cell, gap]
 	return null
 

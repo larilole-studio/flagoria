@@ -14,7 +14,7 @@ A starting castle's flag is at most 2 cells from any courtyard cell, so the defa
 
 ## How to get to it (user POV)
 
-1. Host. The starting castle courtyard scores at once. The top-left total and the scoreboard both show that count.
+1. Host. The starting castle courtyard scores at once. The top-left total and the scoreboard both include the courtyard count and earned awards.
 2. Tap the castle flag. A ring marks the land that flag covers.
 3. Wall in a larger city. Cells outside every flag's ring do not add to the score until another flag tower covers them. Open a gap, or lose the flag, and those points go away.
 
@@ -24,7 +24,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_land_score_range` and `te
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=land_score_range,land_score_client_skips,land_score_two_players`, or the full `tools/verify.sh`.
 - **Unit tests.** The 8x5 wall fixture scores 10 points with one tower, 18 with two, and 0 after the ring opens. A connecting client awards no land points for the same fixture.
-- **Drive (live).** `bin/launch.sh drives/land_score.gd --display` (under xvfb, `--seed 11`). Steps `castle`, `ring`: `start_game()`, wait until the castle scores, `snapshot("castle")`, tap the castle flag, `snapshot("ring")`.
+- **Drive (live).** `bin/launch.sh drives/land_score.gd --display --seed 11` under xvfb. Host, wait until the castle scores, capture `castle`, tap the castle flag, then capture `ring`. The drive checks the ring radius, the covered cell count against the land contribution, and the HUD total against covered cells plus earned points.
 - **Proof.** Headers `-- test_land_score_range`, `-- test_land_score_client_skips`, `-- test_land_score_two_players` with no `FAIL` after them. Drive snapshots `01-castle` and `02-ring` under `--display`.
 
 ## Gotchas

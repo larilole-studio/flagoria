@@ -73,7 +73,9 @@ func clear() -> void:
 
 
 func erase(cell: Vector2i) -> void:
-	## Drop the sprout on `cell` (a structure now covers it), undrawn.
+	## Drop the sprout on `cell` when a structure or sync replaces it.
+	if BirchTrees.is_tree_tile(tile_or(cell, _WorldMap.NO_PLANT)):
+		BirchTrees.clear_top(_map, cell)
 	_sprouts.erase(cell)
 
 
@@ -90,7 +92,7 @@ func sprout_tile(cell: Vector2i) -> Vector2i:
 
 
 func _birch_foliage(cell: Vector2i, alt: float, moist: float, chance: float, biome: int, beach: bool) -> Vector2i:
-	return BirchTrees.foliage_tile(_map, cell, alt, moist, chance, biome, beach)
+	return BirchTrees.foliage_tile(_map, cell, alt, moist, chance, biome, beach, true)
 
 
 func can_sprout(cell: Vector2i, blocked: Dictionary) -> Vector2i:
@@ -159,8 +161,13 @@ func add(cell: Vector2i) -> bool:
 	_sprouts[cell] = tile
 	touch(cell)
 	_map.invalidate_painted_cell(cell)
+	if BirchTrees.is_tree_tile(tile):
+		_map.invalidate_painted_cell(BirchTrees.top_cell(cell))
 	if _map.is_drawn(cell) and not _map.has_cut(cell):
-		_map.set_cell(1, cell, TileCatalog.SOURCE_ID, tile)
+		if BirchTrees.is_tree_tile(tile):
+			BirchTrees.paint_bottom(_map, cell)
+		else:
+			_map.set_cell(1, cell, TileCatalog.SOURCE_ID, tile)
 	return true
 
 
@@ -470,7 +477,7 @@ func replace(changes: Dictionary) -> Array[Vector2i]:
 	var dropped: Array[Vector2i] = []
 	for cell: Vector2i in _sprouts.keys():
 		if not listed.has(cell):
-			_sprouts.erase(cell)
+			erase(cell)
 			dropped.append(cell)
 	restore(changes)
 	return dropped

@@ -371,16 +371,17 @@ func _test_chop_birch_clears_both_cells() -> int:
 	var fail := 0
 	var scene = mount_main_scene()
 	var world = scene.get_node("World/worldMap")
-	world.clear()
-	var bottom := Vector2i(12, 9)
-	var top := BirchTrees.top_cell(bottom)
-	for c in [bottom, top, bottom + Vector2i(1, 0)]:
-		world.set_cell(0, c, TileCatalog.SOURCE_ID, TileCatalog.GRASS_A)
-	BirchTrees.paint_bottom(world, bottom)
+	configure_birch_map(world)
+	var bottom := Vector2i(-1018, 266)
+	var top := bottom + Vector2i.UP
+	world.generate_chunk(world.map_to_local(bottom))
 	if world.get_cell_atlas_coords(1, bottom) != TileCatalog.TREE_BIRCH_BOTTOM \
 			or world.get_cell_atlas_coords(1, top) != TileCatalog.TREE_BIRCH_TOP:
 		printerr("FAIL chop_birch: setup bottom=%s top=%s"
 				% [world.get_cell_atlas_coords(1, bottom), world.get_cell_atlas_coords(1, top)])
+		fail += 1
+	if world.predict_cell(top)[1] != TileCatalog.TREE_BIRCH_TOP:
+		printerr("FAIL chop_birch: expected a living canopy before cutting")
 		fail += 1
 	var cut: InteractableType = world.cut_choppable(bottom)
 	if cut == null or cut.id != "tree":
@@ -391,8 +392,58 @@ func _test_chop_birch_clears_both_cells() -> int:
 		printerr("FAIL chop_birch: after cut top=%s stump=%s"
 				% [world.get_cell_atlas_coords(1, top), world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, bottom)])
 		fail += 1
+	var biome: int = world.biome_at(top)
+	world.set_tile_type_z1(top, world.cell_altitude(top, biome),
+			world.moisture.get_noise_2d(top.x, top.y), 0.0,
+			world.items_chance.get_noise_2d(top.x, top.y), biome)
+	if world.get_cell_atlas_coords(1, top) == TileCatalog.TREE_BIRCH_TOP \
+			or world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, bottom) != TileCatalog.STUMP:
+		printerr("FAIL chop_birch: repaint must keep stump and leave canopy gone")
+		fail += 1
+	if world.predict_cell(top)[1] == TileCatalog.TREE_BIRCH_TOP:
+		printerr("FAIL chop_birch: prediction restored the cut canopy")
+		fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
 		print("PASS test_chop_birch_clears_both_cells")
 	return fail
+
+
+func _test_birch_sprout_drawn_chunk() -> int:
+	print("-- test_birch_sprout_drawn_chunk")
+	var scene = mount_main_scene()
+	var world = scene.get_node("World/worldMap")
+	configure_birch_map(world)
+	var bottom := Vector2i(-1024, -619)
+	var top := bottom + Vector2i.UP
+	world.generate_chunk(world.map_to_local(bottom))
+	var fail := 0
+	if not world.is_drawn(bottom) or not world.is_drawn(top) \
+			or world.get_cell_source_id(1, bottom) != -1 or world.get_cell_source_id(1, top) != -1:
+		printerr("FAIL birch_sprout_drawn_chunk: expected two drawn, empty cells")
+		fail += 1
+	if not world.tree_sprouts().add(bottom) \
+			or world.get_cell_atlas_coords(1, bottom) != TileCatalog.TREE_BIRCH_BOTTOM \
+			or world.get_cell_atlas_coords(1, top) != TileCatalog.TREE_BIRCH_TOP:
+		printerr("FAIL birch_sprout_drawn_chunk: add must paint trunk and canopy immediately")
+		fail += 1
+	if world.predict_cell(top)[1] != TileCatalog.TREE_BIRCH_TOP:
+		printerr("FAIL birch_sprout_drawn_chunk: prediction must include the sprout canopy")
+		fail += 1
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_birch_sprout_drawn_chunk")
+	return fail
+
+
+func configure_birch_map(world) -> void:
+	var params := MapGenParams.new()
+	params.altitude_seed = 2
+	params.moisture_seed = 7
+	params.temperature_seed = 12
+	params.items_seed = 17
+	params.biome_seed = 31
+	params.biome_frequency = 0.003
+	world.apply_map_params(params)

@@ -6,7 +6,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## The address is typed and Join is clicked. Servers are loopback only.
 ## Each server loads its own map save, with seeds that are not the client's
 ## local MapGen fixture. World snapshots wait for those params, then for
-## nearby layer-0 cells drawn after that apply.
+## nearby ground cells drawn after that apply.
 
 const ADDRESS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry"
 const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
@@ -195,10 +195,13 @@ func _ground_count() -> int:
 	if map == null:
 		return 0
 	var cell := map.local_to_map(map.to_local(h.global_position))
+	var has_sea_layer := map.get_layers_count() > SkyIslands.SEA_LAYER
 	var n := 0
 	for dy in range(-NEARBY_RADIUS, NEARBY_RADIUS + 1):
 		for dx in range(-NEARBY_RADIUS, NEARBY_RADIUS + 1):
-			if map.get_cell_source_id(0, cell + Vector2i(dx, dy)) != -1:
+			var nearby_cell := cell + Vector2i(dx, dy)
+			if (map.get_cell_source_id(0, nearby_cell) != -1
+					or (has_sea_layer and map.get_cell_source_id(SkyIslands.SEA_LAYER, nearby_cell) != -1)):
 				n += 1
 	return n
 
