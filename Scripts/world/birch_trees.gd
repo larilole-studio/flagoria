@@ -55,28 +55,44 @@ static func bottom_can_place(map: _WorldMap, bottom: Vector2i) -> bool:
 	return top_can_hold(map, top_cell(bottom))
 
 
-static func canopy_for(map: _WorldMap, cell: Vector2i) -> Vector2i:
-	## BIRCH_TOP when the cell below would grow a birch bottom that fits, else NO_PLANT.
-	var below := cell - NORTH
-	if not bottom_would_grow(map, below,
-			map.cell_altitude(below, map.biome_at(below)),
-			map.moisture.get_noise_2d(below.x, below.y),
-			map.items_chance.get_noise_2d(below.x, below.y),
-			map.biome_at(below)):
+static func canopy_for(map: _WorldMap, cell: Vector2i, generated_only: bool = false) -> Vector2i:
+	## Sprout selection and untouched-map counts use generated foliage only.
+	if map.biome_frequency <= 0.0:
 		return _WorldMap.NO_PLANT
-	return TOP if bottom_can_place(map, below) else _WorldMap.NO_PLANT
+	var below := cell - NORTH
+	if not generated_only and foliage_blocked(map, below):
+		return _WorldMap.NO_PLANT
+	var b := map.biome_at(below)
+	var alt := map.cell_altitude(below, b)
+	var moist := map.moisture.get_noise_2d(below.x, below.y)
+	var chance := map.items_chance.get_noise_2d(below.x, below.y)
+	var ground := map.ground_tile(alt, moist, chance, b)
+	if ground == TileCatalog.SAND or not map.ground_is_walkable(ground):
+		return _WorldMap.NO_PLANT
+	if bottom_would_grow(map, below, alt, moist, chance, b) and bottom_can_place(map, below):
+		return TOP
+	if not generated_only and map.tree_sprouts().tile_or(below, _WorldMap.NO_PLANT) == BOTTOM \
+			and PlantPicker.plant_tile(map, alt, moist, chance, b) == _WorldMap.NO_PLANT:
+		return TOP
+	return _WorldMap.NO_PLANT
+
+
+static func foliage_blocked(map: _WorldMap, cell: Vector2i) -> bool:
+	return map.has_cut(cell) or map._structures.has_cell(cell) or map.has_wall(cell) \
+			or map.has_bridge(cell) or map._object_removals.has_removed(cell)
 
 
 static func paint_top(map: _WorldMap, bottom: Vector2i) -> void:
 	var top := top_cell(bottom)
-	map.erase_cell(1, top)
+	if foliage_blocked(map, top):
+		return
 	map.set_cell(1, top, TileCatalog.SOURCE_ID, TOP)
 
 
 static func clear_top(map: _WorldMap, bottom: Vector2i) -> void:
 	var top := top_cell(bottom)
-	map.erase_cell(1, top)
-	map.erase_cell(map.GROUND_DECOR_LAYER, top)
+	if map.get_cell_atlas_coords(1, top) == TOP:
+		map.erase_cell(1, top)
 	map.invalidate_painted_cell(top)
 
 
@@ -84,9 +100,9 @@ static func is_tree_tile(atlas: Vector2i) -> bool:
 	return atlas == BOTTOM
 
 
-static func foliage_tile(map: _WorldMap, cell: Vector2i, alt: float, moist: float, chance: float, biome_id: int, beach: bool) -> Vector2i:
+static func foliage_tile(map: _WorldMap, cell: Vector2i, alt: float, moist: float, chance: float, biome_id: int, beach: bool, generated_only: bool = false) -> Vector2i:
 	## Layer-1 plant from noise before sprouts and stones; birch canopy wins first.
-	var canopy := canopy_for(map, cell)
+	var canopy := canopy_for(map, cell, generated_only)
 	if canopy != _WorldMap.NO_PLANT:
 		return canopy
 	if map.biome_frequency <= 0.0 or not beach:
