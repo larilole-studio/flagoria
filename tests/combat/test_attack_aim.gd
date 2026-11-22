@@ -112,9 +112,6 @@ func _test_attack_aim_mouse() -> int:
 
 	# Off-axis aims swing at the exact angle, the cone with them; the sprite
 	# keeps the nearest four-way facing.
-	var minimap = scene.get_node("CanvasLayer1/MinimapPanel")
-	minimap.shown = false  # the open minimap is HUD right of the hero
-	minimap.visible = false
 	var four := await _four_way_blades(player)
 	for deg in OFF_AXIS_DEGREES:
 		var angle := deg_to_rad(deg)

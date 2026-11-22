@@ -1,26 +1,14 @@
 # Map zoom
 
-Drive: not player-facing
+Drive: drives/map_zoom.gd
 
-Pinch with two fingers on open map to zoom the local camera in or out; the default view stays the default. Zoom is local and never synced.
+After hosting or joining, spread two fingers on the world to zoom in and bring them together to zoom out. The camera stays between 0.75× and 2× of its default. Zoom is local to each player.
 
-## Sub-features
+- Touches that begin on a HUD control, including the joystick and Attack, stay with that control. A world pinch can cross a HUD control without grabbing it.
+- Double-tap the world, or press Ctrl+0, to reset. Wheel and Ctrl+Plus and Ctrl+Minus step the camera zoom.
+- Map or M opens the [parchment map](./explored-map.md). Pinching on the sheet zooms the chart while the world camera keeps its current setting.
 
-- `zoom-pinch` two touches on open map zoom between `MIN_FACTOR` 0.75 and `MAX_FACTOR` 2.0 of the default (`Scripts/player/map_zoom.gd`).
-- `zoom-hud-safe` touches that start on HUD controls (joystick, attack) do not zoom.
-- `zoom-desktop` wheel or Ctrl +/- steps by `STEP`.
+## Verification
 
-## How to get to it (user POV)
-
-- On a phone or touch screen: Host, then pinch on the map away from the joystick and attack button.
-
-## Driving it with verify-flagoria helpers
-
-Preconditions: `doctor.sh` exits `0`.
-
-- **Run.** Run `./.cursor/skills/verify-flagoria/bin/drive-verify.sh` (or `./tools/verify.sh`) and read `artifacts/verify.log`.
-- **Proof.** Each header `-- test_map_zoom` appears in the log, no `FAIL` line follows it, and the run ends with `All tests passed.` and `Verification passed.`
-
-## Gotchas
-
-- Headless tests feed synthetic touch events; real multi-touch on a device still needs a manual check.
+- `-- test_map_zoom` sends two touch contacts and drags through the stretched 2400×1080 viewport. It checks both limits, overlaps at the start of a pinch, HUD exclusion and desktop controls.
+- `bin/launch.sh drives/map_zoom.gd --seed 42 --display` hosts and sends touch contacts through the window input path. Expect `default`, `zoomed-in`, `zoomed-out` and `parchment` screenshots. The log reports the camera factor and confirms the sheet zooms independently. The [2400×1080 captures](../../../../docs/evidence/pinch-minimap-660/) cover the phone-landscape framing. Physical touchscreen delivery needs a device check.

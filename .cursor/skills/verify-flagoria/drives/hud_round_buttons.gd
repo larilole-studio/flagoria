@@ -1,31 +1,31 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 49
 ## Checks the mirrored thumb controls and opens and closes the Buildings
-## picker beside them. Picks Plank, opens the minimap, toggles interact, and taps Run.
+## picker beside them. Picks Plank, opens parchment, toggles interact, and taps Run.
 ## bin/launch.sh drives/hud_round_buttons.gd --display --seed 49
 
 const BUILDINGS := "CanvasLayer1/BuildingsButton"
 const PLANK := "CanvasLayer1/BuildPicker/PlankButton"
-const MAP_BUTTON := "CanvasLayer1/MinimapButton"
+const MAP_BUTTON := "CanvasLayer1/MapButton"
 const RUN_BUTTON := "CanvasLayer1/RunButton"
 
 
 func run() -> void:
 	if not await start_game():
 		return
-	var panel: MinimapPanel = current_scene.get_node(MINIMAP)
+	var parchment: ParchmentMap = current_scene.get_node("CanvasLayer1/ParchmentMap")
 	var interaction: Interaction = current_scene.get_node(INTERACTION)
 	var buildings := current_scene.get_node(BUILDINGS) as Button
 	var ok := await wait_until(func() -> bool:
-		return buildings.size.x >= RoundHudStyle.HIT and not panel.visible \
+		return buildings.size.x >= RoundHudStyle.HIT and not parchment.is_open() \
 				and not _plank().visible
 	, 5.0)
 	step("match-start")
-	ok = ok and _cluster_ok(panel) and _disc_is(buildings, "build_normal") \
+	ok = ok and _cluster_ok() and _disc_is(buildings, "build_normal") \
 			and _disc_is(current_scene.get_node(MAP_BUTTON), "map_normal") \
 			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
 	await snapshot("match-start")
-	print("hud round: start panel %s tool %s" % [panel.visible, interaction.build.tool])
+	print("hud round: start parchment %s tool %s" % [parchment.is_open(), interaction.build.tool])
 
 	step("building-list")
 	await click(BUILDINGS)
@@ -49,12 +49,12 @@ func run() -> void:
 	print("hud round: plank tool %s ring %s" % [interaction.build.tool, picked])
 	await click(BUILDINGS)
 
-	step("minimap")
+	step("parchment")
 	await click(MAP_BUTTON)
-	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
-	ok = ok and _buttons_outside(panel)
-	await snapshot("minimap")
-	print("hud round: minimap panel %s clear %s" % [panel.visible, _buttons_outside(panel)])
+	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
+	await snapshot("parchment")
+	await click("CanvasLayer1/ParchmentMap/CloseButton")
+	ok = ok and not parchment.is_open()
 
 	step("interact")
 	var before := interaction.mode
@@ -62,7 +62,6 @@ func run() -> void:
 	var switched: bool = interaction.mode != before and interaction.mode == Interaction.Mode.INTERACT \
 			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_chop_normal") \
 			and interaction.build.tool == BuildPlacement.Tool.PLANK
-	ok = ok and _buttons_outside(panel)
 	await snapshot("interact")
 	await toggle_mode()
 	var back: bool = interaction.mode == before and interaction.build.tool == BuildPlacement.Tool.CUT \
@@ -81,12 +80,12 @@ func _plank() -> Button:
 	return current_scene.get_node(PLANK) as Button
 
 
-func _cluster_ok(panel: MinimapPanel) -> bool:
+func _cluster_ok() -> bool:
 	var map_button := current_scene.get_node(MAP_BUTTON) as Button
 	var buildings := current_scene.get_node(BUILDINGS) as Button
 	var run := current_scene.get_node(RUN_BUTTON) as Button
 	var attack := current_scene.get_node("CanvasLayer1/TouchScreenButton") as TouchScreenButton
-	if panel.visible or not _round(map_button) or not _round(buildings):
+	if not _round(map_button) or not _round(buildings):
 		printerr("hud round: start buttons map %s buildings %s" % [map_button.size, buildings.size])
 		return false
 	if not _disc_is(run, "run_normal"):
@@ -147,16 +146,6 @@ func _picker_ok() -> bool:
 			printerr("hud round: %s misplaced at %s" % [button.name, rect])
 			return false
 	return count == 6
-
-
-func _buttons_outside(panel: Control) -> bool:
-	var panel_rect := panel.get_global_rect()
-	for path in [BUILDINGS, MAP_BUTTON]:
-		var button := current_scene.get_node(path) as Control
-		if button.get_global_rect().intersects(panel_rect):
-			printerr("hud round: %s %s hits the minimap %s" % [path, button.get_global_rect(), panel_rect])
-			return false
-	return true
 
 
 func _disc_is(button: Button, stem: String) -> bool:

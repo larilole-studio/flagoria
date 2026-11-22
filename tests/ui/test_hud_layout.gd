@@ -82,17 +82,14 @@ func _test_hud_layout_edit_blocks_map() -> int:
 	var scene = await _play_scene()
 	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
 	await process_frame
-	var panel: MinimapPanel = layer.get_node("MinimapPanel")
-	var map_btn: Button = layer.get_node("MinimapButton")
+	var map: ParchmentMap = layer.get_node("ParchmentMap")
+	var map_btn: Button = layer.get_node("MapButton")
 	_hud().edit_begin(layer)
 	await process_frame
 	map_btn.pressed.emit()
 	await process_frame
 	await process_frame
-	if panel.shown:
-		printerr("FAIL hud_layout_edit_blocks_map: minimap panel opened during edit")
-		fail += 1
-	if panel.parchment != null and panel.parchment.is_open():
+	if map.is_open():
 		printerr("FAIL hud_layout_edit_blocks_map: parchment opened during edit")
 		fail += 1
 	_hud().edit_end()

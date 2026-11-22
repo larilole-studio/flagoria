@@ -36,5 +36,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the twelve tests below are unde
 - `aim_center()` is a viewport position; the viewport is 480 x 270 and the window is not (1280 x 720 under `--display`), so convert with `root.get_final_transform() * aim_center()` before `Input.parse_input_event()`.
 - Touches that start on a HUD control, mouse events made from touches, interact mode and a dead player never aim (`-- test_attack_aim_touch_guards`, `-- test_attack_aim_mouse`).
 - The two-player sword test runs real physics on the spawn point; a slow machine can make it time out rather than fail an assert.
-- The minimap panel is open by default and covers the top right of the screen, so a mouse press there is on the HUD and does not aim; hide it (`shown = false`) before aiming up and to the right.
 - Swing sounds are covered by `-- test_combat_sfx` ([Audio](./audio.md)).

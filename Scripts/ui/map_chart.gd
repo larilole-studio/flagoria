@@ -1,17 +1,15 @@
-class_name MinimapPanel
-extends Control
-## Explored ground in the top-right wood panel. A save restores the chart.
-## The panel starts closed; the round minimap button or M opens it (#450).
-const FRAME := preload("res://art/ui/map/ui_map_panel_open.png")
+class_name MapChart
+extends Node
+## Tracks and paints explored ground for the parchment map. Saves restore the chart.
+
+signal chart_changed
+signal chart_cleared
 const HERO := {
 	"Up": preload("res://art/ui/map/ui_map_marker_hero_up.png"),
 	"Right": preload("res://art/ui/map/ui_map_marker_hero_right.png"),
 	"Down": preload("res://art/ui/map/ui_map_marker_hero_down.png"),
 	"Left": preload("res://art/ui/map/ui_map_marker_hero_left.png"),
 }
-const MARGIN := 4.0  ## art pixels from the right edge
-const TOP := 28.0  ## art pixels from the top; the arc slides the panel to its left
-const WINDOW := Rect2i(4, 16, 216, 124)  ## map window inside the frame
 const CELL_PX := 2
 const CHECK_FRAMES := 15  ## physics frames between reveals
 const WORLD_PATH := "/root/Flagoria/World"
@@ -27,8 +25,6 @@ const GRASS_DARK := Color("3f8a3c")
 const LEAF_DEEP := Color("24604a")
 const STONE := Color("8e97a3")
 const GOLD := Color("f2b632")
-const CLOUD := Color("ffffff")
-const CLOUD_SHADE := Color("d9e6f2")
 const INK := Color("2a2238")
 const CITY_HOST := Color("3b70e0")
 const CITY_MOBS := Color("9b54c4")
@@ -48,44 +44,18 @@ const _NEIGHBOURS := [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector
 var explored := ExploredMap.new()
 var hero_cell := Vector2i.ZERO
 var facing := "Down"
-var shown := false  ## closed until the minimap button or M
-var parchment: ParchmentMap
-var _map_button: Button
 
 var _textures := {}  ## chunk (Vector2i) -> ImageTexture
 var _images := {}  ## chunk (Vector2i) -> Image behind its texture
 var _terrain := {}  ## chunk (Vector2i) -> PackedByteArray, a Kind per cell, see _cell_info
 var _frames := 0
 var _last_sample := Vector2i.MAX  ## hero cell at the previous tick
-var _view: Control
-var _mist: ImageTexture
 
 
 func _ready() -> void:
-	visible = false
-	mouse_filter = MOUSE_FILTER_STOP  # touches on the panel are HUD touches
-	texture_filter = TEXTURE_FILTER_NEAREST
-	size = Vector2(FRAME.get_size())
-	_view = Control.new()
-	_view.name = "MapView"
-	_view.position = WINDOW.position
-	_view.size = WINDOW.size
-	_view.clip_contents = true
-	_view.mouse_filter = MOUSE_FILTER_IGNORE
-	_view.draw.connect(_draw_map)
-	add_child(_view)
-	var frame := TextureRect.new()
-	frame.name = "Frame"
-	frame.texture = FRAME
-	frame.mouse_filter = MOUSE_FILTER_IGNORE
-	add_child(frame)
-	_mist = ImageTexture.create_from_image(_mist_image())
-	_add_header_buttons()
 	var map := _map()
 	if map:
 		map.ground_changed.connect(_on_ground_changed)
-	get_viewport().size_changed.connect(_fit_pixel_scale)
-	_fit_pixel_scale()
 
 
 func _physics_process(_delta: float) -> void:
@@ -94,113 +64,9 @@ func _physics_process(_delta: float) -> void:
 		tick()
 
 
-func _process(_delta: float) -> void:
-	var player := local_player()
-	if player == null or not visible:
-		return
-	var cell := _cell_of(player)
-	var dir: String = player.lastAnimDirection
-	if cell != hero_cell or dir != facing:
-		hero_cell = cell
-		facing = dir
-		_view.queue_redraw()
-
-
-func _unhandled_key_input(event: InputEvent) -> void:
-	if not (event is InputEventKey) or not event.pressed or event.echo or local_player() == null:
-		return
-	if event.keycode != KEY_M:
-		return
-	if event.shift_pressed:
-		if parchment.is_open():
-			parchment.hide_map()
-		else:
-			maximize()
-	else:
-		shown = not shown
-		if parchment.is_open():
-			parchment.hide_map()
-	apply_chrome()
-	get_viewport().set_input_as_handled()
-
-
-func _add_header_buttons() -> void:
-	## Collapse and maximize sit in the wood header. The round minimap button
-	## is a sibling in the top-right arc, so it stays up when this panel hides.
-	var collapse := _header_button("CollapseButton", MapWoodButton.Glyph.MINUS, Vector2(184, 1))
-	collapse.activated.connect(collapse_panel)
-	var maximize_button := _header_button("MaximizeButton", MapWoodButton.Glyph.SQUARE, Vector2(204, 1))
-	maximize_button.activated.connect(maximize)
-	_map_button = Button.new()
-	_map_button.name = "MinimapButton"
-	_map_button.toggle_mode = true
-	_map_button.theme = load("res://art/ui/main_menu_theme.tres")
-	_map_button.icon = null
-	_map_button.tooltip_text = "Minimap"
-	RoundHudStyle.apply(_map_button)
-	_map_button.pressed.connect(_on_map_button)
-	parchment = ParchmentMap.new()
-	parchment.panel = self
-	# The canvas layer is still entering the tree when the panel's _ready runs.
-	var layer := get_parent()
-	layer.add_child.call_deferred(_map_button)
-	layer.add_child.call_deferred(parchment)
-
-func _on_map_button() -> void:
-	## Toggles the wood panel; closes parchment first when it is open.
-	if HudLayoutVisual.blocks_hud_actions():
-		_map_button.set_pressed_no_signal(false)
-		return
-	if parchment != null and parchment.is_open():
-		parchment.hide_map()
-		shown = false
-	else:
-		shown = not shown
-	apply_chrome()
-
-func _header_button(node_name: String, glyph: int, at: Vector2) -> MapWoodButton:
-	var button := MapWoodButton.new()
-	button.name = node_name
-	button.glyph = glyph
-	button.position = at
-	button.size = Vector2(18, 14)
-	add_child(button)
-	return button
-
-
-func collapse_panel() -> void:
-	shown = false
-	apply_chrome()
-
-
-func reopen_panel() -> void:
-	shown = true
-	apply_chrome()
-
-
-func maximize() -> void:
-	if local_player() == null:
-		return
-	parchment.show_map()
-	apply_chrome()
-
-
-func apply_chrome() -> void:
-	## The wood window, or neither while it is closed or the parchment is up.
-	## The round minimap button stays in the top-right arc either way.
-	var playing := local_player() != null
-	var map_open := parchment != null and parchment.is_open()
-	visible = shown and playing and not map_open
-	if _map_button:
-		_map_button.set_pressed_no_signal(visible)
-		RoundHudStyle.refresh_toggle(_map_button)
-
-
 func tick() -> void:
-	## Shows the panel while there is a local hero and reveals the cells
-	## around it.
+	## Reveals the cells around the local hero.
 	var player := local_player()
-	apply_chrome()
 	if player == null:
 		return
 	var map := _map()
@@ -219,7 +85,7 @@ func tick() -> void:
 	if not steady:
 		return
 	reveal_around(hero_cell)
-	_view.queue_redraw()
+	chart_changed.emit()
 
 
 func reveal_around(cell: Vector2i) -> void:
@@ -250,7 +116,6 @@ func reveal_around(cell: Vector2i) -> void:
 			tex.update(_images[chunk])
 		else:
 			_textures[chunk] = ImageTexture.create_from_image(_images[chunk])
-	_view.queue_redraw()
 
 
 func restore_chart(chunks: Dictionary) -> void:
@@ -263,8 +128,7 @@ func restore_chart(chunks: Dictionary) -> void:
 		var img := render_chunk(chunk)
 		_images[chunk] = img
 		_textures[chunk] = ImageTexture.create_from_image(img)
-	if _view:
-		_view.queue_redraw()
+	chart_changed.emit()
 
 
 func local_player() -> Node2D:
@@ -391,23 +255,6 @@ static func kind_colour(kind: int, shore: bool, cell: Vector2i, px: int, py: int
 	return GRASS_HI if _hash01(cell) < 0.12 else GRASS
 
 
-func _draw_map() -> void:
-	# Mist under everything, then the explored chunks, then the hero.
-	_view.draw_texture(_mist, Vector2.ZERO)
-	var half := Vector2i(WINDOW.size.x / CELL_PX / 2, WINDOW.size.y / CELL_PX / 2)
-	var top_left := hero_cell - half
-	var first := ExploredMap.chunk_of(top_left)
-	var last := ExploredMap.chunk_of(top_left + WINDOW.size / CELL_PX)
-	for cy in range(first.y, last.y + 1):
-		for cx in range(first.x, last.x + 1):
-			var tex: ImageTexture = _textures.get(Vector2i(cx, cy))
-			if tex:
-				_view.draw_texture(tex, Vector2((Vector2i(cx, cy) * ExploredMap.CHUNK - top_left) * CELL_PX))
-	var marker: Texture2D = HERO.get(facing, HERO["Down"])
-	_view.draw_texture(marker, Vector2(half * CELL_PX + Vector2i.ONE - HERO_ANCHOR))
-	paint_city_walls(_view, top_left, WINDOW.size)
-
-
 func paint_city_walls(target: CanvasItem, top_left: Vector2i, window_size: Vector2i, cell_px: int = CELL_PX) -> void:
 	## Owner-coloured city wall cells over an explored window (#277).
 	var cities: Cities = get_node_or_null(WORLD_PATH + "/Cities")
@@ -440,20 +287,8 @@ func _on_ground_changed(cells: Rect2i) -> void:
 	_images.clear()
 	_terrain.clear()
 	_last_sample = Vector2i.MAX
-	if parchment and parchment.is_open():
-		parchment.hide_map()
-	apply_chrome()
-	_view.queue_redraw()
-
-
-func _fit_pixel_scale() -> void:
-	## Whole art pixels from the right edge, rounded down so the attack button stays clear.
-	var stretch := get_viewport().get_final_transform().get_scale().x
-	if stretch <= 0.0:
-		return
-	var k := floorf(stretch) / stretch if stretch >= 1.0 else 1.0
-	scale = Vector2(k, k)
-	position = Vector2(get_viewport_rect().size.x - (size.x + MARGIN) * k, maxf(TOP * k, 23.0))
+	chart_cleared.emit()
+	chart_changed.emit()
 
 
 func _map() -> Node:
@@ -484,14 +319,6 @@ func _coast(cell: Vector2i, sx: int, sy: int) -> bool:
 
 func _blank_image() -> Image:
 	return Image.create(ExploredMap.CHUNK * CELL_PX, ExploredMap.CHUNK * CELL_PX, false, Image.FORMAT_RGBA8)
-
-
-func _mist_image() -> Image:
-	var img := Image.create(WINDOW.size.x, WINDOW.size.y, false, Image.FORMAT_RGBA8)
-	for y in WINDOW.size.y:
-		for x in WINDOW.size.x:
-			img.set_pixel(x, y, CLOUD_SHADE if (x + y) % 2 == 0 else CLOUD)
-	return img
 
 
 static func _hash01(cell: Vector2i) -> float:

@@ -282,7 +282,7 @@ func _test_world_save_preview() -> int:
 		printerr("FAIL world_save_preview: land fraction %.3f below minimum" % land_frac)
 		fail += 1
 	var flat := Image.create(WorldSavePreview.ICON_SIZE.x, WorldSavePreview.ICON_SIZE.y, false, Image.FORMAT_RGBA8)
-	flat.fill(MinimapPanel.SKY_DEEP)
+	flat.fill(MapChart.SKY_DEEP)
 	if WorldSavePreview.land_pixel_fraction(flat) >= WorldSavePreview.MIN_LAND_FRACTION:
 		printerr("FAIL world_save_preview: land fraction check accepted an all-water image")
 		fail += 1

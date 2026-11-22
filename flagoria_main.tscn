@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=36 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -23,7 +23,8 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/tower_capture.gd" id="16_tower_capture"]
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/cities.gd" id="17_cities"]
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/flags_held_points.gd" id="18_flags_held"]
-[ext_resource type="Script" path="res://Scripts/ui/minimap_panel.gd" id="16_minimap"]
+[ext_resource type="Script" path="res://Scripts/ui/map_chart.gd" id="16_chart"]
+[ext_resource type="Script" path="res://Scripts/ui/parchment_map.gd" id="16_parchment"]
 [ext_resource type="Script" path="res://Scripts/mechanics/run/run_control.gd" id="19_run"]
 [ext_resource type="Script" path="res://Scripts/ui/hud_tool_row.gd" id="20_hud_row"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building/structure_requests.gd" id="21_requests"]
@@ -119,14 +120,13 @@ mouse_filter = 2
 theme = ExtResource("6_menu")
 script = ExtResource("14_resource_hud")
 
-[node name="MinimapPanel" type="Control" parent="CanvasLayer1"]
-visible = false
-layout_mode = 3
-offset_left = 252.0
-offset_top = 28.0
-offset_right = 476.0
-offset_bottom = 172.0
-script = ExtResource("16_minimap")
+[node name="MapChart" type="Node" parent="CanvasLayer1"]
+script = ExtResource("16_chart")
+
+[node name="MapButton" type="Button" parent="CanvasLayer1"]
+focus_mode = 0
+tooltip_text = "Map (M)"
+theme = ExtResource("6_menu")
 
 [node name="RunButton" type="Button" parent="CanvasLayer1"]
 offset_right = 24.0
@@ -141,6 +141,10 @@ script = ExtResource("19_run")
 script = ExtResource("20_hud_row")
 
 [node name="InGameMenu" parent="CanvasLayer1" instance=ExtResource("9_ingame_menu")]
+
+[node name="ParchmentMap" type="Control" parent="CanvasLayer1"]
+visible = false
+script = ExtResource("16_parchment")
 
 [node name="Inventory" type="Node" parent="."]
 script = ExtResource("13_inventory")

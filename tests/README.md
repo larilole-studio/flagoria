@@ -36,7 +36,7 @@ godot --headless --path . --script res://tools/cli.gd -- map render --seed 42 --
 godot --headless --path . --script res://tools/cli.gd -- hud layout --out tests/golden/hud_layout.txt
 ```
 
-The HUD golden records visible hit rectangles in window pixels at four window sizes, with the stock HUD and each of Buildings, Minimap, and Scoreboard open.
+The HUD golden records visible hit rectangles in window pixels at four window sizes, with the stock HUD and each of Buildings and Scoreboard open.
 
 ## Netcode stress and the `needs-play-review` label
 

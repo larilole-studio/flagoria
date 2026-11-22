@@ -63,7 +63,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Tree sprouts](./tree-sprouts.md) — trees, including birch trunks, sprout where a biome is below its target tree share, host-decided, batched `apply_sprout_cells`, kept in saves and join lists.
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
-- [Explored map](./explored-map.md) — wood minimap (collapse, reopen, maximize) and the parchment full map; cells revealed within 10 cells of the hero.
+- [Explored map](./explored-map.md) — parchment full map from Map or M; cells revealed within 10 cells of the hero.
 - [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), castle (50), guard post (20), barracks (30), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; only the starting castle refuses while multiplayer is on; live path is the build picker.
 - [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for six buildable kinds (plank, tower, castle, guard post, barracks, wall block) through `BuildCosts.buy`; live path is the build picker.
 - [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
@@ -93,12 +93,12 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Points scoreboard](./points-scoreboard.md) — every connected player's total, highest first, from the score row toggle (#509).
 - [Touch controls](./touch-controls.md) — joystick hold, Candy Glass attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
-- [Round HUD buttons](./hud-round-buttons.md) — minimap closed at match start; Map beside Menu, Attack mirrored from the joystick, Run and the tool wheel around Attack, Buildings beside the cluster with two picker rings over a dimmed playfield, map panel clear of the controls (#480).
+- [Round HUD buttons](./hud-round-buttons.md) — Map beside Menu opens parchment, Attack mirrored from the joystick, Run and the tool wheel around Attack, Buildings beside the cluster with two picker rings over a dimmed playfield, map panel clear of the controls (#480).
 - [Customize HUD layout](./hud-customize.md) — in-game menu edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
 - [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.
 - [Starting castle](./start-castle.md) — each player's castle next to the spawn, player starts outside the gate; placed by the host while alone, sent to joining peers.
-- [Cities](./cities.md) — closed wall loop around a flag tower makes a city; tint + minimap; capture transfers; the host decides in multiplayer (#277, #498).
+- [Cities](./cities.md) — closed wall loop around a flag tower makes a city; world tint and parchment walls; capture transfers; the host decides in multiplayer (#277, #498).
 - [Tower capture](./tower-capture.md) — flag towers taken by a lone other side or mobs standing by the flag for 5 s; the host decides, peers receive owner and progress (#274, #497).
 - [Defense towers](./defense-towers.md) — a player-owned flag tower shoots the nearest other living player in range; the host applies damage and a short tracer (#37).
 - [Flags held points](./flags-held-points.md) — 1 point per owned flag tower every 5 s (`flags_held`); the host awards, peers share the totals (#275, #497). The live timer is off while land score is on.

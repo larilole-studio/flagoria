@@ -52,9 +52,8 @@
 1 tests/tower_sync_probe.gd
 4 tests/ui/test_hud_layout.gd
 4 tests/ui/test_ingame_menu.gd
-2 tests/ui/test_minimap.gd
 1 tests/ui/test_number_pad.gd
-15 tests/ui/test_parchment_map.gd
+10 tests/ui/test_parchment_map.gd
 17 tests/ui/test_saved_worlds.gd
 2 tests/ui/test_worlds_list_scroll.gd
 7 tests/wall_sync_probe.gd

@@ -22,7 +22,7 @@ func _test_player_save_round_trip() -> int:
 	scene.get_node("Discovery").restore_found({"3,-1": 1})
 	var far := Vector2i(80, 40)
 	var west := Vector2i(-10, 5)
-	var chart_now: ExploredMap = scene.get_node("CanvasLayer1/MinimapPanel").explored
+	var chart_now: ExploredMap = scene.get_node("CanvasLayer1/MapChart").explored
 	chart_now.reveal_cells(far, 0)
 	chart_now.reveal_cells(west, 0)
 	var saved: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
@@ -53,7 +53,7 @@ func _test_player_save_round_trip() -> int:
 		again._restore_loaded_world()
 		again.add_player(1)
 		var loaded: Node2D = again.get_node("World/1")
-		var chart: ExploredMap = again.get_node("CanvasLayer1/MinimapPanel").explored
+		var chart: ExploredMap = again.get_node("CanvasLayer1/MapChart").explored
 		if not is_equal_approx(loaded.position.x, spot.x) or not is_equal_approx(loaded.position.y, spot.y):
 			printerr("FAIL player_save_round_trip: loaded at %s, want %s" % [loaded.position, spot])
 			fail += 1
@@ -145,7 +145,7 @@ func _player_scene(with_body := true) -> Node:
 	scene.get_node("Discovery").set_physics_process(false)
 	scene.get_node("FlagsHeldPoints").set_physics_process(false)
 	scene.get_node("World/LandScore").set_physics_process(false)
-	scene.get_node("CanvasLayer1/MinimapPanel").set_physics_process(false)
+	scene.get_node("CanvasLayer1/MapChart").set_physics_process(false)
 	if with_body:
 		scene.add_player(1)
 	return scene
@@ -158,13 +158,13 @@ func _dirt(scene: Node, body: Node) -> void:
 		inventory.add(Inventory.WOOD, 9 - have)
 	scene.get_node("Points").restore_total(1, 4)
 	scene.get_node("Discovery").restore_found({"1,1": 1})
-	scene.get_node("CanvasLayer1/MinimapPanel").explored.reveal_cells(Vector2i(80, 40), 0)
+	scene.get_node("CanvasLayer1/MapChart").explored.reveal_cells(Vector2i(80, 40), 0)
 	if body:
 		body.health.set_health_now(2)
 
 
 func _is_default(scene: Node, body: Node, label: String) -> bool:
-	var chart: ExploredMap = scene.get_node("CanvasLayer1/MinimapPanel").explored
+	var chart: ExploredMap = scene.get_node("CanvasLayer1/MapChart").explored
 	var ok: bool = body.health.health == body.health.max_health \
 			and scene.get_node("Inventory").count_of(Inventory.WOOD) == 0 \
 			and scene.get_node("Points").total_of(1) == 0 \

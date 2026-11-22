@@ -261,7 +261,7 @@ func _quiet_scene() -> Node:
 	scene.get_node("Discovery").set_physics_process(false)
 	scene.get_node("FlagsHeldPoints").set_physics_process(false)
 	scene.get_node("World/LandScore").set_physics_process(false)
-	scene.get_node("CanvasLayer1/MinimapPanel").set_physics_process(false)
+	scene.get_node("CanvasLayer1/MapChart").set_physics_process(false)
 	return scene
 
 

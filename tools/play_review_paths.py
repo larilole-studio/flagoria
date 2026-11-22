@@ -72,7 +72,7 @@ GAMEPLAY = [
     "Scripts/world/tile_catalog.gd", "Scripts/world/BiomeCatalog.gd",  # tiles and biome tables of the world map
     "Scripts/saves/world_save.gd",  # what a saved world keeps
     "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
-    "Scripts/world/explored_map.gd", "Scripts/ui/minimap_panel.gd",  # explored map and its HUD panel
+    "Scripts/world/explored_map.gd", "Scripts/ui/map_chart.gd",  # explored terrain and its chart
     "Scripts/ui/parchment_map.gd", "Scripts/ui/map_wood_button.gd",  # parchment full map and its wood controls
     "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd", "Scripts/ui/scoreboard_toggle.gd",
     "Scripts/ui/scoreboard_panel.gd",

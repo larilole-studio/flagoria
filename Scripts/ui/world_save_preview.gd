@@ -51,10 +51,10 @@ static func placeholder() -> ImageTexture:
 
 
 static func land_pixel_fraction(img: Image) -> float:
-	## Share of thumbnail pixels that are not open water (MinimapPanel palette).
+	## Share of thumbnail pixels that are not open water (MapChart palette).
 	var land := 0
-	var sky := MinimapPanel.SKY
-	var deep := MinimapPanel.SKY_DEEP
+	var sky := MapChart.SKY
+	var deep := MapChart.SKY_DEEP
 	for y in img.get_height():
 		for x in img.get_width():
 			var c: Color = img.get_pixel(x, y)
@@ -78,14 +78,14 @@ static func build_image(map: TileMap, params: MapGenParams) -> Image:
 					region.position.x + int((px * region.size.x) / float(ICON_SIZE.x)),
 					region.position.y + int((py * region.size.y) / float(ICON_SIZE.y)))
 			cells[idx] = cell
-			kinds[idx] = MinimapPanel.kind_of(map.predict_cell(cell))
+			kinds[idx] = MapChart.kind_of(map.predict_cell(cell))
 	var img := Image.create(ICON_SIZE.x, ICON_SIZE.y, false, Image.FORMAT_RGBA8)
 	for py in ICON_SIZE.y:
 		for px in ICON_SIZE.x:
 			var idx := py * ICON_SIZE.x + px
 			var kind: int = kinds[idx]
-			var shore := kind == MinimapPanel.Kind.WATER and _touches_land(kinds, px, py)
-			img.set_pixel(px, py, MinimapPanel.kind_colour(kind, shore, cells[idx], px, py))
+			var shore := kind == MapChart.Kind.WATER and _touches_land(kinds, px, py)
+			img.set_pixel(px, py, MapChart.kind_colour(kind, shore, cells[idx], px, py))
 	return img
 
 
@@ -95,7 +95,7 @@ static func _touches_land(kinds: PackedInt32Array, px: int, py: int) -> bool:
 		var ny: int = py + d.y
 		if nx < 0 or ny < 0 or nx >= ICON_SIZE.x or ny >= ICON_SIZE.y:
 			continue
-		if kinds[ny * ICON_SIZE.x + nx] != MinimapPanel.Kind.WATER:
+		if kinds[ny * ICON_SIZE.x + nx] != MapChart.Kind.WATER:
 			return true
 	return false
 

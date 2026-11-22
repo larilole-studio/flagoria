@@ -2,33 +2,14 @@
 
 Drive: drives/explored_map.gd
 
-The wood minimap panel `CanvasLayer1/MinimapPanel` (`Scripts/ui/minimap_panel.gd`) shows the ground the hero has explored. `ExploredMap` (`Scripts/world/explored_map.gd`) marks every cell within `REVEAL_RADIUS` (10 cells, Euclidean) of the hero as explored as it moves, in 32 x 32 cell chunks.
+Map beside Menu, or M, opens the full parchment sheet directly. The chart reveals cells within 10 cells of the local hero and stores them in 32 × 32 cell chunks. `MapChart` paints newly revealed cells and their coastline neighbours. World saves keep the explored cells in `player.charted`.
 
-The panel starts closed. The round Map button beside Menu (`CanvasLayer1/MinimapButton`) opens it; collapse and M hide it again. There is no reopen chip. The panel header has two wood controls, drawn in the frame's own colours: collapse (a minus) and maximize (a square). Maximize, or Shift+M, opens `CanvasLayer1/ParchmentMap` (`Scripts/ui/parchment_map.gd`): the explored ground on an old parchment sheet, with paper fog instead of the panel's blue mist. The world is not paused. While the sheet is open the local hero cannot move or attack; + and − wood buttons, the mouse wheel, and a two-finger pinch zoom the sheet in integer pixel steps from a minimum that fits the whole explored chart up to 16 pixels per cell, centred on the hero for the buttons or on the wheel or pinch midpoint, without changing the play camera. One-finger drag still pans at any zoom. The target-mark recentre control pans back to the hero without changing zoom; closing and reopening returns to the default scale. Close, Esc, or a hit on the hero puts the wood panel back as it was.
+Drag to pan. Use +/−, the wheel or a two-finger pinch to zoom the sheet in whole pixels per cell. The buttons zoom at the hero, and the wheel and pinch zoom at the pointer or midpoint. Recentre pans back to the hero while keeping the zoom. Reopening starts at 2 pixels per cell.
 
-## Sub-features
+The world keeps running while the sheet is open. The local hero cannot move or attack until Close, Esc, M, or a hit dismisses the sheet.
 
-- `explored-reveal` cells within 10 cells of the hero become explored; the count only grows.
-- `explored-panel` the minimap panel is in the main scene and draws the explored cells.
-- `explored-incremental` the panel paints only newly revealed cells (and the ring around them), pixel for pixel the same as drawing each chunk from scratch.
+## Verification
 
-## How to get to it (user POV)
-
-- Host a world. The wood panel stays closed until the minimap button. It opens below the top buttons and adjusts to clear nearby HUD controls. Collapse hides it; the button opens it again. Maximize opens the parchment. +/−, wheel, or pinch to zoom (default, minimum, maximum on a phone-sized window), drag to pan, recentre, then Close to return to the panel.
-
-## Driving it with verify-flagoria helpers
-
-Preconditions: `doctor.sh` exits `0`. Time cost: each test below is under 0.5 s in `tools/verify.sh` (~1.1-1.5 s alone with `--only`); a live drive is ~5-6 s.
-
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=explored_map,minimap_panel_in_scene,minimap_incremental_render,parchment_map`, or the full `tools/verify.sh`. `test_parchment_map` is under 1 s.
-- **Drive (live).** `bin/launch.sh drives/explored_map.gd --display --seed 42` (under xvfb). About 25 s. Steps `open`, `collapse`, `reopen`, `parchment`, `pan`, `parchment-zoom` (1080x2400 portrait window for zoom evidence), `input-blocked`, `close`, `input-restored`, `phone-landscape` (854x480), `phone-portrait` (360x640, a tall window that fits a 1280x720 display).
-- **Proof.** End state: the minimap button shows the panel; collapse hides it and does not show a chip; the button shows the panel again; maximize shows the parchment and hides the panel; a drag changes `pan`; + zoom on the parchment raises `cell_px` above the default on a phone-sized window, then wheel zoom reaches minimum and maximum and recentre clears `pan` without resetting zoom; walking and attacking do nothing while it is open and walking works again after Close; the same controls stay inside the viewport at 854x480 and 360x640. Screenshots: `open-landscape`, `collapsed-landscape`, `reopened-landscape`, `parchment-landscape`, `panned-landscape`, `parchment-zoom-default-phone`, `parchment-zoom-in-phone`, `parchment-zoom-min-phone`, `parchment-zoom-max-phone`, `parchment-recentred-phone`, `closed-landscape`, `collapsed-phone-landscape`, `parchment-phone-landscape`, `open-phone-portrait`, `collapsed-phone-portrait`, `parchment-phone-portrait`.
-
-## Gotchas
-
-- Explored ground is the `player.charted` section of a world save (see [Player save](./player-save.md)). A new match still starts with nothing charted.
-- `explored_cells` is 0 until the first reveal after spawn, so take the start count after a few frames.
-- `hold()` moves the hero only until something blocks it. If the first pass was cut short, walking back can reach new ground and the count rises; compare hero cells, not frame counts, before claiming "same ground".
-- `snapshot()` PNGs show the whole window, not only the panel.
-- Headless tests: `-- test_explored_map`, `-- test_minimap_panel_in_scene`, `-- test_minimap_incremental_render`, `-- test_parchment_map`.
-- The parchment does not pause the tree. Only the local hero's movement and attacks are ignored, and only while the sheet is open.
+- `-- test_explored_map` checks cell coverage and chunk addressing. `-- test_minimap_incremental_render` compares incremental and full chart painting.
+- `-- test_minimap_panel_in_scene` checks the playing HUD and opens parchment with a touch on Map. `-- test_parchment_map` checks pan, zoom, modal controls and dismissal.
+- `bin/launch.sh drives/explored_map.gd --display --seed 42` checks parchment framing on desktop and phone-sized windows. Expect screenshots of the open sheet, pan, zoom limits, recentre and return to play.

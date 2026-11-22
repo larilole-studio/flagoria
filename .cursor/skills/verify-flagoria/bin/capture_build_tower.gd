@@ -27,9 +27,6 @@ func _run() -> void:
 		menu.hide()
 		menu.set_process_unhandled_input(false)
 	flagoria.get_node("CanvasLayer1").show()
-	var minimap = flagoria.get_node("CanvasLayer1/MinimapPanel")
-	minimap.shown = false
-	minimap.hide()
 
 	var world = flagoria.get_node("World/worldMap")
 	var structure: Structure = StructurePlacer.load_named("tower_wood")

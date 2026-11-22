@@ -10,7 +10,7 @@ const ROW_H := 10.0
 const TITLE_H := 12.0
 const SWATCH := Vector2(6, 8)
 
-## Castle flag colours on the minimap / capture bar (host + other peers).
+## Castle flag colours on the parchment map and capture bar (host + other peers).
 const FLAG_HOST := Color(0.23, 0.44, 0.88)
 const FLAG_OTHERS := [
 	Color(0.88, 0.29, 0.29),

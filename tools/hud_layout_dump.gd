@@ -76,11 +76,6 @@ static func visit_states(hud: CanvasLayer, visit: Callable, custom := false) -> 
 	buildings.set_pressed(false)
 	if custom:
 		return fail
-	var map_button: BaseButton = hud.get_node("MinimapButton")
-	map_button.pressed.emit()
-	await tree.process_frame
-	fail += visit.call("minimap_open", hud.get_node("MinimapPanel").visible)
-	map_button.pressed.emit()
 	var scores: BaseButton = hud.find_child("ScoreboardToggle", true, false)
 	scores.pressed.emit()
 	await tree.process_frame

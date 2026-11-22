@@ -11,10 +11,6 @@ func run() -> void:
 		done(false)
 		return
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	var minimap: MinimapPanel = current_scene.get_node_or_null("CanvasLayer1/MinimapPanel")
-	if minimap != null:
-		minimap.shown = false
-		minimap.visible = false
 	print("wall_junctions: window %s" % DisplayServer.window_get_size())
 	var castle_anchor: Variant = _placement_anchor(map, "castle")
 	if castle_anchor == null or not _is_prefix(map, castle_anchor + Vector2i(-3, -4), "WALL_CORNER_OUT_"):

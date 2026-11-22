@@ -18,35 +18,15 @@ wood count, and a trophy sticker. The two loss-flash frames last about
 
 ## Map panel
 
-The explored map in play is a wood panel in the top-right corner, below the
-mode and menu buttons, 4 px from the right edge (224x144 at (252, 28) in the
-480x270 UI space). It uses the files in `map/`:
+Map or M opens the parchment sheet (`Scripts/ui/parchment_map.gd`). It
+fills the viewport with `#e7d7b1` paper, a `#cbb98a` dither for unexplored
+cells, and a `#8a5a32` edge. Explored cells use the terrain palette in
+`Scripts/ui/map_chart.gd`, with a 1 px ink line along explored coastlines.
 
-| file | size | shown |
-|---|---|---|
-| `ui_map_panel_open.png` | 224x144 | the wood frame; its map window is the transparent 216x124 area at (4, 16) |
-| `ui_map_marker_hero_{up,right,down,left}.png` | 16x16 | the local hero, pointing the way it faces; pixel (8, 8) sits on the hero's cell |
-
-The window shows the world at 2 px per cell, centred on the hero. Explored
-cells use the map colours in `Scripts/ui/minimap_panel.gd` (water, shore,
-sand, swamp, grass, trees, stones, flowers), with a 1 px ink line where
-explored land meets explored water. Cells nobody has been near show as mist,
-a 1 px dither of `#ffffff` and `#d9e6f2`. The panel is drawn at a whole
-number of screen pixels per art pixel, rounding down, so at fractional
-window stretches it stays clear of the attack button.
-
-The header carries two controls drawn in code (`Scripts/ui/map_wood_button.gd`)
-in the frame's own colours, ink `#2a2238` on light wood `#e0a96b`: a minus
-that collapses the window, and a square that opens the parchment. Collapsed,
-a 56x24 wood chip in the same corner (a small map and an up chevron) opens
-the panel again. The frame PNG is unchanged.
-
-The parchment (`Scripts/ui/parchment_map.gd`) fills the viewport. It is old
-paper, not a second wood frame: `#e7d7b1` with a `#cbb98a` dither, a
-`#8a5a32` edge and the same ink. Explored cells use the panel's map colours.
-Unexplored cells stay that paper fog. Wheel and pinch zoom the sheet in
-integer pixel steps; a drag pans, the cross recentres on the hero, and the X
-closes it.
+The four 16 × 16 `map/ui_map_marker_hero_*.png` textures show the hero's
+facing. Pixel (8, 8) anchors each marker to the hero's cell. Wheel and pinch
+zoom the sheet in whole pixels per cell. A drag pans, the target button
+recentres on the hero, and X closes the sheet.
 
 ## Touch controls
 
