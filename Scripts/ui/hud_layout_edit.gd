@@ -5,7 +5,7 @@ extends Control
 const LAYER_PATH := "/root/Flagoria/CanvasLayer1"
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
-const CONTROL_IDS := ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]
+const CONTROL_IDS := ["joystick", "attack", "run", "buildings", "map", "wheel"]
 const BAR_EDGE_INSET := 6.0
 const BAR_PAD := 2.0
 const SELECTED_LABEL_MIN_WIDE := 120.0
@@ -152,6 +152,8 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 		await get_tree().process_frame
 	var sz := _top_bar.size
 	var floor_y := view.y * 0.55
+	var status_rect := _status_row_rect(layer)
+	var below_status_y := maxf(BAR_EDGE_INSET, status_rect.end.y + BAR_EDGE_INSET if status_rect.has_area() else BAR_EDGE_INSET)
 	var joy: Rect2 = _hl().control_visual_rect("joystick", layer)
 	var atk: Rect2 = _hl().control_visual_rect("attack", layer)
 	var slot_left: float = joy.end.x + BAR_EDGE_INSET if joy.size != Vector2.ZERO else BAR_EDGE_INSET
@@ -179,11 +181,11 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 		Vector2((view.x - bar_w) * 0.5, bottom_y),
 		Vector2(view.x - bar_w - BAR_EDGE_INSET, bottom_y),
 		Vector2(BAR_EDGE_INSET, maxf(floor_y, bottom_y)),
-		Vector2(BAR_EDGE_INSET, BAR_EDGE_INSET),
+		Vector2(BAR_EDGE_INSET, below_status_y),
 	])
 	if joy.size != Vector2.ZERO:
 		var above_joy := joy.position.y - sz.y - BAR_EDGE_INSET
-		if above_joy >= BAR_EDGE_INSET:
+		if above_joy >= below_status_y:
 			candidates.append(Vector2(BAR_EDGE_INSET, above_joy))
 	var bar_size := _top_bar.size
 	var best_pos := _clamp_bar_position(candidates[0], bar_size, view)
@@ -200,23 +202,42 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 			best_pos = clamped
 	if zero_pos != null:
 		best_pos = zero_pos
+	# Keep the same fallback as before the scores disc was removed: a zero-overlap
+	# candidate at the top inset is still replaced so the bar sits below the status row.
 	if best_score > 0.0:
-		var joy_rect: Rect2 = _hl().control_visual_rect("joystick", layer)
-		var scores_rect: Rect2 = _hl().control_visual_rect("scores", layer)
 		var clear_y := BAR_EDGE_INSET
-		if scores_rect.size != Vector2.ZERO:
-			clear_y = maxf(clear_y, scores_rect.end.y + BAR_EDGE_INSET)
-		if joy_rect.size != Vector2.ZERO:
-			clear_y = minf(clear_y, joy_rect.position.y - bar_size.y - BAR_EDGE_INSET)
+		if status_rect.size != Vector2.ZERO:
+			clear_y = maxf(clear_y, status_rect.end.y + BAR_EDGE_INSET)
+		if joy.size != Vector2.ZERO:
+			clear_y = minf(clear_y, joy.position.y - bar_size.y - BAR_EDGE_INSET)
 		var clear_x := BAR_EDGE_INSET
-		if scores_rect.size != Vector2.ZERO \
-				and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(scores_rect):
-			clear_x = scores_rect.end.x + BAR_EDGE_INSET
+		if status_rect.size != Vector2.ZERO \
+				and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(status_rect):
+			clear_x = status_rect.end.x + BAR_EDGE_INSET
 		best_pos = _clamp_bar_position(Vector2(clear_x, clear_y), bar_size, view)
 		best_score = _bar_overlap_score(layer, Rect2(best_pos, bar_size))
 	_top_bar.global_position = _clamp_bar_position(best_pos, bar_size, view)
 	await get_tree().process_frame
 	_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
+
+
+
+func _status_row_rect(layer: CanvasLayer) -> Rect2:
+	var plate := layer.get_node_or_null("StatusPlate") as Control
+	if plate != null:
+		var rect := plate.get_global_rect()
+		if rect.has_area():
+			return rect
+	var row := Rect2()
+	for node_name in ["HeartsHud", "ScoreHud", "ResourceHud"]:
+		var node := layer.get_node_or_null(node_name) as Control
+		if node == null:
+			continue
+		var rect := node.get_global_rect()
+		if not rect.has_area():
+			continue
+		row = rect if not row.has_area() else row.merge(rect)
+	return row
 
 
 func _bar_measured_size() -> Vector2:

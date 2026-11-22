@@ -2,11 +2,12 @@
 
 Drive: drives/combat_hud.gd
 
-The in-game menu button (three bars, top right) or Esc opens a Pause panel with Resume, Save, Customize HUD, Music volume, Main menu and a status label. The host also sees [Map Settings](./map-settings-panel.md). Nothing is paused, locally or for other players. The Android back button or a window close asks "Do you want to quit?" first.
+The in-game menu button (three bars, top right) or Esc opens a Pause panel with Resume, Save, Scores, Customize HUD, Music volume, Main menu and a status label. The host also sees [Map Settings](./map-settings-panel.md). Nothing is paused, locally or for other players. The Android back button or a window close asks "Do you want to quit?" first.
 
 ## Sub-features
 
 - `menu-panel` `InGameMenu` (`Scripts/shell/ingame_menu.gd`): `MenuButton` opens `MenuPanel`; Resume (`ui_back` sound) or Esc again closes it; on the main menu Esc does nothing. An open panel covers the map, so pinch zoom does not reach it. While it is open, touch aim and swings do not start.
+- `menu-scores` Scores closes the menu and opens the [points scoreboard](./points-scoreboard.md).
 - `menu-save` Save writes this match's world save (see [Map save files](./map-save.md)) and the status shows `Saved: MM-DD HH:MM`. Saving again replaces that file. A new match gets a new file.
 - `menu-music-volume` The Music volume slider shows the current setting and applies and saves changes immediately for this player. The main menu shares the setting.
 - `menu-leave` Main menu leaves the session and goes back to the main menu.
@@ -14,7 +15,7 @@ The in-game menu button (three bars, top right) or Esc opens a Pause panel with 
 
 ## How to get to it (user POV)
 
-- Host, tap the three-bar button, adjust Music volume, then try Resume, Save and Main menu; press back on Android.
+- Host, tap the three-bar button, adjust Music volume, then try Resume, Save, Scores and Main menu; press back on Android.
 
 ## Driving it with verify-flagoria helpers
 

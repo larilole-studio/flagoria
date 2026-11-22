@@ -74,7 +74,7 @@ GAMEPLAY = [
     "Scripts/saves/player_save.gd",  # player position, health, wood, score, charted ground
     "Scripts/world/explored_map.gd", "Scripts/ui/map_chart.gd",  # explored terrain and its chart
     "Scripts/ui/parchment_map.gd", "Scripts/ui/map_wood_button.gd",  # parchment full map and its wood controls
-    "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd", "Scripts/ui/scoreboard_toggle.gd",
+    "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd",
     "Scripts/ui/scoreboard_panel.gd",
     "Scripts/shell/ingame_menu.gd", "Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd",
     "Scripts/shell/quit_prompt.gd", "Scripts/ui/number_pad.gd", "Scripts/ui/hud_layout_edit.tscn",

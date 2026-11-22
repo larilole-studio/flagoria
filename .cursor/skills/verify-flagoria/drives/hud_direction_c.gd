@@ -2,7 +2,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Candy Glass HUD at 1280x720 and 1920x1080 with the floating status row.
 ## bin/launch.sh drives/hud_direction_c.gd --display --seed 49
 
-const SCORES := "CanvasLayer1/ScoreboardToggle"
 const WHEEL := "CanvasLayer1/ToolWheel"
 const CUSTOMIZE := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/CustomizeHud"
 
@@ -11,10 +10,6 @@ func run() -> void:
 	if not await start_game():
 		return
 	await _resize_window("hud-1280", 1280, 720)
-	step("scores-selected")
-	await click(SCORES)
-	await snapshot("scores-selected")
-	await click(SCORES)
 	step("interact")
 	await toggle_mode()
 	await snapshot("mode-interact")

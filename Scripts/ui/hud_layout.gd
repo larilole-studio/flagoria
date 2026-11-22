@@ -11,14 +11,13 @@ const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
 
 ## wheel is the tool button. A legacy mode_* key is not an id (#575).
-const IDS := ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]
+const IDS := ["joystick", "attack", "run", "buildings", "map", "wheel"]
 const PATHS := {
 	"joystick": "player_joystick",
 	"attack": "TouchScreenButton",
 	"run": "RunButton",
 	"buildings": "BuildingsButton",
 	"map": "MapButton",
-	"scores": "ScoreboardToggle",
 	"wheel": "ToolWheel/ToolButton",
 }
 
@@ -275,8 +274,6 @@ func control_hit_rect(id: String, layer: CanvasLayer) -> Rect2:
 	var node := layer.get_node_or_null(PATHS[id])
 	if node == null:
 		return Rect2()
-	if id == "scores":
-		return ScoreboardToggle.layout_hit_rect(layer)
 	match id:
 		"joystick":
 			var stick := node as Node2D
@@ -353,9 +350,7 @@ func _apply_round(button: Button, pos: Vector2, s: float, _is_run := false) -> v
 	if button.get_script() != null and str(button.get_script().resource_path).ends_with("run_control.gd"):
 		_apply_run(button, pos, s)
 		return
-	if button.name == "ScoreboardToggle":
-		RoundHudStyle.apply_scores(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
-	elif button.name == "BuildingsButton":
+	if button.name == "BuildingsButton":
 		RoundHudStyle.apply_build(button, RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)
 	elif button.name == "ToolButton":
 		button.get_parent().style_button(RoundHudStyle.HIT * s, RoundHudStyle.SIZE * s)

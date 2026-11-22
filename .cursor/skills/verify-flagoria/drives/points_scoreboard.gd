@@ -2,7 +2,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --display
 ## Four players, discovery points on the host, open scoreboard, phone snapshot (#509).
 
-const SCORE_TOGGLE := "CanvasLayer1/ScoreboardToggle"
+const SCORES := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/Scores"
 const CLIENT_JOIN_S := 45.0
 const SCOREBOARD := "CanvasLayer1/ScoreboardPanel"
 const MIN_PLAYERS := 4
@@ -47,7 +47,10 @@ func run() -> void:
 	var pts: Points = current_scene.get_node("Points")
 	print("points_scoreboard: host total %s after walking" % pts.total_of(me))
 	step("scoreboard")
-	await click(SCORE_TOGGLE)
+	await snapshot("hud-before-scores")
+	await click(MENU_BUTTON)
+	await snapshot("menu-open")
+	await click(SCORES)
 	var panel: ScoreboardPanel = current_scene.get_node(SCOREBOARD)
 	var opened := await wait_until(func() -> bool: return panel.is_open(), 3.0)
 	var rows := panel.sorted_rows() if opened else []

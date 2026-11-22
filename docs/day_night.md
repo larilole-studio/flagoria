@@ -165,8 +165,7 @@ inside the well. Centre the icon on the 24 px height (4 px from the top
 and bottom, 2 px into the bevel) and widen the stretched plate by
 20 px (a 4 px gap after the wood count, plus the 16 px slot). The
 stretched plate is 120×24. The icon slot is at local pixel (98, 4)
-on that plate (16×16). The scores disc stays 4 px to the right of the
-plate and moves with it. Hide the icon when the cycle is off; do not
+on that plate (16×16). Hide the icon when the cycle is off; do not
 leave an empty slot. No numeric countdown and no dusk sound cue.
 
 ## Night variants

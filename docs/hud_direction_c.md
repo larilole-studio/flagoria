@@ -6,14 +6,13 @@ is 4 texture pixels per HUD unit. The HUD uses linear filtering with mipmaps
 on the fractional 480×270 canvas. The world and parchment map use nearest filtering.
 
 The floating status row starts at (12, 12) and aligns the hearts, star and
-points, log and wood count, and trophy toggle along one centre line. Counters
+points, and log and wood count along one centre line. Counters
 and picker captions use Lilita One with a plum outline and one-unit drop.
 
 ## HUD layout in 480×270
 
 The 24-unit Map, Menu, Build, picker, Rotate and wheel discs have 32-unit hit
-targets. Run has 32-unit art and a 36-unit hit target. The trophy sticker is
-11 units with a 32-unit hit target.
+targets. Run has 32-unit art and a 36-unit hit target.
 
 ### Top-edge menu and map
 

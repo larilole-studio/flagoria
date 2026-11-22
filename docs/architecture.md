@@ -147,7 +147,6 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `Scripts/ui/parchment_map.gd` | Full-screen parchment of explored ground | stays |
 | `Scripts/ui/hearts_hud.gd` | Hearts row | stays |
 | `Scripts/ui/score_hud.gd` | Point total label | stays |
-| `Scripts/ui/scoreboard_toggle.gd` | Scoreboard open button beside the counter (#509) | stays |
 | `Scripts/ui/scoreboard_panel.gd` | All players' totals, highest first (#509) | stays |
 | `Scripts/ui/resource_hud.gd` | Wood count | stays |
 | `Scripts/shell/MainMenu.gd` | Menu shell, scene entry points and Map Settings panel lifecycle | stays |
