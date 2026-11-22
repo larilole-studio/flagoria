@@ -139,8 +139,7 @@ func _add(cell: Vector2i, type: InteractableType, cut_at: float) -> void:
 	_cut_cells[cell] = [cut_at, type.leaves_atlas(), type]
 	sprouts.touch(cell)
 	_map._predict_cache.erase(cell)
-	if BirchTrees.is_tree_tile(_map.get_cell_atlas_coords(1, cell)):
-		BirchTrees.clear_top(_map, cell)
+	BirchTrees.clear_top(_map, cell)
 	if _map.get_cell_source_id(1, cell) != -1:  # drawn already: swap it like a chop
 		_map.erase_cell(1, cell)
 		_map.set_cell(_map.GROUND_DECOR_LAYER, cell, TileCatalog.SOURCE_ID, type.leaves_atlas())
@@ -212,6 +211,7 @@ func _grow_back(cell: Vector2i) -> bool:
 func _redraw(cell: Vector2i) -> bool:
 	## Draw `cell`'s foliage again from the map; true when it is drawn.
 	_map.invalidate_painted_cell(cell)
+	_map.invalidate_painted_cell(BirchTrees.top_cell(cell))
 	if not _map.is_drawn(cell):
 		return false  # not drawn yet: generate_chunk draws the plant
 	_map.erase_cell(1, cell)
