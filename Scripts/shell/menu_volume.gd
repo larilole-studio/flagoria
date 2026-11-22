@@ -3,17 +3,22 @@ extends RefCounted
 
 
 static func bind_controls(menu: PanelContainer) -> void:
-	var audio = menu.get_node("/root/AudioSettings")
-	menu.music_volume.value = audio.get_volume("Music")
-	menu.sfx_volume.value = audio.get_volume("SFX")
-	menu.music_value.text = percent(menu.music_volume.value)
-	menu.sfx_value.text = percent(menu.sfx_volume.value)
-	menu.music_volume.value_changed.connect(func(v: float) -> void:
-		audio.set_volume("Music", v)
-		menu.music_value.text = percent(v))
-	menu.sfx_volume.value_changed.connect(func(v: float) -> void:
-		audio.set_volume("SFX", v)
-		menu.sfx_value.text = percent(v))
+	bind_slider(menu.music_volume, menu.music_value, "Music")
+	bind_slider(menu.sfx_volume, menu.sfx_value, "SFX")
+
+
+static func bind_slider(slider: HSlider, label: Label, bus: String) -> void:
+	var audio = slider.get_node("/root/AudioSettings")
+	refresh_slider(slider, label, bus)
+	slider.value_changed.connect(func(value: float) -> void:
+		audio.set_volume(bus, value)
+		label.text = percent(value))
+
+
+static func refresh_slider(slider: HSlider, label: Label, bus: String) -> void:
+	var audio = slider.get_node("/root/AudioSettings")
+	slider.set_value_no_signal(audio.get_volume(bus))
+	label.text = percent(slider.value)
 
 
 static func percent(v: float) -> String:
