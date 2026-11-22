@@ -13,7 +13,7 @@ const SAVE := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Save"
 const RESET := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Reset"
 const SIZE_SLIDER := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/SizeSlider"
 const WHEEL := "CanvasLayer1/ToolWheel"
-const HUD_IDS := ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]
+const HUD_IDS := ["joystick", "attack", "run", "buildings", "map", "wheel"]
 
 
 func _hud_layout() -> Node:

@@ -15,9 +15,9 @@ static func load_from_disk(hl: Node) -> void:
 	if int(cfg.get_value(SECTION, "version", 0)) != hl.SAVE_VERSION:
 		return
 	for id in hl.IDS:
-		var xv: Variant = _finite(cfg.get_value(SECTION, id + "_x"))
-		var yv: Variant = _finite(cfg.get_value(SECTION, id + "_y"))
-		var sv: Variant = _finite(cfg.get_value(SECTION, id + "_s"), 1.0)
+		var xv: Variant = _finite(cfg.get_value(SECTION, id + "_x", NAN))
+		var yv: Variant = _finite(cfg.get_value(SECTION, id + "_y", NAN))
+		var sv: Variant = _finite(cfg.get_value(SECTION, id + "_s", 1.0), 1.0)
 		if xv == null or yv == null or sv == null:
 			continue
 		var x: float = xv
@@ -69,10 +69,6 @@ static func capture_from_layer(hl: Node, layer: CanvasLayer) -> Dictionary:
 	var view := layer.get_viewport().get_visible_rect().size
 	for id in hl.IDS:
 		var rect: Rect2 = hl.control_hit_rect(id, layer)
-		if rect.size == Vector2.ZERO and id == "scores" and view.x > 0.0 and view.y > 0.0:
-			var toggle := layer.get_node_or_null(hl.PATHS["scores"]) as Control
-			if toggle != null:
-				rect = Rect2(layer.global_position + toggle.position, Vector2(RoundHudStyle.HIT, RoundHudStyle.HIT))
 		if rect.size == Vector2.ZERO:
 			continue
 		out[id] = {

@@ -68,6 +68,21 @@ func _test_ingame_menu_open_resume() -> int:
 	if not opened_by_esc or menu.is_open():
 		printerr("FAIL ingame_menu_open_resume: Esc open=%s, second Esc open=%s" % [opened_by_esc, menu.is_open()])
 		fail += 1
+	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
+	var board: ScoreboardPanel = hud.get_node("ScoreboardPanel")
+	var points: Points = scene.get_node("Points")
+	points.award(1, 7, "test")
+	board.bind(points, 1)
+	menu.menu_button.pressed.emit()
+	var scores := menu.get_node_or_null("Pause/Panel/Margin/VBox/Scores") as Button
+	if scores != null and scores.is_visible_in_tree() and scores.text == "Scores":
+		scores.pressed.emit()
+	if menu.is_open() or not board.is_open() or board.display_lines() != PackedStringArray(["You  7"]):
+		printerr("FAIL ingame_menu_open_resume: Scores did not replace the menu with the scoreboard")
+		fail += 1
+	if hud.has_node("ScoreboardToggle"):
+		printerr("FAIL ingame_menu_open_resume: scoreboard toggle is still on the HUD")
+		fail += 1
 	cam.queue_free()
 	scene.queue_free()
 	await process_frame

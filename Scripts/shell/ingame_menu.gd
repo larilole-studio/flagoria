@@ -19,6 +19,8 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var panel: Control = $Pause
 @onready var resume_button: Button = $Pause/Panel/Margin/VBox/Resume
 @onready var save_button: Button = $Pause/Panel/Margin/VBox/Save
+@onready var scoreboard: ScoreboardPanel = get_node_or_null("../ScoreboardPanel")
+@onready var scores_button: Button = $Pause/Panel/Margin/VBox/Scores
 @onready var customize_hud_button: Button = $Pause/Panel/Margin/VBox/CustomizeHud
 @onready var map_settings_button: Button = $Pause/Panel/Margin/VBox/MapSettings
 @onready var main_menu_button: Button = $Pause/Panel/Margin/VBox/MainMenu
@@ -35,6 +37,7 @@ func _ready() -> void:
 	menu_button.pressed.connect(open)
 	resume_button.pressed.connect(close)
 	save_button.pressed.connect(save_world)
+	scores_button.pressed.connect(_on_scores_pressed)
 	customize_hud_button.pressed.connect(_on_customize_hud_pressed)
 	map_settings_button.pressed.connect(_on_map_settings_pressed)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
@@ -55,11 +58,19 @@ func is_open() -> bool:
 
 
 func open() -> void:
+	if scoreboard != null and scoreboard.is_open():
+		scoreboard.close()
 	MenuVolume.refresh_slider(music_volume, music_value, "Music")
 	panel.show()
 	menu_button.hide()
 	map_settings_button.visible = multiplayer.is_server()
 	resume_button.grab_focus()
+
+
+func _on_scores_pressed() -> void:
+	close()
+	if scoreboard != null:
+		scoreboard.open()
 
 
 func _on_map_settings_pressed() -> void:

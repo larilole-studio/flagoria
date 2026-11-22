@@ -6,7 +6,7 @@ In-match HUD uses `art/ui/hud_e4/` Candy Glass sprites with linear filtering on 
 
 ## How to get to it (user POV)
 
-- Host a match. The hearts, counters and trophy float on one top-left line, Map and Menu sit top-right, and the lower thumb controls use smooth glass art. Buildings opens two rings over the dimmed playfield.
+- Host a match. The hearts and counters float on one top-left line, Map and Menu sit top-right, and the lower thumb controls use smooth glass art. Buildings opens two rings over the dimmed playfield.
 
 ## Driving it with verify-flagoria helpers
 
@@ -14,4 +14,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: about 25 s for this drive plus 
 
 - **Run (headless).** `tools/verify.sh` (`test_hud_round_buttons`, layout and bow tests).
 - **Drive (live).** `bin/launch.sh drives/hud_direction_c.gd --display --seed 49`, and `hud_round_buttons`, `hud_customize`, `combat_hud`, `ranged_bow` for regression.
-- **Proof.** Snapshots: `hud-1280`, `scores-selected`, `mode-interact`, `weapon-bow-1280`, `hud-disabled-edit`, `hud-1920`.
+- **Proof.** Snapshots: `hud-1280`, `mode-interact`, `weapon-bow-1280`, `hud-disabled-edit`, `hud-1920`.

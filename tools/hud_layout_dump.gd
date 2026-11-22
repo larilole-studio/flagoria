@@ -76,11 +76,11 @@ static func visit_states(hud: CanvasLayer, visit: Callable, custom := false) -> 
 	buildings.set_pressed(false)
 	if custom:
 		return fail
-	var scores: BaseButton = hud.find_child("ScoreboardToggle", true, false)
-	scores.pressed.emit()
+	var scores: ScoreboardPanel = hud.get_node("ScoreboardPanel")
+	scores.open()
 	await tree.process_frame
-	fail += visit.call("scoreboard_open", hud.get_node("ScoreboardPanel").is_open())
-	scores.pressed.emit()
+	fail += visit.call("scoreboard_open", scores.is_open())
+	scores.close()
 	return fail
 
 

@@ -23,11 +23,8 @@ static func bind(player: Node, health: PlayerHealth) -> void:
 		plate.show()
 		plate.bind_nodes(hud, score_hud, resource_hud)
 	var scoreboard := _hud_node(player, "ScoreboardPanel") as ScoreboardPanel
-	var score_toggle := _hud_node(player, "ScoreboardToggle") as ScoreboardToggle
 	if scoreboard and points:
 		scoreboard.bind(points, str(player.name).to_int())
-	if score_toggle:
-		score_toggle.show()
 
 
 static func _hud_node(player: Node, node_name: String) -> Node:

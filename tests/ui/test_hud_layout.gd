@@ -25,7 +25,7 @@ func _test_hud_layout_round_trip() -> int:
 		fail += 1
 	_hud().apply(layer)
 	await process_frame
-	for id in ["joystick", "attack", "run", "buildings", "map", "scores", "wheel"]:
+	for id in ["joystick", "attack", "run", "buildings", "map", "wheel"]:
 		if _hud().get_entry(id).is_empty():
 			printerr("FAIL hud_layout_round_trip: missing %s after load" % id)
 			fail += 1
@@ -304,13 +304,16 @@ func _test_hud_layout_legacy_mode() -> int:
 	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
 	await process_frame
 	var cfg := ConfigFile.new()
-	cfg.set_value("hud", "version", _hud().SAVE_VERSION)
+	cfg.set_value("hud", "version", 5)
 	cfg.set_value("hud", "attack_x", 0.62)
 	cfg.set_value("hud", "attack_y", 0.35)
 	cfg.set_value("hud", "attack_s", 1.0)
 	cfg.set_value("hud", "mode_x", 0.9)
 	cfg.set_value("hud", "mode_y", 0.08)
 	cfg.set_value("hud", "mode_s", 1.25)
+	cfg.set_value("hud", "scores_x", 0.2)
+	cfg.set_value("hud", "scores_y", 0.08)
+	cfg.set_value("hud", "scores_s", 1.25)
 	cfg.save(path)
 	_hud().save_path = path
 	_hud().load_from_disk()
@@ -320,8 +323,12 @@ func _test_hud_layout_legacy_mode() -> int:
 	if _hud().set_entry("mode", {"x": 0.5, "y": 0.5, "s": 1.0}):
 		printerr("FAIL hud_layout_legacy_mode: mode is still a layout id")
 		fail += 1
+	if not _hud().get_entry("scores").is_empty() \
+			or _hud().set_entry("scores", {"x": 0.5, "y": 0.5, "s": 1.0}):
+		printerr("FAIL hud_layout_legacy_mode: scores is still a layout id")
+		fail += 1
 	var attack: Dictionary = _hud().get_entry("attack")
-	if absf(float(attack.get("x", -1.0)) - 0.62) > 0.001:
+	if attack != {"x": 0.62, "y": 0.35, "s": 1.0}:
 		printerr("FAIL hud_layout_legacy_mode: attack did not load %s" % attack)
 		fail += 1
 	fail += _no_legacy_buttons(scene, "hud_layout_legacy_mode")
@@ -339,6 +346,10 @@ func _test_hud_layout_legacy_mode() -> int:
 	if again.load(path) != OK or again.has_section_key("hud", "mode_x"):
 		printerr("FAIL hud_layout_legacy_mode: mode_x still in the save")
 		fail += 1
+	for key in ["scores_x", "scores_y", "scores_s"]:
+		if again.has_section_key("hud", key):
+			printerr("FAIL hud_layout_legacy_mode: %s still in the save" % key)
+			fail += 1
 	_hud().reset_to_defaults()
 	_hud().edit_end()
 	tree.paused = false

@@ -11,7 +11,6 @@ const RUN_HIT := 36.0
 const RUN_SIZE := 32.0
 const MENU_HIT := 32.0
 const MENU_ART := 24.0
-const STICKER := 11.0
 
 const _FONT_PATH := "res://art/ui/fonts/LilitaOne-Regular.ttf"
 const _PLUM := Color("#3B1748")
@@ -66,15 +65,11 @@ static func apply_attack(button: TouchScreenButton) -> void:
 
 
 static func apply(button: Button, hit: float = HIT, art: float = SIZE) -> void:
-	apply_disc(button, "map", hit, art, 2)
+	apply_disc(button, "map", hit, art, true)
 
 
 static func apply_build(button: Button, hit: float = HIT, art: float = SIZE) -> void:
-	apply_disc(button, "build", hit, art, 2)
-
-
-static func apply_scores(button: Button, hit: float = HIT, art: float = SIZE) -> void:
-	apply_disc(button, "scores", hit, art * STICKER / SIZE, 1)
+	apply_disc(button, "build", hit, art, true)
 
 
 static func apply_menu(button: Button, hit: float = MENU_HIT, art: float = MENU_ART) -> void:
@@ -86,22 +81,22 @@ static func apply_run(button: Button, hit: float = RUN_HIT, art: float = RUN_SIZ
 
 
 static func apply_wheel(button: Button, tool: int, hit: float = HIT, art: float = SIZE) -> void:
-	apply_disc(button, _WHEEL[tool], hit, art, 2)
+	apply_disc(button, _WHEEL[tool], hit, art, true)
 
 
 static func apply_disc(button: Button, prefix: String, hit: float = HIT, art: float = SIZE,
-		selected_states := 0) -> void:
+		has_selected_states := false) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.icon = null
 	button.text = ""
 	button.texture_filter = FILTER
 	var normal := _box(prefix + "_normal", hit, art)
 	var pressed := _box(prefix + "_pressed", hit, art)
-	var disabled := pressed if prefix == "scores" else _box(prefix + "_disabled", hit, art)
+	var disabled := _box(prefix + "_disabled", hit, art)
 	var boxes := {"normal": normal, "pressed": pressed, "disabled": disabled}
-	if selected_states > 0:
+	if has_selected_states:
 		boxes["selected"] = _box(prefix + "_selected", hit, art)
-		boxes["selected_pressed"] = _box(prefix + "_selected_pressed", hit, art) if selected_states == 2 else pressed
+		boxes["selected_pressed"] = _box(prefix + "_selected_pressed", hit, art)
 		if not button.has_meta(&"hud_e4_boxes"):
 			button.toggled.connect(func(_on: bool) -> void: refresh_toggle(button))
 	button.set_meta(&"hud_e4_boxes", boxes)

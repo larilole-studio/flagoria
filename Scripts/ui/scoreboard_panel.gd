@@ -1,7 +1,7 @@
 class_name ScoreboardPanel
 extends Control
 ## Every connected player's point total, highest first, using the host-owned
-## Points totals (#509). Opened from the score HUD; stays touch-sized at 480x270.
+## Points totals (#509). Opened from the in-game menu. It stays touch-sized at 480x270.
 
 const MAX_ROWS := 8
 const MARGIN := 4.0  ## art px below the hearts / points row
@@ -128,15 +128,15 @@ func follow_hud_row() -> void:
 	var score := get_node_or_null("../ScoreHud") as Control
 	if score == null and plate != null:
 		score = plate.get_node_or_null("ScoreHud") as Control
-	var toggle := get_node_or_null("../ScoreboardToggle") as Control
 	if score == null:
 		return
 	var k := hearts.scale.x if hearts != null else 1.0
 	scale = Vector2(k, k)
 	var left := hearts.position.x if hearts != null else score.position.x
 	var bottom := score.position.y + score.size.y * k
-	if toggle != null and toggle.is_visible_in_tree():
-		bottom = maxf(bottom, toggle.position.y + toggle.size.y * toggle.scale.y)
+	if plate != null and plate.is_visible_in_tree():
+		left = plate.position.x
+		bottom = plate.position.y + plate.size.y * plate.scale.y
 	position = Vector2(left, bottom + MARGIN * k)
 	size = custom_minimum_size
 
