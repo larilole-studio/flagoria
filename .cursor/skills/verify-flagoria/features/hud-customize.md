@@ -29,4 +29,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the `tests/ui/test_hud_layout.g
 
 - Layout is local only; multiplayer peers keep their own saved positions.
 - Until Save, changes apply for this session but are not written to disk.
-- The minimap panel positions itself to clear the HUD controls.
+- The Map control keeps its saved position and opens the parchment sheet.

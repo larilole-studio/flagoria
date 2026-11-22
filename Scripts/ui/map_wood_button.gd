@@ -1,7 +1,6 @@
 class_name MapWoodButton
 extends Control
-## A header control in the wood panel's own colours: ink on a light wood face.
-## Collapse, maximize, reopen, close and recentre. Not a theme button.
+## Parchment controls with ink on a light wood face.
 
 signal activated
 

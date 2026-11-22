@@ -1,11 +1,9 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 42
-## Wood panel collapse, reopen and the parchment full map.
+## Parchment map controls and framing.
 ## bin/launch.sh drives/explored_map.gd --display --seed 42
 
-const COLLAPSE := "CanvasLayer1/MinimapPanel/CollapseButton"
-const MAXIMIZE := "CanvasLayer1/MinimapPanel/MaximizeButton"
-const MAP_BUTTON := "CanvasLayer1/MinimapButton"
+const MAP_BUTTON := "CanvasLayer1/MapButton"
 const PARCHMENT := "CanvasLayer1/ParchmentMap"
 const CLOSE := "CanvasLayer1/ParchmentMap/CloseButton"
 const ZOOM_IN := "CanvasLayer1/ParchmentMap/ZoomInButton"
@@ -17,36 +15,11 @@ const ZOOM_PHONE := Vector2i(1080, 2400)
 func run() -> void:
 	if not await start_game():
 		return
-	var panel: MinimapPanel = current_scene.get_node(MINIMAP)
 	var parchment: ParchmentMap = current_scene.get_node(PARCHMENT)
-	var ok := await wait_until(func() -> bool:
-		var button := current_scene.get_node_or_null(MAP_BUTTON) as Control
-		return button != null and button.visible and not panel.visible
-	, 5.0)
-	step("open")
-	await click(MAP_BUTTON)
-	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
-	await snapshot("open-landscape")
-	print("explored_map: panel %s" % panel.visible)
-
-	step("collapse")
-	await click(COLLAPSE)
-	ok = ok and await wait_until(func() -> bool:
-		return not panel.visible and current_scene.get_node_or_null("CanvasLayer1/MapReopen") == null
-	, 2.0)
-	await snapshot("collapsed-landscape")
-	print("explored_map: collapsed panel %s" % panel.visible)
-
-	step("reopen")
-	await click(MAP_BUTTON)
-	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
-	await snapshot("reopened-landscape")
-
 	step("parchment")
-	await click(MAXIMIZE)
-	ok = ok and await wait_until(func() -> bool: return parchment.is_open() and not panel.visible, 2.0)
+	await click(MAP_BUTTON)
+	var ok := await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	await snapshot("parchment-landscape")
-	print("explored_map: parchment %s pan %s" % [parchment.is_open(), parchment.pan])
 
 	step("pan")
 	var pan_before := parchment.pan
@@ -57,8 +30,6 @@ func run() -> void:
 
 	step("parchment-zoom")
 	ok = ok and await _resize(ZOOM_PHONE.x, ZOOM_PHONE.y)
-	parchment.cell_px = parchment.DEFAULT_CELL_PX
-	parchment.pan = Vector2.ZERO
 	await process_frame
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	ok = ok and is_equal_approx(float(parchment.cell_px), float(parchment.DEFAULT_CELL_PX))
@@ -100,9 +71,9 @@ func run() -> void:
 
 	step("close")
 	await click(CLOSE)
-	ok = ok and await wait_until(func() -> bool: return not parchment.is_open() and panel.visible, 2.0)
+	ok = ok and await wait_until(func() -> bool: return not parchment.is_open(), 2.0)
 	var menu: Control = current_scene.get_node(MENU_PANEL)
-	print("explored_map: closed panel %s map %s menu %s" % [panel.visible, parchment.is_open(), menu.visible])
+	print("explored_map: closed map %s menu %s" % [parchment.is_open(), menu.visible])
 	ok = ok and not menu.visible
 	await snapshot("closed-landscape")
 
@@ -119,30 +90,17 @@ func run() -> void:
 
 	step("phone-landscape")
 	ok = ok and await _resize(854, 480)
-	await click(COLLAPSE)
-	ok = ok and await wait_until(func() -> bool: return not panel.visible, 2.0)
-	await snapshot("collapsed-phone-landscape")
 	await click(MAP_BUTTON)
-	await click(MAXIMIZE)
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	await _drag(PARCHMENT, Vector2(48, 24))
 	await snapshot("parchment-phone-landscape")
 	await click(CLOSE)
-	ok = ok and await wait_until(func() -> bool: return panel.visible and not parchment.is_open(), 2.0)
-	print("explored_map: phone landscape window %s panel %s" % [DisplayServer.window_get_size(), panel.visible])
+	ok = ok and await wait_until(func() -> bool: return not parchment.is_open(), 2.0)
 
 	step("phone-portrait")
 	if not await _resize(360, 640):
 		await _resize(1280, 720)
-	ok = ok and _inside(panel) and _inside(panel.get_node("CollapseButton")) and _inside(panel.get_node("MaximizeButton"))
-	await snapshot("open-phone-portrait")
-	await click(COLLAPSE)
-	var map_button: Control = current_scene.get_node(MAP_BUTTON)
-	ok = ok and await wait_until(func() -> bool: return not panel.visible, 2.0)
-	ok = ok and _inside(map_button)
-	await snapshot("collapsed-phone-portrait")
 	await click(MAP_BUTTON)
-	await click(MAXIMIZE)
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	ok = ok and _inside(parchment.get_node("CloseButton"))
 	ok = ok and _inside(parchment.get_node("ZoomInButton"))
@@ -150,7 +108,7 @@ func run() -> void:
 	ok = ok and _inside(parchment.get_node("RecentreButton"))
 	await snapshot("parchment-phone-portrait")
 	await click(CLOSE)
-	ok = ok and await wait_until(func() -> bool: return panel.visible, 2.0)
+	ok = ok and await wait_until(func() -> bool: return not parchment.is_open(), 2.0)
 	print("explored_map: phone portrait window %s ok so far %s" % [DisplayServer.window_get_size(), ok])
 
 	done(ok)

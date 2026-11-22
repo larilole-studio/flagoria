@@ -30,14 +30,9 @@ static func control_rect(id: String, layer: CanvasLayer, paths: Dictionary) -> R
 
 
 static func dismiss_popups(layer: CanvasLayer) -> void:
-	var panel := layer.get_node_or_null("MinimapPanel") as MinimapPanel
-	if panel != null:
-		panel.collapse_panel()
-		if panel.parchment != null and panel.parchment.is_open():
-			panel.parchment.hide_map()
-	var map_btn := layer.get_node_or_null("MinimapButton") as BaseButton
-	if map_btn != null:
-		map_btn.set_pressed_no_signal(false)
+	var map := layer.get_node_or_null("ParchmentMap") as ParchmentMap
+	if map != null:
+		map.hide_map()
 	var buildings := layer.get_node_or_null("BuildingsButton") as BaseButton
 	if buildings != null:
 		buildings.set_pressed(false)

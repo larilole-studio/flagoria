@@ -3,7 +3,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Free-form wall chain in interact mode (features/free-form-walls.md). Seed 11
 ## gives clear land near spawn. Proof from snapshots: Wall picker, a first
 ## land block that 4-touches the castle, a short chain off the tip, and a
-## refused gap that spends no wood. Minimap is closed for evidence.
+## refused gap that spends no wood.
 
 const SETTLE_FRAMES := 10
 
@@ -19,10 +19,6 @@ func run() -> void:
 	inventory.add(Inventory.WOOD, 40)
 	# Evidence: hide the default-open explored map (M toggles it in play) so
 	# wall / tip / gap shots show the play view, not the mist panel.
-	var minimap: MinimapPanel = current_scene.get_node_or_null("CanvasLayer1/MinimapPanel")
-	if minimap != null:
-		minimap.shown = false
-		minimap.visible = false
 	await snapshot("start")
 
 	step("interact")

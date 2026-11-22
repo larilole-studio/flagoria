@@ -1,11 +1,11 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Buildings and minimap toggles, selected rings and tool changes.
+## Buildings toggle, selected rings and tool changes.
 
 const HudLayoutDump = preload("res://tools/hud_layout_dump.gd")
 
 
 func _test_hud_round_buttons() -> int:
-	## Buildings and Map toggle their panels, and picked tools keep their rings.
+	## Buildings toggles its picker, and picked tools keep their rings.
 	print("-- test_hud_round_buttons")
 	var fail := 0
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -21,21 +21,13 @@ func _test_hud_round_buttons() -> int:
 	scene.add_player(scene.multiplayer.get_unique_id())
 	await process_frame
 	await process_frame
-	var panel: MinimapPanel = scene.get_node("CanvasLayer1/MinimapPanel")
-	panel.set_physics_process(false)
-	panel.tick()
-	panel.tick()
 	var buildings: Button = scene.get_node("CanvasLayer1/BuildingsButton")
 	var picker: Control = scene.get_node("CanvasLayer1/BuildPicker")
 	var plank: Button = picker.get_node("PlankButton")
 	var tower: Button = picker.get_node("TowerButton")
 	var wall: Button = picker.get_node("WallButton")
-	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var wheel: ToolWheel = scene.get_node("CanvasLayer1/ToolWheel")
-	if panel.visible or scene.get_node_or_null("CanvasLayer1/MapReopen") != null:
-		printerr("FAIL hud_round_buttons: panel %s or the old chip is showing" % panel.visible)
-		fail += 1
 	if interaction.build.tool != BuildPlacement.Tool.CUT or plank.visible or tower.visible or wall.visible:
 		printerr("FAIL hud_round_buttons: list starts open, tool %s" % interaction.build.tool)
 		fail += 1
@@ -73,14 +65,6 @@ func _test_hud_round_buttons() -> int:
 	await process_frame
 	if buildings.button_pressed or plank.visible or interaction.build.tool != BuildPlacement.Tool.PLANK:
 		printerr("FAIL hud_round_buttons: outside tap did not close the picker or changed the tool")
-		fail += 1
-	map_button.pressed.emit()
-	if not panel.visible or not map_button.button_pressed or not _is_selected(map_button):
-		printerr("FAIL hud_round_buttons: minimap button left the panel closed")
-		fail += 1
-	map_button.pressed.emit()
-	if panel.visible:
-		printerr("FAIL hud_round_buttons: second press left the panel open")
 		fail += 1
 	var before := interaction.mode
 	var tool_button := wheel.get_node("ToolButton") as Button
@@ -132,7 +116,6 @@ func _test_build_picker_saved_layout_tap() -> int:
 	await process_frame
 	var buildings: Button = hud.get_node("BuildingsButton")
 	var picker: Control = hud.get_node("BuildPicker")
-	var panel: Control = hud.get_node("MinimapPanel")
 	var at := buildings.get_global_rect().get_center()
 	_tap_sequence(at, ["touch_down", "touch_up"])
 	await process_frame
@@ -140,7 +123,7 @@ func _test_build_picker_saved_layout_tap() -> int:
 	for button: Button in picker.get_children():
 		if button.is_visible_in_tree() and root.get_visible_rect().encloses(button.get_global_rect()):
 			visible_count += 1
-	var opened := buildings.button_pressed and not panel.visible and visible_count == 6
+	var opened := buildings.button_pressed and visible_count == 6
 	_tap_sequence(at, ["touch_down", "touch_up"])
 	await process_frame
 	var closed := not buildings.button_pressed

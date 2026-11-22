@@ -2,8 +2,7 @@ class_name ParchmentMap
 extends Control
 ## The full explored map on old parchment. The world keeps running underneath.
 ## While this is open the local hero cannot move or attack, wheel and pinch
-## zoom are used up, a drag pans the sheet, and a hit on the hero closes it.
-## Close, or Esc, returns to the wood panel as it was.
+## zoom the sheet, a drag pans it, and a hit on the hero closes it.
 
 const GROUP := "fullscreen_map"
 const INSET := 8
@@ -12,14 +11,15 @@ const MIN_CELL_PX := 1  ## most zoomed out; nearest-filter pixel steps
 const DEFAULT_CELL_PX := 2  ## opening zoom; one world cell per two art pixels
 const MAX_CELL_PX := 16  ## cells are easy to read
 const FOG_TILE_PX := 32  ## fog art tile; scales with cell_px at default zoom
-## Aged paper, in the same ink and wood family as the panel frame.
+## Aged paper, with ink and wood trim.
 const PAPER := Color("e7d7b1")
 const PAPER_SHADE := Color("cbb98a")
 const PAPER_EDGE := Color("8a5a32")
 const PAPER_HI := Color("f3e6c4")
 const INK := Color("2a2238")
 
-var panel: MinimapPanel
+@onready var chart: MapChart = $"../MapChart"
+@onready var _map_button: Button = $"../MapButton"
 var pan := Vector2.ZERO  ## pixels added to the hero-centred origin
 var cell_px := DEFAULT_CELL_PX  ## art pixels per world cell; nearest-filter steps
 var _health: PlayerHealth
@@ -37,7 +37,6 @@ var _pinch_cell_px := DEFAULT_CELL_PX
 
 
 func _ready() -> void:
-	name = "ParchmentMap"
 	visible = false
 	mouse_filter = MOUSE_FILTER_STOP
 	texture_filter = TEXTURE_FILTER_NEAREST
@@ -51,6 +50,9 @@ func _ready() -> void:
 	_view.texture_filter = TEXTURE_FILTER_NEAREST
 	_view.draw.connect(_draw_map)
 	add_child(_view)
+	chart.chart_changed.connect(_view.queue_redraw)
+	chart.chart_cleared.connect(hide_map)
+	_map_button.pressed.connect(_toggle_map)
 	_zoom_out = _button("ZoomOutButton", MapWoodButton.Glyph.MINUS, _on_zoom_out)
 	_zoom_in = _button("ZoomInButton", MapWoodButton.Glyph.CROSS, _on_zoom_in)
 	_recentre = _button("RecentreButton", MapWoodButton.Glyph.TARGET, _on_recentre)
@@ -94,14 +96,14 @@ func view_cells_rect() -> Rect2i:
 
 
 func explored_fully_visible() -> bool:
-	if panel == null:
+	if chart == null:
 		return true
-	var chart := panel.explored.explored_rect()
-	if chart.size == Vector2i.ZERO:
+	var bounds := chart.explored.explored_rect()
+	if bounds.size == Vector2i.ZERO:
 		return true
-	var cells := chart.size + Vector2i.ONE
-	var lo := Vector2(chart.position * cell_px)
-	var hi := Vector2((chart.position + cells) * cell_px)
+	var cells := bounds.size + Vector2i.ONE
+	var lo := Vector2(bounds.position * cell_px)
+	var hi := Vector2((bounds.position + cells) * cell_px)
 	var view_lo := _origin()
 	var view_hi := view_lo + _view.size
 	return view_lo.x <= lo.x + 0.5 and view_lo.y <= lo.y + 0.5 \
@@ -110,9 +112,9 @@ func explored_fully_visible() -> bool:
 
 func hero_view_focus() -> Vector2:
 	## MapView-local point on the hero marker for wheel or pinch zoom.
-	var marker_scale := float(cell_px) / float(MinimapPanel.CELL_PX)
-	var hero := Vector2(panel.hero_cell * cell_px) + Vector2.ONE * marker_scale \
-			- Vector2(MinimapPanel.HERO_ANCHOR) * marker_scale
+	var marker_scale := float(cell_px) / float(MapChart.CELL_PX)
+	var hero := Vector2(chart.hero_cell * cell_px) + Vector2.ONE * marker_scale \
+			- Vector2(MapChart.HERO_ANCHOR) * marker_scale
 	return hero - _origin()
 
 
@@ -215,6 +217,20 @@ func _gui_input(event: InputEvent) -> void:
 		accept_event()
 
 
+func _toggle_map() -> void:
+	if HudLayoutVisual.blocks_hud_actions() or chart.local_player() == null:
+		return
+	if is_open():
+		hide_map()
+	else:
+		show_map()
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.keycode == KEY_M and event.pressed and not event.echo:
+		_toggle_map()
+
+
 func _input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
 		_on_close()
@@ -233,7 +249,7 @@ func _draw_map() -> void:
 	var window := _view.size
 	var origin := _origin()
 	_draw_fog(window, origin)
-	if panel == null:
+	if chart == null:
 		return
 	var top_left := Vector2i(floori(origin.x / cell_px), floori(origin.y / cell_px))
 	var extent := Vector2i(ceili(window.x / cell_px), ceili(window.y / cell_px))
@@ -242,21 +258,21 @@ func _draw_map() -> void:
 	var chunk_px := ExploredMap.CHUNK * cell_px
 	for cy in range(first.y, last.y + 1):
 		for cx in range(first.x, last.x + 1):
-			var tex: ImageTexture = panel.chunk_texture(Vector2i(cx, cy))
+			var tex: ImageTexture = chart.chunk_texture(Vector2i(cx, cy))
 			if tex:
 				var at := Vector2(Vector2i(cx, cy) * ExploredMap.CHUNK * cell_px) - origin
 				_view.draw_texture_rect(tex, Rect2(at, Vector2(chunk_px, chunk_px)), false)
-	var marker: Texture2D = MinimapPanel.HERO.get(panel.facing, MinimapPanel.HERO["Down"])
-	var marker_scale := float(cell_px) / float(MinimapPanel.CELL_PX)
+	var marker: Texture2D = MapChart.HERO.get(chart.facing, MapChart.HERO["Down"])
+	var marker_scale := float(cell_px) / float(MapChart.CELL_PX)
 	var marker_size := marker.get_size() * marker_scale
-	var hero_at := Vector2(panel.hero_cell * cell_px) - origin \
-			+ Vector2.ONE * marker_scale - Vector2(MinimapPanel.HERO_ANCHOR) * marker_scale
+	var hero_at := Vector2(chart.hero_cell * cell_px) - origin \
+			+ Vector2.ONE * marker_scale - Vector2(MapChart.HERO_ANCHOR) * marker_scale
 	_view.draw_texture_rect(marker, Rect2(hero_at, marker_size), false)
-	panel.paint_city_walls(_view, top_left, Vector2i(window), cell_px)
+	chart.paint_city_walls(_view, top_left, Vector2i(window), cell_px)
 
 
 func _origin() -> Vector2:
-	return Vector2(panel.hero_cell * cell_px) - _view.size * 0.5 + pan
+	return Vector2(chart.hero_cell * cell_px) - _view.size * 0.5 + pan
 
 
 func _zoom_at(focus: Vector2, stepped: int) -> void:
@@ -269,22 +285,22 @@ func _zoom_at(focus: Vector2, stepped: int) -> void:
 	cell_px = clamped
 	if changed:
 		var new_origin := Vector2(anchor_cell * float(cell_px)) - focus
-		pan = new_origin - Vector2(panel.hero_cell * cell_px) + _view.size * 0.5
+		pan = new_origin - Vector2(chart.hero_cell * cell_px) + _view.size * 0.5
 	if clamped == min_cell_px():
 		_center_explored_in_view()
 	_view.queue_redraw()
 
 
 func _center_explored_in_view() -> void:
-	if panel == null:
+	if chart == null:
 		return
-	var chart := panel.explored.explored_rect()
-	if chart.size == Vector2i.ZERO:
+	var bounds := chart.explored.explored_rect()
+	if bounds.size == Vector2i.ZERO:
 		pan = Vector2.ZERO
 		return
-	var cells := chart.size + Vector2i.ONE
-	var lo := Vector2(chart.position * cell_px)
-	var hi := Vector2((chart.position + cells) * cell_px)
+	var cells := bounds.size + Vector2i.ONE
+	var lo := Vector2(bounds.position * cell_px)
+	var hi := Vector2((bounds.position + cells) * cell_px)
 	var center := (lo + hi) * 0.5
 	var map_w := hi.x - lo.x
 	var map_h := hi.y - lo.y
@@ -293,7 +309,7 @@ func _center_explored_in_view() -> void:
 		origin.x = clampf(origin.x, hi.x - _view.size.x, lo.x)
 	if map_h > _view.size.y:
 		origin.y = clampf(origin.y, hi.y - _view.size.y, lo.y)
-	pan = origin - Vector2(panel.hero_cell * cell_px) + _view.size * 0.5
+	pan = origin - Vector2(chart.hero_cell * cell_px) + _view.size * 0.5
 
 
 func _draw_fog(window: Vector2, origin: Vector2) -> void:
@@ -323,8 +339,6 @@ func _pinch_mid() -> Vector2:
 
 func _on_close() -> void:
 	hide_map()
-	if panel:
-		panel.apply_chrome()
 
 
 func _on_zoom_in() -> void:
@@ -347,7 +361,7 @@ func _on_damaged(_amount: int) -> void:
 
 func _bind_health() -> void:
 	_unbind_health()
-	var player := panel.local_player() if panel else null
+	var player := chart.local_player() if chart else null
 	if player == null:
 		return
 	_health = player.get_node_or_null("Health") as PlayerHealth

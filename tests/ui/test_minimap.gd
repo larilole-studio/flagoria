@@ -3,93 +3,19 @@ extends "res://tests/helpers/test_helpers.gd"
 
 
 func _test_minimap_panel_in_scene() -> int:
-	## In the real main scene the wood panel stays closed until its button is
-	## pressed, then shows left of the arc, clear of every arc button and of
-	## the attack button, counts as HUD for touches, reveals once two samples
-	## agree, draws
-	## the explored cells around the hero in the map colours, M hides it, and
-	## a new world clears what was explored.
 	print("-- test_minimap_panel_in_scene")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	var world = scene.get_node("World/worldMap")
-	scene.world_params = _spawn_params(42, 0.003)
-	world.apply_map_params(scene.world_params)
-	await process_frame
-	var panel: MinimapPanel = scene.get_node("CanvasLayer1/MinimapPanel")
-	panel.set_physics_process(false)  # ticks run by hand below
-	panel.tick()
-	if panel.visible:
-		printerr("FAIL minimap_panel visible before the hero spawns")
+	var scene := await preload("res://tools/hud_layout_dump.gd").play_scene(tree)
+	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
+	var map: ParchmentMap = hud.get_node("ParchmentMap")
+	var button := hud.get_node_or_null("MapButton") as Button
+	if hud.has_node("MinimapPanel") or hud.has_node("MinimapButton"):
+		printerr("FAIL minimap_panel_in_scene small map found in the playing HUD")
 		fail += 1
-	scene.add_player(scene.multiplayer.get_unique_id())
-	await process_frame
-	panel.tick()
-	if panel.explored.explored_count() != 0:
-		printerr("FAIL minimap_panel revealed on a single sample")
-		fail += 1
-	panel.tick()
-	if panel.visible or scene.get_node_or_null("CanvasLayer1/MapReopen") != null:
-		printerr("FAIL minimap_panel open at match start (visible %s)" % panel.visible)
-		fail += 1
-	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
-	map_button.pressed.emit()
-	var rect: Rect2 = panel.get_global_rect()
-	var map_rect: Rect2 = map_button.get_global_rect()
-	var buildings_rect: Rect2 = scene.get_node("CanvasLayer1/BuildingsButton").get_global_rect()
-	var attack: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
-	var attack_rect := Rect2(attack.position, attack.texture_normal.get_size() * attack.scale)
-	var view_w: float = scene.get_viewport().get_visible_rect().size.x
-	var arc_left := minf(map_rect.position.x, buildings_rect.position.x)
-	var covers := rect.intersects(map_rect) or rect.intersects(buildings_rect) or rect.intersects(attack_rect)
-	var beside := rect.end.x <= arc_left + 1.0 and rect.end.x >= arc_left - 4.0
-	if not panel.visible or covers or not beside or rect.position.x < 0.0 or rect.end.x > view_w + 1.0 \
-			or rect.size.round() != (Vector2(224, 144) * panel.scale).round():
-		printerr("FAIL minimap_panel visible %s at %s (arc left %s, attack %s)"
-				% [panel.visible, rect, arc_left, attack_rect])
-		fail += 1
-	scene.get_node("CanvasLayer1").show()  # as Host and Join do
-	var zoom = scene.get_node("World/%d/Camera2D/MapZoom" % scene.multiplayer.get_unique_id())
-	if not zoom.starts_on_hud(rect.get_center()):
-		printerr("FAIL minimap_panel touches on the panel are not HUD touches")
-		fail += 1
-	var hero: Vector2i = panel.hero_cell
-	var tex: ImageTexture = panel.chunk_texture(ExploredMap.chunk_of(hero))
-	if not panel.explored.is_explored(hero) or panel.explored.explored_count() != 317 or tex == null:
-		printerr("FAIL minimap_panel explored %s cells around %s" % [panel.explored.explored_count(), hero])
-		fail += 1
-	else:
-		var img := tex.get_image()
-		var local := (hero - ExploredMap.chunk_of(hero) * ExploredMap.CHUNK) * MinimapPanel.CELL_PX + Vector2i.ONE
-		var p: Array = world.predict_cell(hero)
-		var want := MinimapPanel.cell_colour(p, false, hero, hero.x * 2 + 1, hero.y * 2 + 1)
-		var got := img.get_pixelv(local)
-		var far := Vector2i(hero.x + 12, hero.y)
-		var far_px := (far - ExploredMap.chunk_of(far) * ExploredMap.CHUNK) * MinimapPanel.CELL_PX
-		var far_tex: ImageTexture = panel.chunk_texture(ExploredMap.chunk_of(far))
-		if got != want and got != MinimapPanel.INK:
-			printerr("FAIL minimap_panel hero cell drawn %s, want %s" % [got, want])
-			fail += 1
-		if far_tex and far_tex.get_image().get_pixelv(far_px).a != 0.0:
-			printerr("FAIL minimap_panel unexplored cell %s is not left to the mist" % far)
-			fail += 1
-	var key := InputEventKey.new()
-	key.keycode = KEY_M
-	key.pressed = true
-	panel._unhandled_key_input(key)
-	panel.tick()
-	if panel.visible:
-		printerr("FAIL minimap_panel still visible after M")
-		fail += 1
-	panel._unhandled_key_input(key)
-	panel.tick()
-	if not panel.visible:
-		printerr("FAIL minimap_panel hidden after a second M")
-		fail += 1
-	world.apply_map_params(_spawn_params(7, 0.003))
-	if panel.explored.explored_count() != 0 or panel.chunk_texture(ExploredMap.chunk_of(hero)) != null:
-		printerr("FAIL minimap_panel kept %s cells after a new world" % panel.explored.explored_count())
+	if button != null:
+		_tap_sequence(button.get_global_rect().get_center(), ["input_touch_down", "input_touch_up"])
+	if not map.is_open():
+		printerr("FAIL minimap_panel_in_scene Map did not open parchment")
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -111,35 +37,35 @@ func _test_minimap_incremental_render() -> int:
 	scene.world_params = _spawn_params(42, 0.003)
 	world.apply_map_params(scene.world_params)
 	await process_frame
-	var panel: MinimapPanel = scene.get_node("CanvasLayer1/MinimapPanel")
-	panel.set_physics_process(false)
+	var chart: MapChart = scene.get_node("CanvasLayer1/MapChart")
+	chart.set_physics_process(false)
 	var cell := Vector2i(-40, -40)
 	var first_tex: ImageTexture = null
 	for leg in [Vector2i(3, 0), Vector2i(0, 3), Vector2i(-2, 1), Vector2i(1, -3)]:
 		for i in 25:
-			panel.reveal_around(cell)
+			chart.reveal_around(cell)
 			if first_tex == null:
-				first_tex = panel.chunk_texture(ExploredMap.chunk_of(cell))
+				first_tex = chart.chunk_texture(ExploredMap.chunk_of(cell))
 			cell += leg
-	if panel.chunk_texture(ExploredMap.chunk_of(Vector2i(-40, -40))) != first_tex:
+	if chart.chunk_texture(ExploredMap.chunk_of(Vector2i(-40, -40))) != first_tex:
 		printerr("FAIL minimap_incremental_render: a chunk texture was replaced, not updated")
 		fail += 1
 	var ink := 0
 	var water := 0
-	for chunk in panel.explored.chunks():
-		var got := panel.chunk_image(chunk)  # the headless renderer keeps no texture pixels
-		var want := panel.render_chunk(chunk)
+	for chunk in chart.explored.chunks():
+		var got := chart.chunk_image(chunk)  # the headless renderer keeps no texture pixels
+		var want := chart.render_chunk(chunk)
 		if got.get_data() != want.get_data():
 			printerr("FAIL minimap_incremental_render: chunk %s differs from a full render" % chunk)
 			fail += 1
 		for y in want.get_height():
 			for x in want.get_width():
 				var c := want.get_pixel(x, y)
-				ink += int(c == MinimapPanel.INK)
-				water += int(c == MinimapPanel.SKY or c == MinimapPanel.SKY_DEEP)
-	if ink == 0 or water == 0 or panel.explored.chunks().size() < 6:
+				ink += int(c == MapChart.INK)
+				water += int(c == MapChart.SKY or c == MapChart.SKY_DEEP)
+	if ink == 0 or water == 0 or chart.explored.chunks().size() < 6:
 		printerr("FAIL minimap_incremental_render: walk too plain (%d ink, %d water px, %d chunks)"
-				% [ink, water, panel.explored.chunks().size()])
+				% [ink, water, chart.explored.chunks().size()])
 		fail += 1
 	scene.queue_free()
 	await process_frame

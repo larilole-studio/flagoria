@@ -13,10 +13,6 @@ func run() -> void:
 		done(false)
 		return
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	var minimap: MinimapPanel = current_scene.get_node_or_null("CanvasLayer1/MinimapPanel")
-	if minimap != null:
-		minimap.shown = false
-		minimap.visible = false
 	var gap := _shore_gap(map, Vector2i.RIGHT, [])
 	if gap.is_empty():
 		printerr("bridge_joins: no shore-to-shore water gap of 4 to 8 cells")

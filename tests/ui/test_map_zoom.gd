@@ -10,7 +10,8 @@ func _test_map_zoom() -> int:
 	## player's camera gets no zoom handler.
 	print("-- test_map_zoom")
 	var fail := 0
-	await process_frame
+	var original_size := root.size
+	await preload("res://tools/hud_layout_dump.gd").resize(tree, Vector2i(2400, 1080))
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	# In play: menu hidden, HUD shown, and the menu's input handling paused.
@@ -43,15 +44,15 @@ func _test_map_zoom() -> int:
 	var touch := func(index: int, pos: Vector2, pressed: bool, double := false) -> void:
 		var e := InputEventScreenTouch.new()
 		e.index = index
-		e.position = pos
+		e.position = vp.get_final_transform() * pos
 		e.pressed = pressed
 		e.double_tap = double
-		vp.push_input(e, true)
+		vp.push_input(e)
 	var drag := func(index: int, pos: Vector2) -> void:
 		var e := InputEventScreenDrag.new()
 		e.index = index
-		e.position = pos
-		vp.push_input(e, true)
+		e.position = vp.get_final_transform() * pos
+		vp.push_input(e)
 	var factor := func() -> float:
 		return camera.zoom.x / default_zoom.x
 
@@ -114,6 +115,19 @@ func _test_map_zoom() -> int:
 	touch.call(3, Vector2(240, 120), false)
 	zoom.reset()
 
+	# Two contacts reported at the same point can separate into a pinch.
+	var center := vp.get_visible_rect().get_center()
+	touch.call(0, center, true)
+	touch.call(1, center, true)
+	drag.call(1, center + Vector2(40, 0))
+	drag.call(1, center + Vector2(60, 0))
+	if not is_equal_approx(factor.call(), 1.5):
+		printerr("FAIL map_zoom overlapping contacts did not establish a pinch (%s)" % factor.call())
+		fail += 1
+	touch.call(0, center, false)
+	touch.call(1, center + Vector2(60, 0), false)
+	zoom.reset()
+
 	# Desktop: wheel and Ctrl +/- zoom, Ctrl 0 resets.
 	var wheel := InputEventMouseButton.new()
 	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
@@ -134,7 +148,7 @@ func _test_map_zoom() -> int:
 		fail += 1
 
 	scene.queue_free()
-	await process_frame
+	await preload("res://tools/hud_layout_dump.gd").resize(tree, original_size)
 	if fail == 0:
 		print("PASS test_map_zoom")
 	return fail

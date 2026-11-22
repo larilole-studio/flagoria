@@ -2,8 +2,8 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Closed wall loop → city (#277, features/cities.md). Seed 11. Proof from
 ## snapshots: castle city tint at start, a wooden tower + free-form ring that
-## closes, the same ring after a gap dissolves the city, and the minimap
-## painting remaining city walls. Minimap closed for play shots.
+## closes, the same ring after a gap dissolves the city, and the parchment
+## painting remaining city walls.
 
 const SETTLE_FRAMES := 10
 
@@ -17,10 +17,6 @@ func run() -> void:
 	var cities: Cities = current_scene.get_node("World/Cities")
 	var inventory: Inventory = current_scene.get_node(INVENTORY)
 	inventory.add(Inventory.WOOD, 80)
-	var minimap: MinimapPanel = current_scene.get_node_or_null("CanvasLayer1/MinimapPanel")
-	if minimap != null:
-		minimap.shown = false
-		minimap.visible = false
 	# Castle courtyard is a city once Cities has ticked.
 	cities.rebuild()
 	await snapshot("start")
@@ -85,14 +81,9 @@ func run() -> void:
 	await snapshot("open")
 	print("cities: dissolved; remaining=%s" % [cities.cities.keys()])
 
-	step("minimap")
-	if minimap != null:
-		minimap.shown = true
-		minimap.visible = true
-		minimap.tick()
-		for i in 8:
-			await process_frame
-	await snapshot("minimap")
+	step("parchment")
+	await click("CanvasLayer1/MapButton")
+	await snapshot("parchment")
 	done(true)
 
 

@@ -32,7 +32,7 @@ const START_TIMEOUT_S := 30.0
 const MAX_IDLE_S := 600.0
 const INTERACTION := "World/Interaction"
 const INVENTORY := "Inventory"
-const MINIMAP := "CanvasLayer1/MinimapPanel"
+const MAP_CHART := "CanvasLayer1/MapChart"
 const FOLIAGE_LAYER := 1
 const GROUND_DECOR_LAYER := 2  ## stumps, stones and flowers (Scripts/world/TileMap.gd)
 ## snapshot() records the foliage layer in a square this many cells from the
@@ -118,7 +118,7 @@ func tap_key(keycode: Key) -> void:
 
 ## A touch tap on a map cell, at the screen position World/worldMap and the
 ## camera give it now. Like a finger, a tap on a cell under the HUD (the
-## minimap, the buttons) reaches the HUD, not the map.
+## the map button) reaches the HUD, not the map.
 func tap_cell(cell: Vector2i) -> void:
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var at := to_window(map, map.map_to_local(cell))
@@ -231,9 +231,9 @@ func snapshot_state() -> Dictionary:
 			if value is StringName:
 				counts[str(value)] = inventory.count_of(value)
 		state["inventory"] = counts
-	var minimap := current_scene.get_node_or_null(MINIMAP)
-	if minimap != null:
-		state["explored_cells"] = minimap.explored.explored_count()
+	var chart := current_scene.get_node_or_null(MAP_CHART)
+	if chart != null:
+		state["explored_cells"] = chart.explored.explored_count()
 	state["foliage"] = _layer_names(map, FOLIAGE_LAYER, cell)
 	state["ground_decor"] = _layer_names(map, GROUND_DECOR_LAYER, cell)
 	return state

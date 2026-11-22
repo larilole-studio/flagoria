@@ -73,5 +73,3 @@ about 20 s under xvfb.
 - The Wall icon stays visible in multiplayer. Peer sync is
   [Walls and cities sync](./walls-cities-sync.md).
 - No gates in this slice; plain `PALISADE_*` only via `WallSolver`.
-- Drive evidence closes the default-open MinimapPanel (M in play) so the
-  wall chain and gap tint are not covered by the mist panel.

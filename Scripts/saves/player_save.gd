@@ -74,7 +74,7 @@ static func _who(body: Node) -> int:
 
 
 static func _chart(game: Node) -> ExploredMap:
-	var panel := game.get_node_or_null("CanvasLayer1/MinimapPanel")
+	var panel := game.get_node_or_null("CanvasLayer1/MapChart")
 	if panel == null:
 		return null
 	return panel.explored
@@ -110,7 +110,7 @@ static func _chart_from_dict(data) -> Dictionary:
 
 
 static func _apply_chart(game: Node, data) -> void:
-	var panel := game.get_node_or_null("CanvasLayer1/MinimapPanel")
+	var panel := game.get_node_or_null("CanvasLayer1/MapChart")
 	if panel and panel.has_method("restore_chart"):
 		panel.restore_chart(_chart_from_dict(data))
 

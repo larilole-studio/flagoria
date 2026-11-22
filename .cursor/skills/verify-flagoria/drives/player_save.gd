@@ -60,7 +60,7 @@ func run() -> void:
 		printerr("player save: the loaded world did not start")
 		done(false)
 		return
-	var panel: MinimapPanel = current_scene.get_node(MINIMAP)
+	var panel: MapChart = current_scene.get_node(MAP_CHART)
 	if not await wait_until(func() -> bool: return panel.explored.explored_count() > 0, 5.0):
 		printerr("player save: the chart did not restore")
 		done(false)
@@ -85,7 +85,7 @@ func _progress() -> Dictionary:
 		"health": h.health.health,
 		"wood": current_scene.get_node(INVENTORY).count_of(Inventory.WOOD),
 		"score": current_scene.get_node("Points").total_of(int(str(h.name))),
-		"chart": current_scene.get_node(MINIMAP).explored.explored_count(),
+		"chart": current_scene.get_node(MAP_CHART).explored.explored_count(),
 	}
 
 

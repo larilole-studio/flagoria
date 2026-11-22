@@ -56,13 +56,9 @@ func _bind_relayout() -> void:
 		return
 	_layout()
 	layer.visibility_changed.connect(relayout, CONNECT_DEFERRED)
-	var map_button := layer.get_node_or_null("MinimapButton") as BaseButton
-	if map_button != null and not map_button.toggled.is_connected(relayout):
-		map_button.toggled.connect(relayout)
-	for node_name in ["MinimapPanel", "ScoreboardPanel"]:
-		var panel := layer.get_node_or_null(node_name) as CanvasItem
-		if panel != null and not panel.visibility_changed.is_connected(relayout):
-			panel.visibility_changed.connect(relayout)
+	var scores := layer.get_node_or_null("ScoreboardPanel") as CanvasItem
+	if scores != null and not scores.visibility_changed.is_connected(relayout):
+		scores.visibility_changed.connect(relayout)
 	if not get_viewport().size_changed.is_connected(relayout):
 		get_viewport().size_changed.connect(relayout)
 
@@ -94,7 +90,6 @@ func _restore_touch_defaults(layer: Node) -> void:
 	_place_attack(layer)
 	_place_combat(layer)
 	_place_tool(layer)
-	_place_panel(layer)
 	place_build_picker(layer)
 
 
@@ -112,7 +107,7 @@ func _place_menu(layer: Node) -> void:
 
 
 func _place_map(layer: Node) -> void:
-	var map_button := layer.get_node_or_null("MinimapButton") as Button
+	var map_button := layer.get_node_or_null("MapButton") as Button
 	if map_button != null:
 		_pin(map_button)
 		RoundHudStyle.apply(map_button)
@@ -365,42 +360,13 @@ func _picker_obstacles(layer: Node, exclude: CanvasItem = null) -> Array[Rect2]:
 			rect = rect.merge(control.global_transform * shape_rect)
 		if rect.has_area():
 			blocked.append(rect)
-	var paths := ["InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel", "MinimapPanel", "FootprintRotateButton"]
+	var paths := ["InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel", "FootprintRotateButton"]
 	for path in paths:
 		var control := layer.get_node_or_null(path) as Control
 		if control != null and control.visible:
 			blocked.append(control.get_global_rect())
 	return blocked
 
-
-func _place_panel(layer: Node) -> void:
-	var panel := layer.get_node_or_null("MinimapPanel") as Control
-	if panel == null or panel.size.x <= 0.0:
-		return
-	var view := get_viewport().get_visible_rect().size
-	var width := panel.size.x * panel.scale.x
-	var height := panel.size.y * panel.scale.y
-	var arc_left := view.x
-	for node_name in ["MinimapButton", "BuildingsButton"]:
-		arc_left = minf(arc_left, _left_of(layer.get_node_or_null(node_name) as Control))
-	var right := minf(view.x - MinimapPanel.MARGIN * panel.scale.x, arc_left - GAP)
-	var y := maxf(MinimapPanel.TOP * panel.scale.y, SIDE + 24.0)
-	var limit := view.y - SIDE
-	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
-	if attack != null and attack.texture_normal != null:
-		limit = attack.position.y - GAP
-	if y + height > limit:
-		y = limit - height
-	var x := right - width
-	if x < SIDE:
-		x = SIDE
-	panel.position = Vector2(roundf(x), roundf(y))
-	for node_name in ["StatusPlate", "ScoreboardToggle"]:
-		var control := layer.get_node_or_null(node_name) as Control
-		if control != null and control.visible and panel.get_global_rect().intersects(control.get_global_rect()):
-			var dropped := ceilf(control.get_global_rect().end.y + GAP)
-			if dropped + height <= limit:
-				panel.position.y = dropped
 
 
 func _place_tool(layer: Node, custom := false) -> void:
@@ -447,18 +413,9 @@ func _size_of(control: Control) -> Vector2:
 	return Vector2(maxf(control.size.x, need.x), maxf(control.size.y, need.y))
 
 
-func _left_of(control: Control) -> float:
-	if control == null:
-		return INF
-	var rect := control.get_global_rect()
-	if rect.size.x <= 0.0:
-		return INF
-	return rect.position.x
-
 
 func place_custom_popups(layer: Node) -> void:
 	_place_tool(layer, true)
-	_place_panel(layer)
 	var buildings := layer.get_node_or_null("BuildingsButton") as Button
 	if buildings != null and not HudLayoutVisual.blocks_hud_actions():
 		buildings.z_index = 2

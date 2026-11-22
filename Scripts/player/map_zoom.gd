@@ -35,9 +35,9 @@ func _input(event: InputEvent) -> void:
 
 func handle(event: InputEvent) -> bool:
 	## Applies one input event; true when the event was used for zooming.
-	if _parchment_open():
-		# Zoom is used up while the parchment is open; the camera stays put.
-		return _is_zoom_event(event)
+	if _parchment_open() or HudLayoutVisual.blocks_hud_actions():
+		_clear_gesture()
+		return false  # Let the overlay handle its own input.
 	if event is InputEventScreenTouch:
 		return _on_touch(event)
 	if event is InputEventScreenDrag:
@@ -77,7 +77,7 @@ func is_default() -> bool:
 
 
 func _on_touch(event: InputEventScreenTouch) -> bool:
-	if not event.pressed:
+	if not event.pressed or event.canceled:
 		_map_touches.erase(event.index)
 		var was_pinching := _pinching.has(event.index)
 		_pinching.erase(event.index)
@@ -103,10 +103,11 @@ func _on_drag(event: InputEventScreenDrag) -> bool:
 	if not _map_touches.has(event.index):
 		return false
 	_map_touches[event.index] = event.position
-	if _map_touches.size() == 2 and _pinch_distance > 0.0:
+	if _map_touches.size() == 2:
 		var distance := _touch_distance()
 		if distance > 0.0:
-			set_factor(factor * distance / _pinch_distance)
+			if _pinch_distance > 0.0:
+				set_factor(factor * distance / _pinch_distance)
 			_pinch_distance = distance
 	return _pinching.has(event.index)
 
@@ -121,19 +122,15 @@ func _parchment_open() -> bool:
 	return node != null and node.is_open()
 
 
-func _is_zoom_event(event: InputEvent) -> bool:
-	if event is InputEventScreenTouch or event is InputEventScreenDrag:
-		return true
-	if event is InputEventMouseButton:
-		var button := event as InputEventMouseButton
-		return button.button_index == MOUSE_BUTTON_WHEEL_UP \
-				or button.button_index == MOUSE_BUTTON_WHEEL_DOWN
-	if event is InputEventKey and event.pressed and event.ctrl_pressed:
-		return event.keycode == KEY_EQUAL or event.keycode == KEY_PLUS \
-				or event.keycode == KEY_KP_ADD or event.keycode == KEY_MINUS \
-				or event.keycode == KEY_KP_SUBTRACT or event.keycode == KEY_0 \
-				or event.keycode == KEY_KP_0
-	return false
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_clear_gesture()
+
+
+func _clear_gesture() -> void:
+	_map_touches.clear()
+	_pinching.clear()
+	_pinch_distance = 0.0
 
 
 func starts_on_hud(pos: Vector2) -> bool:

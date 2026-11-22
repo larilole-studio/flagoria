@@ -17,7 +17,7 @@ const PATHS := {
 	"attack": "TouchScreenButton",
 	"run": "RunButton",
 	"buildings": "BuildingsButton",
-	"map": "MinimapButton",
+	"map": "MapButton",
 	"scores": "ScoreboardToggle",
 	"wheel": "ToolWheel/ToolButton",
 }

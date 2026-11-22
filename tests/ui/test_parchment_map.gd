@@ -1,60 +1,19 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Touch collapse, reopen and the parchment full map (part of #247).
+## Parchment panning, zoom, modal controls and dismissal.
 
 
 func _test_parchment_map() -> int:
-	## The panel starts closed. The round minimap button opens it; header
-	## buttons collapse it and the button opens it again. Maximize opens the
-	## parchment: a drag pans it, the hero does not move or attack, the wheel
-	## does not zoom, a hit or Esc or the close control returns to the panel.
 	print("-- test_parchment_map")
 	var fail := 0
-	var scene = load("res://flagoria_main.tscn").instantiate()
-	root.add_child(scene)
-	var world = scene.get_node("World/worldMap")
-	scene.world_params = _spawn_params(42, 0.003)
-	world.apply_map_params(scene.world_params)
-	await process_frame
-	var panel: MinimapPanel = scene.get_node("CanvasLayer1/MinimapPanel")
-	panel.set_physics_process(false)
-	scene.add_player(scene.multiplayer.get_unique_id())
-	await process_frame
-	panel.tick()
-	panel.tick()
-	var collapse: Control = panel.get_node("CollapseButton")
-	var maximize: Control = panel.get_node("MaximizeButton")
-	var map_button: Button = scene.get_node("CanvasLayer1/MinimapButton")
+	var scene := await preload("res://tools/hud_layout_dump.gd").play_scene(tree)
+	var chart: MapChart = scene.get_node("CanvasLayer1/MapChart")
+	chart.set_physics_process(false)
+	chart.tick()
+	chart.tick()
+	var map_button: Button = scene.get_node("CanvasLayer1/MapButton")
 	var parchment: ParchmentMap = scene.get_node("CanvasLayer1/ParchmentMap")
 	var player: Node2D = scene.get_node("World/%d" % scene.multiplayer.get_unique_id())
-	if panel.visible or parchment.is_open() or scene.get_node_or_null("CanvasLayer1/MapReopen") != null:
-		printerr("FAIL parchment_map start panel %s map %s chip %s"
-				% [panel.visible, parchment.is_open(), scene.get_node_or_null("CanvasLayer1/MapReopen")])
-		fail += 1
-	var header := Rect2(Vector2.ZERO, Vector2(panel.size.x, 16))
-	if collapse.size.x < 16 or collapse.size.y < 12 or maximize.size.x < 16 \
-			or not header.encloses(Rect2(collapse.position, collapse.size)) \
-			or not header.encloses(Rect2(maximize.position, maximize.size)) \
-			or absf(map_button.size.x - map_button.size.y) > 1.0 or map_button.size.x < 16.0:
-		printerr("FAIL parchment_map controls collapse %s at %s, maximize %s at %s, map button %s"
-				% [collapse.size, collapse.position, maximize.size, maximize.position, map_button.size])
-		fail += 1
 	map_button.pressed.emit()
-	if not panel.visible:
-		printerr("FAIL parchment_map button left the panel closed")
-		fail += 1
-	_tap(collapse)
-	if panel.visible:
-		printerr("FAIL parchment_map collapse left panel %s" % panel.visible)
-		fail += 1
-	map_button.pressed.emit()
-	if not panel.visible:
-		printerr("FAIL parchment_map reopen left panel %s" % panel.visible)
-		fail += 1
-	_tap(maximize)
-	if not parchment.is_open() or panel.visible:
-		printerr("FAIL parchment_map maximize open %s panel %s"
-				% [parchment.is_open(), panel.visible])
-		fail += 1
 	var before := parchment.pan
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
@@ -152,64 +111,68 @@ func _test_parchment_map() -> int:
 		fail += 1
 	if not parchment.explored_fully_visible():
 		printerr("FAIL parchment_map min zoom chart outside view %s explored %s"
-				% [parchment.view_cells_rect(), parchment.panel.explored.explored_rect()])
+				% [parchment.view_cells_rect(), chart.explored.explored_rect()])
 		fail += 1
+	scene.get_node("CanvasLayer1").show()
+	var pinch_px := parchment.cell_px
 	var pinch_a := InputEventScreenTouch.new()
 	pinch_a.index = 0
 	pinch_a.pressed = true
 	pinch_a.position = Vector2(80, 200)
-	parchment._gui_input(pinch_a)
+	root.push_input(pinch_a, true)
 	var pinch_b := InputEventScreenTouch.new()
 	pinch_b.index = 1
 	pinch_b.pressed = true
 	pinch_b.position = Vector2(180, 200)
-	parchment._gui_input(pinch_b)
+	root.push_input(pinch_b, true)
 	var pinch_factor: float = zoom.factor
 	var drag := InputEventScreenDrag.new()
 	drag.index = 1
 	drag.position = Vector2(280, 200)
-	parchment._gui_input(drag)
+	root.push_input(drag, true)
 	await process_frame
 	if not is_equal_approx(zoom.factor, pinch_factor):
 		printerr("FAIL parchment_map pinch moved camera (%s -> %s)" % [pinch_factor, zoom.factor])
 		fail += 1
+	if parchment.cell_px <= pinch_px:
+		printerr("FAIL parchment_map viewport pinch did not zoom the sheet")
+		fail += 1
 	var up_a := pinch_a.duplicate() as InputEventScreenTouch
 	up_a.pressed = false
-	parchment._gui_input(up_a)
+	root.push_input(up_a, true)
 	var up_b := pinch_b.duplicate() as InputEventScreenTouch
 	up_b.pressed = false
-	parchment._gui_input(up_b)
+	root.push_input(up_b, true)
 	var health: PlayerHealth = player.get_node("Health")
 	if not health.take_damage(1):
 		printerr("FAIL parchment_map damage did not land")
 		fail += 1
 	for _i in 5:
 		await process_frame
-	if parchment.is_open() or not panel.visible:
-		printerr("FAIL parchment_map still open after damage (open %s panel %s)"
-				% [parchment.is_open(), panel.visible])
+	if parchment.is_open():
+		printerr("FAIL parchment_map still open after damage (open %s)" % parchment.is_open())
 		fail += 1
-	_tap(maximize)
+	map_button.pressed.emit()
 	var esc := InputEventKey.new()
 	esc.physical_keycode = KEY_ESCAPE
 	esc.keycode = KEY_ESCAPE
 	esc.pressed = true
 	parchment._input(esc)
-	if parchment.is_open() or not panel.visible:
-		printerr("FAIL parchment_map Esc left it open %s panel %s" % [parchment.is_open(), panel.visible])
+	if parchment.is_open():
+		printerr("FAIL parchment_map Esc left it open %s" % parchment.is_open())
 		fail += 1
-	_tap(maximize)
+	map_button.pressed.emit()
 	_tap(parchment.get_node("CloseButton"))
-	if parchment.is_open() or not panel.visible or not is_equal_approx(zoom.factor, factor):
-		printerr("FAIL parchment_map close open %s panel %s zoom %s"
-				% [parchment.is_open(), panel.visible, zoom.factor])
+	if parchment.is_open() or not is_equal_approx(zoom.factor, factor):
+		printerr("FAIL parchment_map close open %s zoom %s"
+				% [parchment.is_open(), zoom.factor])
 		fail += 1
 	_tap(parchment.get_node("RecentreButton"))
 	# Recentre is on the sheet; the sheet is closed, so the tap must not open it.
 	if parchment.is_open():
 		printerr("FAIL parchment_map recentre opened a closed map")
 		fail += 1
-	_tap(maximize)
+	map_button.pressed.emit()
 	parchment.cell_px = 8
 	parchment.pan = Vector2(30, 30)
 	_tap(parchment.get_node("RecentreButton"))
@@ -220,13 +183,11 @@ func _test_parchment_map() -> int:
 		printerr("FAIL parchment_map recentre changed zoom %s" % parchment.cell_px)
 		fail += 1
 	parchment.hide_map()
-	panel.apply_chrome()
-	_tap(maximize)
+	map_button.pressed.emit()
 	if parchment.cell_px != parchment.DEFAULT_CELL_PX:
 		printerr("FAIL parchment_map reopen reset zoom %s" % parchment.cell_px)
 		fail += 1
 	parchment.hide_map()
-	panel.apply_chrome()
 	wheel.pressed = true
 	scene.get_viewport().push_input(wheel, true)
 	await process_frame

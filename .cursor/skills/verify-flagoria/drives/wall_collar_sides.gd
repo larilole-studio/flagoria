@@ -12,10 +12,6 @@ func run() -> void:
 		done(false)
 		return
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	var minimap: MinimapPanel = current_scene.get_node_or_null("CanvasLayer1/MinimapPanel")
-	if minimap != null:
-		minimap.shown = false
-		minimap.visible = false
 	print("wall_collar_sides: window %s" % DisplayServer.window_get_size())
 	var tower: Structure = StructurePlacer.load_named("tower_wood")
 	var found: Variant = _collar_plus(map, tower)

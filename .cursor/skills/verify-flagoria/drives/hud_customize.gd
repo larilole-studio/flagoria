@@ -6,7 +6,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 
 const CUSTOMIZE_BTN := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/CustomizeHud"
 const ATTACK := "CanvasLayer1/TouchScreenButton"
-const MAP := "CanvasLayer1/MinimapButton"
+const MAP := "CanvasLayer1/MapButton"
 const EDIT_BAR := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar"
 const DONE := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Done"
 const SAVE := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Save"
@@ -56,12 +56,7 @@ func _controls_clear_of_bar(layer: CanvasLayer) -> bool:
 
 
 func _map_closed_in_edit(layer: CanvasLayer) -> bool:
-	var panel: MinimapPanel = layer.get_node("MinimapPanel")
-	if panel.shown:
-		return false
-	if panel.parchment != null and panel.parchment.is_open():
-		return false
-	return true
+	return not layer.get_node("ParchmentMap").is_open()
 
 
 func _tap_control(layer: CanvasLayer, id: String) -> void:
