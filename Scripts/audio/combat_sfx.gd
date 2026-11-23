@@ -17,24 +17,29 @@ extends Node2D
 ##           healing player hears it.
 
 const SOUNDS := {
-	"swing": [
+	"swing":
+	[
 		preload("res://art/audio/sfx/combat/sword_swing_01.wav"),
 		preload("res://art/audio/sfx/combat/sword_swing_02.wav"),
 		preload("res://art/audio/sfx/combat/sword_swing_03.wav"),
 	],
-	"hit": [
+	"hit":
+	[
 		preload("res://art/audio/sfx/combat/hit_land_01.wav"),
 		preload("res://art/audio/sfx/combat/hit_land_02.wav"),
 		preload("res://art/audio/sfx/combat/hit_land_03.wav"),
 	],
-	"hurt": [
+	"hurt":
+	[
 		preload("res://art/audio/sfx/combat/player_hurt_01.wav"),
 		preload("res://art/audio/sfx/combat/player_hurt_02.wav"),
 	],
-	"sting": [
+	"sting":
+	[
 		preload("res://art/audio/sfx/combat/hit_sting_01.wav"),
 	],
-	"regen": [
+	"regen":
+	[
 		preload("res://art/audio/sfx/world/regen_tick_01.wav"),
 	],
 }

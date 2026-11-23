@@ -2,8 +2,14 @@ extends "res://tests/helpers/test_helpers.gd"
 ## Junctions on the map: corners, both collars, tower flag, a far flip, cap cleanup, save load.
 
 const NOTCH := [
-	"#######....", "#..#..#....", "#..#..#####", "#.........#", "#.........#", "####.######",
+	"#######....",
+	"#..#..#....",
+	"#..#..#####",
+	"#.........#",
+	"#.........#",
+	"####.######",
 ]
+
 
 func _test_wall_junctions() -> int:
 	## Time cost: about 1 s in tools/verify.sh (~2.4 s alone with --only).
@@ -16,9 +22,18 @@ func _test_wall_junctions() -> int:
 	var params := _spawn_params(11, 0.0)
 	world.apply_map_params(params)
 	world.generate_chunk(Vector2(0, 0))
-	if world.get_layers_count() < 7 or world.get_layer_z_index(WallBuilder.CAP_LAYER) <= 1 \
-			or world.get_layer_z_index(WallBuilder.CAP_LAYER_2) <= world.get_layer_z_index(WallBuilder.CAP_LAYER) \
-			or world.get_layer_z_index(WallBuilder.CAP_LAYER_4) <= world.get_layer_z_index(WallBuilder.CAP_LAYER_3):
+	if (
+		world.get_layers_count() < 7
+		or world.get_layer_z_index(WallBuilder.CAP_LAYER) <= 1
+		or (
+			world.get_layer_z_index(WallBuilder.CAP_LAYER_2)
+			<= world.get_layer_z_index(WallBuilder.CAP_LAYER)
+		)
+		or (
+			world.get_layer_z_index(WallBuilder.CAP_LAYER_4)
+			<= world.get_layer_z_index(WallBuilder.CAP_LAYER_3)
+		)
+	):
 		printerr("FAIL wall_junctions: cap layers missing or under the walls")
 		fail += 1
 	fail += _gate_outline()
@@ -29,7 +44,9 @@ func _test_wall_junctions() -> int:
 		return 1
 	var castle: Dictionary = world.placed_structures()
 	var castle_anchor: Vector2i = castle[castle.keys()[0]]["anchor"]
-	fail += _expect_prefix(world, castle_anchor + Vector2i(-3, -4), "WALL_CORNER_OUT_", "castle corner")
+	fail += _expect_prefix(
+		world, castle_anchor + Vector2i(-3, -4), "WALL_CORNER_OUT_", "castle corner"
+	)
 	var post := StructurePlacer.load_named("guard_post")
 	# Fixed seed 11 fixtures leave room for the towers, joins and notch.
 	var post_at := Vector2i(-18, -25)
@@ -37,11 +54,16 @@ func _test_wall_junctions() -> int:
 		printerr("FAIL wall_junctions: no guard_post on seed 11")
 		scene.queue_free()
 		return 1
-	fail += _expect_prefix(world, post_at + Vector2i(-2, -3), "WALL_CORNER_OUT_", "guard_post corner")
+	fail += _expect_prefix(
+		world, post_at + Vector2i(-2, -3), "WALL_CORNER_OUT_", "guard_post corner"
+	)
 	var tower := StructurePlacer.load_named("tower_wood")
 	var a := Vector2i(-3, -36)
 	var gap := Vector2i(-1, -37)
-	if world.place_structure(tower, a, 1) <= 0 or world.place_structure(tower, a + Vector2i(4, 0), 1) <= 0:
+	if (
+		world.place_structure(tower, a, 1) <= 0
+		or world.place_structure(tower, a + Vector2i(4, 0), 1) <= 0
+	):
 		printerr("FAIL wall_junctions: tower place failed at %s" % a)
 		scene.queue_free()
 		return 1
@@ -54,18 +76,37 @@ func _test_wall_junctions() -> int:
 		printerr("FAIL wall_junctions: gap palisade refused")
 		fail += 1
 	else:
-		if not _tile_name(world, 1, a + Vector2i(1, -1)).begins_with("TOWER_STONE_E_E") \
-				or not _tile_name(world, 1, a + Vector2i(3, -1)).begins_with("TOWER_STONE_W_W"):
-			printerr("FAIL wall_junctions: tower arms %s %s" % [
-				_tile_name(world, 1, a + Vector2i(1, -1)), _tile_name(world, 1, a + Vector2i(3, -1))])
+		if (
+			not _tile_name(world, 1, a + Vector2i(1, -1)).begins_with("TOWER_STONE_E_E")
+			or not _tile_name(world, 1, a + Vector2i(3, -1)).begins_with("TOWER_STONE_W_W")
+		):
+			printerr(
+				(
+					"FAIL wall_junctions: tower arms %s %s"
+					% [
+						_tile_name(world, 1, a + Vector2i(1, -1)),
+						_tile_name(world, 1, a + Vector2i(3, -1))
+					]
+				)
+			)
 			fail += 1
 	var straight := a + Vector2i(0, -3)
 	var bend := a + Vector2i(-2, -1)
 	var tee := a + Vector2i(4, -3)
 	var cross := a + Vector2i(4, 1)
-	var shapes: Array[Vector2i] = [straight, straight + Vector2i(0, -1), bend, bend + Vector2i(0, 1),
-		tee, tee + Vector2i(1, 0), tee + Vector2i(-1, 0), cross, cross + Vector2i(1, 0),
-		cross + Vector2i(-1, 0), cross + Vector2i(0, 1)]
+	var shapes: Array[Vector2i] = [
+		straight,
+		straight + Vector2i(0, -1),
+		bend,
+		bend + Vector2i(0, 1),
+		tee,
+		tee + Vector2i(1, 0),
+		tee + Vector2i(-1, 0),
+		cross,
+		cross + Vector2i(1, 0),
+		cross + Vector2i(-1, 0),
+		cross + Vector2i(0, 1)
+	]
 	if not world.place_wall_cells(shapes):
 		printerr("FAIL wall_junctions: join shapes do not fit at %s" % shapes)
 		fail += 1
@@ -110,7 +151,8 @@ func _test_wall_junctions() -> int:
 	fail += _expect_junction(world, gap, "", [])
 	world.place_wall_cells(gap_cells)
 	var saved_junctions := [
-		junctions[0], [flag, "PROP_FLAG_BLUE", []],
+		junctions[0],
+		[flag, "PROP_FLAG_BLUE", []],
 		[castle_anchor + Vector2i(-3, -4), "WALL_CORNER_OUT_NW", []],
 		[post_at + Vector2i(-2, -3), "WALL_CORNER_OUT_NW", []],
 	]
@@ -187,6 +229,7 @@ func _test_wall_collar_sides() -> int:
 		print("PASS test_wall_collar_sides")
 	return fail
 
+
 func _gate_outline() -> int:
 	var tex := load("res://art/flagoria/flagoria_tiles_v4.png") as Texture2D
 	var img := tex.get_image() if tex != null else null
@@ -201,6 +244,7 @@ func _gate_outline() -> int:
 				return 1
 	return 0
 
+
 func _caps_have_no_collision(world) -> int:
 	var src: TileSetAtlasSource = world.tile_set.get_source(TileCatalog.SOURCE_ID)
 	for n in ["CAP_COLLAR_N", "CAP_COLLAR_E", "CAP_COLLAR_S", "CAP_COLLAR_W"]:
@@ -213,12 +257,14 @@ func _caps_have_no_collision(world) -> int:
 		return 1
 	return 0
 
+
 func _expect_prefix(world, cell: Vector2i, prefix: String, label: String) -> int:
 	var name := _tile_name(world, 1, cell)
 	if not name.begins_with(prefix):
 		printerr("FAIL wall_junctions: %s %s is %s" % [label, cell, name])
 		return 1
 	return 0
+
 
 func _expect_junction(world, cell: Vector2i, piece: String, caps: Array) -> int:
 	var drawn := _junction_tiles(world, cell)
@@ -239,14 +285,24 @@ func _junction_tiles(world, cell: Vector2i) -> Array:
 		tiles.append(_tile_name(world, layer, cell))
 	return tiles
 
+
 func _tile_name(world, layer: int, cell: Vector2i) -> String:
 	if world.get_cell_source_id(layer, cell) == -1:
 		return ""
 	return _name_of(world.get_cell_atlas_coords(layer, cell))
 
+
 func _name_of(atlas: Vector2i) -> String:
 	for n in TileCatalog.TILES:
-		if TileCatalog.TILES[n]["atlas"] == atlas and (n.begins_with("WALL_") or n.begins_with("PALISADE_") \
-				or n.begins_with("TOWER_STONE_") or n.begins_with("CAP_COLLAR_") or n.begins_with("PROP_FLAG_")):
+		if (
+			TileCatalog.TILES[n]["atlas"] == atlas
+			and (
+				n.begins_with("WALL_")
+				or n.begins_with("PALISADE_")
+				or n.begins_with("TOWER_STONE_")
+				or n.begins_with("CAP_COLLAR_")
+				or n.begins_with("PROP_FLAG_")
+			)
+		):
 			return n
 	return str(atlas)

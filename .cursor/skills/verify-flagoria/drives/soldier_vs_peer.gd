@@ -3,10 +3,15 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Train a host-owned soldier, spawn a second player body beside it, capture the strike.
 
-
 const STAND_OFFS := [
-	Vector2i(0, 5), Vector2i(5, 0), Vector2i(-5, 0), Vector2i(0, -5),
-	Vector2i(0, 4), Vector2i(4, 0), Vector2i(-4, 0), Vector2i(0, -4),
+	Vector2i(0, 5),
+	Vector2i(5, 0),
+	Vector2i(-5, 0),
+	Vector2i(0, -5),
+	Vector2i(0, 4),
+	Vector2i(4, 0),
+	Vector2i(-4, 0),
+	Vector2i(0, -4),
 ]
 
 
@@ -67,16 +72,22 @@ func run() -> void:
 		var pos := SoldierRequests.spawn_cell(map, train_at, rot)
 		if pos == Vector2.INF:
 			pos = map.to_global(map.map_to_local(train_at) + Vector2(32, 0))
-		requests.get_node("MultiplayerSpawner").spawn({
-			"name": "soldier_%d_0" % peer,
-			"type": MobCatalog.SOLDIER,
-			"pos": pos,
-			"seed": 11,
-			"owner": peer,
-			"order": "hold",
-			"barracks_anchor": train_at,
-			"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
-		})
+		(
+			requests
+			. get_node("MultiplayerSpawner")
+			. spawn(
+				{
+					"name": "soldier_%d_0" % peer,
+					"type": MobCatalog.SOLDIER,
+					"pos": pos,
+					"seed": 11,
+					"owner": peer,
+					"order": "hold",
+					"barracks_anchor": train_at,
+					"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
+				}
+			)
+		)
 		for _i in 30:
 			await physics_frame
 			for child in requests.get_children():
@@ -128,14 +139,25 @@ func _find_anchor(map: TileMap, placer: ConstructionPlacer) -> Variant:
 	return null
 
 
-func _stand_near(it: Interaction, map: TileMap, placer: ConstructionPlacer,
-		inventory: Inventory, anchor: Vector2i) -> bool:
+func _stand_near(
+	it: Interaction,
+	map: TileMap,
+	placer: ConstructionPlacer,
+	inventory: Inventory,
+	anchor: Vector2i
+) -> bool:
 	var one: Array[Vector2i] = [anchor]
 	for off: Vector2i in STAND_OFFS:
 		hero().global_position = map.to_global(map.map_to_local(anchor + off))
 		for i in 8:
 			await process_frame
-		if it.in_reach(anchor) \
-				and placer.can_place(BuildCosts.BARRACKS, one, inventory, it.build.footprint_rotation).is_empty():
+		if (
+			it.in_reach(anchor)
+			and (
+				placer
+				. can_place(BuildCosts.BARRACKS, one, inventory, it.build.footprint_rotation)
+				. is_empty()
+			)
+		):
 			return true
 	return false

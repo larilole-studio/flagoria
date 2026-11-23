@@ -73,7 +73,10 @@ func _advance_merge(main, world: TileMap, buildings: GeneratedBuildings, host: b
 			if buildings.generate(_origin1, 6, 5, 42, 0):
 				_step = 1
 		1:
-			if buildings.record_count() >= 1 and buildings.generate(_origin1 + Vector2i(6, 0), 6, 5, 43, 0):
+			if (
+				buildings.record_count() >= 1
+				and buildings.generate(_origin1 + Vector2i(6, 0), 6, 5, 43, 0)
+			):
 				_step = 2
 		2:
 			if not _seam_snapshot.is_empty() and FileAccess.file_exists(probe_out + ".remove"):
@@ -84,8 +87,14 @@ func _advance_merge(main, world: TileMap, buildings: GeneratedBuildings, host: b
 
 
 func _peer_ready(main) -> bool:
-	return main.multiplayer != null and main.multiplayer.has_multiplayer_peer() \
-			and main.multiplayer.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+	return (
+		main.multiplayer != null
+		and main.multiplayer.has_multiplayer_peer()
+		and (
+			main.multiplayer.multiplayer_peer.get_connection_status()
+			== MultiplayerPeer.CONNECTION_CONNECTED
+		)
+	)
 
 
 func _write(main, world: TileMap, buildings: GeneratedBuildings, merge: bool) -> void:
@@ -96,7 +105,9 @@ func _write(main, world: TileMap, buildings: GeneratedBuildings, merge: bool) ->
 		write_result(_single_result(main, world, buildings, peer_id))
 
 
-func _single_result(main, world: TileMap, buildings: GeneratedBuildings, peer_id: String) -> Dictionary:
+func _single_result(
+	main, world: TileMap, buildings: GeneratedBuildings, peer_id: String
+) -> Dictionary:
 	var me := local_player(main)
 	var cells := {}
 	var door_clear := false
@@ -121,7 +132,14 @@ func _single_result(main, world: TileMap, buildings: GeneratedBuildings, peer_id
 					wall_blocked = true
 	return {
 		"id": peer_id,
-		"ready": main.world_params != null and me != null and buildings.record_count() > 0 and saw_door and saw_wall,
+		"ready":
+		(
+			main.world_params != null
+			and me != null
+			and buildings.record_count() > 0
+			and saw_door
+			and saw_wall
+		),
 		"refused": _refused,
 		"records": buildings.record_count(),
 		"door_clear": door_clear,

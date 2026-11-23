@@ -3,7 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## A client closes a wall loop around a tower. Snapshots: wall-tool,
 ## host-city. The client writes client-city.png in the same evidence dir.
 
-
 const CLIENT_JOIN_S := 40.0
 const CLIENT_SHOT_S := 25.0
 
@@ -24,7 +23,9 @@ func run() -> void:
 		printerr("walls cities: the client process did not start")
 		done(false)
 		return
-	if not await wait_until(func() -> bool: return _client(client_out).get("ready", false), CLIENT_JOIN_S):
+	if not await wait_until(
+		func() -> bool: return _client(client_out).get("ready", false), CLIENT_JOIN_S
+	):
 		printerr("walls cities: the client did not join: %s" % _client(client_out))
 		await _stop_client(pid, client_out)
 		done(false)
@@ -61,7 +62,12 @@ func run() -> void:
 		return
 	await snapshot("host-city")
 	step("client-view")
-	if shot != "" and not await wait_until(func() -> bool: return _client(client_out).get("shot", false), CLIENT_SHOT_S):
+	if (
+		shot != ""
+		and not await wait_until(
+			func() -> bool: return _client(client_out).get("shot", false), CLIENT_SHOT_S
+		)
+	):
 		printerr("walls cities: the client did not save its view: %s" % _client(client_out))
 		await _stop_client(pid, client_out)
 		done(false)
@@ -111,12 +117,20 @@ func _launch_client(client_out: String, shot: String) -> int:
 		args = "--headless "
 	else:
 		args = "--rendering-driver opengl3 "
-	var cmd := "export XDG_CONFIG_HOME='%s' XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; exec '%s' %s--path '%s' --script '%s' -- --port=9786 --out='%s' --mode=drive --shot='%s'" % [
-		config.path_join("client"), data.path_join("client"), cache.path_join("client"),
-		godot, args, ProjectSettings.globalize_path("res://"),
-		ProjectSettings.globalize_path("res://tests/wall_sync_probe.gd"),
-		client_out, shot,
-	]
+	var cmd := (
+		"export XDG_CONFIG_HOME='%s' XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; exec '%s' %s--path '%s' --script '%s' -- --port=9786 --out='%s' --mode=drive --shot='%s'"
+		% [
+			config.path_join("client"),
+			data.path_join("client"),
+			cache.path_join("client"),
+			godot,
+			args,
+			ProjectSettings.globalize_path("res://"),
+			ProjectSettings.globalize_path("res://tests/wall_sync_probe.gd"),
+			client_out,
+			shot,
+		]
+	)
 	return OS.create_process("/bin/bash", ["-c", cmd])
 
 

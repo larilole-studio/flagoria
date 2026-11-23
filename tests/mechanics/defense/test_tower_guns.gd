@@ -18,7 +18,9 @@ func _guns(label: String) -> Dictionary:
 		world.generate_chunk(Vector2(0, 0))
 		for cell: Vector2i in world.get_used_cells(0):
 			var cells: Array = StructurePlacer.footprint(structure, cell).keys()
-			if not cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if not cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				continue
 			# tower_wood's flag is one cell north of the anchor. The shot needs
 			# clear land just outside the ring, so the wall test has a corridor.
@@ -38,8 +40,12 @@ func _guns(label: String) -> Dictionary:
 			var id: int = world.place_structure(structure, cell, 1)
 			var flag: Vector2i = world._structures.towers()[id][0]
 			return {
-				"scene": scene, "world": world, "guns": guns, "id": id,
-				"centre": world.to_global(world.map_to_local(flag)), "flag": flag,
+				"scene": scene,
+				"world": world,
+				"guns": guns,
+				"id": id,
+				"centre": world.to_global(world.map_to_local(flag)),
+				"flag": flag,
 				"dir": Vector2(step),
 			}
 	printerr("FAIL %s: no clear tower_wood spot near the origin on seeds 11, 42, 99" % label)
@@ -93,11 +99,21 @@ func _test_tower_guns() -> int:
 	var guns: TowerGuns = t["guns"]
 	guns.tick(0.05)
 	if _health(owner) != 6 or _health(enemy) != 5:
-		printerr("FAIL tower_guns: closer owner %s, enemy %s, want 6 and 5" % [_health(owner), _health(enemy)])
+		printerr(
+			(
+				"FAIL tower_guns: closer owner %s, enemy %s, want 6 and 5"
+				% [_health(owner), _health(enemy)]
+			)
+		)
 		fail += 1
 	guns.tick(0.05)
 	if _health(enemy) != 5:
-		printerr("FAIL tower_guns: second tick inside the cooldown left health %s, want 5" % _health(enemy))
+		printerr(
+			(
+				"FAIL tower_guns: second tick inside the cooldown left health %s, want 5"
+				% _health(enemy)
+			)
+		)
 		fail += 1
 	enemy.global_position = t["centre"] + dir * 100.0
 	guns.tick(2.0)
@@ -121,7 +137,12 @@ func _test_tower_guns() -> int:
 		await physics_frame
 		guns.tick(0.05)
 		if _health(enemy) != 4:
-			printerr("FAIL tower_guns: blocked ray spent the cooldown, health %s, want 4" % _health(enemy))
+			printerr(
+				(
+					"FAIL tower_guns: blocked ray spent the cooldown, health %s, want 4"
+					% _health(enemy)
+				)
+			)
 			fail += 1
 	(enemy.get_node("Health") as PlayerHealth).set_health_now(6)
 	t["world"]._structures.set_owner(t["id"], 0)
@@ -132,7 +153,9 @@ func _test_tower_guns() -> int:
 	t["world"]._structures.set_owner(t["id"], StructurePlacer.OWNER_MOBS)
 	guns.tick(0.05)
 	if _health(enemy) != 6 or _health(owner) != 6:
-		printerr("FAIL tower_guns: mob owner shot, enemy %s owner %s" % [_health(enemy), _health(owner)])
+		printerr(
+			"FAIL tower_guns: mob owner shot, enemy %s owner %s" % [_health(enemy), _health(owner)]
+		)
 		fail += 1
 	t["scene"].queue_free()
 	if fail == 0:

@@ -28,7 +28,9 @@ const OWNER_MOBS := -1
 ## Owner -> flag tile for `team` legend entries. The host is blue, a neutral
 ## tower grey, a mob tower purple, and every other peer red until more owner
 ## colours exist.
-const OWNER_FLAGS := {1: "PROP_FLAG_BLUE", OWNER_NEUTRAL: "PROP_FLAG_NEUTRAL", OWNER_MOBS: "PROP_FLAG_MOBS"}
+const OWNER_FLAGS := {
+	1: "PROP_FLAG_BLUE", OWNER_NEUTRAL: "PROP_FLAG_NEUTRAL", OWNER_MOBS: "PROP_FLAG_MOBS"
+}
 const OTHER_OWNER_FLAG := "PROP_FLAG_RED"
 const DIR := "res://structures"
 
@@ -100,8 +102,13 @@ func apply_solved(cell: Vector2i, tile_name: String) -> void:
 	_map.set_cell(1, cell, TileCatalog.SOURCE_ID, atlas)
 
 
-func can_place(structure: Structure, anchor_cell: Vector2i, quarter_turns: int = 0,
-		from_host := false, actors := true) -> Array[String]:
+func can_place(
+	structure: Structure,
+	anchor_cell: Vector2i,
+	quarter_turns: int = 0,
+	from_host := false,
+	actors := true
+) -> Array[String]:
 	## Why `structure` cannot go with its anchor on `anchor_cell`; empty when
 	## it can. Each reason appears once, in the order of the constants above.
 	## Read from predict_cell, so it works on cells not drawn yet. `quarter_turns`
@@ -121,8 +128,13 @@ func can_place(structure: Structure, anchor_cell: Vector2i, quarter_turns: int =
 		var p: Array = _map.predict_cell(cell)
 		if not _map.ground_is_walkable(p[0]) or _map.has_bridge(cell):
 			found[WATER] = true
-		elif p[1] == TileCatalog.TREE or p[1] == TileCatalog.TREE_BUSHY or p[1] == TileCatalog.PINE \
-				or p[1] == TileCatalog.TREE_BIRCH_BOTTOM or p[1] == TileCatalog.TREE_BIRCH_TOP:
+		elif (
+			p[1] == TileCatalog.TREE
+			or p[1] == TileCatalog.TREE_BUSHY
+			or p[1] == TileCatalog.PINE
+			or p[1] == TileCatalog.TREE_BIRCH_BOTTOM
+			or p[1] == TileCatalog.TREE_BIRCH_TOP
+		):
 			found[TREE] = true
 		elif p[1] == TileCatalog.BUSH:
 			found[BUSH] = true
@@ -135,7 +147,16 @@ func can_place(structure: Structure, anchor_cell: Vector2i, quarter_turns: int =
 		if actors and mobs.has(cell):
 			found[OVERLAPS_MOB] = true
 	var out: Array[String] = []
-	for reason in [WATER, TREE, BUSH, OUT_OF_MAP, OVERLAPS_STRUCTURE, OVERLAPS_PLAYER, OVERLAPS_MOB, MULTIPLAYER_ON]:
+	for reason in [
+		WATER,
+		TREE,
+		BUSH,
+		OUT_OF_MAP,
+		OVERLAPS_STRUCTURE,
+		OVERLAPS_PLAYER,
+		OVERLAPS_MOB,
+		MULTIPLAYER_ON
+	]:
 		if found.has(reason):
 			out.append(reason)
 	return out
@@ -157,7 +178,9 @@ func _player_rects() -> Array[Rect2]:
 
 
 func _overlaps_player(players: Array[Rect2], cell: Vector2i) -> bool:
-	var cell_rect := Rect2(_map.to_global(_map.map_to_local(cell) - Vector2(8, 8)), Vector2(16, 16) * _map.global_scale)
+	var cell_rect := Rect2(
+		_map.to_global(_map.map_to_local(cell) - Vector2(8, 8)), Vector2(16, 16) * _map.global_scale
+	)
 	for rect in players:
 		if rect.intersects(cell_rect):
 			return true
@@ -176,7 +199,9 @@ func place(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turn
 	return _write(structure, anchor_cell, owner, quarter_turns)
 
 
-func place_from_host(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turns: int = 0) -> int:
+func place_from_host(
+	structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turns: int = 0
+) -> int:
 	## The host already decided this placement (#497, #278, #493). Same footprint
 	## rules as can_place, without the multiplayer refuse a client still gets
 	## from can_place. `quarter_turns` 0 omits rotation from the sync row.
@@ -212,8 +237,13 @@ func replace_from_host(list: Array) -> int:
 	## Returns how many placements it holds.
 	clear()
 	for entry in list:
-		if not entry is Array or entry.size() < 3 or not entry[0] is String \
-				or not entry[1] is int or not entry[2] is Vector2i:
+		if (
+			not entry is Array
+			or entry.size() < 3
+			or not entry[0] is String
+			or not entry[1] is int
+			or not entry[2] is Vector2i
+		):
 			continue
 		var turns := 0
 		if entry.size() >= 4 and entry[3] is int:
@@ -228,7 +258,10 @@ static func load_named(structure_name: String) -> Structure:
 	## The shipped structure file `structure_name` (res://structures/NAME.txt),
 	## or null when the name is not one.
 	var path := "%s/%s.txt" % [DIR, structure_name]
-	if RegEx.create_from_string("^[a-z0-9_]+$").search(structure_name) == null or not FileAccess.file_exists(path):
+	if (
+		RegEx.create_from_string("^[a-z0-9_]+$").search(structure_name) == null
+		or not FileAccess.file_exists(path)
+	):
 		return null
 	return Structure.parse(FileAccess.get_file_as_string(path))["structure"]
 
@@ -278,7 +311,13 @@ func _write(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_tur
 	return id
 
 
-func _remember_auto(structure: Structure, anchor_cell: Vector2i, cell: Vector2i, tile: String, attrs: PackedStringArray) -> bool:
+func _remember_auto(
+	structure: Structure,
+	anchor_cell: Vector2i,
+	cell: Vector2i,
+	tile: String,
+	attrs: PackedStringArray
+) -> bool:
 	## Record a solved wall or tower ring. False when `tile` is neither.
 	if tile.begins_with("TOWER_"):
 		var ring := WallSolver.ring_at(cell - anchor_cell + structure.anchor)
@@ -332,7 +371,8 @@ static func footprint(structure: Structure, anchor_cell: Vector2i) -> Dictionary
 			if g == Structure.EMPTY and o == Structure.EMPTY:
 				continue
 			out[anchor_cell + Vector2i(x, y) - structure.anchor] = [
-				structure.legend.get(g, {}), structure.legend.get(o, {})]
+				structure.legend.get(g, {}), structure.legend.get(o, {})
+			]
 	return out
 
 

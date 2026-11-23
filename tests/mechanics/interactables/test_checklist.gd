@@ -14,7 +14,9 @@ const TILES_DOC := "res://docs/tiles.md"
 const CHECKLIST_DOC := "res://docs/interactables.md"
 const TESTS_DIR := "res://tests/mechanics/"
 const FEATURES_DIR := "res://.cursor/skills/verify-flagoria/features/"
-const SOUND_SLOTS := ["hit_sounds", "hit_layer_sounds", "last_hit_sounds", "fell_sounds", "pickup_sounds"]
+const SOUND_SLOTS := [
+	"hit_sounds", "hit_layer_sounds", "last_hit_sounds", "fell_sounds", "pickup_sounds"
+]
 
 
 func _test_checklist_types_on_main() -> int:
@@ -30,11 +32,21 @@ func _test_checklist_types_on_main() -> int:
 	for type: InteractableType in InteractableCatalog.TYPES:
 		registered[type.resource_path] = true
 		if not files.has(type.resource_path):
-			printerr("FAIL checklist: %s: step 1 data: %s is in InteractableCatalog.TYPES but not in %s" % [type.id, type.resource_path, DATA_DIR])
+			printerr(
+				(
+					"FAIL checklist: %s: step 1 data: %s is in InteractableCatalog.TYPES but not in %s"
+					% [type.id, type.resource_path, DATA_DIR]
+				)
+			)
 			fail += 1
 	for path: String in files:
 		if not registered.has(path):
-			printerr("FAIL checklist: %s: step 1 data: not in InteractableCatalog.TYPES (interactable_catalog.gd)" % path.get_file().get_basename())
+			printerr(
+				(
+					"FAIL checklist: %s: step 1 data: not in InteractableCatalog.TYPES (interactable_catalog.gd)"
+					% path.get_file().get_basename()
+				)
+			)
 			fail += 1
 	for msg in checklist_errors(InteractableCatalog.TYPES):
 		printerr("FAIL checklist: " + msg)
@@ -55,7 +67,12 @@ func _test_checklist_fixtures_fail() -> int:
 		["tiles", _names_of(["GRASS_A"]), "bush", "step 2 art"],
 		["tiles", _names_of(["NO_SUCH_TILE"]), "bush", "step 2 art"],
 		["leaves", "TREE", "bush", "step 2 art"],
-		["fx_sheet", ImageTexture.create_from_image(Image.create_empty(9, 9, false, Image.FORMAT_RGBA8)), "bush", "step 2 art"],
+		[
+			"fx_sheet",
+			ImageTexture.create_from_image(Image.create_empty(9, 9, false, Image.FORMAT_RGBA8)),
+			"bush",
+			"step 2 art"
+		],
 		["hit_sheet", load("res://art/flagoria/fx/bush_hit.png"), "tree", "step 2 art"],
 		["hit_sounds", _streams([bad_wav]), "tree", "step 3 sound"],
 		["fell_sounds", _streams([]), "bush", "step 3 sound"],
@@ -78,10 +95,19 @@ func _test_checklist_fixtures_fail() -> int:
 			fail += 1
 		types[i] = broken
 		var msgs := checklist_errors(types)
-		var hit := msgs.filter(func(m: String) -> bool: return m.begins_with(broken.id + ": " + c[3]))
-		var other := msgs.filter(func(m: String) -> bool: return not m.begins_with(broken.id + ": "))
+		var hit := msgs.filter(
+			func(m: String) -> bool: return m.begins_with(broken.id + ": " + c[3])
+		)
+		var other := msgs.filter(
+			func(m: String) -> bool: return not m.begins_with(broken.id + ": ")
+		)
 		if hit.is_empty() or not other.is_empty():
-			printerr("FAIL checklist_fixtures: %s = %s on %s gave %s, want a '%s' failure for %s only" % [c[0], c[1], c[2], msgs, c[3], broken.id])
+			printerr(
+				(
+					"FAIL checklist_fixtures: %s = %s on %s gave %s, want a '%s' failure for %s only"
+					% [c[0], c[1], c[2], msgs, c[3], broken.id]
+				)
+			)
 			fail += 1
 	return fail
 
@@ -115,17 +141,23 @@ func checklist_errors(types: Array) -> Array[String]:
 	var keys := {}
 	var tile_owner := {}
 	var resources := Inventory.new()
-	var known: Array = resources.get_script().get_script_constant_map().values().filter(func(v) -> bool: return v is StringName)
+	var known: Array = resources.get_script().get_script_constant_map().values().filter(
+		func(v) -> bool: return v is StringName
+	)
 	resources.free()
 	for type: InteractableType in types:
-		var e := func(step: String, what: String) -> void: out.append("%s: %s: %s" % [type.id, step, what])
+		var e := func(step: String, what: String) -> void:
+			out.append("%s: %s: %s" % [type.id, step, what])
 		# 1. Data: fields set and valid.
 		if type.id == "" or type.tiles.is_empty():
 			e.call("step 1 data", "id and tiles must be set")
 		if type.hits < 1:
 			e.call("step 1 data", "hits is %d, want 1 or more" % type.hits)
 		if type.regrow_delay < 0.0:
-			e.call("step 1 data", "regrow_delay is %s; 0 means never, it cannot be negative" % type.regrow_delay)
+			e.call(
+				"step 1 data",
+				"regrow_delay is %s; 0 means never, it cannot be negative" % type.regrow_delay
+			)
 		if not TileCatalog.TILES.has(type.leaves):
 			e.call("step 1 data", "leaves %s is not in TileCatalog.TILES" % type.leaves)
 		# 2. Art: tiles in the catalog and TileSet, collision, tiles.md, credits.
@@ -139,14 +171,28 @@ func checklist_errors(types: Array) -> Array[String]:
 			tile_owner[n] = type.id
 			if not src.has_tile(atlas) or _polygons(src, atlas, 0) == 0:
 				e.call("step 2 art", "tile %s %s has no collision in %s" % [n, atlas, TILESET])
-			elif type.hit_sheet != null and (not src.has_alternative_tile(atlas, ChopAction.HIDDEN_ALT) or _polygons(src, atlas, ChopAction.HIDDEN_ALT) == 0):
-				e.call("step 2 art", "tile %s has a hit_sheet but no alternative %d with collision" % [n, ChopAction.HIDDEN_ALT])
+			elif (
+				type.hit_sheet != null
+				and (
+					not src.has_alternative_tile(atlas, ChopAction.HIDDEN_ALT)
+					or _polygons(src, atlas, ChopAction.HIDDEN_ALT) == 0
+				)
+			):
+				e.call(
+					"step 2 art",
+					(
+						"tile %s has a hit_sheet but no alternative %d with collision"
+						% [n, ChopAction.HIDDEN_ALT]
+					)
+				)
 			if not tiles_doc.contains("| (%d, %d) |" % [atlas.x, atlas.y]):
 				e.call("step 2 art", "tile %s %s has no row in docs/tiles.md" % [n, atlas])
 		if TileCatalog.TILES.has(type.leaves):
 			var left: Vector2i = TileCatalog.TILES[type.leaves]["atlas"]
 			if not src.has_tile(left) or _polygons(src, left, 0) > 0:
-				e.call("step 2 art", "leaves %s must be in the TileSet with no collision" % type.leaves)
+				e.call(
+					"step 2 art", "leaves %s must be in the TileSet with no collision" % type.leaves
+				)
 			if not tiles_doc.contains("| (%d, %d) |" % [left.x, left.y]):
 				e.call("step 2 art", "leaves %s has no row in docs/tiles.md" % type.leaves)
 		for sheet_name in ["hit_sheet", "fx_sheet"]:
@@ -154,10 +200,30 @@ func checklist_errors(types: Array) -> Array[String]:
 			if sheet == null:
 				continue
 			var rows := type.tiles.size() if sheet_name == "hit_sheet" else 1
-			if sheet.get_height() != 16 * rows or sheet.get_width() % 16 != 0 or (sheet_name == "fx_sheet" and sheet.get_width() != 64):
-				e.call("step 2 art", "%s %s is %dx%d, want 16 px frames%s, %d row(s)" % [sheet_name, sheet.resource_path, sheet.get_width(), sheet.get_height(), " x4" if sheet_name == "fx_sheet" else "", rows])
+			if (
+				sheet.get_height() != 16 * rows
+				or sheet.get_width() % 16 != 0
+				or (sheet_name == "fx_sheet" and sheet.get_width() != 64)
+			):
+				e.call(
+					"step 2 art",
+					(
+						"%s %s is %dx%d, want 16 px frames%s, %d row(s)"
+						% [
+							sheet_name,
+							sheet.resource_path,
+							sheet.get_width(),
+							sheet.get_height(),
+							" x4" if sheet_name == "fx_sheet" else "",
+							rows
+						]
+					)
+				)
 			if not art_credits.contains(sheet.resource_path.get_file()):
-				e.call("step 2 art", "%s %s is not credited in %s" % [sheet_name, sheet.resource_path, ART_CREDITS])
+				e.call(
+					"step 2 art",
+					"%s %s is not credited in %s" % [sheet_name, sheet.resource_path, ART_CREDITS]
+				)
 		# 3. Sound: files in one world/<group>/ folder, 22,050 Hz mono 16-bit, credited.
 		if type.hit_sounds.is_empty() or type.fell_sounds.is_empty():
 			e.call("step 3 sound", "hit_sounds and fell_sounds must not be empty")
@@ -167,21 +233,44 @@ func checklist_errors(types: Array) -> Array[String]:
 				var wav := s as AudioStreamWAV
 				var path: String = s.resource_path if s != null else ""
 				if not path.begins_with(SFX_DIR) or not FileAccess.file_exists(path):
-					e.call("step 3 sound", "%s has %s, want a .wav file under %s<group>/" % [slot, path if path != "" else "an unsaved stream", SFX_DIR])
+					e.call(
+						"step 3 sound",
+						(
+							"%s has %s, want a .wav file under %s<group>/"
+							% [slot, path if path != "" else "an unsaved stream", SFX_DIR]
+						)
+					)
 					continue
 				groups[path.get_base_dir()] = true
 				if wav == null or _wav_format(path) != [1, 22050, 16]:
-					e.call("step 3 sound", "%s %s is %s (channels, Hz, bits), want 22,050 Hz mono 16-bit" % [slot, path, _wav_format(path)])
+					e.call(
+						"step 3 sound",
+						(
+							"%s %s is %s (channels, Hz, bits), want 22,050 Hz mono 16-bit"
+							% [slot, path, _wav_format(path)]
+						)
+					)
 				if not _credited(audio_credits, path.trim_prefix("res://art/audio/")):
-					e.call("step 3 sound", "%s %s is not credited in %s" % [slot, path, AUDIO_CREDITS])
+					e.call(
+						"step 3 sound", "%s %s is not credited in %s" % [slot, path, AUDIO_CREDITS]
+					)
 		if groups.size() > 1:
-			e.call("step 3 sound", "sounds come from %d folders %s, want one group" % [groups.size(), groups.keys()])
+			e.call(
+				"step 3 sound",
+				"sounds come from %d folders %s, want one group" % [groups.size(), groups.keys()]
+			)
 		# 4. Yield: at least one known resource, each above 0.
 		if type.yields.is_empty():
 			e.call("step 4 yield", "yields is empty")
 		for r in type.yields:
 			if type.yields[r] <= 0 or not known.has(r):
-				e.call("step 4 yield", "yields %s: %s, want a resource in Inventory (%s) above 0" % [r, type.yields[r], known])
+				e.call(
+					"step 4 yield",
+					(
+						"yields %s: %s, want a resource in Inventory (%s) above 0"
+						% [r, type.yields[r], known]
+					)
+				)
 		# 5. Save: save_key set and unique.
 		if type.save_key == "":
 			e.call("step 5 save", "save_key is empty")
@@ -190,12 +279,20 @@ func checklist_errors(types: Array) -> Array[String]:
 		keys[type.save_key] = type.id
 		# 6. Tests: a test file named for the type, or one that names its id.
 		if not _has_test(type.id):
-			e.call("step 6 tests", "no tests/mechanics/**/test_%s*.gd and no test there names \"%s\"" % [type.id, type.id])
+			e.call(
+				"step 6 tests",
+				(
+					'no tests/mechanics/**/test_%s*.gd and no test there names "%s"'
+					% [type.id, type.id]
+				)
+			)
 		# 7. Verification: a feature file names the data file, and features/README.md lists it.
 		var features := _features_naming(type.id + ".tres")
 		var index := _read(FEATURES_DIR + "README.md")
 		if features.is_empty():
-			e.call("step 7 verification", "no %s*.md names %s.tres (#291)" % [FEATURES_DIR, type.id])
+			e.call(
+				"step 7 verification", "no %s*.md names %s.tres (#291)" % [FEATURES_DIR, type.id]
+			)
 		elif features.all(func(f: String) -> bool: return not index.contains("(./%s)" % f)):
 			e.call("step 7 verification", "%s: no line in features/README.md" % ", ".join(features))
 		# The checklist doc names every type.
@@ -238,7 +335,11 @@ func _credited(credits: String, rel: String) -> bool:
 	var m := RegEx.create_from_string("^(.*)_(\\d\\d)\\.wav$").search(rel)
 	if m == null:
 		return false
-	var top := RegEx.create_from_string("`%s_01\\.wav` … `_(\\d\\d)\\.wav`" % m.get_string(1)).search(credits)
+	var top := (
+		RegEx
+		. create_from_string("`%s_01\\.wav` … `_(\\d\\d)\\.wav`" % m.get_string(1))
+		. search(credits)
+	)
 	return top != null and int(top.get_string(1)) >= int(m.get_string(2))
 
 
@@ -247,7 +348,10 @@ func _has_test(id: String) -> bool:
 		var f := path.get_file()
 		if f == "test_checklist.gd":  # its fixtures name made-up ids
 			continue
-		if f.begins_with("test_" + id) or (f.begins_with("test_") and _read(path).contains("\"%s\"" % id)):
+		if (
+			f.begins_with("test_" + id)
+			or (f.begins_with("test_") and _read(path).contains('"%s"' % id))
+		):
 			return true
 	return false
 

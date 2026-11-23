@@ -8,14 +8,22 @@ func _test_player_spawn_no_missing_nodes() -> int:
 	## engine errors cannot be read back in-process. --quit-after bounds the run.
 	print("-- test_player_spawn_no_missing_nodes")
 	var output := []
-	var code := OS.execute(
-		OS.get_executable_path(),
-		[
-			"--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--quit-after", "600", "--script", "res://tests/spawn_player_probe.gd",
-		],
-		output,
-		true
+	var code := (
+		OS
+		. execute(
+			OS.get_executable_path(),
+			[
+				"--headless",
+				"--path",
+				ProjectSettings.globalize_path("res://"),
+				"--quit-after",
+				"600",
+				"--script",
+				"res://tests/spawn_player_probe.gd",
+			],
+			output,
+			true
+		)
 	)
 	var log_text: String = "".join(output)
 	var fail := 0

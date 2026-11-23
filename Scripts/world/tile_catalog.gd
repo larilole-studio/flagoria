@@ -632,11 +632,15 @@ const _CORE := {
 }
 static var TILES := _with_junctions(_CORE)
 
+
 static func _with_junctions(core: Dictionary) -> Dictionary:
 	var t := core.duplicate()
 	for i in 4:
 		t["CAP_COLLAR_" + "NESW"[i]] = {"source_id": SOURCE_ID, "atlas": Vector2i(8 + i, 4)}
-	var arms := "NW_X,NW_N,NW_W,NW_NW,N_X,N_N,NE_X,NE_E,NE_N,NE_NE,W_X,W_W,E_X,E_E,SW_X,SW_S,SW_W,SW_SW,S_X,S_S,SE_X,SE_E,SE_S,SE_ES".split(",")
+	var arms := (
+		"NW_X,NW_N,NW_W,NW_NW,N_X,N_N,NE_X,NE_E,NE_N,NE_NE,W_X,W_W,E_X,E_E,SW_X,SW_S,SW_W,SW_SW,S_X,S_S,SE_X,SE_E,SE_S,SE_ES"
+		. split(",")
+	)
 	for i in arms.size():
 		t["TOWER_STONE_" + arms[i]] = {"source_id": SOURCE_ID, "atlas": Vector2i(i, 5)}
 	return t

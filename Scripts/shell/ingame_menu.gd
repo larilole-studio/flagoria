@@ -137,7 +137,10 @@ static func saved_text(save_name: String) -> String:
 static func auto_save_name(now: Dictionary) -> String:
 	## "2026-10-27 22-15-03" for a Time datetime dict. Sorts by time, and
 	## has no characters that validate_filename would change.
-	return "%04d-%02d-%02d %02d-%02d-%02d" % [now["year"], now["month"], now["day"], now["hour"], now["minute"], now["second"]]
+	return (
+		"%04d-%02d-%02d %02d-%02d-%02d"
+		% [now["year"], now["month"], now["day"], now["hour"], now["minute"], now["second"]]
+	)
 
 
 static func unused_save_name(base: String) -> String:

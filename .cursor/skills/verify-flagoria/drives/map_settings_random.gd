@@ -2,7 +2,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 42
 ## Check the common and Advanced views, then host with the displayed settings.
 
-
 const MAP_SETTINGS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MapSettingsButton"
 const PANEL := "CanvasLayer2/MapAdminPanel"
 const ADVANCED := PANEL + "/Margin/VBox/Advanced"
@@ -25,16 +24,21 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		_fail("cannot load " + MAIN)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(MAP_SETTINGS), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(MAP_SETTINGS),
+		START_TIMEOUT_S
+	):
 		_fail("no Map Settings button")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 	step("open-map-settings")
 	await click(MAP_SETTINGS)
-	if not await wait_until(func() -> bool:
+	if not await wait_until(
+		func() -> bool:
 			var p = current_scene.get_node_or_null(PANEL)
-			return p != null and p.visible, 5.0):
+			return p != null and p.visible,
+		5.0
+	):
 		_fail("Map Settings panel did not open")
 		return
 	var panel: Node = current_scene.get_node(PANEL)
@@ -60,9 +64,12 @@ func run() -> void:
 
 	step("back")
 	await click(BACK)
-	var menu_back := await wait_until(func() -> bool:
-		var menu := current_scene.get_node_or_null("CanvasLayer2/MainMenu")
-		return menu != null and menu.visible and not panel.visible, 5.0)
+	var menu_back := await wait_until(
+		func() -> bool:
+			var menu := current_scene.get_node_or_null("CanvasLayer2/MainMenu")
+			return menu != null and menu.visible and not panel.visible,
+		5.0
+	)
 	if not menu_back:
 		_fail("Back did not return to the main menu")
 		return
@@ -83,7 +90,12 @@ func _resize(width: int, height: int) -> Vector2i:
 	for _i in 12:
 		await process_frame
 	var got := DisplayServer.window_get_size()
-	print("map_settings_random: window %s (asked %dx%d) visible %s" % [got, width, height, root.get_visible_rect().size])
+	print(
+		(
+			"map_settings_random: window %s (asked %dx%d) visible %s"
+			% [got, width, height, root.get_visible_rect().size]
+		)
+	)
 	return got
 
 
@@ -100,7 +112,12 @@ func _buttons_fit(tag: String) -> bool:
 		var rect := b.get_global_rect()
 		rects.append(rect)
 		var inside := vp.encloses(rect)
-		print("map_settings_random: %s %s rect=%s size=%s inside=%s" % [tag, b.name, rect, b.size, inside])
+		print(
+			(
+				"map_settings_random: %s %s rect=%s size=%s inside=%s"
+				% [tag, b.name, rect, b.size, inside]
+			)
+		)
 		if not inside or b.size.x < 40.0 or b.size.y < 24.0:
 			ok = false
 	for i in rects.size():

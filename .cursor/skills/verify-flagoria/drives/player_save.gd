@@ -28,7 +28,9 @@ func run() -> void:
 		await hold("ui_down", 25)
 	var wood: int = current_scene.get_node(INVENTORY).count_of(Inventory.WOOD)
 	if wood < 1 or hero().global_position.distance_to(origin) < 24.0:
-		printerr("player save: wood %s moved %s" % [wood, hero().global_position.distance_to(origin)])
+		printerr(
+			"player save: wood %s moved %s" % [wood, hero().global_position.distance_to(origin)]
+		)
 		done(false)
 		return
 	var before := _progress()
@@ -67,13 +69,26 @@ func run() -> void:
 		return
 	await snapshot("loaded")
 	var after := _progress()
-	var spot_ok: bool = Vector2(before["x"], before["y"]).distance_to(Vector2(after["x"], after["y"])) <= 48.0
-	var ok: bool = spot_ok and after["wood"] == before["wood"] and after["health"] == before["health"] \
-			and after["score"] == before["score"] and after["chart"] >= before["chart"] and before["chart"] > 0
+	var spot_ok: bool = (
+		Vector2(before["x"], before["y"]).distance_to(Vector2(after["x"], after["y"])) <= 48.0
+	)
+	var ok: bool = (
+		spot_ok
+		and after["wood"] == before["wood"]
+		and after["health"] == before["health"]
+		and after["score"] == before["score"]
+		and after["chart"] >= before["chart"]
+		and before["chart"] > 0
+	)
 	if not ok:
 		printerr("player save: before %s after %s" % [before, after])
 	else:
-		print("player save: back at %s wood %s chart %s" % [Vector2(after["x"], after["y"]), after["wood"], after["chart"]])
+		print(
+			(
+				"player save: back at %s wood %s chart %s"
+				% [Vector2(after["x"], after["y"]), after["wood"], after["chart"]]
+			)
+		)
 	done(ok)
 
 
@@ -96,14 +111,22 @@ func _leave() -> bool:
 		printerr("player save: the menu did not open")
 		return false
 	await click(MAIN_MENU_BUTTON)
-	return await wait_until(func() -> bool:
-		return current_scene != null and current_scene.has_node(WORLDS) and hero() == null, 15.0)
+	return await wait_until(
+		func() -> bool:
+			return current_scene != null and current_scene.has_node(WORLDS) and hero() == null,
+		15.0
+	)
 
 
 func _open_worlds() -> bool:
 	await click(WORLDS)
-	return await wait_until(func() -> bool:
-		return current_scene.has_node(LIST) and current_scene.get_node(LIST).is_visible_in_tree(), 5.0)
+	return await wait_until(
+		func() -> bool:
+			return (
+				current_scene.has_node(LIST) and current_scene.get_node(LIST).is_visible_in_tree()
+			),
+		5.0
+	)
 
 
 func _click_item(list: ItemList, index: int) -> bool:

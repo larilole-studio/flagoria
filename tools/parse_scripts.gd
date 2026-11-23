@@ -1,13 +1,25 @@
 extends SceneTree
 ## Compile every GDScript path in a list file, in this one process.
 
-class _ScriptErrors extends Logger:
+
+class _ScriptErrors:
+	extends Logger
 	var count := 0
 
-	func _log_error(_function: String, _file: String, _line: int, _code: String, _rationale: String,
-			_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+	func _log_error(
+		_function: String,
+		_file: String,
+		_line: int,
+		_code: String,
+		_rationale: String,
+		_editor_notify: bool,
+		error_type: int,
+		_script_backtraces: Array[ScriptBacktrace]
+	) -> void:
 		if error_type == ERROR_TYPE_SCRIPT:
 			count += 1
+
+
 ##
 ## tools/verify.sh used to start Godot once per file (`--check-only --script`).
 ## Engine startup dominated that step. This script compiles the same set and

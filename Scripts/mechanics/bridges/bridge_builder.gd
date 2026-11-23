@@ -51,8 +51,9 @@ func to_sync() -> Array:
 	## Placed bridge cells as [x, y, atlas_x, atlas_y], sorted by cell, for the
 	## host to send a joining peer with the map (#297).
 	var cells: Array = _bridge_cells.keys()
-	cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return a.y < b.y if a.y != b.y else a.x < b.x)
+	cells.sort_custom(
+		func(a: Vector2i, b: Vector2i) -> bool: return a.y < b.y if a.y != b.y else a.x < b.x
+	)
 	var out := []
 	for cell: Vector2i in cells:
 		var atlas: Vector2i = _bridge_cells[cell]
@@ -111,7 +112,11 @@ static func from_changes(changes: Dictionary, map: _WorldMap) -> Array:
 		for key in changes[chunk]:
 			var entry = changes[chunk][key]
 			var cell = WorldSave.parse_cell(str(key))
-			if not entry is Dictionary or not atlases.has(str(entry.get("tile", ""))) or cell == null:
+			if (
+				not entry is Dictionary
+				or not atlases.has(str(entry.get("tile", "")))
+				or cell == null
+			):
 				continue
 			if map.predict_cell(cell)[0] != TileCatalog.WATER:
 				continue
@@ -176,7 +181,9 @@ func erase_cells(cells: Array[Vector2i]) -> bool:
 	return true
 
 
-static func bridge_pieces(length: int, horizontal: bool, land_before: bool, land_after: bool) -> Array[Vector2i]:
+static func bridge_pieces(
+	length: int, horizontal: bool, land_before: bool, land_after: bool
+) -> Array[Vector2i]:
 	## The _WATER plank pieces of one isolated straight run of `length` cells,
 	## W->E (H) or N->S (V): START/END where land is before/after the run,
 	## SINGLE for one cell with land on both sides, TIP_ at an end with no land,

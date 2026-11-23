@@ -30,7 +30,9 @@ func run() -> void:
 			return
 		pids.append(pid)
 		outs.append(out)
-		if not await wait_until(func() -> bool: return _client(out).get("ready", false), CLIENT_JOIN_S):
+		if not await wait_until(
+			func() -> bool: return _client(out).get("ready", false), CLIENT_JOIN_S
+		):
 			printerr("points_scoreboard: joiner %s did not become ready: %s" % [name, _client(out)])
 			await _stop_clients(pids, outs)
 			done(false)
@@ -94,12 +96,20 @@ func _launch_client(client_out: String, client_name: String, min_players: int) -
 		args = "--headless "
 	else:
 		args = "--rendering-driver opengl3 "
-	var cmd := "export XDG_CONFIG_HOME='%s' XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; exec '%s' %s--path '%s' --script '%s' -- --port=9786 --min-players=%d --out='%s'" % [
-		config.path_join(sub), data.path_join(sub), cache.path_join(sub),
-		godot, args, ProjectSettings.globalize_path("res://"),
-		ProjectSettings.globalize_path("res://tests/scoreboard_join_probe.gd"),
-		min_players, client_out,
-	]
+	var cmd := (
+		"export XDG_CONFIG_HOME='%s' XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; exec '%s' %s--path '%s' --script '%s' -- --port=9786 --min-players=%d --out='%s'"
+		% [
+			config.path_join(sub),
+			data.path_join(sub),
+			cache.path_join(sub),
+			godot,
+			args,
+			ProjectSettings.globalize_path("res://"),
+			ProjectSettings.globalize_path("res://tests/scoreboard_join_probe.gd"),
+			min_players,
+			client_out,
+		]
+	)
 	return OS.create_process("/bin/bash", ["-c", cmd])
 
 

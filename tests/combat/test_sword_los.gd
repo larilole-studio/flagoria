@@ -11,8 +11,17 @@ func _paint_pad(world, cells: Array) -> void:
 	world.clear()
 	var seen := {}
 	for c in cells:
-		for d in [Vector2i.ZERO, Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
-				Vector2i(1, 1), Vector2i(1, -1), Vector2i(-1, 1), Vector2i(-1, -1)]:
+		for d in [
+			Vector2i.ZERO,
+			Vector2i(1, 0),
+			Vector2i(-1, 0),
+			Vector2i(0, 1),
+			Vector2i(0, -1),
+			Vector2i(1, 1),
+			Vector2i(1, -1),
+			Vector2i(-1, 1),
+			Vector2i(-1, -1)
+		]:
 			var n: Vector2i = c + d
 			if seen.has(n):
 				continue
@@ -124,11 +133,18 @@ func _test_sword_los_wall_blocks() -> int:
 		await physics_frame
 		await physics_frame
 		if case["diag"]:
-			await _swing_toward(player, player.to_global(AttackAim.ORIGIN), mob.hurt_box.global_position)
+			await _swing_toward(
+				player, player.to_global(AttackAim.ORIGIN), mob.hurt_box.global_position
+			)
 		else:
 			await _swing_right(player)
 		if mob.hp != 99:
-			printerr("FAIL sword_los_wall_blocks %s: wall did not block (hp %s)" % [case["label"], mob.hp])
+			printerr(
+				(
+					"FAIL sword_los_wall_blocks %s: wall did not block (hp %s)"
+					% [case["label"], mob.hp]
+				)
+			)
 			fail += 1
 	s["scene"].queue_free()
 	await process_frame
@@ -156,7 +172,9 @@ func _test_sword_los_open_gate_hits() -> int:
 	await _swing_right(player)
 	var fail := 0
 	if mob.hp >= hp0:
-		printerr("FAIL sword_los_open_gate_hits: open gate blocked the hit (hp %s -> %s)" % [hp0, mob.hp])
+		printerr(
+			"FAIL sword_los_open_gate_hits: open gate blocked the hit (hp %s -> %s)" % [hp0, mob.hp]
+		)
 		fail += 1
 	s["scene"].queue_free()
 	await process_frame

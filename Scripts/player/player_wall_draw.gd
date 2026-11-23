@@ -63,7 +63,10 @@ func _ensure_wall_atlases() -> void:
 	if not _wall_atlases.is_empty():
 		return
 	for tile_name: String in TileCatalog.TILES:
-		if not tile_name.begins_with("WALL_") and not tile_name.begins_with("PALISADE_") \
-				and not tile_name.begins_with("TOWER_STONE_"):
+		if (
+			not tile_name.begins_with("WALL_")
+			and not tile_name.begins_with("PALISADE_")
+			and not tile_name.begins_with("TOWER_STONE_")
+		):
 			continue
 		_wall_atlases[TileCatalog.TILES[tile_name]["atlas"]] = true

@@ -5,7 +5,13 @@ const WALL_PROBE := "res://tests/wall_sync_probe.gd"
 const ROWS := {
 	"wall": {"probe": WALL_PROBE, "option": "--mode=", "mode": "wall", "timeout": 25000},
 	"city": {"probe": WALL_PROBE, "option": "--mode=", "mode": "city", "timeout": 30000},
-	"break": {"probe": "res://tests/wall_break_probe.gd", "option": "--phase=", "mode": "work", "timeout": 25000},
+	"break":
+	{
+		"probe": "res://tests/wall_break_probe.gd",
+		"option": "--phase=",
+		"mode": "work",
+		"timeout": 25000
+	},
 }
 
 
@@ -14,11 +20,24 @@ func _test_wall_place_two_players() -> int:
 
 
 func _test_city_change_two_players() -> int:
-	return await run_wall_row("test_city_change_two_players", "city", _city_closed, _same_city_build, Callable(), _open_city)
+	return await run_wall_row(
+		"test_city_change_two_players",
+		"city",
+		_city_closed,
+		_same_city_build,
+		Callable(),
+		_open_city
+	)
 
 
-func run_wall_row(label: String, kind: String, changed: Callable, joined: Callable,
-		after_change: Callable = Callable(), after_join: Callable = Callable()) -> int:
+func run_wall_row(
+	label: String,
+	kind: String,
+	changed: Callable,
+	joined: Callable,
+	after_change: Callable = Callable(),
+	after_join: Callable = Callable()
+) -> int:
 	print("-- " + label)
 	var row: Dictionary = ROWS[kind]
 	var session := saved_probe_session(label, row["probe"], _spawn_params(11, 0.0), [])
@@ -37,25 +56,46 @@ func run_wall_row(label: String, kind: String, changed: Callable, joined: Callab
 	else:
 		launch.call([row["option"] + row["mode"]])
 		if not await wait_until(changed.bind(read), row["timeout"]):
-			printerr("FAIL %s: wall change did not sync: host %s client %s" % [label, read.call(0), read.call(1)])
+			printerr(
+				(
+					"FAIL %s: wall change did not sync: host %s client %s"
+					% [label, read.call(0), read.call(1)]
+				)
+			)
 			fail = 1
 		elif after_change.is_valid() and not await after_change.call(read):
 			fail = 1
 		else:
 			launch.call([row["option"] + "watch"])
-			if not await wait_until(func() -> bool:
-				var peer: Dictionary = read.call(2)
-				return peer.get("ready", false) and joined.call(peer, read.call(0)), 30000):
+			if not await wait_until(
+				func() -> bool:
+					var peer: Dictionary = read.call(2)
+					return peer.get("ready", false) and joined.call(peer, read.call(0)),
+				30000
+			):
 				printerr("FAIL %s: late joiner %s host %s" % [label, read.call(2), read.call(0)])
 				fail = 1
 			elif after_join.is_valid():
 				fail = await after_join.call(read, probes[0]["out"])
 		for i in probes.size():
 			var data: Dictionary = read.call(i)
-			if not data.get("errors", []).is_empty() or str(data.get("place_error", "")) != "" \
-					or str(data.get("phase_done", "")) != "":
-				printerr("FAIL %s: peer %d errors %s place %s phase %s" % [
-					label, i, data.get("errors", []), data.get("place_error", ""), data.get("phase_done", "")])
+			if (
+				not data.get("errors", []).is_empty()
+				or str(data.get("place_error", "")) != ""
+				or str(data.get("phase_done", "")) != ""
+			):
+				printerr(
+					(
+						"FAIL %s: peer %d errors %s place %s phase %s"
+						% [
+							label,
+							i,
+							data.get("errors", []),
+							data.get("place_error", ""),
+							data.get("phase_done", "")
+						]
+					)
+				)
 				fail = 1
 	await close_probe_session(session)
 	if fail == 0:
@@ -71,11 +111,17 @@ func _open_city(read: Callable, host_out: String) -> int:
 	if not publish_probe_command(host_out + ".open", "%d %d\n" % [int(gap[0]), int(gap[1])]):
 		printerr("FAIL city_change_two_players: could not publish the open request")
 		return 1
-	var opened_or_error := await wait_until(func() -> bool:
-		return str(read.call(0).get("place_error", "")) != "" or _city_opened(read), 15000)
+	var opened_or_error := await wait_until(
+		func() -> bool: return str(read.call(0).get("place_error", "")) != "" or _city_opened(read),
+		15000
+	)
 	if not opened_or_error or not _city_opened(read):
-		printerr("FAIL city_change_two_players: after open host %s client %s joiner %s"
-				% [read.call(0), read.call(1), read.call(2)])
+		printerr(
+			(
+				"FAIL city_change_two_players: after open host %s client %s joiner %s"
+				% [read.call(0), read.call(1), read.call(2)]
+			)
+		)
 		return 1
 	return 0
 
@@ -105,8 +151,12 @@ func _wall_connects(data: Dictionary) -> bool:
 		return false
 	var piece := str(walls[0][2])
 	var caps := str(walls[0][3])
-	return piece.begins_with("PALISADE_") and piece != "PALISADE_POST" and caps != "" \
-			and not data.get("autos", []).is_empty()
+	return (
+		piece.begins_with("PALISADE_")
+		and piece != "PALISADE_POST"
+		and caps != ""
+		and not data.get("autos", []).is_empty()
+	)
 
 
 func _city_closed(read: Callable) -> bool:
@@ -129,8 +179,12 @@ func _city_opened(read: Callable) -> bool:
 	for i in 3:
 		if _has_city(read.call(i), tower):
 			return false
-	return _same_cities(read.call(1), read.call(0)) and _same_cities(read.call(2), read.call(0)) \
-			and _same_built(read.call(1), read.call(0)) and _same_built(read.call(2), read.call(0))
+	return (
+		_same_cities(read.call(1), read.call(0))
+		and _same_cities(read.call(2), read.call(0))
+		and _same_built(read.call(1), read.call(0))
+		and _same_built(read.call(2), read.call(0))
+	)
 
 
 func _has_city(data: Dictionary, tower: int) -> bool:
@@ -141,14 +195,19 @@ func _has_city(data: Dictionary, tower: int) -> bool:
 
 
 func _same_cities(a: Dictionary, b: Dictionary) -> bool:
-	return _key(a.get("cities", [])) == _key(b.get("cities", [])) and not _key(b.get("cities", [])).is_empty()
+	return (
+		_key(a.get("cities", [])) == _key(b.get("cities", []))
+		and not _key(b.get("cities", [])).is_empty()
+	)
 
 
 func _same_built(a: Dictionary, b: Dictionary) -> bool:
-	return _key(a.get("walls", [])) == _key(b.get("walls", [])) \
-			and _key(a.get("autos", [])) == _key(b.get("autos", [])) \
-			and not _key(b.get("walls", [])).is_empty() \
-			and not _key(b.get("autos", [])).is_empty()
+	return (
+		_key(a.get("walls", [])) == _key(b.get("walls", []))
+		and _key(a.get("autos", [])) == _key(b.get("autos", []))
+		and not _key(b.get("walls", [])).is_empty()
+		and not _key(b.get("autos", [])).is_empty()
+	)
 
 
 func _key(rows: Array) -> String:

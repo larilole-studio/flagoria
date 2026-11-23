@@ -73,8 +73,15 @@ func _fight(mob: Mob) -> bool:
 			saw_hurt = saw_hurt or mob.state == Mob.State.HURT
 			saw_dying = saw_dying or mob.state == Mob.State.DYING
 			await physics_frame
-	var dead := not is_instance_valid(mob) or (is_instance_valid(mob) and mob.state == Mob.State.DYING)
-	print("dedicated_play: client-a %s hurt=%s dying=%s dead=%s" % [mob.name if is_instance_valid(mob) else "gone", saw_hurt, saw_dying, dead])
+	var dead := (
+		not is_instance_valid(mob) or (is_instance_valid(mob) and mob.state == Mob.State.DYING)
+	)
+	print(
+		(
+			"dedicated_play: client-a %s hurt=%s dying=%s dead=%s"
+			% [mob.name if is_instance_valid(mob) else "gone", saw_hurt, saw_dying, dead]
+		)
+	)
 	return saw_hurt and dead
 
 
@@ -112,10 +119,14 @@ func _walk_near(mob: Mob) -> bool:
 			else:
 				action = "ui_down" if delta.y > 0.0 else "ui_up"
 			await hold(action, 2)
-		if map.local_to_map(map.to_local(hero().global_position)) != cell \
-				and hero().global_position.distance_to(map.map_to_local(cell)) >= 10.0:
+		if (
+			map.local_to_map(map.to_local(hero().global_position)) != cell
+			and hero().global_position.distance_to(map.map_to_local(cell)) >= 10.0
+		):
 			return false
-	return is_instance_valid(mob) and hero().global_position.distance_to(mob.global_position) <= 48.0
+	return (
+		is_instance_valid(mob) and hero().global_position.distance_to(mob.global_position) <= 48.0
+	)
 
 
 func _path_to(map: TileMap, mob: Mob) -> Array[Vector2i]:

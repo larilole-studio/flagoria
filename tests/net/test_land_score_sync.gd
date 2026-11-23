@@ -25,15 +25,27 @@ func _test_land_score_two_players() -> int:
 		fail = 1
 	else:
 		launch.call(false)
-		if not await wait_for.call(func() -> bool: return _matched(read.call(1), read.call(0)), 20000):
-			printerr("FAIL land_score_two_players: client %s host %s" % [read.call(1), read.call(0)])
+		if not await wait_for.call(
+			func() -> bool: return _matched(read.call(1), read.call(0)), 20000
+		):
+			printerr(
+				"FAIL land_score_two_players: client %s host %s" % [read.call(1), read.call(0)]
+			)
 			fail = 1
 		else:
 			launch.call(false)
-			if not await wait_for.call(func() -> bool:
-				return read.call(2).get("ready", false) and _matched(read.call(2), read.call(0)) \
-						and _matched(read.call(1), read.call(0)), 20000):
-				printerr("FAIL land_score_two_players: joiner %s host %s" % [read.call(2), read.call(0)])
+			if not await wait_for.call(
+				func() -> bool:
+					return (
+						read.call(2).get("ready", false)
+						and _matched(read.call(2), read.call(0))
+						and _matched(read.call(1), read.call(0))
+					),
+				20000
+			):
+				printerr(
+					"FAIL land_score_two_players: joiner %s host %s" % [read.call(2), read.call(0)]
+				)
 				fail = 1
 			else:
 				var before := int(read.call(0).get("points", {}).get("1", -1))
@@ -41,14 +53,22 @@ func _test_land_score_two_players() -> int:
 				drop.store_string("drop")
 				drop.close()
 				if not await wait_for.call(func() -> bool: return _dropped(read, before), 15000):
-					printerr("FAIL land_score_two_players: after the loss host %s client %s joiner %s"
-							% [read.call(0), read.call(1), read.call(2)])
+					printerr(
+						(
+							"FAIL land_score_two_players: after the loss host %s client %s joiner %s"
+							% [read.call(0), read.call(1), read.call(2)]
+						)
+					)
 					fail = 1
 		for i in session["outs"].size():
 			var data: Dictionary = read.call(i)
 			if not data.get("errors", []).is_empty() or data.get("client_tick_same", true) != true:
-				printerr("FAIL land_score_two_players: peer %d errors %s client tick %s"
-						% [i, data.get("errors", []), data.get("client_tick_same", true)])
+				printerr(
+					(
+						"FAIL land_score_two_players: peer %d errors %s client tick %s"
+						% [i, data.get("errors", []), data.get("client_tick_same", true)]
+					)
+				)
 				fail = 1
 	await _close(session)
 	if fail == 0:
@@ -82,7 +102,10 @@ func _same(data: Dictionary, host: Dictionary) -> bool:
 	for peer_id in theirs:
 		if int(mine.get(str(peer_id), -1)) != int(theirs[peer_id]):
 			return false
-		if int(data.get("land", {}).get(str(peer_id), -1)) != int(host.get("land", {}).get(str(peer_id), -2)):
+		if (
+			int(data.get("land", {}).get(str(peer_id), -1))
+			!= int(host.get("land", {}).get(str(peer_id), -2))
+		):
 			return false
 	return _board_has(data, 1, int(theirs.get("1", -1)))
 
@@ -113,7 +136,9 @@ func _open() -> Dictionary:
 		return {}
 	var dir := make_probe_dir("land_score_%d_%d" % [OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_land_score_%d_%d" % [OS.get_process_id(), port])
+	var saved := MapSave.save_world(
+		WorldSave.new(params), "test_land_score_%d_%d" % [OS.get_process_id(), port]
+	)
 	if saved["error"] != "":
 		printerr("FAIL land score sync could not save the map: %s" % saved["error"])
 		return {}
@@ -130,8 +155,13 @@ func _open() -> Dictionary:
 	var wait_for := wait_until
 	launch.call(true)
 	return {
-		"dir": dir, "outs": outs, "probes": probes, "saved": saved["path"],
-		"launch": launch, "read": read, "wait_for": wait_for,
+		"dir": dir,
+		"outs": outs,
+		"probes": probes,
+		"saved": saved["path"],
+		"launch": launch,
+		"read": read,
+		"wait_for": wait_for,
 	}
 
 

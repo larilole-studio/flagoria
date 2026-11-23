@@ -26,18 +26,31 @@ func _test_castle_owners_two_players() -> int:
 	else:
 		launch.call(false, "play")
 		if not await wait_for.call(func() -> bool: return _pair(read.call(0), read.call(1)), 30000):
-			printerr("FAIL castle_owners_two_players: after join host %s client %s"
-					% [_brief(read.call(0)), _brief(read.call(1))])
+			printerr(
+				(
+					"FAIL castle_owners_two_players: after join host %s client %s"
+					% [_brief(read.call(0)), _brief(read.call(1))]
+				)
+			)
 			fail = 1
 		else:
 			launch.call(false, "watch")
 			if not await wait_for.call(func() -> bool: return _trio(read), 30000):
-				printerr("FAIL castle_owners_two_players: late joiner host %s client %s joiner %s"
-						% [_brief(read.call(0)), _brief(read.call(1)), _brief(read.call(2))])
+				printerr(
+					(
+						"FAIL castle_owners_two_players: late joiner host %s client %s joiner %s"
+						% [_brief(read.call(0)), _brief(read.call(1)), _brief(read.call(2))]
+					)
+				)
 				fail = 1
 		for i in session["outs"].size():
 			if not read.call(i).get("errors", []).is_empty():
-				printerr("FAIL castle_owners_two_players: peer %d errors %s" % [i, read.call(i).get("errors", [])])
+				printerr(
+					(
+						"FAIL castle_owners_two_players: peer %d errors %s"
+						% [i, read.call(i).get("errors", [])]
+					)
+				)
 				fail = 1
 	await _close(session)
 	if fail == 0:
@@ -68,8 +81,16 @@ func _trio(read: Callable) -> bool:
 		return false
 	var builder := int(str(client.get("id", "0")))
 	var third := int(str(late.get("id", "0")))
-	return builder > 1 and third > 1 and third != builder and _owned(rows, 1) \
-			and _owned(rows, builder) and _owned(rows, third) and _flags(rows) and _blocked(rows)
+	return (
+		builder > 1
+		and third > 1
+		and third != builder
+		and _owned(rows, 1)
+		and _owned(rows, builder)
+		and _owned(rows, third)
+		and _flags(rows)
+		and _blocked(rows)
+	)
 
 
 func _same(a: Dictionary, b: Dictionary) -> bool:
@@ -102,7 +123,9 @@ func _flags(rows: Array) -> bool:
 		if flag.size() < 2:
 			return false
 		var atlas := Vector2i(int(flag[0]), int(flag[1]))
-		var want := TileCatalog.PROP_FLAG_BLUE if int(row["owner"]) == 1 else TileCatalog.PROP_FLAG_RED
+		var want := (
+			TileCatalog.PROP_FLAG_BLUE if int(row["owner"]) == 1 else TileCatalog.PROP_FLAG_RED
+		)
 		if atlas != want:
 			return false
 	return true
@@ -119,7 +142,9 @@ func _brief(data: Dictionary) -> String:
 	var owners := []
 	for row in _rows(data):
 		owners.append(int(row["owner"]))
-	return "ready=%s owners=%s errors=%s" % [data.get("ready", false), owners, data.get("errors", [])]
+	return (
+		"ready=%s owners=%s errors=%s" % [data.get("ready", false), owners, data.get("errors", [])]
+	)
 
 
 func _open() -> Dictionary:
@@ -129,7 +154,9 @@ func _open() -> Dictionary:
 		return {}
 	var dir := make_probe_dir("castle_sync_%d_%d" % [OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_castle_%d_%d" % [OS.get_process_id(), port])
+	var saved := MapSave.save_world(
+		WorldSave.new(params), "test_castle_%d_%d" % [OS.get_process_id(), port]
+	)
 	if saved["error"] != "":
 		printerr("FAIL castle sync could not save the map: %s" % saved["error"])
 		return {}
@@ -146,8 +173,13 @@ func _open() -> Dictionary:
 	var wait_for := wait_until
 	launch.call(true, "play")
 	return {
-		"dir": dir, "outs": outs, "probes": probes, "saved": saved["path"],
-		"launch": launch, "read": read, "wait_for": wait_for,
+		"dir": dir,
+		"outs": outs,
+		"probes": probes,
+		"saved": saved["path"],
+		"launch": launch,
+		"read": read,
+		"wait_for": wait_for,
 	}
 
 

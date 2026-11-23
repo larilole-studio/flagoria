@@ -33,8 +33,12 @@ const BUTTON_NAMES := {
 
 static func picker_tools() -> Array:
 	return [
-		BuildPlacement.Tool.PLANK, BuildPlacement.Tool.WALL, BuildPlacement.Tool.TOWER,
-		BuildPlacement.Tool.CASTLE, BuildPlacement.Tool.GUARD, BuildPlacement.Tool.BARRACKS,
+		BuildPlacement.Tool.PLANK,
+		BuildPlacement.Tool.WALL,
+		BuildPlacement.Tool.TOWER,
+		BuildPlacement.Tool.CASTLE,
+		BuildPlacement.Tool.GUARD,
+		BuildPlacement.Tool.BARRACKS,
 	]
 
 
@@ -57,14 +61,14 @@ static func is_footprint(tool: BuildPlacement.Tool) -> bool:
 static func tracks_pointer(tool: BuildPlacement.Tool) -> bool:
 	if tool == BuildPlacement.Tool.CUT:
 		return false
-	return tool == BuildPlacement.Tool.PLANK or tool == BuildPlacement.Tool.WALL or is_footprint(tool)
+	return (
+		tool == BuildPlacement.Tool.PLANK or tool == BuildPlacement.Tool.WALL or is_footprint(tool)
+	)
 
 
 static func populate_picker(
-		picker: Control,
-		theme: Theme,
-		buttons: Dictionary,
-		on_select: Callable) -> void:
+	picker: Control, theme: Theme, buttons: Dictionary, on_select: Callable
+) -> void:
 	for child in picker.get_children():
 		child.queue_free()
 	buttons.clear()
@@ -78,7 +82,9 @@ static func populate_picker(
 		button.theme = theme
 		button.tooltip_text = tip(t)
 		var sprite := "guard" if t == BuildPlacement.Tool.GUARD else tip(t).to_lower()
-		RoundHudStyle.apply_disc(button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, true)
+		RoundHudStyle.apply_disc(
+			button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, true
+		)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
 		_add_picker_label(button, "Guard" if t == BuildPlacement.Tool.GUARD else tip(t))
@@ -96,7 +102,9 @@ static func _add_picker_label(button: Button, caption: String) -> void:
 	button.add_child(label)
 
 
-static func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
+static func wall_segment(
+	tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i
+) -> Array[Vector2i]:
 	var empty: Array[Vector2i] = []
 	if not has_tip:
 		if from_cell == to_cell:
@@ -106,8 +114,10 @@ static func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_c
 	if delta == Vector2i.ZERO:
 		return empty
 	var neighbours := {
-		tip + Vector2i.LEFT: true, tip + Vector2i.RIGHT: true,
-		tip + Vector2i.UP: true, tip + Vector2i.DOWN: true,
+		tip + Vector2i.LEFT: true,
+		tip + Vector2i.RIGHT: true,
+		tip + Vector2i.UP: true,
+		tip + Vector2i.DOWN: true,
 	}
 	if from_cell == to_cell:
 		if not neighbours.has(to_cell):

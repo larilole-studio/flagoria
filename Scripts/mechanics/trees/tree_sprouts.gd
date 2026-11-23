@@ -16,7 +16,9 @@ const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 ## missing tree sprouts with chance PASS_SECONDS / regrow delay, so a
 ## missing tree takes about one regrow delay to come back, like a stump.
 const PASS_SECONDS := 5.0
-const TREES: Array[Vector2i] = [TileCatalog.TREE, TileCatalog.TREE_BUSHY, TileCatalog.PINE, TileCatalog.TREE_BIRCH_BOTTOM]
+const TREES: Array[Vector2i] = [
+	TileCatalog.TREE, TileCatalog.TREE_BUSHY, TileCatalog.PINE, TileCatalog.TREE_BIRCH_BOTTOM
+]
 ## Side of the area around each player that a pass counts, in chunks: the
 ## player's chunk and its neighbours. One chunk is smaller than a forest
 ## patch, so a thinned biome would refill only where it was sparse.
@@ -91,7 +93,9 @@ func sprout_tile(cell: Vector2i) -> Vector2i:
 	return tile if tile in TREES else _WorldMap.NO_PLANT
 
 
-func _birch_foliage(cell: Vector2i, alt: float, moist: float, chance: float, biome: int, beach: bool) -> Vector2i:
+func _birch_foliage(
+	cell: Vector2i, alt: float, moist: float, chance: float, biome: int, beach: bool
+) -> Vector2i:
 	return BirchTrees.foliage_tile(_map, cell, alt, moist, chance, biome, beach, true)
 
 
@@ -111,8 +115,12 @@ func _free_now(cell: Vector2i, blocked: Dictionary) -> bool:
 	## No structure, bridge, plant, stump or stones on `cell`, and it is not
 	## in `blocked` (blocked_cells: under a mob or player, the spawn, the
 	## start castle's gate).
-	return _map.predict_cell(cell)[1] == _WorldMap.NO_PLANT and not blocked.has(cell) \
-			and not _map._structures.has_cell(cell) and not _map.has_bridge(cell)
+	return (
+		_map.predict_cell(cell)[1] == _WorldMap.NO_PLANT
+		and not blocked.has(cell)
+		and not _map._structures.has_cell(cell)
+		and not _map.has_bridge(cell)
+	)
 
 
 func blocked_cells() -> Dictionary:
@@ -122,7 +130,11 @@ func blocked_cells() -> Dictionary:
 	## start castle's gate cell and the cell outside it (StartCastle).
 	var out := _map.mob_cells()
 	for node in _map.get_parent().get_children():
-		var body := node.get_node_or_null("CollisionShape2D") as CollisionShape2D if node is CharacterBody2D else null
+		var body := (
+			node.get_node_or_null("CollisionShape2D") as CollisionShape2D
+			if node is CharacterBody2D
+			else null
+		)
 		if body and body.shape:
 			_add_player_cells(body.global_transform * body.shape.get_rect(), out)
 	out[_map.spawn_point] = true
@@ -139,7 +151,10 @@ func _add_player_cells(box: Rect2, out: Dictionary) -> void:
 	for y in range(mini(a.y, z.y) - 1, maxi(a.y, z.y) + 2):
 		for x in range(mini(a.x, z.x) - 1, maxi(a.x, z.x) + 2):
 			var cell := Vector2i(x, y)
-			var rect := Rect2(_map.to_global(_map.map_to_local(cell) - Vector2(8, 8)), Vector2(16, 16) * _map.global_scale)
+			var rect := Rect2(
+				_map.to_global(_map.map_to_local(cell) - Vector2(8, 8)),
+				Vector2(16, 16) * _map.global_scale
+			)
 			if box.intersects(rect):
 				out[cell] = true
 
@@ -196,7 +211,10 @@ func _missing(counts: Array) -> Dictionary:
 	## deficits from the [land, grown, now] counts of a window.
 	var out := {}
 	for b in counts[0]:
-		var missing: int = mini(floori(BiomeCatalog.tree_share(b) * counts[0][b]), counts[1].get(b, 0)) - counts[2].get(b, 0)
+		var missing: int = (
+			mini(floori(BiomeCatalog.tree_share(b) * counts[0][b]), counts[1].get(b, 0))
+			- counts[2].get(b, 0)
+		)
 		if missing > 0:
 			out[b] = missing
 	return out
@@ -240,8 +258,16 @@ func _untouched(cell: Vector2i) -> Array:
 	if _map.biome_frequency > 0.0:
 		tile = _birch_foliage(cell, alt, moist, chance, b, beach)
 	var tree := open and tile in TREES
-	var may_sprout := open and (_map.plant_tile(alt, moist, 1.0, b) in TREES
-			or (_map.biome_frequency > 0.0 and _birch_foliage(cell, alt, moist, 1.0, b, beach) in TREES))
+	var may_sprout := (
+		open
+		and (
+			_map.plant_tile(alt, moist, 1.0, b) in TREES
+			or (
+				_map.biome_frequency > 0.0
+				and _birch_foliage(cell, alt, moist, 1.0, b, beach) in TREES
+			)
+		)
+	)
 	return [b, ground != TileCatalog.WATER, tree, may_sprout]
 
 
@@ -259,7 +285,9 @@ func _count_square(square: Vector2i, window: Rect2i, counts: Array) -> void:
 	var a := part.position - origin
 	var z := part.end - origin
 	var tables: Dictionary = _block_table(square)[0]
-	var corners := PackedInt32Array([(z.y * W + z.x) * 2, (a.y * W + z.x) * 2, (z.y * W + a.x) * 2, (a.y * W + a.x) * 2])
+	var corners := PackedInt32Array(
+		[(z.y * W + z.x) * 2, (a.y * W + z.x) * 2, (z.y * W + a.x) * 2, (a.y * W + a.x) * 2]
+	)
 	for b in tables:
 		var t: PackedInt32Array = tables[b]
 		var land := t[corners[0]] - t[corners[1]] - t[corners[2]] + t[corners[3]]
@@ -271,7 +299,12 @@ func _count_square(square: Vector2i, window: Rect2i, counts: Array) -> void:
 	for cell: Vector2i in cells.keys():
 		if not part.has_point(cell):
 			continue
-		if not (_map.has_cut(cell) or _sprouts.has(cell) or _map._structures.has_cell(cell) or _map.has_bridge(cell)):
+		if not (
+			_map.has_cut(cell)
+			or _sprouts.has(cell)
+			or _map._structures.has_cell(cell)
+			or _map.has_bridge(cell)
+		):
 			cells.erase(cell)
 			continue
 		var n := _natural(cell)
@@ -286,8 +319,12 @@ func _count_square(square: Vector2i, window: Rect2i, counts: Array) -> void:
 func _squares(window: Rect2i) -> Array[Vector2i]:
 	## The squares `window` overlaps, in row order.
 	var out: Array[Vector2i] = []
-	for by in range(floori(window.position.y / float(BLOCK)), floori((window.end.y - 1) / float(BLOCK)) + 1):
-		for bx in range(floori(window.position.x / float(BLOCK)), floori((window.end.x - 1) / float(BLOCK)) + 1):
+	for by in range(
+		floori(window.position.y / float(BLOCK)), floori((window.end.y - 1) / float(BLOCK)) + 1
+	):
+		for bx in range(
+			floori(window.position.x / float(BLOCK)), floori((window.end.x - 1) / float(BLOCK)) + 1
+		):
 			out.append(Vector2i(bx, by))
 	return out
 
@@ -407,7 +444,9 @@ func _pick_free(window: Rect2i, want: Dictionary, blocked: Dictionary) -> Array[
 	return out
 
 
-func _pick_in(square: Vector2i, window: Rect2i, want: Dictionary, blocked: Dictionary) -> Array[Vector2i]:
+func _pick_in(
+	square: Vector2i, window: Rect2i, want: Dictionary, blocked: Dictionary
+) -> Array[Vector2i]:
 	## _pick_free in one square: the sprout spots of each wanted biome
 	## (_block_table) in `window` and _free_now, from a random one on.
 	var out: Array[Vector2i] = []
@@ -459,7 +498,11 @@ func restore(changes: Dictionary) -> int:
 			if not entry is Dictionary or not entry.has("sprout") or cell == null:
 				continue
 			var tile := sprout_tile(cell)
-			if tile != _WorldMap.NO_PLANT and InteractableCatalog.type_at(tile).save_key == str(entry["sprout"]) and add(cell):
+			if (
+				tile != _WorldMap.NO_PLANT
+				and InteractableCatalog.type_at(tile).save_key == str(entry["sprout"])
+				and add(cell)
+			):
 				added += 1
 	return added
 

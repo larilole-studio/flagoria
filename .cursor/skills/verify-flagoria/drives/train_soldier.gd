@@ -2,11 +2,16 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Place a barracks, train a soldier, toggle follow and hold.
 
-
 const ROTATE_BTN := "CanvasLayer1/FootprintRotateButton"
 const STAND_OFFS := [
-	Vector2i(0, 5), Vector2i(5, 0), Vector2i(-5, 0), Vector2i(0, -5),
-	Vector2i(0, 4), Vector2i(4, 0), Vector2i(-4, 0), Vector2i(0, -4),
+	Vector2i(0, 5),
+	Vector2i(5, 0),
+	Vector2i(-5, 0),
+	Vector2i(0, -5),
+	Vector2i(0, 4),
+	Vector2i(4, 0),
+	Vector2i(-4, 0),
+	Vector2i(0, -4),
 ]
 
 
@@ -77,14 +82,25 @@ func _find_anchor(map: TileMap, placer: ConstructionPlacer) -> Variant:
 	return null
 
 
-func _stand_near(it: Interaction, map: TileMap, placer: ConstructionPlacer,
-		inventory: Inventory, anchor: Vector2i) -> bool:
+func _stand_near(
+	it: Interaction,
+	map: TileMap,
+	placer: ConstructionPlacer,
+	inventory: Inventory,
+	anchor: Vector2i
+) -> bool:
 	var one: Array[Vector2i] = [anchor]
 	for off: Vector2i in STAND_OFFS:
 		hero().global_position = map.to_global(map.map_to_local(anchor + off))
 		for i in 8:
 			await process_frame
-		if it.in_reach(anchor) \
-				and placer.can_place(BuildCosts.BARRACKS, one, inventory, it.build.footprint_rotation).is_empty():
+		if (
+			it.in_reach(anchor)
+			and (
+				placer
+				. can_place(BuildCosts.BARRACKS, one, inventory, it.build.footprint_rotation)
+				. is_empty()
+			)
+		):
 			return true
 	return false

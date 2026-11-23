@@ -46,7 +46,6 @@ extends Resource
 ## Play the puff cloud (MobCatalog.PUFF_SHEET) over the cell when it falls.
 @export var fell_puff := false
 
-
 ## Set by hit_row when `atlas` is not in `tiles` (fallback used row 0).
 var last_hit_row_missed := false
 
@@ -60,8 +59,7 @@ func hit_row(atlas: Vector2i) -> int:
 			return row
 	last_hit_row_missed = true
 	push_warning(
-			"InteractableType.hit_row: type '%s' has no tile for atlas %s; using row 0"
-			% [id, atlas]
+		"InteractableType.hit_row: type '%s' has no tile for atlas %s; using row 0" % [id, atlas]
 	)
 	return 0
 

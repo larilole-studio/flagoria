@@ -20,22 +20,40 @@ func _test_mob_sfx_clips() -> int:
 				fail += 1
 			for clip in clips:
 				var wav := clip as AudioStreamWAV
-				if wav == null or wav.get_length() <= 0.05 or not ResourceLoader.exists(wav.resource_path):
-					printerr("FAIL mob_sfx_clips: %s %s clip %s missing or empty" % [t, event, clip])
+				if (
+					wav == null
+					or wav.get_length() <= 0.05
+					or not ResourceLoader.exists(wav.resource_path)
+				):
+					printerr(
+						"FAIL mob_sfx_clips: %s %s clip %s missing or empty" % [t, event, clip]
+					)
 					fail += 1
 				elif not wav.resource_path.get_file().begins_with("%s_%s_" % [t, event]):
 					printerr("FAIL mob_sfx_clips: %s %s maps to %s" % [t, event, wav.resource_path])
 					fail += 1
 	# The crab clips are 1-3.6 dB quieter than the others; its offset makes up some of it.
-	if not (MobSfx.MOB_VOLUME_DB.get(MobCatalog.CRAB, 0.0) >= 1.0 and MobSfx.MOB_VOLUME_DB.get(MobCatalog.CRAB, 0.0) <= 3.6):
-		printerr("FAIL mob_sfx_clips: crab offset %s dB, want 1..3.6" % MobSfx.MOB_VOLUME_DB.get(MobCatalog.CRAB))
+	if not (
+		MobSfx.MOB_VOLUME_DB.get(MobCatalog.CRAB, 0.0) >= 1.0
+		and MobSfx.MOB_VOLUME_DB.get(MobCatalog.CRAB, 0.0) <= 3.6
+	):
+		printerr(
+			(
+				"FAIL mob_sfx_clips: crab offset %s dB, want 1..3.6"
+				% MobSfx.MOB_VOLUME_DB.get(MobCatalog.CRAB)
+			)
+		)
 		fail += 1
 	for t in MobSfx.SOUNDS:
 		if not MobCatalog.TYPES.has(t):
 			printerr("FAIL mob_sfx_clips: sounds for unknown mob %s" % t)
 			fail += 1
 	for event in MobSfx.EVENTS:
-		if not MobSfx.VOLUME_DB.has(event) or not MobSfx.COOLDOWN.has(event) or not MobSfx.new().plays.has(event):
+		if (
+			not MobSfx.VOLUME_DB.has(event)
+			or not MobSfx.COOLDOWN.has(event)
+			or not MobSfx.new().plays.has(event)
+		):
 			printerr("FAIL mob_sfx_clips: %s lacks a volume, cooldown or counter" % event)
 			fail += 1
 	for t in MobCatalog.names():
@@ -45,8 +63,17 @@ func _test_mob_sfx_clips() -> int:
 		for event in MobSfx.EVENTS:
 			var p: AudioStreamPlayer2D = mob.sfx.get_node(event)
 			var want: float = MobSfx.VOLUME_DB[event] + MobSfx.MOB_VOLUME_DB[t]
-			if p.bus != &"SFX" or not is_equal_approx(p.volume_db, want) or p.max_distance != MobSfx.MAX_DISTANCE:
-				printerr("FAIL mob_sfx_clips: %s %s on %s at %s dB, max %s" % [t, event, p.bus, p.volume_db, p.max_distance])
+			if (
+				p.bus != &"SFX"
+				or not is_equal_approx(p.volume_db, want)
+				or p.max_distance != MobSfx.MAX_DISTANCE
+			):
+				printerr(
+					(
+						"FAIL mob_sfx_clips: %s %s on %s at %s dB, max %s"
+						% [t, event, p.bus, p.volume_db, p.max_distance]
+					)
+				)
 				fail += 1
 		mob.free()
 	if fail == 0:
@@ -82,7 +109,12 @@ func _test_mob_sfx_events() -> int:
 			m.sfx._last_ms.clear()  # steps are not about cooldowns
 		for e in MobSfx.EVENTS:
 			if got[e] != expect.get(e, 0):
-				printerr("FAIL mob_sfx_events %s %s: plays %s, want %s" % [m.mob_type, label, got, expect])
+				printerr(
+					(
+						"FAIL mob_sfx_events %s %s: plays %s, want %s"
+						% [m.mob_type, label, got, expect]
+					)
+				)
 				return 1
 		return 0
 
@@ -202,7 +234,14 @@ func _test_mob_sfx_events() -> int:
 	# The hooks reach every peer only if both values are synced on change.
 	var cfg: SceneReplicationConfig = a.get_node("MultiplayerSynchronizer").replication_config
 	for prop in [NodePath(".:state"), NodePath(".:attacks")]:
-		if not cfg.has_property(prop) or cfg.property_get_replication_mode(prop) != SceneReplicationConfig.REPLICATION_MODE_ON_CHANGE or not cfg.property_get_spawn(prop):
+		if (
+			not cfg.has_property(prop)
+			or (
+				cfg.property_get_replication_mode(prop)
+				!= SceneReplicationConfig.REPLICATION_MODE_ON_CHANGE
+			)
+			or not cfg.property_get_spawn(prop)
+		):
 			printerr("FAIL mob_sfx_events %s is not synced on change and at spawn" % prop)
 			fail += 1
 	scene.queue_free()

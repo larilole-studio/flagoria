@@ -30,9 +30,14 @@ func _run() -> void:
 	var world_seed := int(options.seed)
 	var frames := int(options.frames)
 	var large: bool = options.size == "large"
-	if not String(options.seed).is_valid_int() or world_seed <= 0 or world_seed > 2147483643 \
-			or not String(options.frames).is_valid_int() or frames <= 0 \
-			or (not large and options.size != "default"):
+	if (
+		not String(options.seed).is_valid_int()
+		or world_seed <= 0
+		or world_seed > 2147483643
+		or not String(options.frames).is_valid_int()
+		or frames <= 0
+		or (not large and options.size != "default")
+	):
 		_fail("invalid seed, frame count, or size")
 		return
 
@@ -59,12 +64,15 @@ func _run() -> void:
 	var world := game.get_node("World/worldMap") as TileMap
 	var map_gen := root.get_node("MapGen")
 	map_gen.params = params
-	game.host_port = 0 # Let the OS choose an unused UDP port.
+	game.host_port = 0  # Let the OS choose an unused UDP port.
 	start = Time.get_ticks_usec()
 	game.get_node("CanvasLayer2/MainMenu")._begin_host()
 	var host_us := Time.get_ticks_usec() - start
 	var hero := game.get_node_or_null("World/1") as CharacterBody2D
-	if hero == null or game.enet_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+	if (
+		hero == null
+		or game.enet_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED
+	):
 		_fail("host or local player did not start")
 		return
 	var first_chunk_wall_us := -1
@@ -102,8 +110,7 @@ func _run() -> void:
 		await process_frame
 		frame_wall.append(Time.get_ticks_usec() - frame_start)
 		# Godot 4.7 publishes interval peaks, held across multiple frames.
-		monitor_pairs[Vector2(Performance.get_monitor(Performance.TIME_PROCESS),
-			Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS))] = true
+		monitor_pairs[Vector2(Performance.get_monitor(Performance.TIME_PROCESS), Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS))] = true
 		travel += previous.distance_to(hero.position)
 		previous = hero.position
 		for key in MONITORS:
@@ -113,10 +120,22 @@ func _run() -> void:
 			samples[key].append(value * 1000000.0 if key.ends_with("_us") else value)
 	Input.action_release(WALK[walk])
 
-	var report := "BENCH seed=%d size=%s frames=%d physics_ticks=%d scene_us=%d host_us=%d spawn_terrain_wait_us=%d monitor_pairs=%d travel_px=%.1f end_x=%.1f end_y=%.1f" % [
-		world_seed, options.size, frames, Engine.get_physics_frames() - physics_start,
-		scene_us, host_us, first_chunk_wall_us, monitor_pairs.size(), travel, previous.x, previous.y,
-	]
+	var report := (
+		"BENCH seed=%d size=%s frames=%d physics_ticks=%d scene_us=%d host_us=%d spawn_terrain_wait_us=%d monitor_pairs=%d travel_px=%.1f end_x=%.1f end_y=%.1f"
+		% [
+			world_seed,
+			options.size,
+			frames,
+			Engine.get_physics_frames() - physics_start,
+			scene_us,
+			host_us,
+			first_chunk_wall_us,
+			monitor_pairs.size(),
+			travel,
+			previous.x,
+			previous.y,
+		]
+	)
 	for key in MONITORS:
 		report += _stats(key, samples[key])
 	print(report + _stats("frame_wall_us", frame_wall))
@@ -133,10 +152,19 @@ func _stats(key: String, values: PackedFloat64Array) -> String:
 	for value in values:
 		total += value
 	var count := values.size()
-	return " %s_mean=%.1f %s_p50=%.1f %s_p95=%.1f %s_max=%.1f" % [
-		key, total / count, key, values[ceili(count * 0.5) - 1],
-		key, values[ceili(count * 0.95) - 1], key, values[count - 1],
-	]
+	return (
+		" %s_mean=%.1f %s_p50=%.1f %s_p95=%.1f %s_max=%.1f"
+		% [
+			key,
+			total / count,
+			key,
+			values[ceili(count * 0.5) - 1],
+			key,
+			values[ceili(count * 0.95) - 1],
+			key,
+			values[count - 1],
+		]
+	)
 
 
 func _fail(message: String) -> void:

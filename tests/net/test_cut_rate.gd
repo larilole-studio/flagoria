@@ -15,7 +15,10 @@ const RATE_ROWS := {
 	"test_cut_rate_drag_burst": {"peer": 2, "refill": false, "drag": true},
 }
 
-class FakeApi extends Batch.FakeApi:
+
+class FakeApi:
+	extends Batch.FakeApi
+
 	func _get_peer_ids() -> PackedInt32Array:
 		return PackedInt32Array([2, 3])
 
@@ -61,7 +64,9 @@ func _cut_by(api: FakeApi, s: Dictionary, peer: int, cell: Vector2i) -> bool:
 	api.sent.clear()
 	api.sender = peer
 	s["interaction"].request_cut(cell)
-	var yields := api.sent.filter(func(r: Array) -> bool: return r[0] == peer and str(r[1]) == "receive_yields")
+	var yields := api.sent.filter(
+		func(r: Array) -> bool: return r[0] == peer and str(r[1]) == "receive_yields"
+	)
 	return s["world"].choppable(cell) == null and yields.size() == 1
 
 
@@ -105,12 +110,22 @@ func _run_rate_row(label: String) -> int:
 		_spam(api, session, 2, spam)
 		if row["refill"]:
 			if _cut_by(api, session, peer, cell) or session["world"].choppable(cell) == null:
-				printerr("FAIL %s: after %d requests, peer %d's next request cut %s" % [label, spam, peer, cell])
+				printerr(
+					(
+						"FAIL %s: after %d requests, peer %d's next request cut %s"
+						% [label, spam, peer, cell]
+					)
+				)
 				fail += 1
 			if script:
 				session["now"][0] += 1.0 / script.RATE
 		if not _cut_by(api, session, peer, cell):
-			printerr("FAIL %s: peer %d could not cut %s after peer 2 sent %d requests" % [label, peer, cell, spam])
+			printerr(
+				(
+					"FAIL %s: peer %d could not cut %s after peer 2 sent %d requests"
+					% [label, peer, cell, spam]
+				)
+			)
 			fail += 1
 	await close_rpc_test_scene(session["scene"])
 	if fail == 0:
@@ -152,14 +167,23 @@ func _test_cut_rate_numbers() -> int:
 	scene.free()
 	var tile := float(script.TILE)
 	if Vector2(tiles.tile_size) != Vector2(tile, tile):
-		printerr("FAIL cut_rate_numbers: tiles are %s px, the limit assumes %s" % [tiles.tile_size, tile])
+		printerr(
+			"FAIL cut_rate_numbers: tiles are %s px, the limit assumes %s" % [tiles.tile_size, tile]
+		)
 		fail += 1
 	var most := 0
 	for a in 64:
 		for b in 64:
-			most = maxi(most, _in_reach(Vector2(a, b) * tile / 64.0, tile, Interaction.REACH).size())
+			most = maxi(
+				most, _in_reach(Vector2(a, b) * tile / 64.0, tile, Interaction.REACH).size()
+			)
 	if most != script.DRAG_CELLS:
-		printerr("FAIL cut_rate_numbers: at most %d cells are in reach, DRAG_CELLS is %d" % [most, script.DRAG_CELLS])
+		printerr(
+			(
+				"FAIL cut_rate_numbers: at most %d cells are in reach, DRAG_CELLS is %d"
+				% [most, script.DRAG_CELLS]
+			)
+		)
 		fail += 1
 	var speed := float(preload("res://Scripts/player/player.gd").MAX_SPEED)
 	for dir in [Vector2.RIGHT, Vector2(1, 1).normalized(), Vector2(2, 1).normalized()]:
@@ -176,8 +200,18 @@ func _test_cut_rate_numbers() -> int:
 					asked[cell] = true
 					refused += int(not limit.allow(2))
 		if refused > 0:
-			printerr("FAIL cut_rate_numbers: walking %s at %d px/s, %d of %d requests were refused" % [dir, speed, refused, asked.size()])
+			printerr(
+				(
+					"FAIL cut_rate_numbers: walking %s at %d px/s, %d of %d requests were refused"
+					% [dir, speed, refused, asked.size()]
+				)
+			)
 			fail += 1
 	if fail == 0:
-		print("PASS test_cut_rate_numbers (%d cells in reach, burst %d, %.1f/s)" % [most, script.BURST, script.RATE])
+		print(
+			(
+				"PASS test_cut_rate_numbers (%d cells in reach, burst %d, %.1f/s)"
+				% [most, script.BURST, script.RATE]
+			)
+		)
 	return fail

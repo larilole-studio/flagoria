@@ -83,15 +83,31 @@ func run() -> void:
 	var map_btn := current_scene.get_node(MAP) as Control
 	var wheel: ToolWheel = current_scene.get_node(WHEEL)
 	var wheel_button := wheel.get_node("ToolButton") as Control
-	var ok := attack != null and attack.texture_normal != null and map_btn != null and wheel_button != null
+	var ok := (
+		attack != null
+		and attack.texture_normal != null
+		and map_btn != null
+		and wheel_button != null
+	)
 	step("default-layout")
 	var stick := layer.get_node("player_joystick") as Node2D
-	ok = ok and await wait_until(func() -> bool:
-		var center := attack.global_position + attack.texture_normal.get_size() * attack.scale * 0.5
-		var view := layer.get_viewport().get_visible_rect()
-		return is_equal_approx(center.y, stick.global_position.y) \
-				and is_equal_approx(view.end.x - center.x, stick.global_position.x - view.position.x)
-	, 5.0)
+	ok = (
+		ok
+		and await wait_until(
+			func() -> bool:
+				var center := (
+					attack.global_position + attack.texture_normal.get_size() * attack.scale * 0.5
+				)
+				var view := layer.get_viewport().get_visible_rect()
+				return (
+					is_equal_approx(center.y, stick.global_position.y)
+					and is_equal_approx(
+						view.end.x - center.x, stick.global_position.x - view.position.x
+					)
+				),
+			5.0
+		)
+	)
 	await snapshot("default-layout")
 	var default_pos := attack.global_position
 	var default_map := map_btn.global_position
@@ -133,8 +149,16 @@ func run() -> void:
 	ok = ok and map_btn.global_position.distance_to(default_map) > 10.0
 	ok = ok and _controls_clear_of_bar(layer)
 	if not ok:
-		printerr("hud customize: failed by moved-control attack-moved=%s map-moved=%s slider=%s"
-				% [attack.global_position.distance_to(default_pos) > 12.0, map_btn.global_position.distance_to(default_map) > 10.0, (current_scene.get_node(SIZE_SLIDER) as HSlider).editable])
+		printerr(
+			(
+				"hud customize: failed by moved-control attack-moved=%s map-moved=%s slider=%s"
+				% [
+					attack.global_position.distance_to(default_pos) > 12.0,
+					map_btn.global_position.distance_to(default_map) > 10.0,
+					(current_scene.get_node(SIZE_SLIDER) as HSlider).editable
+				]
+			)
+		)
 	await snapshot("moved-control")
 
 	step("moved-wheel")
@@ -149,7 +173,9 @@ func run() -> void:
 	wheel_button = wheel.get_node("ToolButton") as Control
 	var wheel_scale := wheel_button.size.x / RoundHudStyle.HIT
 	if not placed or wheel_button.global_position.distance_to(default_wheel) <= 12.0:
-		printerr("hud customize: wheel move placed=%s at %s" % [placed, wheel_button.global_position])
+		printerr(
+			"hud customize: wheel move placed=%s at %s" % [placed, wheel_button.global_position]
+		)
 	if absf(wheel_scale - 1.75) >= 0.08:
 		printerr("hud customize: wheel scale %s size %s" % [wheel_scale, wheel_button.size])
 	if not _controls_clear_of_bar(layer):
@@ -165,8 +191,12 @@ func run() -> void:
 	attack_at = to_window(attack, attack.texture_normal.get_size() * attack.scale * 0.5)
 	await _tap(attack_at)
 	var blocked: bool = not _hud_layout().try_place(
-			"attack", buildings.global_position.x / layer.get_viewport().get_visible_rect().size.x,
-			buildings.global_position.y / layer.get_viewport().get_visible_rect().size.y, 1.0, layer)
+		"attack",
+		buildings.global_position.x / layer.get_viewport().get_visible_rect().size.x,
+		buildings.global_position.y / layer.get_viewport().get_visible_rect().size.y,
+		1.0,
+		layer
+	)
 	await process_frame
 	ok = ok and blocked
 	if not ok and not blocked:
@@ -182,7 +212,10 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		done(false)
 		return
-	await wait_until(func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), START_TIMEOUT_S)
+	await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON),
+		START_TIMEOUT_S
+	)
 	await click(HOST_BUTTON)
 	await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S)
 	layer = current_scene.get_node("CanvasLayer1") as CanvasLayer
@@ -191,9 +224,13 @@ func run() -> void:
 	if not _hud_layout().uses_custom():
 		_hud_layout().load_from_disk()
 	_hud_layout().apply(layer)
-	await wait_until(func() -> bool:
-		return _hud_layout().uses_custom() and attack.global_position.distance_to(saved_pos) < 12.0
-	, 3.0)
+	await wait_until(
+		func() -> bool:
+			return (
+				_hud_layout().uses_custom() and attack.global_position.distance_to(saved_pos) < 12.0
+			),
+		3.0
+	)
 	await process_frame
 	await process_frame
 	wheel = current_scene.get_node(WHEEL) as ToolWheel
@@ -201,7 +238,9 @@ func run() -> void:
 	if attack.global_position.distance_to(saved_pos) >= 8.0:
 		printerr("hud customize: attack reload %s want %s" % [attack.global_position, saved_pos])
 	if wheel_button.global_position.distance_to(saved_wheel) >= 8.0:
-		printerr("hud customize: wheel reload %s want %s" % [wheel_button.global_position, saved_wheel])
+		printerr(
+			"hud customize: wheel reload %s want %s" % [wheel_button.global_position, saved_wheel]
+		)
 	ok = ok and _hud_layout().uses_custom() and attack.global_position.distance_to(saved_pos) < 8.0
 	ok = ok and wheel_button.global_position.distance_to(saved_wheel) < 8.0
 	await snapshot("after-save-restart")
@@ -251,7 +290,12 @@ func run() -> void:
 	if map_btn.global_position.distance_to(default_map) >= 16.0:
 		printerr("hud customize: map reset %s want %s" % [map_btn.global_position, default_map])
 	if wheel_button.global_position.distance_to(default_wheel) >= 16.0:
-		printerr("hud customize: wheel reset %s want %s size %s" % [wheel_button.global_position, default_wheel, wheel_button.size])
+		printerr(
+			(
+				"hud customize: wheel reset %s want %s size %s"
+				% [wheel_button.global_position, default_wheel, wheel_button.size]
+			)
+		)
 	ok = ok and not _hud_layout().uses_custom()
 	ok = ok and attack.global_position.distance_to(default_pos) < 16.0
 	ok = ok and map_btn.global_position.distance_to(default_map) < 16.0
@@ -291,7 +335,13 @@ func _arc_on_screen(wheel: ToolWheel) -> bool:
 		if not view.encloses(rect):
 			printerr("hud customize: %s off screen %s view %s" % [node_name, rect, view])
 			return false
-		if node_name == "Bow" and rect.get_center().distance_to(view.get_center()) + 4.0 < button.distance_to(view.get_center()):
+		if (
+			node_name == "Bow"
+			and (
+				rect.get_center().distance_to(view.get_center()) + 4.0
+				< button.distance_to(view.get_center())
+			)
+		):
 			inward = true
 	if not inward:
 		printerr("hud customize: arc did not open toward the screen centre")

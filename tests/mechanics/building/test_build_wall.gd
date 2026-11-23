@@ -12,8 +12,12 @@ func _clear_wall_run(world, count: int = 4) -> Array[Vector2i]:
 			var run: Array[Vector2i] = []
 			for i in range(count + 1):
 				var c: Vector2i = cell + Vector2i(i, 0)
-				if world.get_cell_source_id(0, c) == -1 or not world.predicted_clear(c) \
-						or world.has_wall(c) or world._structures.has_cell(c):
+				if (
+					world.get_cell_source_id(0, c) == -1
+					or not world.predicted_clear(c)
+					or world.has_wall(c)
+					or world._structures.has_cell(c)
+				):
 					break
 				run.append(c)
 			if run.size() == count + 1:
@@ -55,8 +59,12 @@ func _boot_wall_scene() -> Dictionary:
 	await process_frame
 	player.position = stand
 	return {
-		"scene": scene, "world": world, "interaction": interaction,
-		"inventory": inventory, "player": player, "run": run,
+		"scene": scene,
+		"world": world,
+		"interaction": interaction,
+		"inventory": inventory,
+		"player": player,
+		"run": run,
 	}
 
 
@@ -78,31 +86,36 @@ func _test_build_wall_segment_tip_and_gap() -> int:
 		printerr("FAIL build_wall_segment_tip_and_gap: first tap got %s" % [first_tap])
 		fail += 1
 	var first_drag: Array[Vector2i] = BuildPlacement.new().wall_segment(
-			tip, false, tip, tip + Vector2i(3, 0))
+		tip, false, tip, tip + Vector2i(3, 0)
+	)
 	if first_drag.size() != 4 or first_drag[0] != tip or first_drag[3] != tip + Vector2i(3, 0):
 		printerr("FAIL build_wall_segment_tip_and_gap: first drag got %s" % [first_drag])
 		fail += 1
 	# With tip: adjacent tap.
 	var adj: Array[Vector2i] = BuildPlacement.new().wall_segment(
-			tip, true, tip + Vector2i.RIGHT, tip + Vector2i.RIGHT)
+		tip, true, tip + Vector2i.RIGHT, tip + Vector2i.RIGHT
+	)
 	if adj != [tip + Vector2i.RIGHT]:
 		printerr("FAIL build_wall_segment_tip_and_gap: adj tap got %s" % [adj])
 		fail += 1
 	# Gap (two cells away).
 	var gap: Array[Vector2i] = BuildPlacement.new().wall_segment(
-			tip, true, tip + Vector2i(2, 0), tip + Vector2i(2, 0))
+		tip, true, tip + Vector2i(2, 0), tip + Vector2i(2, 0)
+	)
 	if not gap.is_empty():
 		printerr("FAIL build_wall_segment_tip_and_gap: gap got %s" % [gap])
 		fail += 1
 	# Diagonal tap.
 	var diag: Array[Vector2i] = BuildPlacement.new().wall_segment(
-			tip, true, tip + Vector2i(1, 1), tip + Vector2i(1, 1))
+		tip, true, tip + Vector2i(1, 1), tip + Vector2i(1, 1)
+	)
 	if not diag.is_empty():
 		printerr("FAIL build_wall_segment_tip_and_gap: diag got %s" % [diag])
 		fail += 1
 	# Drag from tip eastward: starts on tip+RIGHT through end.
 	var drag: Array[Vector2i] = BuildPlacement.new().wall_segment(
-			tip, true, tip + Vector2i.RIGHT, tip + Vector2i(3, 0))
+		tip, true, tip + Vector2i.RIGHT, tip + Vector2i(3, 0)
+	)
 	if drag.size() != 3 or drag[0] != tip + Vector2i.RIGHT or drag[2] != tip + Vector2i(3, 0):
 		printerr("FAIL build_wall_segment_tip_and_gap: tip drag got %s" % [drag])
 		fail += 1
@@ -133,61 +146,105 @@ func _test_build_wall_preview_matches_commit() -> int:
 	interaction.build.set_tool(BuildPlacement.Tool.WALL)
 	var vp0 := _cell_vp(interaction, world, run[0])
 	interaction.build.update_preview(vp0, vp0)
-	if interaction.build.cells != [run[0]] \
-			or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok) \
-			or interaction.build.cost != 2 \
-			or not interaction.build.reasons.is_empty():
-		printerr("FAIL build_wall_preview_matches_commit: first preview cells %s ok %s cost %d reasons %s"
-				% [interaction.build.cells, interaction.build.cell_ok,
-					interaction.build.cost, interaction.build.reasons])
+	if (
+		interaction.build.cells != [run[0]]
+		or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+		or interaction.build.cost != 2
+		or not interaction.build.reasons.is_empty()
+	):
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: first preview cells %s ok %s cost %d reasons %s"
+				% [
+					interaction.build.cells,
+					interaction.build.cell_ok,
+					interaction.build.cost,
+					interaction.build.reasons
+				]
+			)
+		)
 		fail += 1
 	var wood_before := inventory.count_of(Inventory.WOOD)
 	if not interaction.build.commit():
 		printerr("FAIL build_wall_preview_matches_commit: first commit false")
 		fail += 1
 	if not world.has_wall(run[0]) or inventory.count_of(Inventory.WOOD) != wood_before - 2:
-		printerr("FAIL build_wall_preview_matches_commit: after first wall %s wood %d"
-				% [world.has_wall(run[0]), inventory.count_of(Inventory.WOOD)])
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: after first wall %s wood %d"
+				% [world.has_wall(run[0]), inventory.count_of(Inventory.WOOD)]
+			)
+		)
 		fail += 1
 	if not interaction.build._has_wall_tip or interaction.build._wall_tip != run[0]:
-		printerr("FAIL build_wall_preview_matches_commit: tip not set to %s (has=%s tip=%s)"
-				% [run[0], interaction.build._has_wall_tip, interaction.build._wall_tip])
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: tip not set to %s (has=%s tip=%s)"
+				% [run[0], interaction.build._has_wall_tip, interaction.build._wall_tip]
+			)
+		)
 		fail += 1
 	# Chain: drag run[1]..run[3] next to tip.
 	var vp1 := _cell_vp(interaction, world, run[1])
 	var vp3 := _cell_vp(interaction, world, run[3])
 	interaction.build.update_preview(vp1, vp3)
-	if interaction.build.cells.size() != 3 \
-			or interaction.build.cost != 6 \
-			or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok):
-		printerr("FAIL build_wall_preview_matches_commit: chain preview cells %s ok %s cost %d"
-				% [interaction.build.cells, interaction.build.cell_ok, interaction.build.cost])
+	if (
+		interaction.build.cells.size() != 3
+		or interaction.build.cost != 6
+		or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+	):
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: chain preview cells %s ok %s cost %d"
+				% [interaction.build.cells, interaction.build.cell_ok, interaction.build.cost]
+			)
+		)
 		fail += 1
 	wood_before = inventory.count_of(Inventory.WOOD)
 	if not interaction.build.commit():
 		printerr("FAIL build_wall_preview_matches_commit: chain commit false")
 		fail += 1
-	if not [run[1], run[2], run[3]].all(func(c: Vector2i) -> bool: return world.has_wall(c)) \
-			or inventory.count_of(Inventory.WOOD) != wood_before - 6:
-		printerr("FAIL build_wall_preview_matches_commit: after chain wood %d"
-				% inventory.count_of(Inventory.WOOD))
+	if (
+		not [run[1], run[2], run[3]].all(func(c: Vector2i) -> bool: return world.has_wall(c))
+		or inventory.count_of(Inventory.WOOD) != wood_before - 6
+	):
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: after chain wood %d"
+				% inventory.count_of(Inventory.WOOD)
+			)
+		)
 		fail += 1
 	if interaction.build._wall_tip != run[3]:
-		printerr("FAIL build_wall_preview_matches_commit: tip want %s got %s"
-				% [run[3], interaction.build._wall_tip])
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: tip want %s got %s"
+				% [run[3], interaction.build._wall_tip]
+			)
+		)
 		fail += 1
 	# Gap off tip: empty segment, not adjacent, no spend.
 	var far := run[3] + Vector2i(2, 0)
 	var vpf := _cell_vp(interaction, world, far)
 	wood_before = inventory.count_of(Inventory.WOOD)
 	interaction.build.update_preview(vpf, vpf)
-	if interaction.build.cells != [far] \
-			or interaction.build.cell_ok != [false] \
-			or "not adjacent" not in interaction.build.reasons \
-			or interaction.build.cost != 0:
-		printerr("FAIL build_wall_preview_matches_commit: gap cells %s ok %s reasons %s cost %d"
-				% [interaction.build.cells, interaction.build.cell_ok,
-					interaction.build.reasons, interaction.build.cost])
+	if (
+		interaction.build.cells != [far]
+		or interaction.build.cell_ok != [false]
+		or "not adjacent" not in interaction.build.reasons
+		or interaction.build.cost != 0
+	):
+		printerr(
+			(
+				"FAIL build_wall_preview_matches_commit: gap cells %s ok %s reasons %s cost %d"
+				% [
+					interaction.build.cells,
+					interaction.build.cell_ok,
+					interaction.build.reasons,
+					interaction.build.cost
+				]
+			)
+		)
 		fail += 1
 	if interaction.build.commit() or inventory.count_of(Inventory.WOOD) != wood_before:
 		printerr("FAIL build_wall_preview_matches_commit: gap spent wood")
@@ -202,6 +259,7 @@ func _test_build_wall_preview_matches_commit() -> int:
 	if fail == 0:
 		print("PASS test_build_wall_preview_matches_commit")
 	return fail
+
 
 func _test_build_wall_first_must_touch_structure() -> int:
 	## First wall block must 4-touch an existing tower, castle or wall;
@@ -221,12 +279,16 @@ func _test_build_wall_first_must_touch_structure() -> int:
 	# 4-touch any wall/structure (far from the seeded support + run).
 	var floating := Vector2i(1 << 18, 1 << 18)
 	for cell: Vector2i in world.get_used_cells(0):
-		if not world.predicted_clear(cell) or world.has_wall(cell) \
-				or world._structures.has_cell(cell):
+		if (
+			not world.predicted_clear(cell)
+			or world.has_wall(cell)
+			or world._structures.has_cell(cell)
+		):
 			continue
 		var touches := false
-		for n in [cell + Vector2i.LEFT, cell + Vector2i.RIGHT,
-				cell + Vector2i.UP, cell + Vector2i.DOWN]:
+		for n in [
+			cell + Vector2i.LEFT, cell + Vector2i.RIGHT, cell + Vector2i.UP, cell + Vector2i.DOWN
+		]:
 			if world.has_wall(n) or world._structures.has_cell(n):
 				touches = true
 				break
@@ -246,15 +308,25 @@ func _test_build_wall_first_must_touch_structure() -> int:
 		var vpf := _cell_vp(interaction, world, floating)
 		var wood_before := inventory.count_of(Inventory.WOOD)
 		interaction.build.update_preview(vpf, vpf)
-		if "not adjacent" not in interaction.build.reasons \
-				or interaction.build.cost != 0 \
-				or interaction.build.commit() \
-				or inventory.count_of(Inventory.WOOD) != wood_before \
-				or world.has_wall(floating):
-			printerr("FAIL build_wall_first_must_touch_structure: floating cells %s ok %s reasons %s cost %d wood %d"
-					% [interaction.build.cells, interaction.build.cell_ok,
-						interaction.build.reasons, interaction.build.cost,
-						inventory.count_of(Inventory.WOOD)])
+		if (
+			"not adjacent" not in interaction.build.reasons
+			or interaction.build.cost != 0
+			or interaction.build.commit()
+			or inventory.count_of(Inventory.WOOD) != wood_before
+			or world.has_wall(floating)
+		):
+			printerr(
+				(
+					"FAIL build_wall_first_must_touch_structure: floating cells %s ok %s reasons %s cost %d wood %d"
+					% [
+						interaction.build.cells,
+						interaction.build.cell_ok,
+						interaction.build.reasons,
+						interaction.build.cost,
+						inventory.count_of(Inventory.WOOD)
+					]
+				)
+			)
 			fail += 1
 	# Supported first block (run[0] 4-touches seeded wall) still places.
 	if run.is_empty():
@@ -266,13 +338,20 @@ func _test_build_wall_first_must_touch_structure() -> int:
 		var vp0 := _cell_vp(interaction, world, run[0])
 		var wood_before := inventory.count_of(Inventory.WOOD)
 		interaction.build.update_preview(vp0, vp0)
-		if interaction.build.cells != [run[0]] or interaction.build.cost != 2 \
-				or not interaction.build.reasons.is_empty() \
-				or not interaction.build.commit() \
-				or not world.has_wall(run[0]) \
-				or inventory.count_of(Inventory.WOOD) != wood_before - 2:
-			printerr("FAIL build_wall_first_must_touch_structure: supported first cells %s cost %d reasons %s"
-					% [interaction.build.cells, interaction.build.cost, interaction.build.reasons])
+		if (
+			interaction.build.cells != [run[0]]
+			or interaction.build.cost != 2
+			or not interaction.build.reasons.is_empty()
+			or not interaction.build.commit()
+			or not world.has_wall(run[0])
+			or inventory.count_of(Inventory.WOOD) != wood_before - 2
+		):
+			printerr(
+				(
+					"FAIL build_wall_first_must_touch_structure: supported first cells %s cost %d reasons %s"
+					% [interaction.build.cells, interaction.build.cost, interaction.build.reasons]
+				)
+			)
 			fail += 1
 	ctx["scene"].queue_free()
 	await process_frame

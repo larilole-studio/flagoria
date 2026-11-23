@@ -30,7 +30,12 @@ func _test_combat_sfx() -> int:
 	var c: CombatSfx = player.combat_sfx
 	player.attack_animation()
 	player.health.take_damage(1)
-	if c.plays["swing"] != 1 or c.plays["hit"] != 1 or c.plays["hurt"] != 1 or c.plays["sting"] != 0:
+	if (
+		c.plays["swing"] != 1
+		or c.plays["hit"] != 1
+		or c.plays["hurt"] != 1
+		or c.plays["sting"] != 0
+	):
 		printerr("FAIL combat_sfx: attack + damage plays %s" % c.plays)
 		fail += 1
 	# A hit from another player's sword: hit and hurt once each; at half a heart it is a kill.

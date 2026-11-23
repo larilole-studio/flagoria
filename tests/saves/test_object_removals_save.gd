@@ -41,8 +41,10 @@ func _removal_scene(need_stones: bool) -> Array:
 
 func _decor_gone(world, cell: Vector2i) -> bool:
 	world.generate_chunk(world.map_to_local(cell))
-	return world.get_cell_source_id(world.GROUND_DECOR_LAYER, cell) == -1 \
-			and world.get_cell_source_id(1, cell) == -1
+	return (
+		world.get_cell_source_id(world.GROUND_DECOR_LAYER, cell) == -1
+		and world.get_cell_source_id(1, cell) == -1
+	)
 
 
 func _test_object_removals_round_trip() -> int:
@@ -62,7 +64,12 @@ func _test_object_removals_round_trip() -> int:
 			scene.queue_free()
 		return 1
 	if not world.pick_decor(flower) or not world.destroy_decor(stones):
-		printerr("FAIL object_removals_round_trip: could not remove flower %s stones %s" % [flower, stones])
+		printerr(
+			(
+				"FAIL object_removals_round_trip: could not remove flower %s stones %s"
+				% [flower, stones]
+			)
+		)
 		scene.queue_free()
 		return 1
 	var want: Dictionary = {}
@@ -70,7 +77,9 @@ func _test_object_removals_round_trip() -> int:
 		var chunk := WorldSave.chunk_key(cell)
 		want.get_or_add(chunk, {})[WorldSave.cell_key(cell)] = {"removed": true}
 	if world.object_changes() != want:
-		printerr("FAIL object_removals_round_trip: entries %s, want %s" % [world.object_changes(), want])
+		printerr(
+			"FAIL object_removals_round_trip: entries %s, want %s" % [world.object_changes(), want]
+		)
 		fail += 1
 	world.generate_chunk(world.map_to_local(flower + Vector2i(32, 0)))
 	if not _decor_gone(world, flower) or not _decor_gone(world, stones):
@@ -82,14 +91,20 @@ func _test_object_removals_round_trip() -> int:
 	var loaded := MapSave.load_world(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
 	if saved["error"] != "" or loaded["error"] != "":
-		printerr("FAIL object_removals_round_trip: save %s load %s" % [saved["error"], loaded["error"]])
+		printerr(
+			"FAIL object_removals_round_trip: save %s load %s" % [saved["error"], loaded["error"]]
+		)
 		scene.queue_free()
 		return fail + 1
 	scene._apply_params_to_world(params)
 	var restored: int = world.restore_object_changes(loaded["world"].object_changes)
 	if restored != 2 or world.object_changes() != want:
-		printerr("FAIL object_removals_round_trip: restored %d entries %s want 2 and %s"
-				% [restored, world.object_changes(), want])
+		printerr(
+			(
+				"FAIL object_removals_round_trip: restored %d entries %s want 2 and %s"
+				% [restored, world.object_changes(), want]
+			)
+		)
 		fail += 1
 	if not _decor_gone(world, flower) or not _decor_gone(world, stones):
 		printerr("FAIL object_removals_round_trip: after load flower or stones came back")
@@ -136,8 +151,12 @@ func _test_object_removals_in_game() -> int:
 	scene._apply_params_to_world(scene.world_params)
 	var restored: int = scene._restore_loaded_world()
 	if restored < 1 or not _decor_gone(world, flower):
-		printerr("FAIL object_removals_in_game: restored %d flower at %s gone %s"
-				% [restored, flower, _decor_gone(world, flower)])
+		printerr(
+			(
+				"FAIL object_removals_in_game: restored %d flower at %s gone %s"
+				% [restored, flower, _decor_gone(world, flower)]
+			)
+		)
 		fail += 1
 	DirAccess.remove_absolute(result["path"])
 	map_gen.params = before

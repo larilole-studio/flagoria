@@ -25,7 +25,9 @@ var _points_before_map := false
 
 
 func _run() -> void:
-	var mode := "host" if has_option("--host") else ("dedicated" if has_option("--dedicated") else "join")
+	var mode := (
+		"host" if has_option("--host") else ("dedicated" if has_option("--dedicated") else "join")
+	)
 	var main = await open_game(mode != "join")
 	if main == null:
 		printerr("late_join_probe: needs --port=N, --out=PATH and the main scene")
@@ -34,9 +36,11 @@ func _run() -> void:
 	var world: Node = main.get_node("World")
 	if mode != "join":
 		# The server sets a player's spot before adding it to the tree.
-		world.child_entered_tree.connect(func(node: Node) -> void:
-			if node is CharacterBody2D:
-				_picked[str(node.name)] = [node.position.x, node.position.y])
+		world.child_entered_tree.connect(
+			func(node: Node) -> void:
+				if node is CharacterBody2D:
+					_picked[str(node.name)] = [node.position.x, node.position.y]
+		)
 	if mode == "host":
 		if host_game(main, _session_params()) == OK:
 			host_listening()
@@ -49,9 +53,11 @@ func _run() -> void:
 	if points:
 		# The kill snapshot must not ride ahead of the map: totals_received
 		# before world_params means this peer got points first.
-		points.totals_received.connect(func() -> void:
-			if main.world_params == null:
-				_points_before_map = true)
+		points.totals_received.connect(
+			func() -> void:
+				if main.world_params == null:
+					_points_before_map = true
+		)
 	_id = main.multiplayer.get_unique_id()
 	var deadline := Time.get_ticks_msec() + 90000
 	while game_active(main, deadline):
@@ -59,14 +65,20 @@ func _run() -> void:
 		if me and not me.health.respawned.is_connected(_on_respawned):
 			me.health.respawned.connect(_on_respawned)
 			me.health.health_changed.connect(_on_health_changed)
-		if mode != "join" and FileAccess.file_exists(probe_out + ".kill") \
-				and FileAccess.get_file_as_string(probe_out + ".kill") != _kill_text:
+		if (
+			mode != "join"
+			and FileAccess.file_exists(probe_out + ".kill")
+			and FileAccess.get_file_as_string(probe_out + ".kill") != _kill_text
+		):
 			_kill_text = FileAccess.get_file_as_string(probe_out + ".kill")
 			for child in world.get_children():
 				if child is CharacterBody2D:
 					child.health.set_health_now(0)
-		var walk := FileAccess.get_file_as_string(probe_out + ".walk").strip_edges() \
-				if FileAccess.file_exists(probe_out + ".walk") else ""
+		var walk := (
+			FileAccess.get_file_as_string(probe_out + ".walk").strip_edges()
+			if FileAccess.file_exists(probe_out + ".walk")
+			else ""
+		)
 		if walk != _walking:
 			if _walking != "":
 				Input.action_release(_walking)
@@ -120,7 +132,8 @@ func _write(main: Node, world: Node) -> void:
 		"id": str(_id),
 		"origin": [_origin.x, _origin.y] if _origin != Vector2.INF else null,
 		"picked": _picked,
-		"respawned_at": [_respawned_at.x, _respawned_at.y] if _respawned_at != Vector2.INF else null,
+		"respawned_at":
+		[_respawned_at.x, _respawned_at.y] if _respawned_at != Vector2.INF else null,
 		"deaths": _deaths,
 		"errors": _errors.snapshot(),
 		"players": players,

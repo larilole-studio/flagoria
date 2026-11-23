@@ -1,7 +1,6 @@
 extends "res://tests/soldier_sync_probe.gd"
 ## Host spawns a slime in attack range after a soldier trains (#554).
 
-
 var _fight_mob := ""
 var _fight_started := false
 var _fight_spawn_at := -1
@@ -63,7 +62,9 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var structure_requests = main.get_node("World/StructureRequests")
 	var inventory: Inventory = main.get_node("Inventory")
-	var land: Variant = _search(world, func(cell: Vector2i) -> bool: return _barracks_ok(world, cell, 0))
+	var land: Variant = _search(
+		world, func(cell: Vector2i) -> bool: return _barracks_ok(world, cell, 0)
+	)
 	if land == null:
 		return "no clear barracks anchor"
 	var err := await _ready_to_build(main, me, interaction.cell_center(land) + Vector2(0, 48))
@@ -101,12 +102,18 @@ func _spawn_fight_mob(requests: SoldierRequests, mobs: MobSpawner) -> void:
 	soldier.set_order("hold")
 	soldier._hold_pos = soldier.global_position
 	_fight_mob = "mob_fight_probe"
-	mobs.get_node("MultiplayerSpawner").spawn({
-		"name": _fight_mob,
-		"type": MobCatalog.SLIME,
-		"pos": soldier.global_position + Vector2(6, 0),
-		"seed": 11,
-	})
+	(
+		mobs
+		. get_node("MultiplayerSpawner")
+		. spawn(
+			{
+				"name": _fight_mob,
+				"type": MobCatalog.SLIME,
+				"pos": soldier.global_position + Vector2(6, 0),
+				"seed": 11,
+			}
+		)
+	)
 
 
 func _fight_hp(mobs: MobSpawner) -> Dictionary:
@@ -132,15 +139,17 @@ func _write_fight(main, world, me: Node2D, requests: SoldierRequests, mobs: MobS
 			if child is CharacterBody2D and str(child.name).is_valid_int():
 				peers[str(child.name)] = [child.global_position.x, child.global_position.y]
 	var fight := _fight_hp(mobs)
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"place_error": _place_error,
-		"peers": peers,
-		"soldiers": _soldier_rows(requests),
-		"pending_jobs": requests.pending_job_count() if requests != null else 0,
-		"fight_mob_hp": fight["hp"],
-		"fight_mob_start_hp": MobCatalog.stat(MobCatalog.SLIME, "hp"),
-		"mob_count": mobs.mobs().size(),
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"place_error": _place_error,
+			"peers": peers,
+			"soldiers": _soldier_rows(requests),
+			"pending_jobs": requests.pending_job_count() if requests != null else 0,
+			"fight_mob_hp": fight["hp"],
+			"fight_mob_start_hp": MobCatalog.stat(MobCatalog.SLIME, "hp"),
+			"mob_count": mobs.mobs().size(),
+			"errors": _errors.snapshot(),
+		}
+	)

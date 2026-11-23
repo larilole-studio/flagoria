@@ -40,11 +40,14 @@ func run() -> void:
 	foe.global_position = centre + Vector2(0, 140)
 	var started := Time.get_ticks_msec()
 	var dropped := false
-	if not await wait_until(func() -> bool:
-		if health.health < seen:
-			dropped = true
-			return true
-		return Time.get_ticks_msec() - started >= 2000, 5.0):
+	if not await wait_until(
+		func() -> bool:
+			if health.health < seen:
+				dropped = true
+				return true
+			return Time.get_ticks_msec() - started >= 2000,
+		5.0
+	):
 		printerr("defense tower: the out-of-range wait did not finish")
 		done(false)
 		return

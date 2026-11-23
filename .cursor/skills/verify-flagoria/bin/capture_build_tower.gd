@@ -43,7 +43,9 @@ func _run() -> void:
 		world.generate_chunk(Vector2(0, 0))
 		for cell in world.get_used_cells(0):
 			var foot: Array = StructurePlacer.footprint(structure, cell).keys()
-			if foot.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if foot.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				anchor = cell
 				found = true
 				break
@@ -61,7 +63,11 @@ func _run() -> void:
 	# Fill the view around the staged anchor, including neighbouring chunks.
 	for dy in range(-1, 2):
 		for dx in range(-1, 2):
-			world.generate_chunk(world.map_to_local(anchor + Vector2i(dx * world.chunk_width, dy * world.chunk_height)))
+			world.generate_chunk(
+				world.map_to_local(
+					anchor + Vector2i(dx * world.chunk_width, dy * world.chunk_height)
+				)
+			)
 	var interaction: Interaction = flagoria.get_node("World/Interaction")
 	interaction.bind(player)
 	var inventory: Inventory = flagoria.get_node("Inventory")
@@ -76,7 +82,9 @@ func _run() -> void:
 
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	interaction.build.set_tool(BuildPlacement.Tool.TOWER)
-	var vp: Vector2 = interaction.get_canvas_transform() * world.to_global(world.map_to_local(anchor))
+	var vp: Vector2 = (
+		interaction.get_canvas_transform() * world.to_global(world.map_to_local(anchor))
+	)
 	interaction.build.update_preview(vp, vp)
 	interaction._dragging = true
 	interaction._start = vp
@@ -95,9 +103,18 @@ func _run() -> void:
 		quit(1)
 		return
 	var save_err = img.save_png(abs_out)
-	print("capture_build_tower: save_err=", save_err, " path=", out_res,
-			" cells=", interaction.build.cells, " cost=", interaction.build.cost,
-			" ok=", interaction.build.cell_ok)
+	print(
+		"capture_build_tower: save_err=",
+		save_err,
+		" path=",
+		out_res,
+		" cells=",
+		interaction.build.cells,
+		" cost=",
+		interaction.build.cost,
+		" ok=",
+		interaction.build.cell_ok
+	)
 	if save_err != OK:
 		quit(1)
 		return
@@ -115,14 +132,26 @@ func _run() -> void:
 	interaction.queue_redraw()
 	for i in range(5):
 		await process_frame
-	if interaction.build.reasons != ["out of reach"] or interaction.build.cost != 0 \
-			or interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok):
+	if (
+		interaction.build.reasons != ["out of reach"]
+		or interaction.build.cost != 0
+		or interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok)
+	):
 		push_error("capture_build_tower: wrong reach refusal %s" % [interaction.build.reasons])
 		quit(1)
 		return
 	out_res = "res://docs/screenshots/build_tower_out_of_reach.png"
-	save_err = flagoria.get_viewport().get_texture().get_image().save_png(ProjectSettings.globalize_path(out_res))
-	print("capture_build_tower: save_err=", save_err, " path=", out_res, " reasons=", interaction.build.reasons)
+	save_err = flagoria.get_viewport().get_texture().get_image().save_png(
+		ProjectSettings.globalize_path(out_res)
+	)
+	print(
+		"capture_build_tower: save_err=",
+		save_err,
+		" path=",
+		out_res,
+		" reasons=",
+		interaction.build.reasons
+	)
 	if save_err != OK:
 		quit(1)
 		return

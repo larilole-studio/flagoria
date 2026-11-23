@@ -12,9 +12,13 @@ func _test_attack_aim_mouse() -> int:
 	## direction swings in the facing direction.
 	print("-- test_attack_aim_mouse")
 	var fail := 0
-	if AttackAim.direction_name(Vector2(-3, 1)) != "Left" or AttackAim.direction_name(Vector2(1, -3)) != "Up" \
-			or AttackAim.direction_name(Vector2(2, 2)) != "Right" or AttackAim.direction_name(Vector2(0, 5)) != "Down" \
-			or AttackAim.direction_name(Vector2.ZERO) != "":
+	if (
+		AttackAim.direction_name(Vector2(-3, 1)) != "Left"
+		or AttackAim.direction_name(Vector2(1, -3)) != "Up"
+		or AttackAim.direction_name(Vector2(2, 2)) != "Right"
+		or AttackAim.direction_name(Vector2(0, 5)) != "Down"
+		or AttackAim.direction_name(Vector2.ZERO) != ""
+	):
 		printerr("FAIL attack_aim_mouse direction_name snaps wrong")
 		fail += 1
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -64,8 +68,12 @@ func _test_attack_aim_mouse() -> int:
 	await process_frame
 	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(-60, 5)), false)
 	if not aimed_before or aim.aiming or player.isAttacking:
-		printerr("FAIL attack_aim_mouse opening the in-game menu did not cancel the aim (aimed %s, aiming %s, attacking %s)"
-				% [aimed_before, aim.aiming, player.isAttacking])
+		printerr(
+			(
+				"FAIL attack_aim_mouse opening the in-game menu did not cancel the aim (aimed %s, aiming %s, attacking %s)"
+				% [aimed_before, aim.aiming, player.isAttacking]
+			)
+		)
 		fail += 1
 	# Click the backdrop so menu layout changes cannot activate a button here.
 	var backdrop := vp.get_visible_rect().get_center()
@@ -83,30 +91,57 @@ func _test_attack_aim_mouse() -> int:
 	player.lastAnimDirection = "Down"
 	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(-60, 5)), true)
 	if not aim.aiming or aim.aim_direction() != "Left" or player.isAttacking:
-		printerr("FAIL attack_aim_mouse press: aiming %s toward %s, attacking %s"
-				% [aim.aiming, aim.aim_direction(), player.isAttacking])
+		printerr(
+			(
+				"FAIL attack_aim_mouse press: aiming %s toward %s, attacking %s"
+				% [aim.aiming, aim.aim_direction(), player.isAttacking]
+			)
+		)
 		fail += 1
 	move.call(at.call(Vector2(10, -70)))
 	if aim.aim_direction() != "Up":
-		printerr("FAIL attack_aim_mouse cone did not follow the cursor up (%s)" % aim.aim_direction())
+		printerr(
+			"FAIL attack_aim_mouse cone did not follow the cursor up (%s)" % aim.aim_direction()
+		)
 		fail += 1
 	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(10, -70)), false)
-	if aim.aiming or not player.isAttacking or player.lastAnimDirection != "Up" \
-			or player.animations.current_animation != "attackUp":
-		printerr("FAIL attack_aim_mouse release: aiming %s, attacking %s, facing %s, anim %s"
-				% [aim.aiming, player.isAttacking, player.lastAnimDirection, player.animations.current_animation])
+	if (
+		aim.aiming
+		or not player.isAttacking
+		or player.lastAnimDirection != "Up"
+		or player.animations.current_animation != "attackUp"
+	):
+		printerr(
+			(
+				"FAIL attack_aim_mouse release: aiming %s, attacking %s, facing %s, anim %s"
+				% [
+					aim.aiming,
+					player.isAttacking,
+					player.lastAnimDirection,
+					player.animations.current_animation
+				]
+			)
+		)
 		fail += 1
 	await wait_swing.call()
 
 	# The cone covers the sword's hitbox at mid-swing, every direction.
-	var offsets := {"Right": Vector2(50, 0), "Left": Vector2(-50, 0),
-		"Up": Vector2(0, -50), "Down": Vector2(0, 50)}
+	var offsets := {
+		"Right": Vector2(50, 0),
+		"Left": Vector2(-50, 0),
+		"Up": Vector2(0, -50),
+		"Down": Vector2(0, 50)
+	}
 	for direction in offsets:
 		var spot: Vector2 = at.call(Vector2.ZERO) + offsets[direction]
 		mouse.call(MOUSE_BUTTON_LEFT, spot, true)
 		if not aim.aiming or aim.aim_direction() != direction:
-			printerr("FAIL attack_aim_mouse expected %s aim, got %s (aiming %s)"
-				% [direction, aim.aim_direction(), aim.aiming])
+			printerr(
+				(
+					"FAIL attack_aim_mouse expected %s aim, got %s (aiming %s)"
+					% [direction, aim.aim_direction(), aim.aiming]
+				)
+			)
 			fail += 1
 		var cone := aim.cone_points()
 		mouse.call(MOUSE_BUTTON_LEFT, spot, false)
@@ -131,13 +166,22 @@ func _test_attack_aim_mouse() -> int:
 
 	# The RPC's angle is checked on every peer: one that is not finite or not
 	# within 45 degrees of the direction swings the facing direction, untilted.
-	for bad in [["Right", INF], ["Right", PI], ["Right", deg_to_rad(50.0)], ["Up", -INF], ["Sideways", 0.2]]:
+	for bad in [
+		["Right", INF], ["Right", PI], ["Right", deg_to_rad(50.0)], ["Up", -INF], ["Sideways", 0.2]
+	]:
 		player.lastAnimDirection = "Left"
 		player.attack_animation(bad[0], bad[1])
-		if player.lastAnimDirection != "Left" or player.animations.current_animation != "attackLeft" \
-				or player.swing_turn != 0.0:
-			printerr("FAIL attack_aim_mouse bad angle %s swung %s, turn %s"
-					% [bad, player.animations.current_animation, player.swing_turn])
+		if (
+			player.lastAnimDirection != "Left"
+			or player.animations.current_animation != "attackLeft"
+			or player.swing_turn != 0.0
+		):
+			printerr(
+				(
+					"FAIL attack_aim_mouse bad angle %s swung %s, turn %s"
+					% [bad, player.animations.current_animation, player.swing_turn]
+				)
+			)
 			fail += 1
 		await wait_swing.call()
 	# No angle (Space, older callers) keeps the four-way swing.
@@ -152,7 +196,12 @@ func _test_attack_aim_mouse() -> int:
 	mouse.call(MOUSE_BUTTON_RIGHT, at.call(Vector2(60, 0)), true)
 	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(60, 0)), false)
 	if aim.aiming or player.isAttacking:
-		printerr("FAIL attack_aim_mouse right-click did not cancel (aiming %s, attacking %s)" % [aim.aiming, player.isAttacking])
+		printerr(
+			(
+				"FAIL attack_aim_mouse right-click did not cancel (aiming %s, attacking %s)"
+				% [aim.aiming, player.isAttacking]
+			)
+		)
 		fail += 1
 	# A touch's emulated mouse press never aims.
 	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(60, 0)), true, InputEvent.DEVICE_ID_EMULATION)
@@ -162,7 +211,9 @@ func _test_attack_aim_mouse() -> int:
 	mouse.call(MOUSE_BUTTON_LEFT, at.call(Vector2(60, 0)), false, InputEvent.DEVICE_ID_EMULATION)
 	# A click on the attack button (HUD) does not aim.
 	var button: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
-	var on_button := button.get_global_transform_with_canvas() * (button.shape.get_rect().get_center())
+	var on_button := (
+		button.get_global_transform_with_canvas() * (button.shape.get_rect().get_center())
+	)
 	mouse.call(MOUSE_BUTTON_LEFT, on_button, true)
 	if aim.aiming:
 		printerr("FAIL attack_aim_mouse a click on the attack button aimed")
@@ -188,7 +239,9 @@ func _test_attack_aim_mouse() -> int:
 	player.lastAnimDirection = "Left"
 	player.attack_animation("Sideways")
 	if player.lastAnimDirection != "Left" or player.animations.current_animation != "attackLeft":
-		printerr("FAIL attack_aim_mouse unknown direction swung %s" % player.animations.current_animation)
+		printerr(
+			"FAIL attack_aim_mouse unknown direction swung %s" % player.animations.current_animation
+		)
 		fail += 1
 	await wait_swing.call()
 	# A dead player does not aim.
@@ -264,7 +317,12 @@ func _test_attack_aim_touch() -> int:
 		fail += 1
 	touch.call(1, c + Vector2(1, 1), false)
 	if aim.aiming or player.animations.current_animation != "attackLeft":
-		printerr("FAIL attack_aim_touch tap swung %s, want attackLeft" % player.animations.current_animation)
+		printerr(
+			(
+				"FAIL attack_aim_touch tap swung %s, want attackLeft"
+				% player.animations.current_animation
+			)
+		)
 		fail += 1
 	await wait_swing.call()
 	# A wobble inside the dead zone is still a tap.
@@ -276,7 +334,12 @@ func _test_attack_aim_touch() -> int:
 		fail += 1
 	touch.call(1, c + Vector2(dz * 0.6, -dz * 0.6), false)
 	if player.animations.current_animation != "attackLeft":
-		printerr("FAIL attack_aim_touch a dead-zone drag swung %s, want attackLeft" % player.animations.current_animation)
+		printerr(
+			(
+				"FAIL attack_aim_touch a dead-zone drag swung %s, want attackLeft"
+				% player.animations.current_animation
+			)
+		)
 		fail += 1
 	await wait_swing.call()
 
@@ -286,7 +349,9 @@ func _test_attack_aim_touch() -> int:
 	touch.call(1, c, true)
 	drag.call(1, c + Vector2(-4, -30))
 	if not aim.aiming or aim.aim_direction() != "Up" or player.isAttacking:
-		printerr("FAIL attack_aim_touch drag up: aiming %s toward %s" % [aim.aiming, aim.aim_direction()])
+		printerr(
+			"FAIL attack_aim_touch drag up: aiming %s toward %s" % [aim.aiming, aim.aim_direction()]
+		)
 		fail += 1
 	if aim.cone_points().size() < 3:
 		printerr("FAIL attack_aim_touch no cone while aiming")
@@ -294,17 +359,29 @@ func _test_attack_aim_touch() -> int:
 	drag.call(1, c + Vector2(30, 6))
 	drag.call(0, joystick.global_position + Vector2(-20, 0))  # the stick finger moves; the aim stays
 	if aim.aim_direction() != "Right" or joystick.ongoing_drag != 0:
-		printerr("FAIL attack_aim_touch with the stick held: toward %s, stick finger %s"
-				% [aim.aim_direction(), joystick.ongoing_drag])
+		printerr(
+			(
+				"FAIL attack_aim_touch with the stick held: toward %s, stick finger %s"
+				% [aim.aim_direction(), joystick.ongoing_drag]
+			)
+		)
 		fail += 1
 	touch.call(0, joystick.global_position, false)  # lifting the stick finger does not fire
 	if not aim.aiming or player.isAttacking:
 		printerr("FAIL attack_aim_touch lifting the stick finger ended the aim")
 		fail += 1
 	touch.call(1, c + Vector2(30, 6), false)
-	if aim.aiming or player.lastAnimDirection != "Right" or player.animations.current_animation != "attackRight":
-		printerr("FAIL attack_aim_touch release swung %s facing %s, want attackRight"
-				% [player.animations.current_animation, player.lastAnimDirection])
+	if (
+		aim.aiming
+		or player.lastAnimDirection != "Right"
+		or player.animations.current_animation != "attackRight"
+	):
+		printerr(
+			(
+				"FAIL attack_aim_touch release swung %s facing %s, want attackRight"
+				% [player.animations.current_animation, player.lastAnimDirection]
+			)
+		)
 		fail += 1
 	await wait_swing.call()
 
@@ -317,7 +394,9 @@ func _test_attack_aim_touch() -> int:
 		fail += 1
 	touch.call(1, c + Vector2(2, 1), false)
 	if player.isAttacking:
-		printerr("FAIL attack_aim_touch a cancelled drag swung %s" % player.animations.current_animation)
+		printerr(
+			"FAIL attack_aim_touch a cancelled drag swung %s" % player.animations.current_animation
+		)
 		fail += 1
 	# ...and dragging out again aims again.
 	touch.call(1, c, true)
@@ -326,7 +405,12 @@ func _test_attack_aim_touch() -> int:
 	drag.call(1, c + Vector2(3, 30))
 	touch.call(1, c + Vector2(3, 30), false)
 	if player.animations.current_animation != "attackDown":
-		printerr("FAIL attack_aim_touch re-aim after cancel swung %s, want attackDown" % player.animations.current_animation)
+		printerr(
+			(
+				"FAIL attack_aim_touch re-aim after cancel swung %s, want attackDown"
+				% player.animations.current_animation
+			)
+		)
 		fail += 1
 	await wait_swing.call()
 	# Off-axis drags swing at the exact angle from the button's centre.
@@ -349,15 +433,23 @@ func _test_attack_aim_touch() -> int:
 	touch.call(0, joystick.global_position, false)
 	touch.call(2, c + Vector2(-150, -80), true)
 	if not kept or aim.aiming:
-		printerr("FAIL attack_aim_touch second touch: aim kept on the stick %s, after a map touch %s"
-				% [kept, aim.aiming])
+		printerr(
+			(
+				"FAIL attack_aim_touch second touch: aim kept on the stick %s, after a map touch %s"
+				% [kept, aim.aiming]
+			)
+		)
 		fail += 1
 	touch.call(2, c + Vector2(-150, -80), false)
 	drag.call(1, c + Vector2(0, -30))
 	touch.call(1, c + Vector2(0, -30), false)
 	if aim.aiming or player.isAttacking:
-		printerr("FAIL attack_aim_touch a finger cancelled by a second touch aimed or swung %s"
-				% player.animations.current_animation)
+		printerr(
+			(
+				"FAIL attack_aim_touch a finger cancelled by a second touch aimed or swung %s"
+				% player.animations.current_animation
+			)
+		)
 		fail += 1
 	await wait_swing.call()
 	# Opening the in-game menu cancels a touch aim: lifting does not swing.
@@ -370,8 +462,12 @@ func _test_attack_aim_touch() -> int:
 	drag.call(1, c + Vector2(-32, 0))
 	touch.call(1, c + Vector2(-32, 0), false)
 	if not aimed_before or aim.aiming or player.isAttacking:
-		printerr("FAIL attack_aim_touch opening the in-game menu did not cancel the aim (aimed %s, aiming %s, attacking %s)"
-				% [aimed_before, aim.aiming, player.isAttacking])
+		printerr(
+			(
+				"FAIL attack_aim_touch opening the in-game menu did not cancel the aim (aimed %s, aiming %s, attacking %s)"
+				% [aimed_before, aim.aiming, player.isAttacking]
+			)
+		)
 		fail += 1
 	game_menu.close()
 	await wait_swing.call()
@@ -459,15 +555,23 @@ func _test_attack_aim_touch_guards() -> int:
 		drag.call(1, c + Vector2(30, 0))
 		aim.notification(what)
 		if aim.aiming or aim.touch_state() != AttackAim.TOUCH_IDLE:
-			printerr("FAIL attack_aim_touch_guards notification %d kept the finger (state %d, aiming %s)"
-					% [what, aim.touch_state(), aim.aiming])
+			printerr(
+				(
+					"FAIL attack_aim_touch_guards notification %d kept the finger (state %d, aiming %s)"
+					% [what, aim.touch_state(), aim.aiming]
+				)
+			)
 			fail += 1
 		touch.call(1, c + Vector2(30, 0), false)  # a late lift does nothing
 		touch.call(3, c, true)  # a new finger on the button is tracked again
 		drag.call(3, c + Vector2(0, -30))
 		if aim.aim_direction() != "Up" or not aim.aiming or player.isAttacking:
-			printerr("FAIL attack_aim_touch_guards after notification %d: aiming %s toward %s, attacking %s"
-					% [what, aim.aiming, aim.aim_direction(), player.isAttacking])
+			printerr(
+				(
+					"FAIL attack_aim_touch_guards after notification %d: aiming %s toward %s, attacking %s"
+					% [what, aim.aiming, aim.aim_direction(), player.isAttacking]
+				)
+			)
 			fail += 1
 		aim.cancel()
 		touch.call(3, c, false)
@@ -509,10 +613,17 @@ func _check_cone_angle(what: String, aim: AttackAim, angle: float) -> int:
 	## While aiming, the cone's middle points along `angle`.
 	var cone := aim.cone_points()
 	var mid: Vector2 = cone[1 + AttackAim.ARC_POINTS / 2] - AttackAim.ORIGIN
-	if not aim.aiming or absf(angle_difference(mid.angle(), angle)) > 0.01 \
-			or absf(angle_difference(aim.aim_angle(), angle)) > 0.01:
-		printerr("FAIL %s cone at %s, aim %s (aiming %s)"
-				% [what, rad_to_deg(mid.angle()), rad_to_deg(aim.aim_angle()), aim.aiming])
+	if (
+		not aim.aiming
+		or absf(angle_difference(mid.angle(), angle)) > 0.01
+		or absf(angle_difference(aim.aim_angle(), angle)) > 0.01
+	):
+		printerr(
+			(
+				"FAIL %s cone at %s, aim %s (aiming %s)"
+				% [what, rad_to_deg(mid.angle()), rad_to_deg(aim.aim_angle()), aim.aiming]
+			)
+		)
 		return 1
 	return 0
 
@@ -525,12 +636,21 @@ func _check_turned_swing(what: String, player, angle: float, four: Dictionary) -
 	var blade := _blade(player)
 	var want: Vector2 = four[direction].rotated(turn)
 	var fail := 0
-	if player.lastAnimDirection != direction or player.animations.current_animation != "attack" + direction:
-		printerr("FAIL %s swung %s facing %s, want %s"
-				% [what, player.animations.current_animation, player.lastAnimDirection, direction])
+	if (
+		player.lastAnimDirection != direction
+		or player.animations.current_animation != "attack" + direction
+	):
+		printerr(
+			(
+				"FAIL %s swung %s facing %s, want %s"
+				% [what, player.animations.current_animation, player.lastAnimDirection, direction]
+			)
+		)
 		fail += 1
 	if blade.distance_to(want) > 0.05:
-		printerr("FAIL %s blade at %s, want %s (four-way %s)" % [what, blade, want, four[direction]])
+		printerr(
+			"FAIL %s blade at %s, want %s (four-way %s)" % [what, blade, want, four[direction]]
+		)
 		fail += 1
 	return fail
 
@@ -594,10 +714,18 @@ func _test_attack_angle_two_players() -> int:
 		else:
 			var on_server := _blade(server)
 			var on_client := _blade(client)
-			if server.lastAnimDirection != "Right" or absf(server.swing_turn - angle) > 0.001 \
-					or on_server.distance_to(want) > 0.05 or on_client.distance_to(want) > 0.05:
-				printerr("FAIL attack_angle_two_players server swung %s turned %s, blade %s; client blade %s; want %s"
-						% [server.lastAnimDirection, server.swing_turn, on_server, on_client, want])
+			if (
+				server.lastAnimDirection != "Right"
+				or absf(server.swing_turn - angle) > 0.001
+				or on_server.distance_to(want) > 0.05
+				or on_client.distance_to(want) > 0.05
+			):
+				printerr(
+					(
+						"FAIL attack_angle_two_players server swung %s turned %s, blade %s; client blade %s; want %s"
+						% [server.lastAnimDirection, server.swing_turn, on_server, on_client, want]
+					)
+				)
 				fail += 1
 		await wait_attack.call(server, false)
 		await wait_attack.call(client, false)
@@ -607,8 +735,12 @@ func _test_attack_angle_two_players() -> int:
 			printerr("FAIL attack_angle_two_players the server copy did not get the bad angle")
 			fail += 1
 		elif server.animations.current_animation != "attackDown" or server.swing_turn != 0.0:
-			printerr("FAIL attack_angle_two_players bad angle swung %s turned %s on the server"
-					% [server.animations.current_animation, server.swing_turn])
+			printerr(
+				(
+					"FAIL attack_angle_two_players bad angle swung %s turned %s on the server"
+					% [server.animations.current_animation, server.swing_turn]
+				)
+			)
 			fail += 1
 	cpeer.close()
 	speer.close()

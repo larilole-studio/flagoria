@@ -15,7 +15,18 @@ const ATTRIBUTES := ["auto", "team", "open"]
 ## and team colours are chosen by the game when a structure is placed.
 const ALLOWED := {
 	"ground": ["GRASS_A", "GRASS_B", "GRASS_C", "GRASS_D", "SAND", "STONES", "FLOWER"],
-	"object": ["WALL_H", "WALL_GATE_H", "WALL_POST", "TOWER_WOOD_POST", "TOWER_WOOD_WALL", "PROP_FLAG_BLUE", "BUSH", "TREE", "TREE_PINE_SMALL"],
+	"object":
+	[
+		"WALL_H",
+		"WALL_GATE_H",
+		"WALL_POST",
+		"TOWER_WOOD_POST",
+		"TOWER_WOOD_WALL",
+		"PROP_FLAG_BLUE",
+		"BUSH",
+		"TREE",
+		"TREE_PINE_SMALL"
+	],
 }
 
 var name := ""
@@ -60,21 +71,44 @@ static func parse(text: String) -> Dictionary:
 		elif section in LAYERS:
 			s.layers[section].append(line)
 		elif section == "legend":
-			var m := RegEx.create_from_string("^(\\S+)\\s*=\\s*([A-Z0-9_]+)((?:\\s+\\S+)*)$").search(line)
+			var m := (
+				RegEx
+				. create_from_string("^(\\S+)\\s*=\\s*([A-Z0-9_]+)((?:\\s+\\S+)*)$")
+				. search(line)
+			)
 			if m == null:
 				errors.append(at + "legend entries look like 'c = TILE_NAME [auto] [team] [open]'")
 				continue
 			var c := m.get_string(1)
 			var attrs := m.get_string(3).strip_edges().split(" ", false)
-			if c.length() != 1 or c == EMPTY or c == ";" or c.unicode_at(0) < 33 or c.unicode_at(0) > 126:
-				errors.append(at + "legend character '%s' must be one printable ASCII character other than '.' and ';'" % c)
+			if (
+				c.length() != 1
+				or c == EMPTY
+				or c == ";"
+				or c.unicode_at(0) < 33
+				or c.unicode_at(0) > 126
+			):
+				(
+					errors
+					. append(
+						(
+							at
+							+ (
+								"legend character '%s' must be one printable ASCII character other than '.' and ';'"
+								% c
+							)
+						)
+					)
+				)
 			elif s.legend.has(c):
 				errors.append(at + "legend character '%s' is defined twice" % c)
 			elif not TileCatalog.TILES.has(m.get_string(2)):
 				errors.append(at + "unknown tile %s" % m.get_string(2))
 			for a in attrs:
 				if not a in ATTRIBUTES:
-					errors.append(at + "unknown attribute '%s' (allowed: %s)" % [a, ", ".join(ATTRIBUTES)])
+					errors.append(
+						at + "unknown attribute '%s' (allowed: %s)" % [a, ", ".join(ATTRIBUTES)]
+					)
 			s.legend[c] = {"tile": m.get_string(2), "attributes": attrs}
 		else:
 			var key := line.get_slice(":", 0).strip_edges()
@@ -94,13 +128,24 @@ static func parse(text: String) -> Dictionary:
 				"size":
 					var wh := value.split("x")
 					s.size = Vector2i(wh[0].to_int(), wh[-1].to_int())
-					if wh.size() != 2 or not wh[0].is_valid_int() or not wh[1].is_valid_int() \
-							or s.size.x < 1 or s.size.y < 1 or s.size.x > MAX_SIZE or s.size.y > MAX_SIZE:
+					if (
+						wh.size() != 2
+						or not wh[0].is_valid_int()
+						or not wh[1].is_valid_int()
+						or s.size.x < 1
+						or s.size.y < 1
+						or s.size.x > MAX_SIZE
+						or s.size.y > MAX_SIZE
+					):
 						errors.append(at + "size must be WxH with each side 1 to %d" % MAX_SIZE)
 				"anchor":
 					var xy := value.split(",")
 					s.anchor = Vector2i(xy[0].to_int(), xy[-1].to_int())
-					if xy.size() != 2 or not xy[0].strip_edges().is_valid_int() or not xy[1].strip_edges().is_valid_int():
+					if (
+						xy.size() != 2
+						or not xy[0].strip_edges().is_valid_int()
+						or not xy[1].strip_edges().is_valid_int()
+					):
 						errors.append(at + "anchor must be x,y")
 				"tags":
 					for t in value.split(",", false):
@@ -122,7 +167,9 @@ func validate() -> Array[String]:
 	## Grid shape, anchor, legend use and the per-layer palette.
 	var errors: Array[String] = []
 	if not Rect2i(Vector2i.ZERO, size).has_point(anchor):
-		errors.append("anchor %d,%d is outside the %dx%d grid" % [anchor.x, anchor.y, size.x, size.y])
+		errors.append(
+			"anchor %d,%d is outside the %dx%d grid" % [anchor.x, anchor.y, size.x, size.y]
+		)
 	var used := {}
 	for layer in LAYERS:
 		var rows: PackedStringArray = layers[layer]
@@ -130,14 +177,28 @@ func validate() -> Array[String]:
 			errors.append("%s: %d rows, size says %d" % [layer, rows.size(), size.y])
 		for y in rows.size():
 			if rows[y].length() != size.x:
-				errors.append("%s row %d: %d characters, size says %d" % [layer, y + 1, rows[y].length(), size.x])
+				errors.append(
+					(
+						"%s row %d: %d characters, size says %d"
+						% [layer, y + 1, rows[y].length(), size.x]
+					)
+				)
 			for c in rows[y]:
 				if c == EMPTY:
 					continue
 				if not legend.has(c) and not used.has(layer + c):
 					errors.append("%s row %d: '%s' is not in the legend" % [layer, y + 1, c])
-				elif legend.has(c) and not legend[c]["tile"] in ALLOWED[layer] and not used.has(layer + c):
-					errors.append("%s row %d: %s is not allowed on the %s layer" % [layer, y + 1, legend[c]["tile"], layer])
+				elif (
+					legend.has(c)
+					and not legend[c]["tile"] in ALLOWED[layer]
+					and not used.has(layer + c)
+				):
+					errors.append(
+						(
+							"%s row %d: %s is not allowed on the %s layer"
+							% [layer, y + 1, legend[c]["tile"], layer]
+						)
+					)
 				used[c] = true
 				used[layer + c] = true
 	for c in legend:
@@ -151,8 +212,13 @@ func validate() -> Array[String]:
 func to_text() -> String:
 	## Canonical text: LF, keys in a fixed order, legend sorted by character,
 	## an all-empty ground layer left out, and a trailing newline.
-	var out := [MAGIC, "name: " + name, "version: %d" % version,
-		"size: %dx%d" % [size.x, size.y], "anchor: %d,%d" % [anchor.x, anchor.y]]
+	var out := [
+		MAGIC,
+		"name: " + name,
+		"version: %d" % version,
+		"size: %dx%d" % [size.x, size.y],
+		"anchor: %d,%d" % [anchor.x, anchor.y]
+	]
 	if not tags.is_empty():
 		out.append("tags: " + ", ".join(tags))
 	out.append_array(comments)
@@ -160,7 +226,9 @@ func to_text() -> String:
 	var chars := legend.keys()
 	chars.sort()
 	for c in chars:
-		out.append("  %s = %s" % [c, " ".join([legend[c]["tile"]] + Array(legend[c]["attributes"]))])
+		out.append(
+			"  %s = %s" % [c, " ".join([legend[c]["tile"]] + Array(legend[c]["attributes"]))]
+		)
 	for layer in LAYERS:
 		if layer == "ground" and layers[layer] == _blank_rows():
 			continue

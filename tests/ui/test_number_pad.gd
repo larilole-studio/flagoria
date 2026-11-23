@@ -20,16 +20,29 @@ func _test_number_pad_first_key_replaces() -> int:
 		if how == "focus":
 			seed_field.grab_focus()
 		else:
-			_tap_sequence(seed_field.get_global_rect().get_center(), ["mouse_down", "touch_down", "mouse_up", "touch_up"])
+			_tap_sequence(
+				seed_field.get_global_rect().get_center(),
+				["mouse_down", "touch_down", "mouse_up", "touch_up"]
+			)
 		await process_frame
 		await process_frame
 		if not pad.visible or seed_field.get_selected_text() != "4295":
-			printerr("FAIL number_pad_first_key %s: pad open=%s selected=%s" % [how, pad.visible, seed_field.get_selected_text()])
+			printerr(
+				(
+					"FAIL number_pad_first_key %s: pad open=%s selected=%s"
+					% [how, pad.visible, seed_field.get_selected_text()]
+				)
+			)
 			fail += 1
 		for key in ["Digit7", "Digit1"]:
 			pad.find_child(key, true, false).pressed.emit()
 		if seed_field.text != "71":
-			printerr("FAIL number_pad_first_key %s: typed 7 1 over 4295 gave %s want 71" % [how, seed_field.text])
+			printerr(
+				(
+					"FAIL number_pad_first_key %s: typed 7 1 over 4295 gave %s want 71"
+					% [how, seed_field.text]
+				)
+			)
 			fail += 1
 	pad.close()
 	seed_field.release_focus()
@@ -44,7 +57,12 @@ func _test_number_pad_first_key_replaces() -> int:
 		field.text = lone
 		pad.find_child("OK", true, false).pressed.emit()
 		if field.text != old_text or not is_equal_approx(spin.value, 0.25):
-			printerr("FAIL number_pad_first_key lone %s gave text=%s value=%s want %s" % [lone, field.text, spin.value, old_text])
+			printerr(
+				(
+					"FAIL number_pad_first_key lone %s gave text=%s value=%s want %s"
+					% [lone, field.text, spin.value, old_text]
+				)
+			)
 			fail += 1
 		field.release_focus()
 		await process_frame
@@ -75,11 +93,18 @@ func _test_number_pad_selected_value_edit_keys() -> int:
 		await process_frame
 		await process_frame
 		if field.get_selected_text() != "12":
-			printerr("FAIL number_pad_selected_value_edit_keys %s: 12 not selected on open" % case[0])
+			printerr(
+				"FAIL number_pad_selected_value_edit_keys %s: 12 not selected on open" % case[0]
+			)
 			fail += 1
 		pad.find_child(case[0], true, false).pressed.emit()
 		if field.text != case[1]:
-			printerr("FAIL number_pad_selected_value_edit_keys first %s on 12 gave %s want %s" % [case[0], field.text, case[1]])
+			printerr(
+				(
+					"FAIL number_pad_selected_value_edit_keys first %s on 12 gave %s want %s"
+					% [case[0], field.text, case[1]]
+				)
+			)
 			fail += 1
 	pad.queue_free()
 	field.queue_free()
@@ -108,7 +133,12 @@ func _test_number_pad_keycap_style() -> int:
 	for key in want:
 		var b: Button = pad.find_child(key, true, false)
 		if b == null or b.theme_type_variation != want[key]:
-			printerr("FAIL number_pad_keycap_style %s style %s want %s" % [key, b.theme_type_variation if b else "missing", want[key]])
+			printerr(
+				(
+					"FAIL number_pad_keycap_style %s style %s want %s"
+					% [key, b.theme_type_variation if b else "missing", want[key]]
+				)
+			)
 			fail += 1
 	if pad.get_node("Panel").theme_type_variation != &"KeyboardPanel":
 		printerr("FAIL number_pad_keycap_style panel is not a KeyboardPanel")
@@ -128,8 +158,7 @@ func _test_number_pad_minus_zero_commits_zero() -> int:
 	var committed := {"v": NAN}
 	root.add_child(field)
 	root.add_child(pad)
-	pad.attach(field, true, true, func() -> void:
-		committed["v"] = field.text.to_float())
+	pad.attach(field, true, true, func() -> void: committed["v"] = field.text.to_float())
 	await process_frame
 	field.text = "1"
 	field.grab_focus()
@@ -148,4 +177,3 @@ func _test_number_pad_minus_zero_commits_zero() -> int:
 	if fail == 0:
 		print("PASS test_number_pad_minus_zero_commits_zero")
 	return fail
-

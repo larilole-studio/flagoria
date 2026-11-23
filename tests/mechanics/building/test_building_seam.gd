@@ -39,15 +39,18 @@ func _test_building_seam_placement() -> int:
 			printerr("FAIL %s: expected quoted cost %d" % [kind, price])
 			fail += 1
 		inventory.add(Inventory.WOOD, 1)
-		if not placer.place(kind, [cell], inventory, turns) \
-				or inventory.count_of(Inventory.WOOD) != 0 \
-				or not world.structures_for_sync().has([row[1], 1, cell, turns]):
+		if (
+			not placer.place(kind, [cell], inventory, turns)
+			or inventory.count_of(Inventory.WOOD) != 0
+			or not world.structures_for_sync().has([row[1], 1, cell, turns])
+		):
 			printerr("FAIL %s: placement, charge or sync row at %s" % [kind, cell])
 			fail += 1
 		inventory.add(Inventory.WOOD, price)
 		if row[1] != "barracks":
-			var flag_offset: Vector2i = {&"tower": Vector2i.RIGHT, &"castle": Vector2i(2, 0),
-				&"guard_post": Vector2i.DOWN}[kind]
+			var flag_offset: Vector2i = {
+				&"tower": Vector2i.RIGHT, &"castle": Vector2i(2, 0), &"guard_post": Vector2i.DOWN
+			}[kind]
 			if world.predict_cell(cell + flag_offset)[1] != Vector2i(2, 7):
 				printerr("FAIL %s: missing owner flag at %s" % [kind, cell + flag_offset])
 				fail += 1
@@ -77,8 +80,11 @@ func _test_building_seam_runs() -> int:
 	var inventory := scene.get_node("Inventory") as Inventory
 	var placer := ConstructionPlacer.new(world)
 	var planks: Array[Vector2i] = [_SHORE, _SHORE + Vector2i.LEFT]
-	var walls: Array[Vector2i] = [_WALL_SUPPORT + Vector2i.RIGHT, _WALL_SUPPORT + 2 * Vector2i.RIGHT,
-		_WALL_SUPPORT + 3 * Vector2i.RIGHT]
+	var walls: Array[Vector2i] = [
+		_WALL_SUPPORT + Vector2i.RIGHT,
+		_WALL_SUPPORT + 2 * Vector2i.RIGHT,
+		_WALL_SUPPORT + 3 * Vector2i.RIGHT
+	]
 	var bent_planks: Array[Vector2i] = [planks[0], planks[1], _SHORE + Vector2i.UP]
 	var bent_walls: Array[Vector2i] = [walls[0], walls[1], walls[1] + Vector2i.DOWN]
 	var fail := 0
@@ -86,7 +92,9 @@ func _test_building_seam_runs() -> int:
 	fail += _refused(placer, world, inventory, &"plank", planks, 0, "not enough wood")
 	inventory.add(Inventory.WOOD, 19)
 	fail += _refused(placer, world, inventory, &"plank", [_WALL_SUPPORT], 0, "wrong ground")
-	fail += _refused(placer, world, inventory, &"plank", [_SHORE + 3 * Vector2i.LEFT], 0, "not adjacent")
+	fail += _refused(
+		placer, world, inventory, &"plank", [_SHORE + 3 * Vector2i.LEFT], 0, "not adjacent"
+	)
 	fail += _refused(placer, world, inventory, &"plank", bent_planks, 0, "not straight")
 	fail += _refused(placer, world, inventory, &"wall_block", walls, 0, "not adjacent")
 	if not world.place_wall_cells([_WALL_SUPPORT]):
@@ -95,10 +103,15 @@ func _test_building_seam_runs() -> int:
 		return fail + 1
 	fail += _refused(placer, world, inventory, &"wall_block", [_SHORE], 0, "wrong ground")
 	fail += _refused(placer, world, inventory, &"wall_block", bent_walls, 0, "not straight")
-	for row in [[&"plank", planks, 18, world.has_bridge], [&"wall_block", walls, 12, world.has_wall]]:
+	for row in [
+		[&"plank", planks, 18, world.has_bridge], [&"wall_block", walls, 12, world.has_wall]
+	]:
 		var cells: Array[Vector2i] = row[1]
-		if not placer.place(row[0], cells, inventory) or not cells.all(row[3]) \
-				or inventory.count_of(Inventory.WOOD) != row[2]:
+		if (
+			not placer.place(row[0], cells, inventory)
+			or not cells.all(row[3])
+			or inventory.count_of(Inventory.WOOD) != row[2]
+		):
 			printerr("FAIL %s: run was not written or charged at %s" % [row[0], cells])
 			fail += 1
 		fail += _refused(placer, world, inventory, row[0], [cells[0]], 0, "occupied")
@@ -132,17 +145,27 @@ func _test_building_seam_refund() -> int:
 		return 1
 	stub.add(Inventory.WOOD, 10)
 	for row in [[&"plank", _SHORE], [&"wall_block", wall], [&"tower", _TOWER]]:
-		if placer.place(row[0], [row[1]], stub, 1) or stub.count_of(Inventory.WOOD) != 10 \
-				or world.has_bridge(_SHORE) or world.has_wall(wall) or not world.placed_structures().is_empty():
+		if (
+			placer.place(row[0], [row[1]], stub, 1)
+			or stub.count_of(Inventory.WOOD) != 10
+			or world.has_bridge(_SHORE)
+			or world.has_wall(wall)
+			or not world.placed_structures().is_empty()
+		):
 			printerr("FAIL %s: failed charge changed the world or wood" % row[0])
 			fail += 1
 	inventory.add(Inventory.WOOD, 13)
 	var charged: Array[int] = []
 	inventory.changed.connect(func(_resource: StringName, wood: int) -> void: charged.append(wood))
-	if placer.place_for_peer(&"tower", [_BLOCKED_TOWER], 1, inventory, 1) \
-			or charged != [3, 13] or inventory.count_of(Inventory.WOOD) != 13 \
-			or not world.placed_structures().is_empty():
-		printerr("FAIL building seam: refused tower should refund 10 wood, balances were %s" % [charged])
+	if (
+		placer.place_for_peer(&"tower", [_BLOCKED_TOWER], 1, inventory, 1)
+		or charged != [3, 13]
+		or inventory.count_of(Inventory.WOOD) != 13
+		or not world.placed_structures().is_empty()
+	):
+		printerr(
+			"FAIL building seam: refused tower should refund 10 wood, balances were %s" % [charged]
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -173,15 +196,26 @@ func _test_building_seam_connecting() -> int:
 	var wall := _WALL_SUPPORT + Vector2i.RIGHT
 	for row in [[&"tower", _TOWER, 1], [&"wall_block", wall, 0]]:
 		var cells: Array[Vector2i] = [row[1]]
-		if not placer.can_place(row[0], cells, inventory, row[2]).is_empty() \
-				or placer.place(row[0], cells, inventory, row[2]):
-			printerr("FAIL %s: connecting client had a blocked preview or submitted a build" % row[0])
+		if (
+			not placer.can_place(row[0], cells, inventory, row[2]).is_empty()
+			or placer.place(row[0], cells, inventory, row[2])
+		):
+			printerr(
+				"FAIL %s: connecting client had a blocked preview or submitted a build" % row[0]
+			)
 			fail += 1
-	if inventory.count_of(Inventory.WOOD) != 10 or world.has_wall(wall) or not world.placed_structures().is_empty():
+	if (
+		inventory.count_of(Inventory.WOOD) != 10
+		or world.has_wall(wall)
+		or not world.placed_structures().is_empty()
+	):
 		printerr("FAIL building seam: connecting client wrote or spent on an unsubmitted build")
 		fail += 1
-	if not placer.place(&"plank", [_SHORE], inventory) or not world.has_bridge(_SHORE) \
-			or inventory.count_of(Inventory.WOOD) != 9:
+	if (
+		not placer.place(&"plank", [_SHORE], inventory)
+		or not world.has_bridge(_SHORE)
+		or inventory.count_of(Inventory.WOOD) != 9
+	):
 		printerr("FAIL building seam: local plank transaction failed while connecting")
 		fail += 1
 	api.multiplayer_peer = null
@@ -194,7 +228,9 @@ func _test_building_seam_connecting() -> int:
 	return fail
 
 
-func _actor_refusals(scene: Node, world: _WorldMap, placer: ConstructionPlacer, inventory: Inventory) -> int:
+func _actor_refusals(
+	scene: Node, world: _WorldMap, placer: ConstructionPlacer, inventory: Inventory
+) -> int:
 	var wall := _WALL_SUPPORT + Vector2i.RIGHT
 	if not world.place_wall_cells([_WALL_SUPPORT]):
 		printerr("FAIL building seam: could not seed actor wall support")
@@ -204,7 +240,9 @@ func _actor_refusals(scene: Node, world: _WorldMap, placer: ConstructionPlacer, 
 	mob.setup(MobCatalog.SLIME, Vector2.ZERO, 1)
 	scene.get_node("World/Mobs").add_child(mob)
 	var fail := 0
-	for row in [[&"tower", _TOWER, 1], [&"guard_post", Vector2i(16, -33), 2], [&"wall_block", wall, 0]]:
+	for row in [
+		[&"tower", _TOWER, 1], [&"guard_post", Vector2i(16, -33), 2], [&"wall_block", wall, 0]
+	]:
 		var cell: Vector2i = row[1]
 		var pos := world.to_global(world.map_to_local(cell))
 		player.global_position = pos
@@ -219,15 +257,35 @@ func _actor_refusals(scene: Node, world: _WorldMap, placer: ConstructionPlacer, 
 	return fail
 
 
-func _refused(placer: ConstructionPlacer, world: _WorldMap, inventory: Inventory, kind: StringName,
-		cells: Array[Vector2i], turns: int, reason: String) -> int:
-	var before := [inventory.count_of(Inventory.WOOD), world.structures_for_sync(), world.bridges_for_sync(),
-		cells.map(world.has_wall)]
+func _refused(
+	placer: ConstructionPlacer,
+	world: _WorldMap,
+	inventory: Inventory,
+	kind: StringName,
+	cells: Array[Vector2i],
+	turns: int,
+	reason: String
+) -> int:
+	var before := [
+		inventory.count_of(Inventory.WOOD),
+		world.structures_for_sync(),
+		world.bridges_for_sync(),
+		cells.map(world.has_wall)
+	]
 	var reasons := placer.can_place(kind, cells, inventory, turns)
 	var placed := placer.place(kind, cells, inventory, turns)
-	var after := [inventory.count_of(Inventory.WOOD), world.structures_for_sync(), world.bridges_for_sync(),
-		cells.map(world.has_wall)]
+	var after := [
+		inventory.count_of(Inventory.WOOD),
+		world.structures_for_sync(),
+		world.bridges_for_sync(),
+		cells.map(world.has_wall)
+	]
 	if reason in reasons and not placed and after == before:
 		return 0
-	printerr("FAIL %s at %s: expected %s and no changes, got %s, placed=%s" % [kind, cells, reason, reasons, placed])
+	printerr(
+		(
+			"FAIL %s at %s: expected %s and no changes, got %s, placed=%s"
+			% [kind, cells, reason, reasons, placed]
+		)
+	)
 	return 1

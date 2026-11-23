@@ -4,6 +4,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Day, dusk and night on one map. The cycle is 10 minutes, so the drive
 ## seeks the host clock to the middle of each hold and saves that screen.
 
+
 func run() -> void:
 	if not await start_game():
 		return
@@ -23,7 +24,9 @@ func run() -> void:
 	var night_tint: Color = clock.color_of("night")
 	var phase := str(clock.phase())
 	var night := mod != null and phase == "night" and _same(mod.color, night_tint)
-	print("day_night: phase=%s tint=%s hud_clear=%s" % [phase, mod.color if mod else "none", placed])
+	print(
+		"day_night: phase=%s tint=%s hud_clear=%s" % [phase, mod.color if mod else "none", placed]
+	)
 	done(placed and night)
 
 
@@ -44,4 +47,8 @@ func _layer_has_modulate(node: Node) -> bool:
 
 
 func _same(got: Color, want: Color) -> bool:
-	return is_equal_approx(got.r, want.r) and is_equal_approx(got.g, want.g) and is_equal_approx(got.b, want.b)
+	return (
+		is_equal_approx(got.r, want.r)
+		and is_equal_approx(got.g, want.g)
+		and is_equal_approx(got.b, want.b)
+	)

@@ -68,7 +68,9 @@ func to_changes() -> Dictionary[String, Dictionary]:
 		var chunk := WorldSave.chunk_key(cell)
 		if not out.has(chunk):
 			out[chunk] = {}
-		out[chunk][WorldSave.cell_key(cell)] = {"cut": type.save_key, "age": _map.play_time - _cut_cells[cell][0]}
+		out[chunk][WorldSave.cell_key(cell)] = {
+			"cut": type.save_key, "age": _map.play_time - _cut_cells[cell][0]
+		}
 	sprouts.to_changes(out)
 	return out
 
@@ -177,12 +179,19 @@ func regrow_due() -> Array[Vector2i]:
 	## stump, and each stump is looked up in that set (#354).
 	## Returns the cells that regrew.
 	var regrown: Array[Vector2i] = []
-	if _cut_cells.is_empty() or Interaction.multiplayer_on(_map.multiplayer) and not _map.multiplayer.is_server():
+	if (
+		_cut_cells.is_empty()
+		or Interaction.multiplayer_on(_map.multiplayer) and not _map.multiplayer.is_server()
+	):
 		return regrown
 	var under_mobs: Variant = null  # Dictionary once a stump is due
 	for cell in _cut_cells.keys():
 		var delay: float = regrow_delay if regrow_delay >= 0.0 else _cut_cells[cell][2].regrow_delay
-		if delay == 0.0 or _map.play_time - _cut_cells[cell][0] < delay or _map.player_on_cell(cell):
+		if (
+			delay == 0.0
+			or _map.play_time - _cut_cells[cell][0] < delay
+			or _map.player_on_cell(cell)
+		):
 			continue
 		if under_mobs == null:
 			under_mobs = _map.mob_cells()
@@ -217,6 +226,12 @@ func _redraw(cell: Vector2i) -> bool:
 	_map.erase_cell(1, cell)
 	_map.erase_cell(_map.GROUND_DECOR_LAYER, cell)
 	var b := _map.biome_at(cell)
-	_map.set_tile_type_z1(cell, _map.cell_altitude(cell, b), _map.moisture.get_noise_2d(cell.x, cell.y),
-			_map.temperature.get_noise_2d(cell.x, cell.y), _map.items_chance.get_noise_2d(cell.x, cell.y), b)
+	_map.set_tile_type_z1(
+		cell,
+		_map.cell_altitude(cell, b),
+		_map.moisture.get_noise_2d(cell.x, cell.y),
+		_map.temperature.get_noise_2d(cell.x, cell.y),
+		_map.items_chance.get_noise_2d(cell.x, cell.y),
+		b
+	)
 	return true

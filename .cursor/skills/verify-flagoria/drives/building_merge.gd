@@ -68,8 +68,10 @@ func _walk_to_shared_wall(buildings: GeneratedBuildings, map: TileMap, origin1: 
 			break
 		var dx := wall.x - here.x
 		var dy := wall.y - here.y
-		var action := "ui_right" if absi(dx) >= absi(dy) and dx > 0 else \
-				"ui_left" if absi(dx) >= absi(dy) and dx < 0 else \
-				"ui_down" if dy > 0 else "ui_up"
+		var action := (
+			"ui_right"
+			if absi(dx) >= absi(dy) and dx > 0
+			else "ui_left" if absi(dx) >= absi(dy) and dx < 0 else "ui_down" if dy > 0 else "ui_up"
+		)
 		await hold(action, 8)
 		guard += 1

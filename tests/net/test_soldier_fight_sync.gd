@@ -23,28 +23,53 @@ func _test_soldier_fight_two_players() -> int:
 			printerr("FAIL soldier_fight_two_players: client did not join: %s" % read.call(1))
 			fail = 1
 		elif not await wait_for.call(func() -> bool: return _trained(read), 25000):
-			printerr("FAIL soldier_fight_two_players: train host %s client %s"
-					% [read.call(0), read.call(1)])
+			printerr(
+				(
+					"FAIL soldier_fight_two_players: train host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail += 1
 		elif not await wait_for.call(func() -> bool: return _fight_mob_live(read, 2), 40000):
-			printerr("FAIL soldier_fight_two_players: fight mob missing host %s client %s"
-					% [read.call(0), read.call(1)])
+			printerr(
+				(
+					"FAIL soldier_fight_two_players: fight mob missing host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail += 1
 		elif not await wait_for.call(func() -> bool: return _mob_hurt(read, 2), 45000):
-			printerr("FAIL soldier_fight_two_players: mob hp host %s client %s"
-					% [read.call(0), read.call(1)])
+			printerr(
+				(
+					"FAIL soldier_fight_two_players: mob hp host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail += 1
 		else:
 			launch.call(false, "watch")
-			if not await wait_for.call(func() -> bool:
-				return read.call(2).get("ready", false) and _mob_hurt(read, 3), 30000):
-				printerr("FAIL soldier_fight_two_players: late joiner host %s joiner %s"
-						% [read.call(0), read.call(2)])
+			if not await wait_for.call(
+				func() -> bool: return read.call(2).get("ready", false) and _mob_hurt(read, 3),
+				30000
+			):
+				printerr(
+					(
+						"FAIL soldier_fight_two_players: late joiner host %s joiner %s"
+						% [read.call(0), read.call(2)]
+					)
+				)
 				fail += 1
 		for i in session["outs"].size():
-			if not read.call(i).get("errors", []).is_empty() or str(read.call(i).get("place_error", "")) != "":
-				printerr("FAIL soldier_fight_two_players: peer %d errors %s place %s"
-						% [i, read.call(i).get("errors", []), read.call(i).get("place_error", "")])
+			if (
+				not read.call(i).get("errors", []).is_empty()
+				or str(read.call(i).get("place_error", "")) != ""
+			):
+				printerr(
+					(
+						"FAIL soldier_fight_two_players: peer %d errors %s place %s"
+						% [i, read.call(i).get("errors", []), read.call(i).get("place_error", "")]
+					)
+				)
 				fail += 1
 	await _close(session)
 	if fail == 0:
@@ -88,7 +113,9 @@ func _open() -> Dictionary:
 		return {}
 	var dir := make_probe_dir("soldier_fight_sync_%d_%d" % [OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_soldier_fight_%d_%d" % [OS.get_process_id(), port])
+	var saved := MapSave.save_world(
+		WorldSave.new(params), "test_soldier_fight_%d_%d" % [OS.get_process_id(), port]
+	)
 	if saved["error"] != "":
 		printerr("FAIL soldier fight sync could not save the map: %s" % saved["error"])
 		return {}
@@ -105,8 +132,13 @@ func _open() -> Dictionary:
 	var wait_for := wait_until
 	launch.call(true, "place")
 	return {
-		"dir": dir, "outs": outs, "probes": probes, "saved": saved["path"],
-		"launch": launch, "read": read, "wait_for": wait_for,
+		"dir": dir,
+		"outs": outs,
+		"probes": probes,
+		"saved": saved["path"],
+		"launch": launch,
+		"read": read,
+		"wait_for": wait_for,
 	}
 
 

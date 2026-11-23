@@ -1,6 +1,7 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Map Settings input, persistence and generation.
 
+
 func _test_map_settings_simple_choices() -> int:
 	print("-- test_map_settings_simple_choices")
 	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
@@ -10,7 +11,9 @@ func _test_map_settings_simple_choices() -> int:
 	var spawn := panel.find_child("SpawnBiome", true, false) as OptionButton
 	var raw := panel.find_child("AltitudeSeed") as LineEdit
 	if island == null or biome == null or spawn == null or raw.is_visible_in_tree():
-		printerr("FAIL map_settings_simple_choices: expected three selectors and hidden raw controls")
+		printerr(
+			"FAIL map_settings_simple_choices: expected three selectors and hidden raw controls"
+		)
 		panel.queue_free()
 		return 1
 	var params: MapGenParams = root.get_node("MapGen").params.duplicate_params()
@@ -24,10 +27,19 @@ func _test_map_settings_simple_choices() -> int:
 		biome.select(size)
 		biome.item_selected.emit(size)
 		panel.apply_to_params(params)
-		if [params.island_radius, params.archipelago_spacing, params.archipelago_island_radius,
-				params.archipelago_world_extent] != [[80, 80, 40, 512], [140, 112, 52, 768], [200, 144, 64, 1024]][size] \
-				or not is_equal_approx(params.biome_frequency, [0.006, 0.003, 0.002][size]) \
-				or params.spawn_biome != size:
+		if (
+			(
+				[
+					params.island_radius,
+					params.archipelago_spacing,
+					params.archipelago_island_radius,
+					params.archipelago_world_extent
+				]
+				!= [[80, 80, 40, 512], [140, 112, 52, 768], [200, 144, 64, 1024]][size]
+			)
+			or not is_equal_approx(params.biome_frequency, [0.006, 0.003, 0.002][size])
+			or params.spawn_biome != size
+		):
 			printerr("FAIL map_settings_simple_choices: wrong preset for size ", size)
 			failures += 1
 	panel.queue_free()
@@ -51,10 +63,7 @@ func _test_map_settings_water_reopen() -> int:
 	var shown := float(spin.get_line_edit().text)
 	panel.queue_free()
 	if abs(shown - in_use) > 0.001:
-		printerr(
-			"FAIL map_settings_water_reopen shown=%s want in-use=%s"
-			% [shown, in_use]
-		)
+		printerr("FAIL map_settings_water_reopen shown=%s want in-use=%s" % [shown, in_use])
 		return 1
 	print("PASS test_map_settings_water_reopen shown=%s" % shown)
 	return 0
@@ -68,13 +77,20 @@ func _test_map_settings_covers_params() -> int:
 	var panel = load("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	root.add_child(panel)
 	var control_names := {
-		"altitude_seed": "AltitudeSeed", "moisture_seed": "MoistureSeed",
-		"temperature_seed": "TemperatureSeed", "items_seed": "ItemsSeed",
-		"biome_seed": "BiomeSeed", "noise_type": "NoiseType", "spawn_biome": "SpawnBiome",
+		"altitude_seed": "AltitudeSeed",
+		"moisture_seed": "MoistureSeed",
+		"temperature_seed": "TemperatureSeed",
+		"items_seed": "ItemsSeed",
+		"biome_seed": "BiomeSeed",
+		"noise_type": "NoiseType",
+		"spawn_biome": "SpawnBiome",
 	}
 	var fail := 0
 	for prop in params.get_property_list():
-		if not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE) or prop["name"] in ["island_preset", "starter_grove", "starter_wood", "swamp_trees"]:
+		if (
+			not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE)
+			or prop["name"] in ["island_preset", "starter_grove", "starter_wood", "swamp_trees"]
+		):
 			continue
 		var key: String = prop["name"]
 		if not data.has(key) or panel.find_child(control_names.get(key, key), true, false) == null:
@@ -95,7 +111,9 @@ func _test_map_settings_number_pad_touch_tap() -> int:
 	await process_frame
 	var field: LineEdit = panel.find_child("AltitudeSeed")
 	field.text = ""
-	_tap_sequence(field.get_global_rect().get_center(), ["mouse_down", "touch_down", "mouse_up", "touch_up"])
+	_tap_sequence(
+		field.get_global_rect().get_center(), ["mouse_down", "touch_down", "mouse_up", "touch_up"]
+	)
 	await process_frame
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
@@ -107,7 +125,9 @@ func _test_map_settings_number_pad_touch_tap() -> int:
 		var params := MapGenParams.make_defaults()
 		panel.apply_to_params(params)
 		if params.altitude_seed != 7:
-			printerr("FAIL map_settings_number_pad_touch_tap: seed is %s, want 7" % params.altitude_seed)
+			printerr(
+				"FAIL map_settings_number_pad_touch_tap: seed is %s, want 7" % params.altitude_seed
+			)
 			fail += 1
 	panel.queue_free()
 	if fail == 0:
@@ -161,25 +181,43 @@ func _test_map_settings_number_pad_spin_boxes() -> int:
 			root.push_input(event)
 		await process_frame
 		if field.text != row[2]:
-			printerr("FAIL map_settings_number_pad_spin_boxes: %s typed %s, saw %s, want %s"
-					% [row[0], row[1], field.text, row[2]])
+			printerr(
+				(
+					"FAIL map_settings_number_pad_spin_boxes: %s typed %s, saw %s, want %s"
+					% [row[0], row[1], field.text, row[2]]
+				)
+			)
 			fail += 1
 		pad.find_child("OK", true, false).pressed.emit()
 		if not field.text.is_valid_float() or not is_equal_approx(float(field.text), row[3]):
-			printerr("FAIL map_settings_number_pad_spin_boxes: %s committed to %s, want %s"
-					% [row[0], field.text, row[3]])
+			printerr(
+				(
+					"FAIL map_settings_number_pad_spin_boxes: %s committed to %s, want %s"
+					% [row[0], field.text, row[3]]
+				)
+			)
 			fail += 1
 
 	panel.find_child("Back").pressed.emit()
 	map_gen.params = _spawn_params(42, 0.0)
 	map_gen.load_from_disk()
 	if not is_equal_approx(map_gen.params.water_max_alt, 1.0):
-		printerr("FAIL map_settings_number_pad_spin_boxes: reloaded water altitude is %s, want 1" % map_gen.params.water_max_alt)
+		printerr(
+			(
+				"FAIL map_settings_number_pad_spin_boxes: reloaded water altitude is %s, want 1"
+				% map_gen.params.water_max_alt
+			)
+		)
 		fail += 1
 	map_gen.apply_to_world_map(world)
 	world.generate_chunk(Vector2.ZERO)
 	if not was_land or world.get_cell_source_id(0, shore) != -1 or not world.is_open_sea(shore):
-		printerr("FAIL map_settings_number_pad_spin_boxes: raising water did not flood the shore at %s" % shore)
+		printerr(
+			(
+				"FAIL map_settings_number_pad_spin_boxes: raising water did not flood the shore at %s"
+				% shore
+			)
+		)
 		fail += 1
 
 	map_gen.params = saved_params
@@ -225,8 +263,10 @@ func _test_map_settings_bottom_buttons_visible() -> int:
 		var rect: Rect2 = row.get_global_rect()
 		if not vp.encloses(rect):
 			printerr(
-				"FAIL map_settings_bottom_buttons_visible: %s rect %s not inside viewport %s (clipped by %.1f)"
-				% [row_name, rect, vp, rect.end.y - vp.end.y]
+				(
+					"FAIL map_settings_bottom_buttons_visible: %s rect %s not inside viewport %s (clipped by %.1f)"
+					% [row_name, rect, vp, rect.end.y - vp.end.y]
+				)
 			)
 			fail += 1
 	for button_name in ["RandomSeed", "RandomSpecs", "Reset", "Back", "Start"]:
@@ -238,8 +278,10 @@ func _test_map_settings_bottom_buttons_visible() -> int:
 		var brect: Rect2 = b.get_global_rect()
 		if not vp.encloses(brect):
 			printerr(
-				"FAIL map_settings_bottom_buttons_visible: %s rect %s not inside viewport %s"
-				% [button_name, brect, vp]
+				(
+					"FAIL map_settings_bottom_buttons_visible: %s rect %s not inside viewport %s"
+					% [button_name, brect, vp]
+				)
 			)
 			fail += 1
 	panel.queue_free()

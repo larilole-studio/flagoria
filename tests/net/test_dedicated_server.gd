@@ -15,7 +15,14 @@ func _test_dedicated_server_join() -> int:
 		return 1
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if pid <= 0:
 		printerr("FAIL dedicated_server_join could not start the server process")
@@ -34,7 +41,9 @@ func _test_dedicated_server_join() -> int:
 		var deadline := Time.get_ticks_msec() + timeout_ms
 		while Time.get_ticks_msec() < deadline and OS.is_process_running(pid):
 			client_id = scene.multiplayer.get_unique_id()
-			var params_ok: bool = scene.world_params != null and scene.world_params.altitude_seed != 0
+			var params_ok: bool = (
+				scene.world_params != null and scene.world_params.altitude_seed != 0
+			)
 			if params_ok and world.has_node(str(client_id)):
 				break
 			await process_frame
@@ -43,7 +52,9 @@ func _test_dedicated_server_join() -> int:
 			printerr("FAIL dedicated_server_join server process exited early")
 			fail += 1
 		elif params == null or params.altitude_seed == 0 or params.items_seed == 0:
-			printerr("FAIL dedicated_server_join no map params from server within %s ms" % timeout_ms)
+			printerr(
+				"FAIL dedicated_server_join no map params from server within %s ms" % timeout_ms
+			)
 			fail += 1
 		elif not world.has_node(str(client_id)):
 			printerr("FAIL dedicated_server_join server did not spawn player %s" % client_id)
@@ -76,10 +87,31 @@ func _test_dedicated_server_params_file() -> int:
 		printerr("FAIL dedicated_server_params_file found no free UDP port")
 		return 1
 	var out := []
-	var code := OS.execute("timeout", ["-k", "5", "30", exe, "--headless", "--path", project,
-		"--", "--server", "--port=%d" % port, "--params=user://no_such_save.json"], out, true)
+	var code := OS.execute(
+		"timeout",
+		[
+			"-k",
+			"5",
+			"30",
+			exe,
+			"--headless",
+			"--path",
+			project,
+			"--",
+			"--server",
+			"--port=%d" % port,
+			"--params=user://no_such_save.json"
+		],
+		out,
+		true
+	)
 	if code != 1 or not "no map save" in "".join(out):
-		printerr("FAIL dedicated_server_params_file missing file: exit %s, want 1 and 'no map save'" % code)
+		printerr(
+			(
+				"FAIL dedicated_server_params_file missing file: exit %s, want 1 and 'no map save'"
+				% code
+			)
+		)
 		fail += 1
 
 	var params := MapGenParams.make_defaults()
@@ -105,8 +137,22 @@ func _test_dedicated_server_params_file() -> int:
 		return fail + 1
 	handle.store_buffer(raw)
 	handle.close()
-	var pid := OS.create_process("timeout", ["-k", "5", "90", exe, "--headless", "--path", project,
-		"--", "--server", "--port=%d" % port, "--params=" + mounted])
+	var pid := OS.create_process(
+		"timeout",
+		[
+			"-k",
+			"5",
+			"90",
+			exe,
+			"--headless",
+			"--path",
+			project,
+			"--",
+			"--server",
+			"--port=%d" % port,
+			"--params=" + mounted
+		]
+	)
 	if pid <= 0:
 		printerr("FAIL dedicated_server_params_file could not start the server process")
 		DirAccess.remove_absolute(saved["path"])
@@ -122,8 +168,12 @@ func _test_dedicated_server_params_file() -> int:
 		await process_frame
 	var got: MapGenParams = scene.world_params
 	if got == null or got.to_dict() != params.to_dict():
-		printerr("FAIL dedicated_server_params_file client got %s, want %s" % [
-			got.to_dict() if got != null else null, params.to_dict()])
+		printerr(
+			(
+				"FAIL dedicated_server_params_file client got %s, want %s"
+				% [got.to_dict() if got != null else null, params.to_dict()]
+			)
+		)
 		fail += 1
 	OS.execute("kill", ["-TERM", str(pid)])
 	scene.enet_peer.close()

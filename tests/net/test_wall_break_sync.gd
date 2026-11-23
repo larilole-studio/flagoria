@@ -3,7 +3,9 @@ extends "res://tests/net/test_wall_sync.gd"
 
 
 func _test_wall_break_two_players() -> int:
-	return await run_wall_row("test_wall_break_two_players", "break", _both_hp2, _same_walls, _await_break)
+	return await run_wall_row(
+		"test_wall_break_two_players", "break", _both_hp2, _same_walls, _await_break
+	)
 
 
 func _await_break(read: Callable) -> bool:

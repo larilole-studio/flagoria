@@ -65,18 +65,22 @@ static func layout_cells(width: int, height: int, seed_value: int, style: int) -
 		var row: Array = grid[y]
 		for x in row.size():
 			var piece_id := str(row[x])
-			out.append({
-				"x": x,
-				"y": y,
-				"piece": piece_id,
-				"tile": tile_name_for(piece_id, style),
-			})
+			(
+				out
+				. append(
+					{
+						"x": x,
+						"y": y,
+						"piece": piece_id,
+						"tile": tile_name_for(piece_id, style),
+					}
+				)
+			)
 	return out
 
 
 static func layout_grid(width: int, height: int, seed_value: int, style: int) -> Array:
-	var solved := WfcBuildingConstraints.solve_building(
-			width, height, mix_seed(seed_value, style))
+	var solved := WfcBuildingConstraints.solve_building(width, height, mix_seed(seed_value, style))
 	if not solved.ok:
 		return []
 	return solved.grid
@@ -143,8 +147,7 @@ func generate(origin: Vector2i, width: int, height: int, seed_value: int, style:
 			return false
 	if _has_record(record):
 		return true
-	if not WfcBuildingConstraints.solve_building(
-			width, height, mix_seed(seed_value, style)).ok:
+	if not WfcBuildingConstraints.solve_building(width, height, mix_seed(seed_value, style)).ok:
 		return false
 	_records.append(record)
 	_rebuild_from_records()
@@ -326,7 +329,9 @@ func _clear_cover(map: TileMap, cell: Vector2i, piece_id: String) -> void:
 		map.claim_ground(cell, TileCatalog.GRASS_A)
 
 
-func _clear_door_exit(map: TileMap, door: Vector2i, x: int, y: int, width: int, height: int) -> void:
+func _clear_door_exit(
+	map: TileMap, door: Vector2i, x: int, y: int, width: int, height: int
+) -> void:
 	## The cell just outside the door stays open, so a tree or the shore does
 	## not seal the only way in.
 	var steps: Array[Vector2i] = []
@@ -363,9 +368,21 @@ func _solid_alternative(map: TileMap, atlas: Vector2i) -> int:
 	var created := source.create_alternative_tile(atlas)
 	var tile := source.get_tile_data(atlas, created)
 	tile.add_collision_polygon(0)
-	tile.set_collision_polygon_points(0, 0, PackedVector2Array([
-		Vector2(-8, -8), Vector2(8, -8), Vector2(8, 8), Vector2(-8, 8),
-	]))
+	(
+		tile
+		. set_collision_polygon_points(
+			0,
+			0,
+			PackedVector2Array(
+				[
+					Vector2(-8, -8),
+					Vector2(8, -8),
+					Vector2(8, 8),
+					Vector2(-8, 8),
+				]
+			)
+		)
+	)
 	return created
 
 
@@ -425,10 +442,17 @@ func _record_covering(cell: Vector2i) -> int:
 
 
 func _key(record: Dictionary) -> String:
-	return "%s:%s:%s:%s:%s:%s" % [
-		int(record.get("seed", 0)), int(record.get("width", 0)), int(record.get("height", 0)),
-		int(record.get("style", 0)), int(record.get("x", 0)), int(record.get("y", 0)),
-	]
+	return (
+		"%s:%s:%s:%s:%s:%s"
+		% [
+			int(record.get("seed", 0)),
+			int(record.get("width", 0)),
+			int(record.get("height", 0)),
+			int(record.get("style", 0)),
+			int(record.get("x", 0)),
+			int(record.get("y", 0)),
+		]
+	)
 
 
 func _seed_for(params: MapGenParams, origin: Vector2i) -> int:

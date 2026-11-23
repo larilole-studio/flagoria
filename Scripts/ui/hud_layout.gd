@@ -281,7 +281,9 @@ func control_hit_rect(id: String, layer: CanvasLayer) -> Rect2:
 			return Rect2(stick.global_position - Vector2(r, r), Vector2(r, r) * 2.0)
 		"attack":
 			var btn := node as TouchScreenButton
-			var size := btn.texture_normal.get_size() * btn.scale if btn.texture_normal else Vector2.ZERO
+			var size := (
+				btn.texture_normal.get_size() * btn.scale if btn.texture_normal else Vector2.ZERO
+			)
 			return Rect2(btn.global_position, size)
 		_:
 			var c := node as Control
@@ -347,7 +349,10 @@ func _apply_run(button: Button, pos: Vector2, s: float) -> void:
 
 
 func _apply_round(button: Button, pos: Vector2, s: float, _is_run := false) -> void:
-	if button.get_script() != null and str(button.get_script().resource_path).ends_with("run_control.gd"):
+	if (
+		button.get_script() != null
+		and str(button.get_script().resource_path).ends_with("run_control.gd")
+	):
 		_apply_run(button, pos, s)
 		return
 	if button.name == "BuildingsButton":

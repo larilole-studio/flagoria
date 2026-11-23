@@ -43,13 +43,23 @@ func _test_two_player_smoke() -> int:
 	var a: String = read.call(1).get("id", "")
 	var b: String = read.call(2).get("id", "")
 	if not waited:
-		printerr("FAIL two_player_smoke not every peer sees both players: server %s, A %s, B %s"
-				% [read.call(0), read.call(1), read.call(2)])
+		printerr(
+			(
+				"FAIL two_player_smoke not every peer sees both players: server %s, A %s, B %s"
+				% [read.call(0), read.call(1), read.call(2)]
+			)
+		)
 		fail += 1
 	else:
-		await wait_until(func() -> bool:
-			var own: Vector2 = seen.call(1, a)
-			return own.distance_to(seen.call(0, a)) < 1.0 and own.distance_to(seen.call(2, a)) < 1.0, 500)
+		await wait_until(
+			func() -> bool:
+				var own: Vector2 = seen.call(1, a)
+				return (
+					own.distance_to(seen.call(0, a)) < 1.0
+					and own.distance_to(seen.call(2, a)) < 1.0
+				),
+			500
+		)
 		var start: Vector2 = seen.call(1, a)
 		var b_start: Vector2 = seen.call(2, a)
 		# Walk until A has moved 4 px; a wall, water or the other player may
@@ -59,25 +69,40 @@ func _test_two_player_smoke() -> int:
 			var walk := FileAccess.open(outs[1] + ".walk", FileAccess.WRITE)
 			walk.store_string(action)
 			walk.close()
-			moved = await wait_for.call(func() -> bool:
-				var own: Vector2 = seen.call(1, a)
-				return own != Vector2.INF and own.distance_to(start) >= 4.0, 1500)
+			moved = await wait_for.call(
+				func() -> bool:
+					var own: Vector2 = seen.call(1, a)
+					return own != Vector2.INF and own.distance_to(start) >= 4.0,
+				1500
+			)
 			DirAccess.remove_absolute(outs[1] + ".walk")
 			if moved:
 				break
 		if not moved:
-			printerr("FAIL two_player_smoke player %s did not move from %s in any direction: A %s"
-					% [a, start, read.call(1)])
+			printerr(
+				(
+					"FAIL two_player_smoke player %s did not move from %s in any direction: A %s"
+					% [a, start, read.call(1)]
+				)
+			)
 			fail += 1
 		else:
 			# Once A stops, both other peers see it where A has it.
 			var synced := func() -> bool:
 				var own: Vector2 = seen.call(1, a)
-				return own != Vector2.INF and own.distance_to(seen.call(0, a)) < 1.0 \
-						and own.distance_to(seen.call(2, a)) < 1.0 and own.distance_to(b_start) >= 4.0
+				return (
+					own != Vector2.INF
+					and own.distance_to(seen.call(0, a)) < 1.0
+					and own.distance_to(seen.call(2, a)) < 1.0
+					and own.distance_to(b_start) >= 4.0
+				)
 			if not await wait_for.call(synced, 5000):
-				printerr("FAIL two_player_smoke A %s is at %s on A, %s on the server, %s on B (was %s on B)"
-						% [a, seen.call(1, a), seen.call(0, a), seen.call(2, a), b_start])
+				printerr(
+					(
+						"FAIL two_player_smoke A %s is at %s on A, %s on the server, %s on B (was %s on B)"
+						% [a, seen.call(1, a), seen.call(0, a), seen.call(2, a), b_start]
+					)
+				)
 				fail += 1
 		for i in 3:
 			var errors: Array = read.call(i).get("errors", [])

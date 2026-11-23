@@ -44,8 +44,10 @@ func _test_map_characterization() -> int:
 		var got1: Vector2i = world.get_cell_atlas_coords(1, cell)
 		if got0 != want[0] or got1 != want[1]:
 			printerr(
-				"FAIL cell=%s expected l0=%s l1=%s got l0=%s l1=%s"
-				% [cell, want[0], want[1], got0, got1]
+				(
+					"FAIL cell=%s expected l0=%s l1=%s got l0=%s l1=%s"
+					% [cell, want[0], want[1], got0, got1]
+				)
 			)
 			fail += 1
 

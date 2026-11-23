@@ -17,7 +17,10 @@ func _extra_castle_anchor(world, quarter_turns := 0, origin: Variant = null) -> 
 				var foot: Array = StructurePlacer.footprint(s, cell).keys()
 				if foot.is_empty():
 					continue
-				if foot.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+				if foot.all(
+					func(c):
+						return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+				):
 					return cell
 	return null
 
@@ -34,7 +37,9 @@ func _clear_castle_anchor(world, quarter_turns := 0) -> Variant:
 			var cells: Array = StructurePlacer.footprint(s, cell).keys()
 			if cells.is_empty():
 				continue
-			if cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				return cell
 	return null
 
@@ -78,8 +83,12 @@ func _test_build_castle_save_round_trip() -> int:
 	var restored: int = scene._restore_loaded_world()
 	StructureSaves.adopt_start_castle(world, 1)
 	if restored != want.size() or str(world.structures_for_sync()) != str(want):
-		printerr("FAIL build_castle_save_round_trip: restored %d got %s want %s"
-				% [restored, world.structures_for_sync(), want])
+		printerr(
+			(
+				"FAIL build_castle_save_round_trip: restored %d got %s want %s"
+				% [restored, world.structures_for_sync(), want]
+			)
+		)
 		fail += 1
 	var second := {}
 	for entry in want:
@@ -91,8 +100,11 @@ func _test_build_castle_save_round_trip() -> int:
 	else:
 		var found := false
 		for p in world.placed_structures().values():
-			if p["name"] == "castle" and p["anchor"] == second["anchor"] \
-					and int(p.get("rotation", 0)) == second["rotation"]:
+			if (
+				p["name"] == "castle"
+				and p["anchor"] == second["anchor"]
+				and int(p.get("rotation", 0)) == second["rotation"]
+			):
 				found = true
 				break
 		if not found:
@@ -154,8 +166,12 @@ func _test_build_castle_land_score_flag() -> int:
 			var start_id: int = int(start[0]["id"])
 			var before := land.covered_of(1)
 			if land.select_cell(start_flag) != start_id or before <= 0:
-				printerr("FAIL build_castle_land_score_flag: start flag id %s covered %s"
-						% [land.select_cell(start_flag), before])
+				printerr(
+					(
+						"FAIL build_castle_land_score_flag: start flag id %s covered %s"
+						% [land.select_cell(start_flag), before]
+					)
+				)
 				fail += 1
 			else:
 				var anchor: Variant = _extra_castle_anchor(world, 0)
@@ -169,18 +185,31 @@ func _test_build_castle_land_score_flag() -> int:
 					land.tick()
 					var built := _castle_towers(world, 1)
 					if built.size() < 2:
-						printerr("FAIL build_castle_land_score_flag: expected two castle flags, got %s" % built.size())
+						printerr(
+							(
+								"FAIL build_castle_land_score_flag: expected two castle flags, got %s"
+								% built.size()
+							)
+						)
 						fail += 1
 					else:
 						var extra: Dictionary = built[1]
 						if land.select_cell(extra["flag"]) != int(extra["id"]):
-							printerr("FAIL build_castle_land_score_flag: extra flag tower %s"
-									% land.select_cell(extra["flag"]))
+							printerr(
+								(
+									"FAIL build_castle_land_score_flag: extra flag tower %s"
+									% land.select_cell(extra["flag"])
+								)
+							)
 							fail += 1
 						var after := land.covered_of(1)
 						if after <= before:
-							printerr("FAIL build_castle_land_score_flag: covered %s after second castle (was %s)"
-									% [after, before])
+							printerr(
+								(
+									"FAIL build_castle_land_score_flag: covered %s after second castle (was %s)"
+									% [after, before]
+								)
+							)
 							fail += 1
 						elif land.select_cell(start_flag) != start_id:
 							printerr("FAIL build_castle_land_score_flag: start flag lost selection")

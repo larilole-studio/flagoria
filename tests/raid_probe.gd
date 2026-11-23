@@ -4,7 +4,6 @@ extends "res://tests/helpers/probe_base.gd"
 ##   -- --port=N --out=PATH --role=host --seed=11 --raids=on
 ##   -- --port=N --out=PATH --role=join --seed=11 --raids=off
 
-
 var _raids := false
 var _armed := false
 var _phase := 0
@@ -94,10 +93,21 @@ func _arm(main) -> void:
 	var mobs: MobSpawner = main.get_node("World/Mobs")
 	mobs.set_physics_process(false)
 	mobs.clear_mobs()
-	var mob := mobs.spawner.spawn({
-		"name": "raid_fixture", "type": MobCatalog.SLIME, "seed": 11,
-		"pos": world.map_to_local(Vector2i(22, -12)),
-	}) as Mob
+	var mob := (
+		(
+			mobs
+			. spawner
+			. spawn(
+				{
+					"name": "raid_fixture",
+					"type": MobCatalog.SLIME,
+					"seed": 11,
+					"pos": world.map_to_local(Vector2i(22, -12)),
+				}
+			)
+		)
+		as Mob
+	)
 	if mob == null:
 		_note = "could not spawn raider"
 		return
@@ -108,7 +118,10 @@ func _arm(main) -> void:
 	while Time.get_ticks_msec() < deadline:
 		_hp = int(_walls(main).get(key, -1))
 		_assigned = _assigned or (mob.state != Mob.State.CHASE and mob.pinned())
-		if (_raids and _hp == 2 and _assigned) or (not _raids and Engine.get_physics_frames() >= off_done):
+		if (
+			(_raids and _hp == 2 and _assigned)
+			or (not _raids and Engine.get_physics_frames() >= off_done)
+		):
 			settings.set_raids_enabled(false, false)
 			return
 		await process_frame

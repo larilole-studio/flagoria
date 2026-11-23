@@ -52,7 +52,13 @@ func _initialize() -> void:
 
 
 func _args() -> Dictionary:
-	var a := {"seed": "42", "freq": "0.003", "size": "4096", "step": "8", "out": "res://artifacts/out/biomes"}
+	var a := {
+		"seed": "42",
+		"freq": "0.003",
+		"size": "4096",
+		"step": "8",
+		"out": "res://artifacts/out/biomes"
+	}
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--") and arg.contains("="):
 			var kv: PackedStringArray = arg.substr(2).split("=", true, 1)
@@ -98,7 +104,18 @@ func _run() -> void:
 	var land := {}
 	for b in BIOME_NAMES:
 		counts[b] = 0
-		land[b] = {"land": 0, "sand": 0, "swamp": 0, "tree": 0, "birch": 0, "bushy": 0, "pine": 0, "bush": 0, "flower": 0, "stones": 0}
+		land[b] = {
+			"land": 0,
+			"sand": 0,
+			"swamp": 0,
+			"tree": 0,
+			"birch": 0,
+			"bushy": 0,
+			"pine": 0,
+			"bush": 0,
+			"flower": 0,
+			"stones": 0
+		}
 	for ix in range(n):
 		for iy in range(n):
 			var cell := Vector2i(ix * step - size / 2, iy * step - size / 2)
@@ -133,7 +150,9 @@ func _run() -> void:
 					pc = PLANT_LAND
 			terrain_img.set_pixel(ix, iy, c)
 			plant_img.set_pixel(ix, iy, pc)
-	var close_centre := _close_up_centres(biome_img, terrain_img, CLOSE_UP / 2 / step, n, step, size)
+	var close_centre := _close_up_centres(
+		biome_img, terrain_img, CLOSE_UP / 2 / step, n, step, size
+	)
 
 	# Close-ups: one CLOSE_UP-tile window per biome at 1 tile per pixel, cells of
 	# other biomes dimmed, so the per-biome ground mix is readable on islands.
@@ -148,7 +167,9 @@ func _run() -> void:
 		close_land[b] = 0
 		close_plants[b] = 0
 	for b in BIOME_NAMES:
-		var origin: Vector2i = close_centre.get(b, Vector2i.ZERO) - Vector2i(CLOSE_UP / 2, CLOSE_UP / 2)
+		var origin: Vector2i = (
+			close_centre.get(b, Vector2i.ZERO) - Vector2i(CLOSE_UP / 2, CLOSE_UP / 2)
+		)
 		for x in range(CLOSE_UP):
 			for y in range(CLOSE_UP):
 				var cell := origin + Vector2i(x, y)
@@ -169,7 +190,9 @@ func _run() -> void:
 	# and the close-up row below in the same order.
 	var legend_h := BIOME_NAMES.size() * (LEGEND_W + PAD)
 	var top_h := maxi(n, legend_h)
-	var combo := Image.create(maxi(n * 3 + PAD * 3 + LEGEND_W, row_w), top_h + PAD + CLOSE_UP, false, Image.FORMAT_RGB8)
+	var combo := Image.create(
+		maxi(n * 3 + PAD * 3 + LEGEND_W, row_w), top_h + PAD + CLOSE_UP, false, Image.FORMAT_RGB8
+	)
 	combo.fill(Color.BLACK)
 	combo.blit_rect(biome_img, Rect2i(0, 0, n, n), Vector2i(0, 0))
 	combo.blit_rect(terrain_img, Rect2i(0, 0, n, n), Vector2i(n + PAD, 0))
@@ -177,7 +200,9 @@ func _run() -> void:
 	combo.blit_rect(close_img, Rect2i(0, 0, row_w, CLOSE_UP), Vector2i(0, top_h + PAD))
 	var i := 0
 	for b in BIOME_NAMES:
-		combo.fill_rect(Rect2i(n * 3 + PAD * 3, i * (LEGEND_W + PAD), LEGEND_W, LEGEND_W), BIOME_COLORS[b])
+		combo.fill_rect(
+			Rect2i(n * 3 + PAD * 3, i * (LEGEND_W + PAD), LEGEND_W, LEGEND_W), BIOME_COLORS[b]
+		)
 		i += 1
 
 	DirAccess.make_dir_recursive_absolute(out_prefix.get_base_dir())
@@ -186,10 +211,26 @@ func _run() -> void:
 	combo.save_png(png)
 
 	var total := n * n
-	var legend := "seed=%d biome_frequency=%s area=%dx%d tiles step=%d\n" % [seed_v, str(freq), size, size, step]
-	legend += "left to right: biome map, terrain (water/sand/swamp/grass/hills), plants (tree #%s, bushy tree #%s, pine #%s, bush #%s, flower #%s, stones #%s, bare land #%s), swatches top to bottom\n" % [
-		TREE.to_html(false), BUSHY.to_html(false), PINE.to_html(false), BUSH.to_html(false), FLOWER.to_html(false), STONES.to_html(false), PLANT_LAND.to_html(false)]
-	legend += "bottom row: %d-tile close-up per biome with plants drawn, left to right in swatch order (other biomes dimmed)\n" % CLOSE_UP
+	var legend := (
+		"seed=%d biome_frequency=%s area=%dx%d tiles step=%d\n"
+		% [seed_v, str(freq), size, size, step]
+	)
+	legend += (
+		"left to right: biome map, terrain (water/sand/swamp/grass/hills), plants (tree #%s, bushy tree #%s, pine #%s, bush #%s, flower #%s, stones #%s, bare land #%s), swatches top to bottom\n"
+		% [
+			TREE.to_html(false),
+			BUSHY.to_html(false),
+			PINE.to_html(false),
+			BUSH.to_html(false),
+			FLOWER.to_html(false),
+			STONES.to_html(false),
+			PLANT_LAND.to_html(false)
+		]
+	)
+	legend += (
+		"bottom row: %d-tile close-up per biome with plants drawn, left to right in swatch order (other biomes dimmed)\n"
+		% CLOSE_UP
+	)
 	var missing: Array[String] = []
 	for b in BIOME_NAMES:
 		var pct: float = 100.0 * counts[b] / total
@@ -200,24 +241,41 @@ func _run() -> void:
 	for b in BIOME_NAMES:
 		var l: Dictionary = land[b]
 		var n_land := maxi(1, l["land"])
-		legend += "%-18s land=%6.2f%% sand=%5.1f%% swamp=%5.1f%% grass=%5.1f%%\n" % [
-			BIOME_NAMES[b], 100.0 * l["land"] / maxi(1, counts[b]),
-			100.0 * l["sand"] / n_land, 100.0 * l["swamp"] / n_land,
-			100.0 * (l["land"] - l["sand"] - l["swamp"]) / n_land]
+		legend += (
+			"%-18s land=%6.2f%% sand=%5.1f%% swamp=%5.1f%% grass=%5.1f%%\n"
+			% [
+				BIOME_NAMES[b],
+				100.0 * l["land"] / maxi(1, counts[b]),
+				100.0 * l["sand"] / n_land,
+				100.0 * l["swamp"] / n_land,
+				100.0 * (l["land"] - l["sand"] - l["swamp"]) / n_land
+			]
+		)
 	legend += "plant mix per biome (share of that biome's land samples):\n"
 	for b in BIOME_NAMES:
 		var l: Dictionary = land[b]
 		var n_land := maxi(1, l["land"])
-		legend += "%-18s tree=%5.1f%% birch=%5.1f%% bushy=%5.1f%% pine=%5.1f%% bush=%5.1f%% flower=%5.1f%% stones=%5.1f%%\n" % [
-			BIOME_NAMES[b], 100.0 * l["tree"] / n_land, 100.0 * l["birch"] / n_land, 100.0 * l["bushy"] / n_land,
-			100.0 * l["pine"] / n_land, 100.0 * l["bush"] / n_land, 100.0 * l["flower"] / n_land,
-			100.0 * l["stones"] / n_land]
+		legend += (
+			"%-18s tree=%5.1f%% birch=%5.1f%% bushy=%5.1f%% pine=%5.1f%% bush=%5.1f%% flower=%5.1f%% stones=%5.1f%%\n"
+			% [
+				BIOME_NAMES[b],
+				100.0 * l["tree"] / n_land,
+				100.0 * l["birch"] / n_land,
+				100.0 * l["bushy"] / n_land,
+				100.0 * l["pine"] / n_land,
+				100.0 * l["bush"] / n_land,
+				100.0 * l["flower"] / n_land,
+				100.0 * l["stones"] / n_land
+			]
+		)
 	legend += "trees + bushy trees + pines + bushes per biome (wide samples + close-up land cells):\n"
 	var bare: Array[String] = []
 	for b in BIOME_NAMES:
 		var wide: int = land[b]["tree"] + land[b]["bushy"] + land[b]["pine"] + land[b]["bush"]
-		legend += "%-18s wide=%d of %d land  close_up=%d of %d land\n" % [
-			BIOME_NAMES[b], wide, land[b]["land"], close_plants[b], close_land[b]]
+		legend += (
+			"%-18s wide=%d of %d land  close_up=%d of %d land\n"
+			% [BIOME_NAMES[b], wide, land[b]["land"], close_plants[b], close_land[b]]
+		)
 		if wide + close_plants[b] == 0:
 			bare.append(BIOME_NAMES[b])
 	var f := FileAccess.open(legend_path, FileAccess.WRITE)
@@ -227,11 +285,18 @@ func _run() -> void:
 	print("saved ", ProjectSettings.globalize_path(png))
 	print("saved ", ProjectSettings.globalize_path(legend_path))
 	if not missing.is_empty():
-		printerr("FAIL: biomes with 0%% coverage: %s (widen --size or raise --freq)" % ", ".join(missing))
+		printerr(
+			"FAIL: biomes with 0%% coverage: %s (widen --size or raise --freq)" % ", ".join(missing)
+		)
 		quit(1)
 		return
 	if not bare.is_empty():
-		printerr("FAIL: biomes with land but no trees or bushes: %s (check BiomeCatalog.PLANTS)" % ", ".join(bare))
+		printerr(
+			(
+				"FAIL: biomes with land but no trees or bushes: %s (check BiomeCatalog.PLANTS)"
+				% ", ".join(bare)
+			)
+		)
 		quit(1)
 		return
 	print("BIOME_COVERAGE_OK")
@@ -276,7 +341,9 @@ func _plant_color(world, cell: Vector2i, b: int, ground: Color) -> Color:
 	return ground
 
 
-func _close_up_centres(biome_img: Image, terrain_img: Image, r: int, n: int, step: int, size: int) -> Dictionary:
+func _close_up_centres(
+	biome_img: Image, terrain_img: Image, r: int, n: int, step: int, size: int
+) -> Dictionary:
 	## Per biome, the sample cell whose (2r+1)-pixel window holds the most
 	## samples of that biome, with its land counted four times, so close-ups of
 	## small biomes still sit inside them and show islands. Uses summed-area tables.
@@ -297,7 +364,12 @@ func _close_up_centres(biome_img: Image, terrain_img: Image, r: int, n: int, ste
 				var y0 := maxi(0, iy - r)
 				var x1 := mini(n, ix + r + 1)
 				var y1 := mini(n, iy + r + 1)
-				var score := sat[y1 * (n + 1) + x1] - sat[y0 * (n + 1) + x1] - sat[y1 * (n + 1) + x0] + sat[y0 * (n + 1) + x0]
+				var score := (
+					sat[y1 * (n + 1) + x1]
+					- sat[y0 * (n + 1) + x1]
+					- sat[y1 * (n + 1) + x0]
+					+ sat[y0 * (n + 1) + x0]
+				)
 				if score > best:
 					best = score
 					centres[b] = Vector2i(ix * step - size / 2, iy * step - size / 2)

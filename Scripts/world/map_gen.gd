@@ -45,7 +45,11 @@ func load_from_disk() -> void:
 		if cfg.has_section_key(SAVE_SECTION, key):
 			data[key] = cfg.get_value(SAVE_SECTION, key)
 	if not data.is_empty():
-		params = MapGenParams.make_defaults() if data.has("island_radius") else MapGenParams.make_world_defaults()
+		params = (
+			MapGenParams.make_defaults()
+			if data.has("island_radius")
+			else MapGenParams.make_world_defaults()
+		)
 		params.starter_wood = true
 		params.from_dict(data)
 

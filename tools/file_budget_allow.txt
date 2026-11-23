@@ -2,4 +2,9 @@
 # One entry per line: <path> <cap> <reason>
 # The cap is the file's size when listed, so it cannot grow. Lower it when the
 # file shrinks, and remove the entry once the file is within its budget.
-Scripts/world/tile_catalog.gd 642 shared data table mapping every tile name to its atlas coords; one entry per tile, little logic, stays whole by the docs/architecture.md rules
+Scripts/world/tile_catalog.gd 646 gdformat baseline; shared data table mapping every tile name to its atlas coords; one entry per tile, little logic, stays whole by the docs/architecture.md rules
+Scripts/mechanics/building/build_placement.gd 528 gdformat baseline line wrapping
+Scripts/mechanics/interact/interaction.gd 517 gdformat baseline line wrapping
+Scripts/mechanics/mobs/mob_spawner.gd 535 gdformat baseline line wrapping
+Scripts/mechanics/trees/tree_sprouts.gd 526 gdformat baseline line wrapping
+flagoria_main.gd 536 gdformat baseline line wrapping

@@ -39,7 +39,12 @@ func _test_music_player() -> int:
 	for p in music.players():
 		playing += 1 if p.playing else 0
 	if music.current_track() != match_track or playing != 2:
-		printerr("FAIL music: expected match track %s during crossfade, got %s with %d players" % [match_track, music.current_track(), playing])
+		printerr(
+			(
+				"FAIL music: expected match track %s during crossfade, got %s with %d players"
+				% [match_track, music.current_track(), playing]
+			)
+		)
 		fail += 1
 	await create_timer(0.6).timeout
 	playing = 0
@@ -50,7 +55,12 @@ func _test_music_player() -> int:
 				printerr("FAIL music: match track is not set to loop")
 				fail += 1
 	if playing != 1 or first.playing:
-		printerr("FAIL music: after the crossfade %d players play, old one playing=%s" % [playing, first.playing])
+		printerr(
+			(
+				"FAIL music: after the crossfade %d players play, old one playing=%s"
+				% [playing, first.playing]
+			)
+		)
 		fail += 1
 
 	# The main menu asks for the menu track; a second menu does not double it.
@@ -65,7 +75,12 @@ func _test_music_player() -> int:
 	for p in music.players():
 		playing += 1 if p.playing else 0
 	if music.current_track() != music.MENU_TRACK or music.starts != after_first or playing != 1:
-		printerr("FAIL music: menu reload starts=%d->%d playing=%d" % [after_first, music.starts, playing])
+		printerr(
+			(
+				"FAIL music: menu reload starts=%d->%d playing=%d"
+				% [after_first, music.starts, playing]
+			)
+		)
 		fail += 1
 	again.queue_free()
 	scene.queue_free()

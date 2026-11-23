@@ -29,14 +29,21 @@ func _setup(label: String, n_towers: int) -> Dictionary:
 			if ids.size() >= n_towers:
 				break
 			var cells: Array = StructurePlacer.footprint(s, cell).keys()
-			if not cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if not cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				continue
 			var id: int = world.place_structure(s, cell, 1)
 			if id > 0:
 				ids.append(id)
 		if ids.size() >= n_towers:
 			return {"scene": scene, "world": world, "held": held, "points": points, "ids": ids}
-	printerr("FAIL %s: could not place %s guard_posts near the origin on seeds 11, 42, 99" % [label, n_towers])
+	printerr(
+		(
+			"FAIL %s: could not place %s guard_posts near the origin on seeds 11, 42, 99"
+			% [label, n_towers]
+		)
+	)
 	scene.queue_free()
 	return {}
 
@@ -52,30 +59,50 @@ func _test_flags_held_awards_per_tower() -> int:
 		return 1
 	var fail := 0
 	var seen: Array = []
-	t["points"].total_changed.connect(func(peer_id: int, total: int, amount: int, reason: String) -> void:
-		seen.append([peer_id, total, amount, reason]))
+	t["points"].total_changed.connect(
+		func(peer_id: int, total: int, amount: int, reason: String) -> void:
+			seen.append([peer_id, total, amount, reason])
+	)
 	for i in 3:
 		var paid: int = t["held"].tick()
 		if paid != 2:
-			printerr("FAIL flags_held_awards_per_tower: tick %s paid %s towers, want 2" % [i + 1, paid])
+			printerr(
+				"FAIL flags_held_awards_per_tower: tick %s paid %s towers, want 2" % [i + 1, paid]
+			)
 			fail += 1
 	var per: int = Points.FLAGS_HELD_POINTS
 	var want_total: int = 2 * 3 * per
 	if t["points"].total_of(1) != want_total:
-		printerr("FAIL flags_held_awards_per_tower: total %s, want %s" % [t["points"].total_of(1), want_total])
+		printerr(
+			(
+				"FAIL flags_held_awards_per_tower: total %s, want %s"
+				% [t["points"].total_of(1), want_total]
+			)
+		)
 		fail += 1
 	if seen.size() != 6:
-		printerr("FAIL flags_held_awards_per_tower: %s awards, want 6 (2 towers × 3 ticks)" % seen.size())
+		printerr(
+			"FAIL flags_held_awards_per_tower: %s awards, want 6 (2 towers × 3 ticks)" % seen.size()
+		)
 		fail += 1
 	elif not seen.all(func(e): return e[0] == 1 and e[2] == per and e[3] == "flags_held"):
-		printerr("FAIL flags_held_awards_per_tower: awards %s, want peer 1 / %s / flags_held" % [seen, per])
+		printerr(
+			(
+				"FAIL flags_held_awards_per_tower: awards %s, want peer 1 / %s / flags_held"
+				% [seen, per]
+			)
+		)
 		fail += 1
 	t["world"]._structures.set_owner(t["ids"][0], StructurePlacer.OWNER_MOBS)
 	seen.clear()
 	var paid_after: int = t["held"].tick()
 	if paid_after != 1 or t["points"].total_of(1) != want_total + per:
-		printerr("FAIL flags_held_awards_per_tower: after losing a tower paid %s total %s, want 1 and %s"
-				% [paid_after, t["points"].total_of(1), want_total + per])
+		printerr(
+			(
+				"FAIL flags_held_awards_per_tower: after losing a tower paid %s total %s, want 1 and %s"
+				% [paid_after, t["points"].total_of(1), want_total + per]
+			)
+		)
 		fail += 1
 	if seen != [[1, want_total + per, per, "flags_held"]]:
 		printerr("FAIL flags_held_awards_per_tower: after loss awards %s" % [seen])
@@ -99,7 +126,9 @@ func _test_flags_held_skips_non_players() -> int:
 	t["world"]._structures.set_owner(t["ids"][1], StructurePlacer.OWNER_MOBS)
 	var paid: int = t["held"].tick()
 	if paid != 0 or t["points"].total_of(1) != 0:
-		printerr("FAIL flags_held_skips_non_players: paid %s total %s" % [paid, t["points"].total_of(1)])
+		printerr(
+			"FAIL flags_held_skips_non_players: paid %s total %s" % [paid, t["points"].total_of(1)]
+		)
 		fail += 1
 	t["scene"].queue_free()
 	LandScore.enabled = true
@@ -126,15 +155,23 @@ func _test_flags_held_off_in_multiplayer() -> int:
 	api.multiplayer_peer = peer
 	var paid: int = t["held"].tick()
 	if paid != 0 or t["points"].total_of(1) != 0:
-		printerr("FAIL flags_held_off_in_multiplayer: paid %s total %s while multiplayer on"
-				% [paid, t["points"].total_of(1)])
+		printerr(
+			(
+				"FAIL flags_held_off_in_multiplayer: paid %s total %s while multiplayer on"
+				% [paid, t["points"].total_of(1)]
+			)
+		)
 		fail += 1
 	peer.close()
 	set_multiplayer(null, path)
 	paid = t["held"].tick()
 	if paid != 1 or t["points"].total_of(1) != Points.FLAGS_HELD_POINTS:
-		printerr("FAIL flags_held_off_in_multiplayer: offline again paid %s total %s"
-				% [paid, t["points"].total_of(1)])
+		printerr(
+			(
+				"FAIL flags_held_off_in_multiplayer: offline again paid %s total %s"
+				% [paid, t["points"].total_of(1)]
+			)
+		)
 		fail += 1
 	t["scene"].queue_free()
 	LandScore.enabled = true

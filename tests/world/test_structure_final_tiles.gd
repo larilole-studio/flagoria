@@ -48,7 +48,12 @@ func _v3_pixels_unchanged_in_v4() -> int:
 					var p3 := v3.get_pixel(ox + x, oy + y)
 					var p4 := v4.get_pixel(ox + x, oy + y)
 					if p3 != p4:
-						printerr("FAIL structure_final_tiles: cell (%d,%d) pixel (%d,%d) changed" % [cx, cy, x, y])
+						printerr(
+							(
+								"FAIL structure_final_tiles: cell (%d,%d) pixel (%d,%d) changed"
+								% [cx, cy, x, y]
+							)
+						)
 						fail += 1
 						if fail >= 5:
 							return fail
@@ -74,8 +79,9 @@ func _pre_v4_catalog_coords_unchanged() -> int:
 
 
 func _placement_pieces_in_tileset() -> int:
-	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
-			"res://docs/art/structures-final/placement.json"))
+	var data: Dictionary = JSON.parse_string(
+		FileAccess.get_file_as_string("res://docs/art/structures-final/placement.json")
+	)
 	var pieces: Array = data["pieces"]
 	var tile_set: TileSet = load("res://art/flagoria/flagoria_tiles_v3.tres")
 	var src: TileSetAtlasSource = tile_set.get_source(TileCatalog.SOURCE_ID)
@@ -108,8 +114,16 @@ func _placement_pieces_in_tileset() -> int:
 		if not TileCatalog.TILES.has(base + "_BLUE") or not TileCatalog.TILES.has(base + "_RED"):
 			printerr("FAIL structure_final_tiles: %s missing _BLUE/_RED pair" % base)
 			fail += 1
-	for s in ["archer_post", "neutral_outpost", "barracks", "respawn_camp", "trading_post",
-			"lumber_mill", "watchtower", "sky_dock"]:
+	for s in [
+		"archer_post",
+		"neutral_outpost",
+		"barracks",
+		"respawn_camp",
+		"trading_post",
+		"lumber_mill",
+		"watchtower",
+		"sky_dock"
+	]:
 		if not structs.has(s):
 			printerr("FAIL structure_final_tiles: no pieces for %s" % s)
 			fail += 1
@@ -125,7 +139,12 @@ func _collision_matches(src: TileSetAtlasSource, atlas: Vector2i, collision) -> 
 			return 1
 		return 0
 	if count != collision.size():
-		printerr("FAIL structure_final_tiles: %s polygon count %d, want %d" % [atlas, count, collision.size()])
+		printerr(
+			(
+				"FAIL structure_final_tiles: %s polygon count %d, want %d"
+				% [atlas, count, collision.size()]
+			)
+		)
 		return 1
 	for i in collision.size():
 		var rect: Array = collision[i]
@@ -136,7 +155,12 @@ func _collision_matches(src: TileSetAtlasSource, atlas: Vector2i, collision) -> 
 			return 1
 		for j in want.size():
 			if got[j].distance_to(want[j]) > 0.01:
-				printerr("FAIL structure_final_tiles: %s poly %d point %d got %s want %s" % [atlas, i, j, got[j], want[j]])
+				printerr(
+					(
+						"FAIL structure_final_tiles: %s poly %d point %d got %s want %s"
+						% [atlas, i, j, got[j], want[j]]
+					)
+				)
 				return 1
 	return 0
 
@@ -146,17 +170,23 @@ func _rect_polygon(rect: Array) -> PackedVector2Array:
 	var y1: float = rect[1]
 	var x2: float = rect[2]
 	var y2: float = rect[3]
-	return PackedVector2Array([
-		Vector2(x1, y1), Vector2(x2, y1), Vector2(x2, y2), Vector2(x1, y2),
-	])
+	return PackedVector2Array(
+		[
+			Vector2(x1, y1),
+			Vector2(x2, y1),
+			Vector2(x2, y2),
+			Vector2(x1, y2),
+		]
+	)
 
 
 func _write_structure_render() -> int:
 	var tile_set: TileSet = load("res://art/flagoria/flagoria_tiles_v3.tres")
 	var src: TileSetAtlasSource = tile_set.get_source(TileCatalog.SOURCE_ID)
 	var atlas: Image = src.texture.get_image()
-	var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
-			"res://docs/art/structures-final/placement.json"))
+	var data: Dictionary = JSON.parse_string(
+		FileAccess.get_file_as_string("res://docs/art/structures-final/placement.json")
+	)
 	var by_struct: Dictionary = {}
 	for piece in data["pieces"]:
 		var s: String = piece["struct"]
@@ -165,8 +195,16 @@ func _write_structure_render() -> int:
 		by_struct[s].append(piece)
 	var col := 0
 	var row_h := 1
-	for s in ["archer_post", "neutral_outpost", "barracks", "respawn_camp", "trading_post",
-			"lumber_mill", "watchtower", "sky_dock"]:
+	for s in [
+		"archer_post",
+		"neutral_outpost",
+		"barracks",
+		"respawn_camp",
+		"trading_post",
+		"lumber_mill",
+		"watchtower",
+		"sky_dock"
+	]:
 		var items: Array = by_struct.get(s, [])
 		var ox := col * 20
 		var oy := 0
@@ -189,8 +227,16 @@ func _write_structure_render() -> int:
 	var sheet := Image.create(col * 20 * 16 + 16, row_h * 16 + 16, false, Image.FORMAT_RGBA8)
 	sheet.fill(Color(0, 0, 0, 0))
 	col = 0
-	for s in ["archer_post", "neutral_outpost", "barracks", "respawn_camp", "trading_post",
-			"lumber_mill", "watchtower", "sky_dock"]:
+	for s in [
+		"archer_post",
+		"neutral_outpost",
+		"barracks",
+		"respawn_camp",
+		"trading_post",
+		"lumber_mill",
+		"watchtower",
+		"sky_dock"
+	]:
 		var items: Array = by_struct.get(s, [])
 		var ox := col * 20
 		var oy := 0
@@ -212,14 +258,23 @@ func _write_structure_render() -> int:
 	if OS.get_environment("FLAGORIA_UPDATE_GOLDENS") == "1":
 		var err := sheet.save_png(golden)
 		if err != OK:
-			printerr("FAIL structure_final_tiles: could not write %s (%s)" % [golden, error_string(err)])
+			printerr(
+				"FAIL structure_final_tiles: could not write %s (%s)" % [golden, error_string(err)]
+			)
 			return 1
 		return 0
 	if not FileAccess.file_exists(golden):
-		printerr("FAIL structure_final_tiles: missing %s. Regenerate with FLAGORIA_UPDATE_GOLDENS=1 godot --headless --path . --script res://tests/run_tests.gd -- --only=structure_final_tiles" % golden)
+		printerr(
+			(
+				"FAIL structure_final_tiles: missing %s. Regenerate with FLAGORIA_UPDATE_GOLDENS=1 godot --headless --path . --script res://tests/run_tests.gd -- --only=structure_final_tiles"
+				% golden
+			)
+		)
 		return 1
 	var expected := Image.load_from_file(golden)
 	if expected == null or sheet.get_data() != expected.get_data():
-		printerr("FAIL structure_final_tiles: render differs from tests/golden/structure_finals_tileset.png")
+		printerr(
+			"FAIL structure_final_tiles: render differs from tests/golden/structure_finals_tileset.png"
+		)
 		return 1
 	return 0

@@ -61,7 +61,9 @@ func _test_hud_layout_clamp_overlap() -> int:
 		printerr("FAIL hud_layout_overlap: no map entry")
 		fail += 1
 	else:
-		var placed: bool = _hud().try_place("attack", float(map_entry.get("x")), float(map_entry.get("y")), 1.0, layer)
+		var placed: bool = _hud().try_place(
+			"attack", float(map_entry.get("x")), float(map_entry.get("y")), 1.0, layer
+		)
 		if placed:
 			printerr("FAIL hud_layout_overlap: attack overlaps map")
 			fail += 1
@@ -104,7 +106,9 @@ func _test_hud_layout_edit_blocks_map() -> int:
 func _test_hud_edit_bar_viewport_sizes() -> int:
 	print("-- test_hud_edit_bar_viewport_sizes")
 	var fail := 0
-	var sizes: Array[Vector2i] = [Vector2i(390, 844), Vector2i(720, 1280), Vector2i(1280, 720), Vector2i(1920, 1080)]
+	var sizes: Array[Vector2i] = [
+		Vector2i(390, 844), Vector2i(720, 1280), Vector2i(1280, 720), Vector2i(1920, 1080)
+	]
 	_hud().reset_to_defaults()
 	var scene = await _play_scene()
 	var layer: CanvasLayer = scene.get_node("CanvasLayer1")
@@ -120,7 +124,12 @@ func _test_hud_edit_bar_viewport_sizes() -> int:
 			await editor.relayout_bar()
 		await process_frame
 		if not editor.has_method("bar_fits_viewport") or not editor.bar_fits_viewport():
-			printerr("FAIL hud_edit_bar_viewport: bar outside view %s rect=%s" % [vp, editor.get_node("TopBar").get_global_rect()])
+			printerr(
+				(
+					"FAIL hud_edit_bar_viewport: bar outside view %s rect=%s"
+					% [vp, editor.get_node("TopBar").get_global_rect()]
+				)
+			)
 			fail += 1
 		editor.close_editor()
 	_hud().edit_end()
@@ -153,7 +162,8 @@ func _test_hud_edit_bar_stable_during_drag() -> int:
 	for step in 16:
 		var t := float(step + 1) / 16.0
 		_hud().try_place(
-				"attack", lerpf(0.18, 0.72, t), lerpf(0.28, 0.62, t), lerpf(1.0, 1.45, t), layer)
+			"attack", lerpf(0.18, 0.72, t), lerpf(0.28, 0.62, t), lerpf(1.0, 1.45, t), layer
+		)
 		if not editor.has_method("relayout_bar"):
 			printerr("FAIL hud_edit_bar_stable: missing relayout_bar")
 			fail += 1
@@ -163,15 +173,21 @@ func _test_hud_edit_bar_stable_during_drag() -> int:
 			await process_frame
 			if top_bar.get_global_rect().position.y <= TOP_INSET + 0.5:
 				printerr(
+					(
 						"FAIL hud_edit_bar_stable: bar at top inset step %d pos=%s"
-						% [step, top_bar.global_position])
+						% [step, top_bar.global_position]
+					)
+				)
 				fail += 1
 		for _i in 8:
 			await process_frame
 		if not editor.has_method("bar_fits_viewport") or not editor.bar_fits_viewport():
 			printerr(
+				(
 					"FAIL hud_edit_bar_stable: bar outside view after step %d rect=%s"
-					% [step, top_bar.get_global_rect()])
+					% [step, top_bar.get_global_rect()]
+				)
+			)
 			fail += 1
 	editor.close_editor()
 	_hud().edit_end()
@@ -206,7 +222,9 @@ func _test_hud_layout_reset() -> int:
 	await process_frame
 	var after: Rect2 = _hud().control_hit_rect("attack", layer)
 	if not _hud().uses_custom() and before.position.distance_to(after.position) > 8.0:
-		printerr("FAIL hud_layout_reset: attack %s want near %s" % [after.position, before.position])
+		printerr(
+			"FAIL hud_layout_reset: attack %s want near %s" % [after.position, before.position]
+		)
 		fail += 1
 	_hud().edit_end()
 	tree.paused = false
@@ -263,15 +281,21 @@ func _test_hud_layout_wheel_slot() -> int:
 		var again: Rect2 = _hud().control_hit_rect("wheel", layer)
 		var again_s: float = _hud().scale_of("wheel", layer)
 		if again.position.distance_to(saved_pos) > 1.5 or absf(again_s - scale_now) > 0.05:
-			printerr("FAIL hud_layout_wheel_slot: reload pos %s scale %s want %s %s"
-					% [again.position, again_s, saved_pos, scale_now])
+			printerr(
+				(
+					"FAIL hud_layout_wheel_slot: reload pos %s scale %s want %s %s"
+					% [again.position, again_s, saved_pos, scale_now]
+				)
+			)
 			fail += 1
 		_hud().reset_to_defaults()
 		(layer.get_node("HudToolRow") as HudToolRow)._layout()
 		await process_frame
 		var after: Rect2 = _hud().control_hit_rect("wheel", layer)
 		if after.position.distance_to(before.position) > 8.0:
-			printerr("FAIL hud_layout_wheel_slot: reset %s want %s" % [after.position, before.position])
+			printerr(
+				"FAIL hud_layout_wheel_slot: reset %s want %s" % [after.position, before.position]
+			)
 			fail += 1
 		if absf(_hud().scale_of("wheel", layer) - 1.0) > 0.05:
 			printerr("FAIL hud_layout_wheel_slot: reset scale %s" % _hud().scale_of("wheel", layer))
@@ -323,8 +347,10 @@ func _test_hud_layout_legacy_mode() -> int:
 	if _hud().set_entry("mode", {"x": 0.5, "y": 0.5, "s": 1.0}):
 		printerr("FAIL hud_layout_legacy_mode: mode is still a layout id")
 		fail += 1
-	if not _hud().get_entry("scores").is_empty() \
-			or _hud().set_entry("scores", {"x": 0.5, "y": 0.5, "s": 1.0}):
+	if (
+		not _hud().get_entry("scores").is_empty()
+		or _hud().set_entry("scores", {"x": 0.5, "y": 0.5, "s": 1.0})
+	):
 		printerr("FAIL hud_layout_legacy_mode: scores is still a layout id")
 		fail += 1
 	var attack: Dictionary = _hud().get_entry("attack")
@@ -364,8 +390,10 @@ func _test_hud_layout_legacy_mode() -> int:
 
 
 func _no_legacy_buttons(scene: Node, label: String) -> int:
-	if scene.get_node_or_null("CanvasLayer1/ModeButton") != null \
-			or scene.get_node_or_null("CanvasLayer1/BowButton") != null:
+	if (
+		scene.get_node_or_null("CanvasLayer1/ModeButton") != null
+		or scene.get_node_or_null("CanvasLayer1/BowButton") != null
+	):
 		printerr("FAIL %s: ModeButton or BowButton is still on the HUD" % label)
 		return 1
 	return 0
@@ -381,7 +409,13 @@ func _arc_on_screen(wheel: ToolWheel) -> bool:
 		if rect.size == Vector2.ZERO or not view.encloses(rect):
 			printerr("wheel arc: %s rect %s view %s" % [node_name, rect, view])
 			return false
-		if node_name == "Bow" and rect.get_center().distance_to(view.get_center()) + 4.0 < button.distance_to(view.get_center()):
+		if (
+			node_name == "Bow"
+			and (
+				rect.get_center().distance_to(view.get_center()) + 4.0
+				< button.distance_to(view.get_center())
+			)
+		):
 			inward = true
 	return inward
 

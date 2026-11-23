@@ -47,8 +47,10 @@ func _seed_sweep(pieces: Array) -> int:
 			var result := _solve(size.x, size.y, pieces, seed)
 			if not result.ok:
 				printerr(
+					(
 						"FAIL wfc_solver: size %dx%d seed %s: %s"
 						% [size.x, size.y, seed, result.get("error", "")]
+					)
 				)
 				fail += 1
 				continue
@@ -77,10 +79,13 @@ func _grid_compatible(grid: Array) -> int:
 					continue
 				var other := BuildingBlockCatalog.by_id(grid[ny][nx])
 				if not BuildingBlockCatalog.edge_compatible(
-						piece, BuildingBlockCatalog.SIDES[i], other):
+					piece, BuildingBlockCatalog.SIDES[i], other
+				):
 					printerr(
+						(
 							"FAIL wfc_solver: incompatible %s %s vs %s at %d,%d"
 							% [id, BuildingBlockCatalog.SIDES[i], grid[ny][nx], x, y]
+						)
 					)
 					fail += 1
 	return fail

@@ -21,25 +21,48 @@ func _test_bridge_planks() -> int:
 	var params := _spawn_params(42, 0.0)
 	world.apply_map_params(params)
 	world.generate_chunk(Vector2.ZERO)
-	if world.build_bridge(run_start - Vector2i.RIGHT, run_end) or world.build_bridge(run_start, run_end + Vector2i.DOWN):
+	if (
+		world.build_bridge(run_start - Vector2i.RIGHT, run_end)
+		or world.build_bridge(run_start, run_end + Vector2i.DOWN)
+	):
 		printerr("FAIL bridge_planks: a run onto land or a bent run was accepted")
 		fail += 1
 	if not world.build_bridge(run_end, run_start) or world.build_bridge(run_start, run_start):
-		printerr("FAIL bridge_planks: build_bridge %s..%s did not build exactly once" % [run_start, run_end])
+		printerr(
+			(
+				"FAIL bridge_planks: build_bridge %s..%s did not build exactly once"
+				% [run_start, run_end]
+			)
+		)
 		fail += 1
 	world.generate_chunk(Vector2(0, 0))
-	var pieces := [Vector2i(10, 15), Vector2i(8, 15), Vector2i(8, 15), Vector2i(8, 15), Vector2i(11, 15)]
+	var pieces := [
+		Vector2i(10, 15), Vector2i(8, 15), Vector2i(8, 15), Vector2i(8, 15), Vector2i(11, 15)
+	]
 	for i in run_len:
 		var c := run_start + Vector2i(i, 0)
-		if world.get_cell_atlas_coords(0, c) != pieces[i] or world.predict_cell(c) != [pieces[i], world.NO_PLANT]:
-			printerr("FAIL bridge_planks: %s drawn %s predicted %s, want %s" % [
-				c, world.get_cell_atlas_coords(0, c), world.predict_cell(c), pieces[i]])
+		if (
+			world.get_cell_atlas_coords(0, c) != pieces[i]
+			or world.predict_cell(c) != [pieces[i], world.NO_PLANT]
+		):
+			printerr(
+				(
+					"FAIL bridge_planks: %s drawn %s predicted %s, want %s"
+					% [c, world.get_cell_atlas_coords(0, c), world.predict_cell(c), pieces[i]]
+				)
+			)
 			fail += 1
-		if not world.is_walkable_land(c) or world.get_cell_source_id(1, c) != -1 \
-				or world.get_cell_source_id(world.GROUND_DECOR_LAYER, c) != -1:
+		if (
+			not world.is_walkable_land(c)
+			or world.get_cell_source_id(1, c) != -1
+			or world.get_cell_source_id(world.GROUND_DECOR_LAYER, c) != -1
+		):
 			printerr("FAIL bridge_planks: %s is not bare walkable ground" % c)
 			fail += 1
-		if MobSpawner.is_home_cell(world, c, MobCatalog.HOME_SAND) or MobSpawner.is_home_cell(world, c, MobCatalog.HOME_GRASS):
+		if (
+			MobSpawner.is_home_cell(world, c, MobCatalog.HOME_SAND)
+			or MobSpawner.is_home_cell(world, c, MobCatalog.HOME_GRASS)
+		):
 			printerr("FAIL bridge_planks: %s is a mob home" % c)
 			fail += 1
 	# The hero's body walks the whole bridge; the water row next to it blocks.
@@ -60,14 +83,24 @@ func _test_bridge_planks() -> int:
 			blocked += 0 if free_row.call(run_start + side) else 1
 		else:
 			blocked += 1  # land there; nothing to check
-	if blocked != 2 or world.predict_cell(run_start + Vector2i.DOWN)[0] != TileCatalog.WATER \
-			and world.predict_cell(run_start + Vector2i.UP)[0] != TileCatalog.WATER:
-		printerr("FAIL bridge_planks: the hero walks over plain water next to the bridge, or no water there")
+	if (
+		blocked != 2
+		or (
+			world.predict_cell(run_start + Vector2i.DOWN)[0] != TileCatalog.WATER
+			and world.predict_cell(run_start + Vector2i.UP)[0] != TileCatalog.WATER
+		)
+	):
+		printerr(
+			"FAIL bridge_planks: the hero walks over plain water next to the bridge, or no water there"
+		)
 		fail += 1
 	player.queue_free()
 	world.apply_map_params(params)
 	world.generate_chunk(Vector2(0, 0))
-	if world.get_cell_atlas_coords(0, run_start) != Vector2i(-1, -1) or not world.is_open_sea(run_start):
+	if (
+		world.get_cell_atlas_coords(0, run_start) != Vector2i(-1, -1)
+		or not world.is_open_sea(run_start)
+	):
 		printerr("FAIL bridge_planks: a new map kept the bridge at %s" % run_start)
 		fail += 1
 	var single := Vector2i(-11, 11)
@@ -94,8 +127,24 @@ func _test_bridge_joins() -> int:
 	# Start, step, continuation length, near shore, separate tip, joined interior, far end.
 	# The horizontal fixture reaches land. The vertical fixture ends in water.
 	var cases := [
-		[Vector2i(-12, -6), Vector2i.RIGHT, 1, Vector2i(10, 15), Vector2i(10, 16), Vector2i(8, 15), Vector2i(11, 15)],
-		[Vector2i(-13, -5), Vector2i.DOWN, 5, Vector2i(12, 15), Vector2i(12, 16), Vector2i(9, 15), Vector2i(12, 16)],
+		[
+			Vector2i(-12, -6),
+			Vector2i.RIGHT,
+			1,
+			Vector2i(10, 15),
+			Vector2i(10, 16),
+			Vector2i(8, 15),
+			Vector2i(11, 15)
+		],
+		[
+			Vector2i(-13, -5),
+			Vector2i.DOWN,
+			5,
+			Vector2i(12, 15),
+			Vector2i(12, 16),
+			Vector2i(9, 15),
+			Vector2i(12, 16)
+		],
 	]
 	for row in cases:
 		var start: Vector2i = row[0]
@@ -131,7 +180,9 @@ func _test_bridge_joins() -> int:
 			if not world._bridges.erase_cells(split) or not world.is_open_sea(tip):
 				printerr("FAIL bridge_joins: middle cell did not return to water")
 				fail += 1
-			fail += _expect_planks(world, {tip - step: Vector2i(10, 16), last: Vector2i(11, 15)}, "split")
+			fail += _expect_planks(
+				world, {tip - step: Vector2i(10, 16), last: Vector2i(11, 15)}, "split"
+			)
 			if not world.build_bridge(tip, tip):
 				printerr("FAIL bridge_joins: filling the split was refused")
 				fail += 1
@@ -142,15 +193,23 @@ func _test_bridge_joins() -> int:
 	world.generate_chunk(Vector2.ZERO)
 	var middle := Vector2i(-15, -5)
 	var branch := middle + Vector2i.DOWN
-	if not world.build_bridge(middle + Vector2i.LEFT, middle + Vector2i.RIGHT) \
-			or not world.build_bridge(branch, branch):
+	if (
+		not world.build_bridge(middle + Vector2i.LEFT, middle + Vector2i.RIGHT)
+		or not world.build_bridge(branch, branch)
+	):
 		printerr("FAIL bridge_joins: branch fixture refused")
 		fail += 1
 	else:
-		fail += _expect_planks(world, {
-			middle + Vector2i.LEFT: Vector2i(11, 16), middle: Vector2i(8, 15),
-			middle + Vector2i.RIGHT: Vector2i(10, 16), branch: Vector2i(12, 16),
-		}, "side branch")
+		fail += _expect_planks(
+			world,
+			{
+				middle + Vector2i.LEFT: Vector2i(11, 16),
+				middle: Vector2i(8, 15),
+				middle + Vector2i.RIGHT: Vector2i(10, 16),
+				branch: Vector2i(12, 16),
+			},
+			"side branch"
+		)
 		var branch_cells: Array[Vector2i] = [branch]
 		if not world._bridges.erase_cells(branch_cells) or not world.is_open_sea(branch):
 			printerr("FAIL bridge_joins: branch remained after removal")
@@ -169,9 +228,13 @@ func _test_bridge_joins() -> int:
 	for row in placement:
 		var cells: Array[Vector2i] = [row[0]]
 		var reasons := placer.can_place(BuildCosts.PLANK, cells, inventory)
-		if (row[1].is_empty() and not reasons.is_empty()) \
-				or not row[1].all(func(reason): return reason in reasons):
-			printerr("FAIL bridge_joins: placement at %s gave %s, expected %s" % [cells, reasons, row[1]])
+		if (
+			(row[1].is_empty() and not reasons.is_empty())
+			or not row[1].all(func(reason): return reason in reasons)
+		):
+			printerr(
+				"FAIL bridge_joins: placement at %s gave %s, expected %s" % [cells, reasons, row[1]]
+			)
 			fail += 1
 	scene.queue_free()
 	await process_frame
@@ -185,6 +248,8 @@ func _expect_planks(world, expected: Dictionary, label: String) -> int:
 	for cell in expected:
 		var drawn: Vector2i = world.get_cell_atlas_coords(0, cell)
 		if drawn != expected[cell]:
-			printerr("FAIL bridge tile: %s at %s drew %s, want %s" % [label, cell, drawn, expected[cell]])
+			printerr(
+				"FAIL bridge tile: %s at %s drew %s, want %s" % [label, cell, drawn, expected[cell]]
+			)
 			fail += 1
 	return fail

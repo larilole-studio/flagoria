@@ -36,7 +36,9 @@ func _every_piece_has_tile_or_empty() -> int:
 			fail += 1
 			continue
 		if piece.tile_name != want[id]:
-			printerr("FAIL building_block_sockets: %s tile %s, want %s" % [id, piece.tile_name, want[id]])
+			printerr(
+				"FAIL building_block_sockets: %s tile %s, want %s" % [id, piece.tile_name, want[id]]
+			)
 			fail += 1
 	return fail
 
@@ -47,7 +49,9 @@ func _catalog_tile_names() -> int:
 		if piece.tile_name == "":
 			continue
 		if not TileCatalog.TILES.has(piece.tile_name):
-			printerr("FAIL building_block_sockets: %s unknown tile %s" % [piece.id, piece.tile_name])
+			printerr(
+				"FAIL building_block_sockets: %s unknown tile %s" % [piece.id, piece.tile_name]
+			)
 			fail += 1
 	return fail
 
@@ -105,8 +109,10 @@ func _adjacency_symmetric() -> int:
 				var back: Dictionary = table.get(piece_b, {}).get(opp, {})
 				if not back.has(piece_a):
 					printerr(
+						(
 							"FAIL building_block_sockets: adjacency %s %s -> %s but not %s %s -> %s"
 							% [piece_a, side_a, piece_b, piece_b, opp, piece_a]
+						)
 					)
 					fail += 1
 	return fail
@@ -114,8 +120,9 @@ func _adjacency_symmetric() -> int:
 
 func _write_debug_screenshot() -> int:
 	## Headless runs have no display; composite tiles and labels like structure finals.
-	var atlas := Image.load_from_file(ProjectSettings.globalize_path(
-			"res://art/flagoria/flagoria_tiles_v4.png"))
+	var atlas := Image.load_from_file(
+		ProjectSettings.globalize_path("res://art/flagoria/flagoria_tiles_v4.png")
+	)
 	if atlas == null:
 		printerr("FAIL building_block_sockets: atlas did not load")
 		return 1
@@ -137,7 +144,11 @@ func _write_debug_screenshot() -> int:
 		if piece.tile_name != "" and TileCatalog.TILES.has(piece.tile_name):
 			var at: Vector2i = TileCatalog.TILES[piece.tile_name]["atlas"]
 			var patch := atlas.get_region(Rect2i(at.x * TILE, at.y * TILE, TILE, TILE))
-			sheet.blit_rect(patch, Rect2i(0, 0, TILE, TILE), Vector2i(ox + CELL / 2 - TILE / 2, oy + CELL / 2 - TILE / 2))
+			sheet.blit_rect(
+				patch,
+				Rect2i(0, 0, TILE, TILE),
+				Vector2i(ox + CELL / 2 - TILE / 2, oy + CELL / 2 - TILE / 2)
+			)
 		_draw_socket_markers(sheet, piece, Vector2i(ox, oy), CELL)
 	var out := OS.get_cache_dir().path_join("building_block_pieces_headless.png")
 	if sheet.save_png(out) != OK:
@@ -146,7 +157,9 @@ func _write_debug_screenshot() -> int:
 	return 0
 
 
-func _draw_socket_markers(img: Image, piece: BuildingBlockPiece, origin: Vector2i, cell: int) -> void:
+func _draw_socket_markers(
+	img: Image, piece: BuildingBlockPiece, origin: Vector2i, cell: int
+) -> void:
 	var colors := {
 		"void": Color(0.45, 0.45, 0.5),
 		"floor": Color(0.35, 0.7, 0.35),

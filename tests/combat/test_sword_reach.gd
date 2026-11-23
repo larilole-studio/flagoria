@@ -12,7 +12,12 @@ func _corners(player) -> Array:
 	var shape: CollisionShape2D = player.sword_shape
 	var half: Vector2 = shape.shape.size / 2.0
 	var out := []
-	for c in [Vector2(-half.x, -half.y), Vector2(half.x, -half.y), Vector2(half.x, half.y), Vector2(-half.x, half.y)]:
+	for c in [
+		Vector2(-half.x, -half.y),
+		Vector2(half.x, -half.y),
+		Vector2(half.x, half.y),
+		Vector2(-half.x, half.y)
+	]:
 		out.append(player.to_local(shape.global_transform * c) - AttackAim.ORIGIN)
 	return out
 
@@ -36,7 +41,9 @@ func _test_sword_reach() -> int:
 	await process_frame
 	var cone_range: float = AttackAim.new().style.range
 	if cone_range != REACH:
-		printerr("FAIL sword_reach the cone is %s px, the sword reaches %s px" % [cone_range, REACH])
+		printerr(
+			"FAIL sword_reach the cone is %s px, the sword reaches %s px" % [cone_range, REACH]
+		)
 		fail += 1
 	var longest := 0.0
 	var reaches := []
@@ -51,13 +58,22 @@ func _test_sword_reach() -> int:
 		longest = maxf(longest, far)
 		reaches.append("%s deg %.1f" % [deg, far])
 		if far < REACH_MIN or far > cone_range:
-			printerr("FAIL sword_reach %s deg reaches %.1f px, want %s-%s within the %s px cone"
-					% [deg, far, REACH_MIN, REACH, cone_range])
+			printerr(
+				(
+					"FAIL sword_reach %s deg reaches %.1f px, want %s-%s within the %s px cone"
+					% [deg, far, REACH_MIN, REACH, cone_range]
+				)
+			)
 			fail += 1
 		player.animations.seek(0.1, true)
 		for c in _corners(player):
-			if c.length() > cone_range or absf(angle_difference(angle, c.angle())) > AttackAim.ARC / 2.0:
-				printerr("FAIL sword_reach %s deg mid-swing corner %s is outside the cone" % [deg, c])
+			if (
+				c.length() > cone_range
+				or absf(angle_difference(angle, c.angle())) > AttackAim.ARC / 2.0
+			):
+				printerr(
+					"FAIL sword_reach %s deg mid-swing corner %s is outside the cone" % [deg, c]
+				)
 				fail += 1
 		while player.isAttacking:
 			await process_frame
@@ -130,7 +146,9 @@ func _test_sword_reach_mob() -> int:
 				await physics_frame
 			var hit := mob.hp < 99
 			if hit != (near < REACH):
-				printerr("FAIL sword_reach_mob %s deg, hurt box %s px out: hit %s" % [deg, near, hit])
+				printerr(
+					"FAIL sword_reach_mob %s deg, hurt box %s px out: hit %s" % [deg, near, hit]
+				)
 				fail += 1
 	scene.queue_free()
 	if fail == 0:

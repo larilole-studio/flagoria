@@ -49,7 +49,12 @@ func _test_build_sync_two_players() -> int:
 	scene.queue_free()
 	await process_frame
 	if shores.size() < 2:
-		printerr("FAIL build_sync_two_players: seed 7 has too few shore water cells near spawn: %s" % [shores])
+		printerr(
+			(
+				"FAIL build_sync_two_players: seed 7 has too few shore water cells near spawn: %s"
+				% [shores]
+			)
+		)
 		return 1
 	var places_of := [[shores[0]], [shores[1]]]  # host, client
 	var all: Array = places_of[0] + places_of[1]
@@ -73,7 +78,11 @@ func _test_build_sync_two_players() -> int:
 			return false
 		for key in want_keys:
 			var here = read.call(i).get("cells", {}).get(key)
-			if here == null or here != read.call(0).get("cells", {}).get(key) or here.get("bridge") != true:
+			if (
+				here == null
+				or here != read.call(0).get("cells", {}).get(key)
+				or here.get("bridge") != true
+			):
 				return false
 		return true
 
@@ -89,22 +98,52 @@ func _test_build_sync_two_players() -> int:
 			fail += 1
 		else:
 			for i in 2:
-				if not publish_probe_command(probes[i]["out"] + ".plank", WorldSave.cell_key(shores[i])):
-					printerr("FAIL build_sync_two_players: could not publish plank command for peer %d" % i)
+				if not publish_probe_command(
+					probes[i]["out"] + ".plank", WorldSave.cell_key(shores[i])
+				):
+					printerr(
+						(
+							"FAIL build_sync_two_players: could not publish plank command for peer %d"
+							% i
+						)
+					)
 					fail += 1
 			# Each places one plank (1 wood). Start wood is 0; probe adds enough.
-			if not await wait_until(func() -> bool: return same.call(1) \
-					and read.call(0).get("wood", -1) == 0 and read.call(1).get("wood", -1) == 0, 20000):
-				printerr("FAIL build_sync_two_players: after both place %s, host %s, client %s"
-						% [places_of, read.call(0), read.call(1)])
+			if not await wait_until(
+				func() -> bool:
+					return (
+						same.call(1)
+						and read.call(0).get("wood", -1) == 0
+						and read.call(1).get("wood", -1) == 0
+					),
+				20000
+			):
+				printerr(
+					(
+						"FAIL build_sync_two_players: after both place %s, host %s, client %s"
+						% [places_of, read.call(0), read.call(1)]
+					)
+				)
 				fail += 1
 			launch.call([])
-			if not await wait_until(func() -> bool: return read.call(2).get("ready", false) and same.call(2), 30000):
-				printerr("FAIL build_sync_two_players: the late joiner %s, host %s" % [read.call(2), read.call(0)])
+			if not await wait_until(
+				func() -> bool: return read.call(2).get("ready", false) and same.call(2), 30000
+			):
+				printerr(
+					(
+						"FAIL build_sync_two_players: the late joiner %s, host %s"
+						% [read.call(2), read.call(0)]
+					)
+				)
 				fail += 1
 			for i in probes.size():
 				if not read.call(i).get("errors", []).is_empty():
-					printerr("FAIL build_sync_two_players: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
+					printerr(
+						(
+							"FAIL build_sync_two_players: peer %d logged errors: %s"
+							% [i, read.call(i)["errors"]]
+						)
+					)
 					fail += 1
 
 	await close_probe_session(session)

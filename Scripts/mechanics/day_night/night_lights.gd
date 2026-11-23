@@ -126,12 +126,13 @@ static func pick_ids(sources: Array, camera: Vector2, cap: int) -> Array[String]
 			pinned.append(str(row["id"]))
 		else:
 			rest.append(row)
-	rest.sort_custom(func(a, b) -> bool:
-		var da := (a["pos"] as Vector2).distance_squared_to(camera)
-		var db := (b["pos"] as Vector2).distance_squared_to(camera)
-		if not is_equal_approx(da, db):
-			return da < db
-		return str(a["id"]) < str(b["id"])
+	rest.sort_custom(
+		func(a, b) -> bool:
+			var da := (a["pos"] as Vector2).distance_squared_to(camera)
+			var db := (b["pos"] as Vector2).distance_squared_to(camera)
+			if not is_equal_approx(da, db):
+				return da < db
+			return str(a["id"]) < str(b["id"])
 	)
 	var keep: Array[String] = []
 	var limit := maxi(cap, 0)
@@ -199,13 +200,18 @@ func _collect(world: Node2D, map: TileMap) -> Array:
 	for child in world.get_children():
 		if not child is CharacterBody2D:
 			continue
-		sources.append({
-			"id": "player:%s" % child.name,
-			"kind": "player",
-			"pos": child.global_position,
-			"parent": child,
-			"pinned": child.is_multiplayer_authority(),
-		})
+		(
+			sources
+			. append(
+				{
+					"id": "player:%s" % child.name,
+					"kind": "player",
+					"pos": child.global_position,
+					"parent": child,
+					"pinned": child.is_multiplayer_authority(),
+				}
+			)
+		)
 	var placed: Dictionary = map.placed_structures()
 	for sid in placed:
 		var meta: Dictionary = placed[sid]
@@ -215,13 +221,18 @@ func _collect(world: Node2D, map: TileMap) -> Array:
 			continue
 		var anchor: Vector2i = meta["anchor"]
 		var turns := int(meta.get("rotation", 0))
-		sources.append({
-			"id": "building:%s" % str(sid),
-			"kind": kind,
-			"pos": _building_pos(map, structure_name, anchor, turns),
-			"parent": world,
-			"pinned": false,
-		})
+		(
+			sources
+			. append(
+				{
+					"id": "building:%s" % str(sid),
+					"kind": kind,
+					"pos": _building_pos(map, structure_name, anchor, turns),
+					"parent": world,
+					"pinned": false,
+				}
+			)
+		)
 	return sources
 
 

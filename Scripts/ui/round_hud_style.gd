@@ -84,8 +84,13 @@ static func apply_wheel(button: Button, tool: int, hit: float = HIT, art: float 
 	apply_disc(button, _WHEEL[tool], hit, art, true)
 
 
-static func apply_disc(button: Button, prefix: String, hit: float = HIT, art: float = SIZE,
-		has_selected_states := false) -> void:
+static func apply_disc(
+	button: Button,
+	prefix: String,
+	hit: float = HIT,
+	art: float = SIZE,
+	has_selected_states := false
+) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.icon = null
 	button.text = ""
@@ -113,8 +118,12 @@ static func refresh_toggle(button: Button, highlighted := false) -> void:
 	var face: StyleBoxTexture = boxes["selected" if selected else "normal"]
 	button.add_theme_stylebox_override("normal", face)
 	button.add_theme_stylebox_override("hover", face)
-	button.add_theme_stylebox_override("pressed", face if selected and button.toggle_mode else boxes["pressed"])
-	button.add_theme_stylebox_override("hover_pressed", boxes["selected_pressed" if selected else "pressed"])
+	button.add_theme_stylebox_override(
+		"pressed", face if selected and button.toggle_mode else boxes["pressed"]
+	)
+	button.add_theme_stylebox_override(
+		"hover_pressed", boxes["selected_pressed" if selected else "pressed"]
+	)
 	button.add_theme_stylebox_override("disabled", boxes["disabled"])
 
 

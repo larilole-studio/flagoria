@@ -57,7 +57,11 @@ func run() -> void:
 	await snapshot("four")
 
 	step("removed")
-	if not map._walls.erase_cells(cells) or not map._walls.cap_names(p).is_empty() or not _layers(map, p, []):
+	if (
+		not map._walls.erase_cells(cells)
+		or not map._walls.cap_names(p).is_empty()
+		or not _layers(map, p, [])
+	):
 		printerr("wall_collar_sides: collars stayed after remove")
 		done(false)
 		return
@@ -65,7 +69,11 @@ func run() -> void:
 	await snapshot("removed")
 
 	step("readded")
-	if not map.place_wall_cells(cells) or map._walls.cap_names(p) != four or not _layers(map, p, four):
+	if (
+		not map.place_wall_cells(cells)
+		or map._walls.cap_names(p) != four
+		or not _layers(map, p, four)
+	):
 		printerr("wall_collar_sides: readd %s" % map._walls.cap_names(p))
 		done(false)
 		return
@@ -108,13 +116,21 @@ func _collar_plus(map: TileMap, tower: Structure) -> Variant:
 		if not map.predicted_clear(cell):
 			continue
 		var anchors: Array[Vector2i] = [
-			cell + Vector2i(-1, -1), cell + Vector2i(2, 0), cell + Vector2i(-2, 2), cell + Vector2i(1, 3),
+			cell + Vector2i(-1, -1),
+			cell + Vector2i(2, 0),
+			cell + Vector2i(-2, 2),
+			cell + Vector2i(1, 3),
 		]
 		var seen := {}
 		var ok := true
 		for a in anchors:
 			for c in StructurePlacer.footprint(tower, a).keys():
-				if seen.has(c) or c == cell or map.get_cell_source_id(0, c) == -1 or not map.predicted_clear(c):
+				if (
+					seen.has(c)
+					or c == cell
+					or map.get_cell_source_id(0, c) == -1
+					or not map.predicted_clear(c)
+				):
 					ok = false
 					break
 				seen[c] = true

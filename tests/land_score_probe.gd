@@ -3,7 +3,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## Host: --host --save --port --out. Client: --port --out --mode.
 ## The host scores city land. A ".drop" file hands the host castle to neutral.
 
-
 var _dropped := false
 var _client_tick_same := true
 
@@ -78,7 +77,10 @@ func _peer_ready(main) -> bool:
 	## run after the test passed.
 	if main == null or main.multiplayer == null or main.multiplayer.multiplayer_peer == null:
 		return false
-	return main.multiplayer.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+	return (
+		main.multiplayer.multiplayer_peer.get_connection_status()
+		== MultiplayerPeer.CONNECTION_CONNECTED
+	)
 
 
 func _park_mobs(main) -> void:
@@ -107,13 +109,15 @@ func _write(main, world, me: Node2D) -> void:
 			var panel: ScoreboardPanel = main.get_node("CanvasLayer1/ScoreboardPanel")
 			for row in panel.sorted_rows():
 				board.append([int(row[0]), int(row[1])])
-	write_result({
-		"id": str(main.multiplayer.get_unique_id()) if _peer_ready(main) else "",
-		"ready": main.world_params != null and me != null,
-		"dropped": _dropped,
-		"client_tick_same": _client_tick_same,
-		"points": points,
-		"land": land,
-		"board": board,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": str(main.multiplayer.get_unique_id()) if _peer_ready(main) else "",
+			"ready": main.world_params != null and me != null,
+			"dropped": _dropped,
+			"client_tick_same": _client_tick_same,
+			"points": points,
+			"land": land,
+			"board": board,
+			"errors": _errors.snapshot(),
+		}
+	)

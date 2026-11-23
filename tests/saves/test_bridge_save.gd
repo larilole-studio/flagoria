@@ -24,8 +24,11 @@ func _bridge_save_scene() -> Array:
 				if maxi(absi(dx), absi(dy)) != r or not water.call(cell):
 					continue
 				for step in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
-					if world.ground_is_walkable(world.predict_cell(cell - step)[0]) and water.call(cell + step) \
-							and water.call(cell + step * 2):
+					if (
+						world.ground_is_walkable(world.predict_cell(cell - step)[0])
+						and water.call(cell + step)
+						and water.call(cell + step * 2)
+					):
 						return [scene, world, params, cell, step]
 	return [scene, world, params, Vector2i.MAX, Vector2i.ZERO]
 
@@ -68,12 +71,21 @@ func _test_bridge_save_round_trip() -> int:
 	for chunk in edits:
 		for key in edits[chunk]:
 			var cell = WorldSave.parse_cell(key)
-			if chunk == WorldSave.chunk_key(cell) and cell in cells and edits[chunk][key].get("tile", "").begins_with("BRIDGE_PLANK_"):
+			if (
+				chunk == WorldSave.chunk_key(cell)
+				and cell in cells
+				and edits[chunk][key].get("tile", "").begins_with("BRIDGE_PLANK_")
+			):
 				written += 1
 			else:
 				written -= 100
 	if written != 2:
-		printerr("FAIL bridge_save_round_trip: save %s wrote tile_edits %s, want the 2 cells %s" % [result["error"], edits, cells])
+		printerr(
+			(
+				"FAIL bridge_save_round_trip: save %s wrote tile_edits %s, want the 2 cells %s"
+				% [result["error"], edits, cells]
+			)
+		)
 		fail += 1
 
 	var load_error: String = map_gen.load_map_inputs(result["path"])
@@ -86,18 +98,41 @@ func _test_bridge_save_round_trip() -> int:
 	var bridged_before: bool = world.has_bridge(cells[0]) or world.has_bridge(cells[1])
 	var restored: int = scene._restore_loaded_world()
 	if drawn_before != 0 or bridged_before or restored != 2:
-		printerr("FAIL bridge_save_round_trip: restored %d (cells drawn first %d, bridge before the load %s)"
-				% [restored, drawn_before, bridged_before])
+		printerr(
+			(
+				"FAIL bridge_save_round_trip: restored %d (cells drawn first %d, bridge before the load %s)"
+				% [restored, drawn_before, bridged_before]
+			)
+		)
 		fail += 1
 	for i in cells.size():
 		var c := cells[i]
 		var walkable: bool = world.is_clear_ground(c)  # draws the chunk
-		if not world.has_bridge(c) or world.get_cell_atlas_coords(0, c) != pieces[i] or not walkable:
-			printerr("FAIL bridge_save_round_trip: %s after the load: bridge %s, tile %s (want %s), walkable %s"
-					% [c, world.has_bridge(c), world.get_cell_atlas_coords(0, c), pieces[i], walkable])
+		if (
+			not world.has_bridge(c)
+			or world.get_cell_atlas_coords(0, c) != pieces[i]
+			or not walkable
+		):
+			printerr(
+				(
+					"FAIL bridge_save_round_trip: %s after the load: bridge %s, tile %s (want %s), walkable %s"
+					% [
+						c,
+						world.has_bridge(c),
+						world.get_cell_atlas_coords(0, c),
+						pieces[i],
+						walkable
+					]
+				)
+			)
 			fail += 1
 	if world.has_bridge(past) or not world.is_open_sea(past):
-		printerr("FAIL bridge_save_round_trip: untouched %s is %s, want generated water" % [past, world.get_cell_atlas_coords(0, past)])
+		printerr(
+			(
+				"FAIL bridge_save_round_trip: untouched %s is %s, want generated water"
+				% [past, world.get_cell_atlas_coords(0, past)]
+			)
+		)
 		fail += 1
 	DirAccess.remove_absolute(result["path"])
 
@@ -105,15 +140,21 @@ func _test_bridge_save_round_trip() -> int:
 	var land := shore - step
 	var bad := {}
 	bad.get_or_add(WorldSave.chunk_key(past), {})[WorldSave.cell_key(past)] = {"tile": "GRASS"}
-	bad.get_or_add(WorldSave.chunk_key(land), {})[WorldSave.cell_key(land)] = {"tile": "BRIDGE_PLANK_H_WATER"}
+	bad.get_or_add(WorldSave.chunk_key(land), {})[WorldSave.cell_key(land)] = {
+		"tile": "BRIDGE_PLANK_H_WATER"
+	}
 	bad.get_or_add(WorldSave.chunk_key(shore), {})["not a cell"] = {"tile": "BRIDGE_PLANK_H_WATER"}
 	bad.get_or_add(WorldSave.chunk_key(shore), {})[WorldSave.cell_key(shore)] = {"removed": true}
-	bad.get_or_add(WorldSave.chunk_key(cells[1]), {})[WorldSave.cell_key(cells[1])] = {"tile": "BRIDGE_PLANK_V_WATER"}
+	bad.get_or_add(WorldSave.chunk_key(cells[1]), {})[WorldSave.cell_key(cells[1])] = {
+		"tile": "BRIDGE_PLANK_V_WATER"
+	}
 	scene._apply_params_to_world(params)
 	var kept := BridgeBuilder.from_changes(bad, world)
 	var v: Vector2i = TileCatalog.BRIDGE_PLANK_V_WATER
 	if kept != [[cells[1].x, cells[1].y, v.x, v.y]]:
-		printerr("FAIL bridge_save_round_trip: from bad entries kept %s, want only %s" % [kept, cells[1]])
+		printerr(
+			"FAIL bridge_save_round_trip: from bad entries kept %s, want only %s" % [kept, cells[1]]
+		)
 		fail += 1
 
 	# A version 1 save (no tile_edits) still loads and starts with no bridges.
@@ -122,7 +163,12 @@ func _test_bridge_save_round_trip() -> int:
 	scene._apply_params_to_world(scene.world_params)
 	var old_restored: int = scene._restore_loaded_world()
 	if old_error != "" or old_restored != 0 or not world.bridges_for_sync().is_empty():
-		printerr("FAIL bridge_save_round_trip: v1 save: error %s, restored %d" % [old_error, old_restored])
+		printerr(
+			(
+				"FAIL bridge_save_round_trip: v1 save: error %s, restored %d"
+				% [old_error, old_restored]
+			)
+		)
 		fail += 1
 	map_gen.params = before
 	scene.queue_free()

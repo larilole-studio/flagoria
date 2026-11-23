@@ -30,13 +30,18 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		_end(false, "cannot load " + MAIN)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(JOIN), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(JOIN),
+		START_TIMEOUT_S
+	):
 		_end(false, "no join button")
 		return
-	if not await wait_until(func() -> bool:
+	if not await wait_until(
+		func() -> bool:
 			var button: Control = current_scene.get_node(JOIN)
-			return button.size.x > 1.0, 5.0):
+			return button.size.x > 1.0,
+		5.0
+	):
 		_end(false, "join button has no size")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
@@ -52,7 +57,12 @@ func run() -> void:
 	if default_ready == "":
 		return
 	await snapshot("joined-default")
-	var default_ok: bool = str(current_scene._join_host) == "localhost" and int(current_scene._join_port) == 9786 and hero() != null and _server_ground_ready(9786, local_altitude)
+	var default_ok: bool = (
+		str(current_scene._join_host) == "localhost"
+		and int(current_scene._join_port) == 9786
+		and hero() != null
+		and _server_ground_ready(9786, local_altitude)
+	)
 	if not await _back_to_menu():
 		_end(false, "could not return to the menu after the default join")
 		return
@@ -65,8 +75,19 @@ func run() -> void:
 	await click(JOIN)
 	var status := _status()
 	var invalid_ms := Time.get_ticks_msec() - started
-	var invalid_ok: bool = status.visible and status.text == "Enter a hostname or an IPv4 address, and an optional port from 1 to 65535." and _menu().visible and invalid_ms < 2000 and _field().text == "host:abc"
-	print("join_port: invalid status='%s' field='%s' ms=%d" % [status.text, _field().text, invalid_ms])
+	var invalid_ok: bool = (
+		status.visible
+		and (
+			status.text
+			== "Enter a hostname or an IPv4 address, and an optional port from 1 to 65535."
+		)
+		and _menu().visible
+		and invalid_ms < 2000
+		and _field().text == "host:abc"
+	)
+	print(
+		"join_port: invalid status='%s' field='%s' ms=%d" % [status.text, _field().text, invalid_ms]
+	)
 	await snapshot("invalid-address")
 
 	step("timeout")
@@ -76,12 +97,20 @@ func run() -> void:
 	started = Time.get_ticks_msec()
 	await click(JOIN)
 	status = _status()
-	var back := await wait_until(func() -> bool:
-			return _menu().visible and _status().visible and _status().text != "", 8.0)
+	var back := await wait_until(
+		func() -> bool: return _menu().visible and _status().visible and _status().text != "", 8.0
+	)
 	var timeout_ms := Time.get_ticks_msec() - started
 	status = _status()
-	var timeout_ok: bool = back and status.text == "Could not join 127.0.0.1:1" and _field().text == "127.0.0.1:1" and timeout_ms >= 250
-	print("join_port: timeout status='%s' field='%s' ms=%d" % [status.text, _field().text, timeout_ms])
+	var timeout_ok: bool = (
+		back
+		and status.text == "Could not join 127.0.0.1:1"
+		and _field().text == "127.0.0.1:1"
+		and timeout_ms >= 250
+	)
+	print(
+		"join_port: timeout status='%s' field='%s' ms=%d" % [status.text, _field().text, timeout_ms]
+	)
 	await snapshot("join-timeout")
 
 	step("join-9799")
@@ -98,7 +127,13 @@ func run() -> void:
 	if explicit_ready == "":
 		return
 	await snapshot("joined-9799")
-	var explicit_ok: bool = str(current_scene._join_host) == "127.0.0.1" and int(current_scene._join_port) == 9799 and _field().text == "127.0.0.1:9799" and hero() != null and _server_ground_ready(9799, local_altitude)
+	var explicit_ok: bool = (
+		str(current_scene._join_host) == "127.0.0.1"
+		and int(current_scene._join_port) == 9799
+		and _field().text == "127.0.0.1:9799"
+		and hero() != null
+		and _server_ground_ready(9799, local_altitude)
+	)
 	_end(default_ok and invalid_ok and timeout_ok and explicit_ok)
 
 
@@ -128,8 +163,9 @@ func _back_to_menu() -> bool:
 	if not await wait_until(func() -> bool: return panel.is_visible_in_tree(), 5.0):
 		return false
 	await click(MAIN_MENU_BUTTON)
-	return await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0)
+	return await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0
+	)
 
 
 func _field() -> LineEdit:
@@ -154,7 +190,13 @@ func _server_seeds(port: int) -> Array:
 func _seed_list(params) -> Array:
 	if params == null:
 		return []
-	return [params.altitude_seed, params.moisture_seed, params.temperature_seed, params.items_seed, params.biome_seed]
+	return [
+		params.altitude_seed,
+		params.moisture_seed,
+		params.temperature_seed,
+		params.items_seed,
+		params.biome_seed
+	]
 
 
 func _seeds_text(params) -> String:
@@ -200,8 +242,13 @@ func _ground_count() -> int:
 	for dy in range(-NEARBY_RADIUS, NEARBY_RADIUS + 1):
 		for dx in range(-NEARBY_RADIUS, NEARBY_RADIUS + 1):
 			var nearby_cell := cell + Vector2i(dx, dy)
-			if (map.get_cell_source_id(0, nearby_cell) != -1
-					or (has_sea_layer and map.get_cell_source_id(SkyIslands.SEA_LAYER, nearby_cell) != -1)):
+			if (
+				map.get_cell_source_id(0, nearby_cell) != -1
+				or (
+					has_sea_layer
+					and map.get_cell_source_id(SkyIslands.SEA_LAYER, nearby_cell) != -1
+				)
+			):
 				n += 1
 	return n
 
@@ -213,31 +260,79 @@ func _params_are_server(port: int) -> bool:
 
 
 func _server_ground_ready(port: int, local_altitude: int) -> bool:
-	return _params_are_server(port) and int(current_scene.world_params.altitude_seed) != local_altitude and _ground_count() == NEARBY_CELLS
+	return (
+		_params_are_server(port)
+		and int(current_scene.world_params.altitude_seed) != local_altitude
+		and _ground_count() == NEARBY_CELLS
+	)
 
 
 ## "ok" on success. On failure the drive has already ended and this returns "".
 func _await_server_ground(port: int, local_altitude: int) -> String:
-	var params_ok := await wait_until(func() -> bool: return _params_are_server(port), PARAMS_TIMEOUT_S)
+	var params_ok := await wait_until(
+		func() -> bool: return _params_are_server(port), PARAMS_TIMEOUT_S
+	)
 	if not params_ok:
-		_end(false, "server map params did not arrive for port %d within %ss (world_params=%s local_altitude=%s)" % [
-			port, PARAMS_TIMEOUT_S, _seeds_text(current_scene.world_params if current_scene else null), local_altitude])
+		_end(
+			false,
+			(
+				"server map params did not arrive for port %d within %ss (world_params=%s local_altitude=%s)"
+				% [
+					port,
+					PARAMS_TIMEOUT_S,
+					_seeds_text(current_scene.world_params if current_scene else null),
+					local_altitude
+				]
+			)
+		)
 		return ""
 	# receive_map_params applies the server map and clears tiles in that call.
 	# Cells counted after this wait were drawn from those params, not from the
 	# client's earlier local chunk.
-	var ground_ok := await wait_until(func() -> bool: return _params_are_server(port) and _ground_count() == NEARBY_CELLS, GROUND_TIMEOUT_S)
+	var ground_ok := await wait_until(
+		func() -> bool: return _params_are_server(port) and _ground_count() == NEARBY_CELLS,
+		GROUND_TIMEOUT_S
+	)
 	var ground := _ground_count()
 	if not ground_ok:
-		_end(false, "nearby ground did not draw after server params for port %d within %ss (ground=%d/%d world_params=%s)" % [
-			port, GROUND_TIMEOUT_S, ground, NEARBY_CELLS, _seeds_text(current_scene.world_params if current_scene else null)])
+		_end(
+			false,
+			(
+				"nearby ground did not draw after server params for port %d within %ss (ground=%d/%d world_params=%s)"
+				% [
+					port,
+					GROUND_TIMEOUT_S,
+					ground,
+					NEARBY_CELLS,
+					_seeds_text(current_scene.world_params if current_scene else null)
+				]
+			)
+		)
 		return ""
 	if int(current_scene.world_params.altitude_seed) == local_altitude:
-		_end(false, "joined map altitude %s matches the client local fixture on port %d" % [local_altitude, port])
+		_end(
+			false,
+			(
+				"joined map altitude %s matches the client local fixture on port %d"
+				% [local_altitude, port]
+			)
+		)
 		return ""
-	print("join_port: ready port=%d host=%s field='%s' players=%s seeds=%s local_altitude=%s ground=%d/%d" % [
-		current_scene._join_port, current_scene._join_host, _field().text, _player_names(),
-		_seeds_text(current_scene.world_params), local_altitude, ground, NEARBY_CELLS])
+	print(
+		(
+			"join_port: ready port=%d host=%s field='%s' players=%s seeds=%s local_altitude=%s ground=%d/%d"
+			% [
+				current_scene._join_port,
+				current_scene._join_host,
+				_field().text,
+				_player_names(),
+				_seeds_text(current_scene.world_params),
+				local_altitude,
+				ground,
+				NEARBY_CELLS
+			]
+		)
+	)
 	return "ok"
 
 
@@ -256,10 +351,21 @@ func _start_server(port: int) -> bool:
 	var params_path := _write_server_map(port)
 	if params_path == "":
 		return false
-	var pid := OS.create_process(OS.get_executable_path(), [
-		"--headless", "--path", ProjectSettings.globalize_path("res://"),
-		"--", "--server", "--port=%d" % port, "--params=%s" % params_path,
-	])
+	var pid := (
+		OS
+		. create_process(
+			OS.get_executable_path(),
+			[
+				"--headless",
+				"--path",
+				ProjectSettings.globalize_path("res://"),
+				"--",
+				"--server",
+				"--port=%d" % port,
+				"--params=%s" % params_path,
+			]
+		)
+	)
 	if pid <= 0:
 		printerr("join_port: could not start the server on %d" % port)
 		return false

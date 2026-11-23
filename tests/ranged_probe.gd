@@ -7,7 +7,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## While PATH.fire changes, a client fires one bow shot at peer 1 (token
 ## "away" aims the other way). Every 100 ms it writes PATH. PATH.stop ends it.
 
-
 var _id := 0
 var _host := false
 var _seed := 0
@@ -106,8 +105,13 @@ func _fire(main: Node, world: Node) -> void:
 	var me := world.get_node_or_null(str(_id)) as CharacterBody2D
 	var target := world.get_node_or_null("1") as Node2D
 	var wheel := main.get_node_or_null("CanvasLayer1/ToolWheel")
-	if me == null or target == null or wheel == null or not wheel.has_method("select") \
-			or not me.is_multiplayer_authority():
+	if (
+		me == null
+		or target == null
+		or wheel == null
+		or not wheel.has_method("select")
+		or not me.is_multiplayer_authority()
+	):
 		return
 	wheel.select(ToolWheel.Tool.BOW)
 	var toward := target.global_position - me.global_position
@@ -151,9 +155,13 @@ func _find_marks(main: Node) -> Array:
 					var aim := here + Vector2(0, -5)
 					if not AttackAim.clear_shot(space, from, aim, exclude):
 						continue
-					var mob_hit: Dictionary = RangedShot.fly(map, from, here - there, mobs, [], null)
-					if mob_hit.get("kind") == "mob" \
-							and from.distance_to(mob_hit["end"]) < from.distance_to(here) - 6.0:
+					var mob_hit: Dictionary = RangedShot.fly(
+						map, from, here - there, mobs, [], null
+					)
+					if (
+						mob_hit.get("kind") == "mob"
+						and from.distance_to(mob_hit["end"]) < from.distance_to(here) - 6.0
+					):
 						continue
 					return [[here.x, here.y], [there.x, there.y]]
 	return []

@@ -69,7 +69,11 @@ var swing_turn := 0.0
 func _ready():
 	# Only the owner moves in physics. Copies receive position from the
 	# synchronizer during multiplayer polling.
-	physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_ON if is_multiplayer_authority() else PHYSICS_INTERPOLATION_MODE_OFF
+	physics_interpolation_mode = (
+		PHYSICS_INTERPOLATION_MODE_ON
+		if is_multiplayer_authority()
+		else PHYSICS_INTERPOLATION_MODE_OFF
+	)
 	reset_physics_interpolation()
 	health.damaged.connect(_on_damaged)
 	health.healed.connect(_on_healed)
@@ -81,7 +85,8 @@ func _ready():
 	var sync := get_node_or_null("MultiplayerSynchronizer")
 	if sync:
 		sync.synchronized.connect(_on_synchronized)
-	if not is_multiplayer_authority(): return
+	if not is_multiplayer_authority():
+		return
 	camera.make_current()
 	# A peer that joins later gets the current walk facing on the next frame.
 	multiplayer.peer_connected.connect(func(_id): _sent_walk_direction = "")
@@ -117,12 +122,14 @@ func set_chop_pose(direction: String, col: int) -> void:
 		chop_sprite.frame_coords = Vector2i(col, CHOP_ROWS[direction])
 	sprite.visible = not health.is_dead() and not chop_sprite.visible
 
+
 func _physics_process(delta):
 	if _respawn_ghost_ticks > 0:
 		_respawn_ghost_ticks -= 1
 		if _respawn_ghost_ticks == 0:
 			_apply_dead_state()
-	if not is_multiplayer_authority(): return
+	if not is_multiplayer_authority():
+		return
 	if health.is_dead():
 		velocity = Vector2.ZERO
 		return
@@ -137,12 +144,16 @@ func _physics_process(delta):
 
 
 func _unhandled_input(event):
-	if not is_multiplayer_authority(): return
-	if health.is_dead(): return
-	if PlayerCamera.map_covers_play(get_tree()): return
+	if not is_multiplayer_authority():
+		return
+	if health.is_dead():
+		return
+	if PlayerCamera.map_covers_play(get_tree()):
+		return
 
 	if Input.is_action_just_pressed("attack"):
 		attack_animation.rpc()
+
 
 func attack_toward(direction: String, angle := NAN):
 	## An aimed attack (AttackAim). The bow tool sends one shot and does
@@ -168,9 +179,11 @@ func sword_active() -> bool:
 func _enter_tree():
 	set_multiplayer_authority(str(name).to_int())
 
+
 func get_input_axis():
 	input = PlayerInput.keyboard_axis()
 	return input.normalized()
+
 
 func get_joystick_axis() -> Vector2:
 	return PlayerInput.joystick_axis(joystick)
@@ -183,10 +196,12 @@ func player_movement(delta):
 func walk_direction() -> String:
 	return PlayerInput.walk_direction(velocity)
 
+
 @rpc("call_local")
 func updateAnimation(direction: String):
 	_walk_direction = direction
-	if isAttacking: return
+	if isAttacking:
+		return
 
 	lastAnimDirection = direction
 	animations.play("walk" + direction)
@@ -254,6 +269,7 @@ func _on_synchronized():
 	else:
 		position = _respawn_hold
 
+
 func _on_animation_player_animation_finished(anim_name):
 	# An attack ended: back to the walk facing the owner last sent, which no
 	# longer arrives every frame.
@@ -268,7 +284,11 @@ func _on_regen_timer_timeout():
 func _on_hurt_box_area_entered(area):
 	# An area never reports itself, and the hurtBox is on no layer anyway.
 	var collision_player = area.get_parent().get_parent()
-	if collision_player.name != name and collision_player.has_method("sword_active") and collision_player.sword_active():
+	if (
+		collision_player.name != name
+		and collision_player.has_method("sword_active")
+		and collision_player.sword_active()
+	):
 		# A different player's sword, mid-swing. Every peer sees the overlap; only
 		# the server's take_damage counts, and it syncs health and sounds to all.
 		health.take_damage(SWORD_DAMAGE)

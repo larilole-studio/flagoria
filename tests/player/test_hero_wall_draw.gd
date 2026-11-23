@@ -28,7 +28,9 @@ func _test_hero_draws_over_wall_face() -> int:
 	player.position = Vector2(center.x, bottom + 10.0)
 	await process_frame
 	if player.z_index != front_z:
-		printerr("FAIL hero_draws_over_wall_face: head overlap z %s, want %s" % [player.z_index, front_z])
+		printerr(
+			"FAIL hero_draws_over_wall_face: head overlap z %s, want %s" % [player.z_index, front_z]
+		)
 		fail += 1
 	# 12 px of the body on the wall: most of the hero is inside, the wall covers them.
 	player.position = Vector2(center.x, bottom + 4.0)

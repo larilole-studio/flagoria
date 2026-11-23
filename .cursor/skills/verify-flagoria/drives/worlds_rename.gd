@@ -16,8 +16,10 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		done(false)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(WORLDS), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(WORLDS),
+		START_TIMEOUT_S
+	):
 		done(false)
 		return
 	step("rename-field")
@@ -69,8 +71,9 @@ func _open_rename() -> bool:
 	if not await _click_item(list, row):
 		return false
 	await click(RENAME)
-	return await wait_until(func() -> bool:
-		return current_scene.get_node(RENAME_FIELD).is_visible_in_tree(), 5.0)
+	return await wait_until(
+		func() -> bool: return current_scene.get_node(RENAME_FIELD).is_visible_in_tree(), 5.0
+	)
 
 
 func _row_named(list: ItemList, save_name: String) -> int:

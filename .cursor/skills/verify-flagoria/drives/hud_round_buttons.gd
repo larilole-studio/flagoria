@@ -16,14 +16,23 @@ func run() -> void:
 	var parchment: ParchmentMap = current_scene.get_node("CanvasLayer1/ParchmentMap")
 	var interaction: Interaction = current_scene.get_node(INTERACTION)
 	var buildings := current_scene.get_node(BUILDINGS) as Button
-	var ok := await wait_until(func() -> bool:
-		return buildings.size.x >= RoundHudStyle.HIT and not parchment.is_open() \
+	var ok := await wait_until(
+		func() -> bool:
+			return (
+				buildings.size.x >= RoundHudStyle.HIT
+				and not parchment.is_open()
 				and not _plank().visible
-	, 5.0)
+			),
+		5.0
+	)
 	step("match-start")
-	ok = ok and _cluster_ok() and _disc_is(buildings, "build_normal") \
-			and _disc_is(current_scene.get_node(MAP_BUTTON), "map_normal") \
-			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
+	ok = (
+		ok
+		and _cluster_ok()
+		and _disc_is(buildings, "build_normal")
+		and _disc_is(current_scene.get_node(MAP_BUTTON), "map_normal")
+		and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
+	)
 	await snapshot("match-start")
 	print("hud round: start parchment %s tool %s" % [parchment.is_open(), interaction.build.tool])
 
@@ -59,13 +68,19 @@ func run() -> void:
 	step("interact")
 	var before := interaction.mode
 	await toggle_mode()
-	var switched: bool = interaction.mode != before and interaction.mode == Interaction.Mode.INTERACT \
-			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_chop_normal") \
-			and interaction.build.tool == BuildPlacement.Tool.PLANK
+	var switched: bool = (
+		interaction.mode != before
+		and interaction.mode == Interaction.Mode.INTERACT
+		and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_chop_normal")
+		and interaction.build.tool == BuildPlacement.Tool.PLANK
+	)
 	await snapshot("interact")
 	await toggle_mode()
-	var back: bool = interaction.mode == before and interaction.build.tool == BuildPlacement.Tool.CUT \
-			and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
+	var back: bool = (
+		interaction.mode == before
+		and interaction.build.tool == BuildPlacement.Tool.CUT
+		and _disc_is(current_scene.get_node(TOOL_BUTTON), "wheel_sword_normal")
+	)
 	print("hud round: mode switched %s back %s" % [switched, back])
 
 	step("run")
@@ -73,7 +88,15 @@ func run() -> void:
 	await click(RUN_BUTTON)
 	var ran: bool = run.running() and run.latched
 	print("hud round: run latched %s" % ran)
-	done(ok and switched and back and ran and current_scene.get_node_or_null("CanvasLayer1/MapReopen") == null)
+	done(
+		(
+			ok
+			and switched
+			and back
+			and ran
+			and current_scene.get_node_or_null("CanvasLayer1/MapReopen") == null
+		)
+	)
 
 
 func _plank() -> Button:
@@ -106,24 +129,38 @@ func _cluster_ok() -> bool:
 	var stick := current_scene.get_node("CanvasLayer1/player_joystick") as Node2D
 	var stick_c := stick.global_position
 	var attack_c := attack_rect.get_center()
-	if not is_equal_approx(attack_c.y, stick_c.y) \
-			or not is_equal_approx(view.end.x - attack_c.x, stick_c.x - view.position.x) \
-			or not is_equal_approx(attack_rect.size.x, stick.start_reach() * 2.0):
+	if (
+		not is_equal_approx(attack_c.y, stick_c.y)
+		or not is_equal_approx(view.end.x - attack_c.x, stick_c.x - view.position.x)
+		or not is_equal_approx(attack_rect.size.x, stick.start_reach() * 2.0)
+	):
 		printerr("hud round: Joystick %s Attack %s" % [stick_c, attack_rect])
 		return false
 	var wheel_rect := (current_scene.get_node(TOOL_BUTTON) as Control).get_global_rect()
 	var build_rect := buildings.get_global_rect()
 	for rect in [run_rect, wheel_rect, build_rect]:
 		var center: Vector2 = rect.get_center()
-		if not view.encloses(rect) or rect.intersects(attack_rect) \
-				or center.x <= view.get_center().x or center.distance_to(attack_c) > attack_rect.size.x * 1.5:
-			printerr("hud round: control %s outside the thumb cluster around %s" % [rect, attack_rect])
+		if (
+			not view.encloses(rect)
+			or rect.intersects(attack_rect)
+			or center.x <= view.get_center().x
+			or center.distance_to(attack_c) > attack_rect.size.x * 1.5
+		):
+			printerr(
+				"hud round: control %s outside the thumb cluster around %s" % [rect, attack_rect]
+			)
 			return false
 		if rect != build_rect and center.x >= attack_c.x and center.y >= attack_c.y:
-			printerr("hud round: satellite %s must sit above or west of Attack %s" % [rect, attack_rect])
+			printerr(
+				"hud round: satellite %s must sit above or west of Attack %s" % [rect, attack_rect]
+			)
 			return false
-	if run_rect.intersects(wheel_rect) or build_rect.intersects(run_rect) \
-			or build_rect.intersects(wheel_rect) or build_rect.position.y <= menu.get_global_rect().end.y:
+	if (
+		run_rect.intersects(wheel_rect)
+		or build_rect.intersects(run_rect)
+		or build_rect.intersects(wheel_rect)
+		or build_rect.position.y <= menu.get_global_rect().end.y
+	):
 		printerr("hud round: overlapping cluster or Buildings on the top row")
 		return false
 	return true
@@ -141,8 +178,12 @@ func _picker_ok() -> bool:
 			continue
 		count += 1
 		var rect := button.get_global_rect()
-		if not view.encloses(rect) or rect.get_center().x > origin.x \
-				or rect.get_center().distance_to(origin) > 92.0 or not _round(button):
+		if (
+			not view.encloses(rect)
+			or rect.get_center().x > origin.x
+			or rect.get_center().distance_to(origin) > 92.0
+			or not _round(button)
+		):
 			printerr("hud round: %s misplaced at %s" % [button.name, rect])
 			return false
 	return count == 6

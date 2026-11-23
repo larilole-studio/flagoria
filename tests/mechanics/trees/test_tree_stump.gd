@@ -29,11 +29,20 @@ func _test_cut_tree_stays_stump() -> int:
 		printerr("FAIL cut_tree_stays_stump: cut_choppable did not cut %s exactly once" % tree)
 		fail += 1
 	world.generate_chunk(Vector2(0, 0))
-	if world.has_tree(tree) or world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, tree) != TileCatalog.STUMP:
+	if (
+		world.has_tree(tree)
+		or world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, tree) != TileCatalog.STUMP
+	):
 		printerr("FAIL cut_tree_stays_stump: %s grew back after the chunk was drawn again" % tree)
 		fail += 1
-	if world.predict_cell(tree)[1] != TileCatalog.STUMP or not world.predicted_clear(tree) or not world.is_clear_ground(tree):
-		printerr("FAIL cut_tree_stays_stump: predict_cell %s for the stump" % [world.predict_cell(tree)])
+	if (
+		world.predict_cell(tree)[1] != TileCatalog.STUMP
+		or not world.predicted_clear(tree)
+		or not world.is_clear_ground(tree)
+	):
+		printerr(
+			"FAIL cut_tree_stays_stump: predict_cell %s for the stump" % [world.predict_cell(tree)]
+		)
 		fail += 1
 	generate_seeded_chunk(world, seed_value, 0.0)
 	if not world.has_tree(tree):
@@ -68,7 +77,10 @@ func _test_tree_regrows() -> int:
 		return 1
 	var atlas: Vector2i = world.get_cell_atlas_coords(1, tree)
 	var is_stump := func() -> bool:
-		return not world.has_tree(tree) and world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, tree) == TileCatalog.STUMP
+		return (
+			not world.has_tree(tree)
+			and world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, tree) == TileCatalog.STUMP
+		)
 	world.regrow_delay = 30.0
 	world.play_time = 100.0
 	world.cut_choppable(tree)
@@ -90,10 +102,18 @@ func _test_tree_regrows() -> int:
 		printerr("FAIL tree_regrows: %s did not regrow after the delay" % tree)
 		fail += 1
 	var top = world.get_cell_tile_data(1, tree)
-	if world.get_cell_atlas_coords(1, tree) != atlas or world.get_cell_source_id(world.GROUND_DECOR_LAYER, tree) != -1 \
-			or top == null or top.get_collision_polygons_count(0) == 0:
-		printerr("FAIL tree_regrows: %s is %s after regrowing, want %s with collision and no stump"
-				% [tree, world.get_cell_atlas_coords(1, tree), atlas])
+	if (
+		world.get_cell_atlas_coords(1, tree) != atlas
+		or world.get_cell_source_id(world.GROUND_DECOR_LAYER, tree) != -1
+		or top == null
+		or top.get_collision_polygons_count(0) == 0
+	):
+		printerr(
+			(
+				"FAIL tree_regrows: %s is %s after regrowing, want %s with collision and no stump"
+				% [tree, world.get_cell_atlas_coords(1, tree), atlas]
+			)
+		)
 		fail += 1
 	if world.predict_cell(tree)[1] != atlas or world.predicted_clear(tree):
 		printerr("FAIL tree_regrows: predict_cell %s after regrowing" % [world.predict_cell(tree)])
@@ -133,7 +153,10 @@ func _test_tree_regrows_under_mob() -> int:
 		scene.queue_free()
 		return 1
 	var is_stump := func() -> bool:
-		return not world.has_tree(tree) and world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, tree) == TileCatalog.STUMP
+		return (
+			not world.has_tree(tree)
+			and world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, tree) == TileCatalog.STUMP
+		)
 	world.regrow_delay = 30.0
 	world.play_time = 100.0
 	world.cut_choppable(tree)
@@ -144,14 +167,23 @@ func _test_tree_regrows_under_mob() -> int:
 	scene.get_node("World/Mobs").add_child(mob)
 	mob.set_physics_process(false)  # stays where the test puts it
 	await process_frame
-	if not world.mob_on_cell(tree) or world.player_on_cell(tree) or world.regrow_due() != 0 or not is_stump.call():
+	if (
+		not world.mob_on_cell(tree)
+		or world.player_on_cell(tree)
+		or world.regrow_due() != 0
+		or not is_stump.call()
+	):
 		printerr("FAIL tree_regrows_under_mob: %s regrew under a mob standing on it" % tree)
 		fail += 1
 	# Feet centred on the next cell, one corner still on the stump.
 	var half: Vector2 = MobCatalog.stat(MobCatalog.SLIME, "body") * 0.5
 	mob.position = centre + Vector2(8 + half.x - 2, 4)
-	if world.local_to_map(mob.position) == tree or not world.mob_on_cell(tree) \
-			or world.regrow_due() != 0 or not is_stump.call():
+	if (
+		world.local_to_map(mob.position) == tree
+		or not world.mob_on_cell(tree)
+		or world.regrow_due() != 0
+		or not is_stump.call()
+	):
 		printerr("FAIL tree_regrows_under_mob: %s regrew under a corner of a mob's feet" % tree)
 		fail += 1
 	# The mob walks off: the next regrow_due grows the tree back.

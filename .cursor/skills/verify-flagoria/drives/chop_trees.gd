@@ -13,7 +13,9 @@ const FALL_S := 2.0  ## s a started chop has to leave a stump (fell_at(2) is 0.5
 ## that the box still holds only the tree under the finger.
 const ONE_DRAG_PX := 7.0
 ## The chop's sounds in order, with the clip number dropped (#265).
-const SOUNDS := ["tree_chop", "leaf_rustle", "tree_chop", "leaf_rustle", "tree_crack", "tree_fall", "wood_pickup"]
+const SOUNDS := [
+	"tree_chop", "leaf_rustle", "tree_chop", "leaf_rustle", "tree_crack", "tree_fall", "wood_pickup"
+]
 
 var _hits: Array[Vector2i] = []
 
@@ -36,25 +38,47 @@ func run() -> void:
 
 	step("paint")
 	var layout: Dictionary = _paint_fixed(map)
-	print("chop: fixed tap %s drag %s spared %s reach %.0f sword %.0f" % [
-			layout["tap"], layout["drag"], layout["spared"],
-			Interaction.CHOP_REACH, AimConeStyle.SWORD_REACH])
+	print(
+		(
+			"chop: fixed tap %s drag %s spared %s reach %.0f sword %.0f"
+			% [
+				layout["tap"],
+				layout["drag"],
+				layout["spared"],
+				Interaction.CHOP_REACH,
+				AimConeStyle.SWORD_REACH
+			]
+		)
+	)
 	await snapshot("before")
 
 	step("north-long")
-	if not await _play_aim(it, map, inventory, Vector2.UP, Interaction.CHOP_REACH, layout["tap"], layout["spared"] + layout["drag"], "north"):
+	if not await _play_aim(
+		it,
+		map,
+		inventory,
+		Vector2.UP,
+		Interaction.CHOP_REACH,
+		layout["tap"],
+		layout["spared"] + layout["drag"],
+		"north"
+	):
 		done(false)
 		return
 
 	step("east-short")
 	var near_only: Array[Vector2i] = [layout["drag"][0]]
 	var east_rest: Array[Vector2i] = [layout["drag"][1]]
-	if not await _play_aim(it, map, inventory, Vector2.RIGHT, 80.0, near_only, east_rest, "east-short"):
+	if not await _play_aim(
+		it, map, inventory, Vector2.RIGHT, 80.0, near_only, east_rest, "east-short"
+	):
 		done(false)
 		return
 
 	step("east-long")
-	if not await _play_aim(it, map, inventory, Vector2.RIGHT, 160.0, east_rest, layout["recover"], "east-long"):
+	if not await _play_aim(
+		it, map, inventory, Vector2.RIGHT, 160.0, east_rest, layout["recover"], "east-long"
+	):
 		done(false)
 		return
 
@@ -66,7 +90,10 @@ func run() -> void:
 	step("save")
 	var saved := []
 	get_root().get_node("MapGen").map_saved.connect(func(path: String) -> void: saved.append(path))
-	if not await menu_save() or not await wait_until(func() -> bool: return not saved.is_empty(), 5.0):
+	if (
+		not await menu_save()
+		or not await wait_until(func() -> bool: return not saved.is_empty(), 5.0)
+	):
 		printerr("chop: the in-game menu did not save the world")
 		done(false)
 		return
@@ -85,8 +112,10 @@ func _paint_fixed(map: TileMap) -> Dictionary:
 			map.erase_cell(1, cell)
 			map.erase_cell(map.GROUND_DECOR_LAYER, cell)
 	var tap: Array[Vector2i] = [
-		origin + Vector2i(0, -2), origin + Vector2i(0, -4),
-		origin + Vector2i(0, -6), origin + Vector2i(0, -15),
+		origin + Vector2i(0, -2),
+		origin + Vector2i(0, -4),
+		origin + Vector2i(0, -6),
+		origin + Vector2i(0, -15),
 	]
 	var spared: Array[Vector2i] = [origin + Vector2i(0, -16), origin + Vector2i(0, 8)]
 	var drag: Array[Vector2i] = [origin + Vector2i(4, 1), origin + Vector2i(8, 1)]
@@ -96,7 +125,16 @@ func _paint_fixed(map: TileMap) -> Dictionary:
 	return {"tap": tap, "spared": spared, "drag": drag, "recover": recover}
 
 
-func _play_aim(it: Node, map: TileMap, inventory: Node, direction: Vector2, reach: float, expected: Array, spared: Array, label: String) -> bool:
+func _play_aim(
+	it: Node,
+	map: TileMap,
+	inventory: Node,
+	direction: Vector2,
+	reach: float,
+	expected: Array,
+	spared: Array,
+	label: String
+) -> bool:
 	var wood_before: int = inventory.count_of(&"wood")
 	await _drag_button(direction.normalized() * reach, label + "-aim")
 	var got: Array = it.sweep_cells()
@@ -108,7 +146,15 @@ func _play_aim(it: Node, map: TileMap, inventory: Node, direction: Vector2, reac
 	return await _wait_sweep(it, map, inventory, expected, spared, wood_before, label)
 
 
-func _wait_sweep(it: Node, map: TileMap, inventory: Node, expected: Array, spared: Array, wood_before: int, label: String) -> bool:
+func _wait_sweep(
+	it: Node,
+	map: TileMap,
+	inventory: Node,
+	expected: Array,
+	spared: Array,
+	wood_before: int,
+	label: String
+) -> bool:
 	var deadline := Time.get_ticks_msec() + int(expected.size() * 900 + 1000)
 	while Time.get_ticks_msec() < deadline:
 		if not it.chopping() and it.sweep_cells().is_empty():
@@ -148,14 +194,21 @@ func _recover_cancel(it: Node, map: TileMap, pair: Array) -> bool:
 			break
 		await process_frame
 	if not it.chopping() or it.chop_time < 0.57:
-		printerr("chop: did not catch recovery, chopping %s time %s" % [it.chopping(), it.chop_time])
+		printerr(
+			"chop: did not catch recovery, chopping %s time %s" % [it.chopping(), it.chop_time]
+		)
 		return false
 	hero().global_position += Vector2(6, 0)
 	await process_frame
 	await process_frame
 	var second: Vector2i = pair[1]
 	if it.chopping() or not it.sweep_cells().is_empty() or map.choppable(second) == null:
-		printerr("chop: recovery move started %s chopping %s queue %s" % [second, it.chopping(), it.sweep_cells()])
+		printerr(
+			(
+				"chop: recovery move started %s chopping %s queue %s"
+				% [second, it.chopping(), it.sweep_cells()]
+			)
+		)
 		return false
 	await snapshot("recover-cancel")
 	print("chop: recovery move left %s standing and the queue empty" % second)
@@ -173,7 +226,9 @@ func settle(timeout_s: float = 5.0) -> bool:
 			return true
 		last = now
 		await physics_frame
-	printerr("chop: the hero did not settle in %.0f s (at %s)" % [timeout_s, hero().global_position])
+	printerr(
+		"chop: the hero did not settle in %.0f s (at %s)" % [timeout_s, hero().global_position]
+	)
 	return false
 
 
@@ -204,12 +259,15 @@ func chop(it: Node, map: TileMap, cell: Vector2i, hits: int) -> bool:
 		_hits.clear()
 		it.sfx_log.clear()  # only the last tap's chop counts
 		await tap_cell(cell)
-		if not await wait_until(func() -> bool: return it.chopping() or not _hits.is_empty(), START_S):
+		if not await wait_until(
+			func() -> bool: return it.chopping() or not _hits.is_empty(), START_S
+		):
 			printerr("chop: tap %d started no chop: %s" % [attempt, diagnose(it, map, cell)])
 			continue
 		var saw_swing := false
 		var saw_impact := false
-		var stump := func() -> bool: return map.get_cell_atlas_coords(GROUND_DECOR_LAYER, cell) == TileCatalog.STUMP
+		var stump := func() -> bool:
+			return map.get_cell_atlas_coords(GROUND_DECOR_LAYER, cell) == TileCatalog.STUMP
 		var stumped := false
 		var deadline := Time.get_ticks_msec() + int(FALL_S * 1000.0)
 		while Time.get_ticks_msec() < deadline:
@@ -229,7 +287,12 @@ func chop(it: Node, map: TileMap, cell: Vector2i, hits: int) -> bool:
 				break
 			await process_frame
 		if not saw_swing or not saw_impact:
-			printerr("chop: tap %d did not show the chop sheet (swing %s, impact %s)" % [attempt, saw_swing, saw_impact])
+			printerr(
+				(
+					"chop: tap %d did not show the chop sheet (swing %s, impact %s)"
+					% [attempt, saw_swing, saw_impact]
+				)
+			)
 			return false
 		if _hits.any(func(c: Vector2i) -> bool: return c != cell):
 			printerr("chop: tap %d chopped %s, not the tree at %s" % [attempt, _hits, cell])
@@ -240,7 +303,12 @@ func chop(it: Node, map: TileMap, cell: Vector2i, hits: int) -> bool:
 				return false
 			print("chop: stump at %s after %d hit(s), tap %d" % [cell, _hits.size(), attempt])
 			return true
-		printerr("chop: tap %d chop ended with no stump after %d hit(s): %s" % [attempt, _hits.size(), diagnose(it, map, cell)])
+		printerr(
+			(
+				"chop: tap %d chop ended with no stump after %d hit(s): %s"
+				% [attempt, _hits.size(), diagnose(it, map, cell)]
+			)
+		)
 	printerr("chop: no stump at %s after %d taps" % [cell, TAPS])
 	return false
 
@@ -261,8 +329,12 @@ func one_drag(it: Node, map: TileMap, impact_label: String, cut_label: String) -
 		printerr("chop: no one-tree drag from %s" % hero().global_position)
 		return false
 	var cell: Vector2i = plan["cell"]
-	print("chop: one-drag targets %d %s, %.1f viewport px, window %s" % [
-			int(plan["count"]), cell, float(plan["px"]), DisplayServer.window_get_size()])
+	print(
+		(
+			"chop: one-drag targets %d %s, %.1f viewport px, window %s"
+			% [int(plan["count"]), cell, float(plan["px"]), DisplayServer.window_get_size()]
+		)
+	)
 	var hits: Array[Vector2i] = []
 	var on_hit := func(c: Vector2i, _hit: int) -> void: hits.append(c)
 	it.chop_hit.connect(on_hit)
@@ -271,11 +343,27 @@ func one_drag(it: Node, map: TileMap, impact_label: String, cut_label: String) -
 	await _drag_window(start, end_pos)
 	var pose: Sprite2D = hero().get_node("ChopSprite")
 	var walk: Sprite2D = hero().get_node("Sprite2D")
-	if not it.chopping() or it.chop_cell != cell or not pose.visible or walk.visible \
-			or map.choppable(cell) == null:
+	if (
+		not it.chopping()
+		or it.chop_cell != cell
+		or not pose.visible
+		or walk.visible
+		or map.choppable(cell) == null
+	):
 		it.chop_hit.disconnect(on_hit)
-		printerr("chop: one-drag did not start on %s (chopping %s cell %s pose %s walk %s tree %s)" % [
-				cell, it.chopping(), it.chop_cell, pose.visible, walk.visible, map.choppable(cell) != null])
+		printerr(
+			(
+				"chop: one-drag did not start on %s (chopping %s cell %s pose %s walk %s tree %s)"
+				% [
+					cell,
+					it.chopping(),
+					it.chop_cell,
+					pose.visible,
+					walk.visible,
+					map.choppable(cell) != null
+				]
+			)
+		)
 		return false
 	var saw_impact := false
 	var stumped := false
@@ -315,7 +403,13 @@ func _one_plan(it: Node, map: TileMap) -> Dictionary:
 		var end_pos := root.get_final_transform() * end_canvas
 		if start.distance_to(end_pos) <= 6.0:
 			continue
-		if zoom != null and (bool(zoom.call("starts_on_hud", start_canvas)) or bool(zoom.call("starts_on_hud", end_canvas))):
+		if (
+			zoom != null
+			and (
+				bool(zoom.call("starts_on_hud", start_canvas))
+				or bool(zoom.call("starts_on_hud", end_canvas))
+			)
+		):
 			continue
 		it._stick.start = start_canvas
 		it._stick.end = end_canvas
@@ -351,14 +445,27 @@ func range_cut(it: Node, map: TileMap) -> bool:
 	var cells: Array = plan["cells"]
 	var near: Vector2i = cells[0]
 	var far: Vector2i = cells[1]
-	print("chop: range %s then %s, chop reach %.0f sword reach %.0f ratio %.2f" % [
-			near, far, Interaction.CHOP_REACH, AimConeStyle.SWORD_REACH,
-			Interaction.CHOP_REACH / AimConeStyle.SWORD_REACH])
+	print(
+		(
+			"chop: range %s then %s, chop reach %.0f sword reach %.0f ratio %.2f"
+			% [
+				near,
+				far,
+				Interaction.CHOP_REACH,
+				AimConeStyle.SWORD_REACH,
+				Interaction.CHOP_REACH / AimConeStyle.SWORD_REACH
+			]
+		)
+	)
 	await _drag_window(plan["start"], plan["end"])
 	var pose: Sprite2D = hero().get_node("ChopSprite")
 	if not it.chopping() or it.chop_cell != near or not pose.visible or map.choppable(far) == null:
-		printerr("chop: range did not start on %s (cell %s chopping %s far %s)" % [
-				near, it.chop_cell, it.chopping(), map.choppable(far) != null])
+		printerr(
+			(
+				"chop: range did not start on %s (cell %s chopping %s far %s)"
+				% [near, it.chop_cell, it.chopping(), map.choppable(far) != null]
+			)
+		)
 		return false
 	await snapshot("range-first")
 	var deadline := Time.get_ticks_msec() + 4000
@@ -494,7 +601,15 @@ func _resize(width: int, height: int) -> bool:
 
 func diagnose(it: Node, map: TileMap, cell: Vector2i) -> String:
 	var h := hero()
-	return "hero=%s dist=%.1f in_reach=%s mode=%s chopping=%s choppable=%s tap_window=%s" % [
-			h.global_position, h.global_position.distance_to(it.cell_center(cell)), it.in_reach(cell),
-			it.mode, it.chopping(), map.choppable(cell) != null,
-			to_window(map, map.map_to_local(cell))]
+	return (
+		"hero=%s dist=%.1f in_reach=%s mode=%s chopping=%s choppable=%s tap_window=%s"
+		% [
+			h.global_position,
+			h.global_position.distance_to(it.cell_center(cell)),
+			it.in_reach(cell),
+			it.mode,
+			it.chopping(),
+			map.choppable(cell) != null,
+			to_window(map, map.map_to_local(cell))
+		]
+	)

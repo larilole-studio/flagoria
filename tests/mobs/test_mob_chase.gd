@@ -32,7 +32,12 @@ func _test_mob_chase() -> int:
 		far.position = mob.position + Vector2(0, Mob.GIVE_UP_RADIUS * 3)
 		mob.think(dt)
 		if mob.state == Mob.State.CHASE:
-			printerr("FAIL mob_chase %s chased a player %s px away" % [label, mob.position.distance_to(near.position)])
+			printerr(
+				(
+					"FAIL mob_chase %s chased a player %s px away"
+					% [label, mob.position.distance_to(near.position)]
+				)
+			)
 			fail += 1
 			continue
 		# Two players in range: it picks the nearer one and closes in.
@@ -46,10 +51,17 @@ func _test_mob_chase() -> int:
 				fail += 1
 				break
 		if mob.target != near or mob.state != Mob.State.CHASE:
-			printerr("FAIL mob_chase %s is not chasing the nearer player (state %s)" % [label, mob.state])
+			printerr(
+				"FAIL mob_chase %s is not chasing the nearer player (state %s)" % [label, mob.state]
+			)
 			fail += 1
 		elif mob.position.distance_to(near.position) > 8.0:
-			printerr("FAIL mob_chase %s only got from %s to %s px" % [label, start_d, mob.position.distance_to(near.position)])
+			printerr(
+				(
+					"FAIL mob_chase %s only got from %s to %s px"
+					% [label, start_d, mob.position.distance_to(near.position)]
+				)
+			)
 			fail += 1
 		if mob.anim_name() != "walk":
 			printerr("FAIL mob_chase %s does not play walk while chasing" % label)
@@ -95,7 +107,14 @@ func _test_mob_chase_two_players() -> int:
 		return 1
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if pid <= 0:
 		printerr("FAIL mob_chase_two_players could not start the server process")

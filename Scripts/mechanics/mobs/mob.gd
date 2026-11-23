@@ -108,7 +108,9 @@ func setup(type: String, at: Vector2, rng_seed: int) -> void:
 
 func _ready() -> void:
 	# Soldiers share this path. Only the server simulates movement in physics.
-	physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_ON if multiplayer.is_server() else PHYSICS_INTERPOLATION_MODE_OFF
+	physics_interpolation_mode = (
+		PHYSICS_INTERPOLATION_MODE_ON if multiplayer.is_server() else PHYSICS_INTERPOLATION_MODE_OFF
+	)
 	reset_physics_interpolation()
 	sprite.texture = MobCatalog.sheet(mob_type)
 	puff.texture = load(MobCatalog.PUFF_SHEET)
@@ -135,7 +137,9 @@ func _process(delta: float) -> void:
 	sprite.visible = not puffing
 	puff.visible = puffing
 	if puffing:
-		puff.frame = mini(int((anim_time - HURT_TIME) * MobCatalog.PUFF_FPS), MobCatalog.PUFF_FRAMES - 1)
+		puff.frame = mini(
+			int((anim_time - HURT_TIME) * MobCatalog.PUFF_FPS), MobCatalog.PUFF_FRAMES - 1
+		)
 	else:
 		sprite.frame_coords = MobCatalog.frame(anim_name(), facing, anim_time)
 
@@ -192,7 +196,10 @@ func think(delta: float) -> void:
 	elif _has_raid() and _calm <= 0.0:
 		_step_raid(delta)
 	elif state == State.WALK:
-		if not step(direction * float(MobCatalog.stat(mob_type, "wander_speed")) * delta) or _timer <= 0.0:
+		if (
+			not step(direction * float(MobCatalog.stat(mob_type, "wander_speed")) * delta)
+			or _timer <= 0.0
+		):
 			_start_idle()
 	elif _timer <= 0.0:
 		_start_walk()
@@ -348,8 +355,12 @@ static func _shape_box(node: Node) -> Rect2:
 
 
 func _chase(delta: float) -> void:
-	if (not is_instance_valid(target) or not is_alive(target) or position.distance_to(target.position) > GIVE_UP_RADIUS
-			or position.distance_to(home) > CHASE_LEASH):
+	if (
+		not is_instance_valid(target)
+		or not is_alive(target)
+		or position.distance_to(target.position) > GIVE_UP_RADIUS
+		or position.distance_to(home) > CHASE_LEASH
+	):
 		target = null
 		_calm = CALM_TIME
 		_start_idle()
@@ -413,7 +424,9 @@ static func cells_under(mobs: Node) -> Dictionary:
 func _feet_cell(pos: Vector2, half: Vector2, corner: int) -> Vector2i:
 	## The map cell under corner 0-3 of the feet box at `pos` (top left, top
 	## right, bottom left, bottom right; the box's bottom edge is at pos.y).
-	return _world.local_to_map(pos + Vector2(half.x if corner & 1 else -half.x, 0.0 if corner & 2 else -half.y))
+	return _world.local_to_map(
+		pos + Vector2(half.x if corner & 1 else -half.x, 0.0 if corner & 2 else -half.y)
+	)
 
 
 func _has_raid() -> bool:

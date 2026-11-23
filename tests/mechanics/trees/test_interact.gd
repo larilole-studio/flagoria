@@ -45,12 +45,23 @@ func _test_interact_cut_trees() -> int:
 	print("-- test_interact_cut_trees")
 	var fail := 0
 	if AimConeStyle.SWORD_REACH != 30.0 or Interaction.CHOP_REACH / AimConeStyle.SWORD_REACH < 4.0:
-		printerr("FAIL interact_cut_trees: chop reach %s sword reach %s"
-				% [Interaction.CHOP_REACH, AimConeStyle.SWORD_REACH])
+		printerr(
+			(
+				"FAIL interact_cut_trees: chop reach %s sword reach %s"
+				% [Interaction.CHOP_REACH, AimConeStyle.SWORD_REACH]
+			)
+		)
 		fail += 1
-	print("chop reach %s px, sword reach %s px, ratio %.2f" % [
-			Interaction.CHOP_REACH, AimConeStyle.SWORD_REACH,
-			Interaction.CHOP_REACH / AimConeStyle.SWORD_REACH])
+	print(
+		(
+			"chop reach %s px, sword reach %s px, ratio %.2f"
+			% [
+				Interaction.CHOP_REACH,
+				AimConeStyle.SWORD_REACH,
+				Interaction.CHOP_REACH / AimConeStyle.SWORD_REACH
+			]
+		)
+	)
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
@@ -120,31 +131,53 @@ func _test_interact_cut_trees() -> int:
 	# Nothing is a stump until each queued chop finishes.
 	swipe.call()
 	if not interaction.chopping() or inventory.count_of(Inventory.WOOD) != 0:
-		printerr("FAIL interact_cut_trees: drag did not queue a chop (chopping %s wood %s)"
-				% [interaction.chopping(), inventory.count_of(Inventory.WOOD)])
+		printerr(
+			(
+				"FAIL interact_cut_trees: drag did not queue a chop (chopping %s wood %s)"
+				% [interaction.chopping(), inventory.count_of(Inventory.WOOD)]
+			)
+		)
 		fail += 1
 	var tree_wood := InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD)
 	var want_cut := [8, 9, 10, 11]
 	for _step in 8:
 		interaction.step_chop(0.70)
-	var want_wood := want_cut.size() * tree_wood + InteractableCatalog.by_id("bush").amount_of(Inventory.WOOD)
+	var want_wood := (
+		want_cut.size() * tree_wood + InteractableCatalog.by_id("bush").amount_of(Inventory.WOOD)
+	)
 	var left: Array = row.call()
 	for x in want_cut:
 		var cell := Vector2i(x, 8)
-		if left.has(x) or world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell) != TileCatalog.STUMP:
+		if (
+			left.has(x)
+			or world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell) != TileCatalog.STUMP
+		):
 			printerr("FAIL interact_cut_trees: %s is not a stump after the queue" % cell)
 			fail += 1
-	if left.has(8) or left.has(9) or left.has(10) or left.has(11) \
-			or not left.has(6) or not left.has(14) \
-			or world.choppable(Vector2i(12, 8)) != null \
-			or world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, Vector2i(12, 8)) != TileCatalog.BUSH_STUMP \
-			or not world.has_tree(Vector2i(10, 6)):
+	if (
+		left.has(8)
+		or left.has(9)
+		or left.has(10)
+		or left.has(11)
+		or not left.has(6)
+		or not left.has(14)
+		or world.choppable(Vector2i(12, 8)) != null
+		or (
+			world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, Vector2i(12, 8))
+			!= TileCatalog.BUSH_STUMP
+		)
+		or not world.has_tree(Vector2i(10, 6))
+	):
 		printerr("FAIL interact_cut_trees: trees left after the drag %s" % [left])
 		fail += 1
 	var hud: ResourceHud = _hud_on_canvas(scene, "ResourceHud") as ResourceHud
 	if inventory.count_of(Inventory.WOOD) != want_wood or hud.label.text != str(want_wood):
-		printerr("FAIL interact_cut_trees: wood %s, HUD '%s' after cutting %s trees and a bush, want %s"
-				% [inventory.count_of(Inventory.WOOD), hud.label.text, want_cut.size(), want_wood])
+		printerr(
+			(
+				"FAIL interact_cut_trees: wood %s, HUD '%s' after cutting %s trees and a bush, want %s"
+				% [inventory.count_of(Inventory.WOOD), hud.label.text, want_cut.size(), want_wood]
+			)
+		)
 		fail += 1
 	# Stumps are walkable; an uncut tree still blocks.
 	await physics_frame
@@ -156,7 +189,9 @@ func _test_interact_cut_trees() -> int:
 	query.exclude = [player.get_rid()]
 	var space: PhysicsDirectSpaceState2D = world.get_world_2d().direct_space_state
 	for x in [8, 17]:
-		query.transform = Transform2D(0, world.to_global(world.map_to_local(Vector2i(x, 6))) + body.position)
+		query.transform = Transform2D(
+			0, world.to_global(world.map_to_local(Vector2i(x, 6))) + body.position
+		)
 		query.motion = Vector2(0, 64)
 		var passes: bool = space.cast_motion(query)[0] >= 1.0
 		if passes != (x == 8):
@@ -178,11 +213,19 @@ func _test_interact_cut_trees() -> int:
 			tap_wood += kind.amount_of(Inventory.WOOD)
 	for _i in tapped.size():
 		interaction.step_chop(0.70)
-	if interaction.chopping() or not interaction.sweep_cells().is_empty() \
-			or world.has_tree(Vector2i(10, 6)) or not world.has_tree(far_east) \
-			or inventory.count_of(Inventory.WOOD) != want_wood + tap_wood:
-		printerr("FAIL interact_cut_trees: tap sweep wood %s want %s chopping %s"
-				% [inventory.count_of(Inventory.WOOD), want_wood + tap_wood, interaction.chopping()])
+	if (
+		interaction.chopping()
+		or not interaction.sweep_cells().is_empty()
+		or world.has_tree(Vector2i(10, 6))
+		or not world.has_tree(far_east)
+		or inventory.count_of(Inventory.WOOD) != want_wood + tap_wood
+	):
+		printerr(
+			(
+				"FAIL interact_cut_trees: tap sweep wood %s want %s chopping %s"
+				% [inventory.count_of(Inventory.WOOD), want_wood + tap_wood, interaction.chopping()]
+			)
+		)
 		fail += 1
 	player.queue_free()
 	scene.queue_free()
@@ -241,19 +284,40 @@ func _test_interact_in_multiplayer() -> int:
 		interaction.set_mode(Interaction.Mode.INTERACT)
 		await frames.call()
 		if not button.visible or button.disabled or interaction.mode != Interaction.Mode.INTERACT:
-			printerr("FAIL interact_in_multiplayer %s: button visible %s, disabled %s, mode %s"
-					% [label, button.visible, button.disabled, interaction.mode])
+			printerr(
+				(
+					"FAIL interact_in_multiplayer %s: button visible %s, disabled %s, mode %s"
+					% [label, button.visible, button.disabled, interaction.mode]
+				)
+			)
 			return 1
 		return 0
 
 	# Offline: the button shows and a tap cuts.
 	if not button.visible or button.disabled:
-		printerr("FAIL interact_in_multiplayer offline: button visible %s, disabled %s" % [button.visible, button.disabled])
+		printerr(
+			(
+				"FAIL interact_in_multiplayer offline: button visible %s, disabled %s"
+				% [button.visible, button.disabled]
+			)
+		)
 		fail += 1
 	interaction.set_mode(Interaction.Mode.INTERACT)
-	_chop_toward(vp, interaction, player, scene.get_node("CanvasLayer1/TouchScreenButton"), world.to_global(world.map_to_local(Vector2i(10, 8))))
+	_chop_toward(
+		vp,
+		interaction,
+		player,
+		scene.get_node("CanvasLayer1/TouchScreenButton"),
+		world.to_global(world.map_to_local(Vector2i(10, 8)))
+	)
 	interaction.step_chop(1.0)
-	if world.has_tree(Vector2i(10, 8)) or inventory.count_of(Inventory.WOOD) != InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD):
+	if (
+		world.has_tree(Vector2i(10, 8))
+		or (
+			inventory.count_of(Inventory.WOOD)
+			!= InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD)
+		)
+	):
 		printerr("FAIL interact_in_multiplayer offline: the tap did not cut (10, 8)")
 		fail += 1
 

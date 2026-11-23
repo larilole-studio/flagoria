@@ -4,6 +4,7 @@ extends SceneTree
 ## tests/player/test_player_spawn.gd, which checks this process's output for
 ## "Node not found".
 
+
 func _initialize() -> void:
 	call_deferred("_run")
 

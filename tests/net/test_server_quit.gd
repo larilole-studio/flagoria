@@ -21,17 +21,32 @@ func _test_server_quit() -> int:
 	var status_path := dir.path_join("client.txt")
 	var server_pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--log-file", log_path, "--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--log-file",
+			log_path,
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if server_pid <= 0:
 		printerr("FAIL server_quit could not start the server")
 		return 1
 	var client_pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--script", "res://tests/server_quit_probe.gd", "--",
-			"--port=%d" % port, "--status=%s" % status_path]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--script",
+			"res://tests/server_quit_probe.gd",
+			"--",
+			"--port=%d" % port,
+			"--status=%s" % status_path
+		]
 	)
 	if client_pid <= 0:
 		OS.execute("kill", ["-TERM", str(server_pid)])
@@ -52,13 +67,22 @@ func _test_server_quit() -> int:
 		var log_text := FileAccess.get_file_as_string(log_path)
 		var stops := log_text.split("Dedicated server stopped.", false).size() - 1
 		if not server_done or code != 0:
-			printerr("FAIL server_quit server exit %s running=%s" % [code, OS.is_process_running(server_pid)])
+			printerr(
+				(
+					"FAIL server_quit server exit %s running=%s"
+					% [code, OS.is_process_running(server_pid)]
+				)
+			)
 			fail = 1
 		if stops != 1:
 			printerr("FAIL server_quit shutdown log count %s" % stops)
 			fail = 1
 		var menu := await _wait_status(status_path, "menu", 6000)
-		if not menu or not await _wait_exit(client_pid, 3000) or OS.get_process_exit_code(client_pid) != 0:
+		if (
+			not menu
+			or not await _wait_exit(client_pid, 3000)
+			or OS.get_process_exit_code(client_pid) != 0
+		):
 			printerr("FAIL server_quit client did not return to the main menu")
 			fail = 1
 	if OS.is_process_running(server_pid):

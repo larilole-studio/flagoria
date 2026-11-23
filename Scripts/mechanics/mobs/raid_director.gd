@@ -87,8 +87,11 @@ func _living() -> Array[Mob]:
 	if node == null:
 		return out
 	for child in node.get_children():
-		if child is Mob and not (child as Mob).is_queued_for_deletion() \
-				and (child as Mob).state != Mob.State.DYING:
+		if (
+			child is Mob
+			and not (child as Mob).is_queued_for_deletion()
+			and (child as Mob).state != Mob.State.DYING
+		):
 			out.append(child)
 	return out
 
@@ -109,7 +112,11 @@ func _eligible(mobs: Array[Mob]) -> Array[Mob]:
 	## window and death stay out; the chase wins until the mob is calm.
 	var out: Array[Mob] = []
 	for mob in mobs:
-		if mob.state == Mob.State.CHASE or mob.state == Mob.State.HURT or mob.state == Mob.State.DYING:
+		if (
+			mob.state == Mob.State.CHASE
+			or mob.state == Mob.State.HURT
+			or mob.state == Mob.State.DYING
+		):
 			continue
 		if mob._raid_cell != Mob.RAID_NONE:
 			continue

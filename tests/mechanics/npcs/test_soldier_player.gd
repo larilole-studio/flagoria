@@ -19,13 +19,18 @@ func _make_scene(soldier: Soldier, owner: Node2D, other: Node2D, slime: Mob) -> 
 	scene.get_node("World").add_child(other)
 	owner.set_physics_process(false)
 	other.set_physics_process(false)
-	soldier.setup_soldier({
-		"type": MobCatalog.SOLDIER,
-		"pos": Vector2(256, 256),
-		"seed": SEED,
-		"owner": owner_peer,
-		"order": "hold",
-	})
+	(
+		soldier
+		. setup_soldier(
+			{
+				"type": MobCatalog.SOLDIER,
+				"pos": Vector2(256, 256),
+				"seed": SEED,
+				"owner": owner_peer,
+				"order": "hold",
+			}
+		)
+	)
 	soldier.name = "soldier_test"
 	scene.get_node("World/Soldiers").add_child(soldier)
 	soldier.set_physics_process(false)

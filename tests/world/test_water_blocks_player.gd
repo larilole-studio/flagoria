@@ -8,9 +8,33 @@ func _test_water_blocks_player() -> int:
 	## space on the next physics frame, hence the await.
 	print("-- test_water_blocks_player")
 	var cases = [
-		{"name": "default_seeds", "alt": 2, "moist": 7, "temp": 12, "items": 17, "water": 0.2, "sand": 0.25},
-		{"name": "high_water", "alt": 2, "moist": 7, "temp": 12, "items": 17, "water": 0.45, "sand": 0.5},
-		{"name": "seed_set_c_high_water", "alt": 4242, "moist": 5252, "temp": 6262, "items": 7272, "water": 0.4, "sand": 0.48},
+		{
+			"name": "default_seeds",
+			"alt": 2,
+			"moist": 7,
+			"temp": 12,
+			"items": 17,
+			"water": 0.2,
+			"sand": 0.25
+		},
+		{
+			"name": "high_water",
+			"alt": 2,
+			"moist": 7,
+			"temp": 12,
+			"items": 17,
+			"water": 0.45,
+			"sand": 0.5
+		},
+		{
+			"name": "seed_set_c_high_water",
+			"alt": 4242,
+			"moist": 5252,
+			"temp": 6262,
+			"items": 7272,
+			"water": 0.4,
+			"sand": 0.48
+		},
 	]
 	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()
 	var point := PhysicsPointQueryParameters2D.new()
@@ -48,7 +72,9 @@ func _test_water_blocks_player() -> int:
 			if not blocked:
 				open += 1
 				if open <= 3:
-					printerr("FAIL water_blocks_player case=%s cell=%s is open" % [case["name"], cell])
+					printerr(
+						"FAIL water_blocks_player case=%s cell=%s is open" % [case["name"], cell]
+					)
 		for cell in world.get_used_cells(0):
 			if world.is_walkable_land(cell):
 				continue
@@ -65,11 +91,15 @@ func _test_water_blocks_player() -> int:
 			if not blocked:
 				open += 1
 				if open <= 3:
-					printerr("FAIL water_blocks_player case=%s cell=%s is open" % [case["name"], cell])
+					printerr(
+						"FAIL water_blocks_player case=%s cell=%s is open" % [case["name"], cell]
+					)
 		if checked == 0 or open > 0:
 			printerr(
-				"FAIL water_blocks_player case=%s checked=%s open=%s"
-				% [case["name"], checked, open]
+				(
+					"FAIL water_blocks_player case=%s checked=%s open=%s"
+					% [case["name"], checked, open]
+				)
 			)
 			fail += 1
 		else:

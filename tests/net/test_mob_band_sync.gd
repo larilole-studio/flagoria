@@ -18,37 +18,77 @@ func _test_mob_band_two_players() -> int:
 	var read: Callable = session["read"]
 	var launch: Callable = session["launch"]
 	var wait_for: Callable = session["wait_for"]
-	if not await wait_for.call(func() -> bool:
-		return _band_ready(read.call(0)) and _band_ready(read.call(1)) \
-				and _band_same(read.call(0), read.call(1)), 20000):
-		printerr("FAIL mob_band_two_players: opening roster host %s client %s" % [read.call(0), read.call(1)])
+	if not await wait_for.call(
+		func() -> bool:
+			return (
+				_band_ready(read.call(0))
+				and _band_ready(read.call(1))
+				and _band_same(read.call(0), read.call(1))
+			),
+		20000
+	):
+		printerr(
+			(
+				"FAIL mob_band_two_players: opening roster host %s client %s"
+				% [read.call(0), read.call(1)]
+			)
+		)
 		fail = 1
 	else:
 		FileAccess.open(session["outs"][0] + ".tick", FileAccess.WRITE).close()
-		if not await wait_for.call(func() -> bool:
-			var host: Dictionary = read.call(0)
-			return int(host.get("tick", 0)) == 1 and _band_same(host, read.call(1)) and _band_tick_ok(host), 15000):
-			printerr("FAIL mob_band_two_players: after tick host %s client %s" % [read.call(0), read.call(1)])
+		if not await wait_for.call(
+			func() -> bool:
+				var host: Dictionary = read.call(0)
+				return (
+					int(host.get("tick", 0)) == 1
+					and _band_same(host, read.call(1))
+					and _band_tick_ok(host)
+				),
+			15000
+		):
+			printerr(
+				(
+					"FAIL mob_band_two_players: after tick host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail = 1
 		else:
 			host_done = read.call(0)
 			launch.call("join")
-			if not await wait_for.call(func() -> bool:
-				var joiner: Dictionary = read.call(2)
-				return _band_ready(joiner) and _band_same(joiner, read.call(0)), 20000):
-				printerr("FAIL mob_band_two_players: late joiner %s host %s" % [read.call(2), read.call(0)])
+			if not await wait_for.call(
+				func() -> bool:
+					var joiner: Dictionary = read.call(2)
+					return _band_ready(joiner) and _band_same(joiner, read.call(0)),
+				20000
+			):
+				printerr(
+					(
+						"FAIL mob_band_two_players: late joiner %s host %s"
+						% [read.call(2), read.call(0)]
+					)
+				)
 				fail = 1
 	if _band_errors(read, session):
 		fail = 1
 	await _band_close(session)
 	if fail == 0:
-		print("PASS test_mob_band_two_players (%s names, %s spawned)" % [host_done.get("names", []).size(), host_done.get("spawned", []).size()])
+		print(
+			(
+				"PASS test_mob_band_two_players (%s names, %s spawned)"
+				% [host_done.get("names", []).size(), host_done.get("spawned", []).size()]
+			)
+		)
 	return fail
 
 
 func _band_ready(data: Dictionary) -> bool:
-	return bool(data.get("ready", false)) and not (data.get("names", []) as Array).is_empty() \
-			and (data.get("errors", []) as Array).is_empty() and str(data.get("note", "")) == ""
+	return (
+		bool(data.get("ready", false))
+		and not (data.get("names", []) as Array).is_empty()
+		and (data.get("errors", []) as Array).is_empty()
+		and str(data.get("note", "")) == ""
+	)
 
 
 func _band_same(a: Dictionary, b: Dictionary) -> bool:
@@ -99,7 +139,12 @@ func _band_errors(read: Callable, session: Dictionary) -> bool:
 	for i in session["outs"].size():
 		var data: Dictionary = read.call(i)
 		if not (data.get("errors", []) as Array).is_empty() or str(data.get("note", "")) != "":
-			printerr("FAIL mob_band_two_players: peer %d errors %s note %s" % [i, data.get("errors", []), data.get("note", "")])
+			printerr(
+				(
+					"FAIL mob_band_two_players: peer %d errors %s note %s"
+					% [i, data.get("errors", []), data.get("note", "")]
+				)
+			)
 			bad = true
 	return bad
 
@@ -114,14 +159,20 @@ func _band_open() -> Dictionary:
 	var probes: Array[Dictionary] = []
 	var launch := func(role: String) -> void:
 		outs.append(dir.path_join("p%d.json" % outs.size()))
-		var args: Array = ["--port=%d" % port,
-				"--role=" + role, "--seed=%d" % SEED]
+		var args: Array = ["--port=%d" % port, "--role=" + role, "--seed=%d" % SEED]
 		probes.append(spawn_probe(PROBE, outs[-1], args))
 	var read := read_probe_at.bind(probes)
 	var wait_for := wait_until
 	launch.call("host")
 	launch.call("join")
-	return {"dir": dir, "outs": outs, "probes": probes, "launch": launch, "read": read, "wait_for": wait_for}
+	return {
+		"dir": dir,
+		"outs": outs,
+		"probes": probes,
+		"launch": launch,
+		"read": read,
+		"wait_for": wait_for
+	}
 
 
 func _band_close(session: Dictionary) -> void:

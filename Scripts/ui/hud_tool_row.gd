@@ -131,7 +131,11 @@ func _place_status(layer: Node) -> void:
 	var score := status_node(layer, "ScoreHud") as Label
 	var wood := status_node(layer, "ResourceHud") as ResourceHud
 	if plate != null and hearts != null and score != null and wood != null:
-		var on_plate := hearts.get_parent() == plate and score.get_parent() == plate and wood.get_parent() == plate
+		var on_plate := (
+			hearts.get_parent() == plate
+			and score.get_parent() == plate
+			and wood.get_parent() == plate
+		)
 		if not on_plate:
 			plate.bind_nodes(hearts, score, wood)
 
@@ -145,8 +149,10 @@ func _place_combat(layer: Node) -> void:
 	if run != null:
 		_pin(run)
 		RoundHudStyle.apply_run(run)
-		run.position = Vector2(rect.position.x - _size_of(run).x - GAP - WHEEL_GAP,
-				rect.get_center().y - _size_of(run).y + WHEEL_GAP)
+		run.position = Vector2(
+			rect.position.x - _size_of(run).x - GAP - WHEEL_GAP,
+			rect.get_center().y - _size_of(run).y + WHEEL_GAP
+		)
 		run.z_index = 2
 	var buildings := layer.get_node_or_null("BuildingsButton") as Button
 	if buildings != null:
@@ -185,13 +191,23 @@ func _place_joystick(layer: Node) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if not (event is InputEventScreenTouch or (event is InputEventMouseButton
-			and event.button_index == MOUSE_BUTTON_LEFT)) or not event.pressed:
+	if (
+		not (
+			event is InputEventScreenTouch
+			or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT)
+		)
+		or not event.pressed
+	):
 		return
 	var layer := get_parent()
 	var picker := layer.get_node_or_null("BuildPicker") as Control
 	var buildings := layer.get_node_or_null("BuildingsButton") as BaseButton
-	if picker == null or buildings == null or not buildings.button_pressed or not picker.is_visible_in_tree():
+	if (
+		picker == null
+		or buildings == null
+		or not buildings.button_pressed
+		or not picker.is_visible_in_tree()
+	):
 		return
 	var point: Vector2 = event.position
 	if buildings.get_global_rect().has_point(point):
@@ -208,11 +224,20 @@ func place_build_picker(layer: Node) -> void:
 	var picker := layer.get_node_or_null("BuildPicker") as Control
 	if _picker_dimmer != null:
 		_picker_dimmer.hide()
-	if buildings == null or picker == null or not buildings.button_pressed or HudLayoutVisual.blocks_hud_actions():
+	if (
+		buildings == null
+		or picker == null
+		or not buildings.button_pressed
+		or HudLayoutVisual.blocks_hud_actions()
+	):
 		return
 	var buttons: Array[Button] = []
 	for child in picker.get_children():
-		if child is Button and child.get_meta(&"picker_available", true) and not child.is_queued_for_deletion():
+		if (
+			child is Button
+			and child.get_meta(&"picker_available", true)
+			and not child.is_queued_for_deletion()
+		):
 			buttons.append(child)
 	if buttons.is_empty():
 		return
@@ -253,8 +278,9 @@ func _show_picker_dimmer(layer: Node, view: Rect2) -> void:
 	_picker_dimmer.show()
 
 
-func _picker_slots(buttons: Array[Button], origin: Vector2, inward: float, view: Rect2,
-		blocked: Array[Rect2]) -> Dictionary:
+func _picker_slots(
+	buttons: Array[Button], origin: Vector2, inward: float, view: Rect2, blocked: Array[Rect2]
+) -> Dictionary:
 	var first_fit := {}
 	var first_side := inward
 	# Increase both radii proportionally, testing both sides at each size.
@@ -277,8 +303,15 @@ func _picker_slots(buttons: Array[Button], origin: Vector2, inward: float, view:
 	return first_fit
 
 
-func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, scale_factor: float,
-		view: Rect2, blocked: Array[Rect2], clamp_to_view := false) -> Dictionary:
+func _picker_candidate(
+	buttons: Array[Button],
+	origin: Vector2,
+	side: float,
+	scale_factor: float,
+	view: Rect2,
+	blocked: Array[Rect2],
+	clamp_to_view := false
+) -> Dictionary:
 	var slots := {}
 	var occupied := blocked.duplicate()
 	for button in buttons:
@@ -286,7 +319,9 @@ func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, sca
 		@warning_ignore("integer_division")
 		var ring := index / 3
 		var angle := deg_to_rad(PICKER_ANGLES[ring][index % 3])
-		var offset := Vector2(side * sin(angle), -cos(angle)) * float(PICKER_RADII[ring]) * scale_factor
+		var offset := (
+			Vector2(side * sin(angle), -cos(angle)) * float(PICKER_RADII[ring]) * scale_factor
+		)
 		var center := (origin + offset).round()
 		var rect := Rect2(center - button.size * 0.5, button.size)
 		if clamp_to_view:
@@ -302,8 +337,9 @@ func _picker_candidate(buttons: Array[Button], origin: Vector2, side: float, sca
 	return slots
 
 
-func _picker_captions(slots: Dictionary, side: float, view: Rect2,
-		blocked: Array[Rect2], reserve := false) -> bool:
+func _picker_captions(
+	slots: Dictionary, side: float, view: Rect2, blocked: Array[Rect2], reserve := false
+) -> bool:
 	var occupied := blocked.duplicate()
 	for slot: Array in slots.values():
 		occupied.append(slot[0])
@@ -325,8 +361,9 @@ func _picker_captions(slots: Dictionary, side: float, view: Rect2,
 	return all_fit
 
 
-func _picker_caption(disc: Rect2, size: Vector2, side: float, view: Rect2,
-		occupied: Array[Rect2]) -> Rect2:
+func _picker_caption(
+	disc: Rect2, size: Vector2, side: float, view: Rect2, occupied: Array[Rect2]
+) -> Rect2:
 	var center := disc.get_center()
 	var distance := (disc.size + size) * 0.5 + Vector2.ONE * 2.0
 	for direction: Vector2 in [Vector2.DOWN, Vector2(side, 0), Vector2.UP, Vector2(-side, 0)]:
@@ -355,13 +392,14 @@ func _picker_obstacles(layer: Node, exclude: CanvasItem = null) -> Array[Rect2]:
 			rect = rect.merge(control.global_transform * shape_rect)
 		if rect.has_area():
 			blocked.append(rect)
-	var paths := ["InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel", "FootprintRotateButton"]
+	var paths := [
+		"InGameMenu/MenuButton", "StatusPlate", "ScoreboardPanel", "FootprintRotateButton"
+	]
 	for path in paths:
 		var control := layer.get_node_or_null(path) as Control
 		if control != null and control.visible:
 			blocked.append(control.get_global_rect())
 	return blocked
-
 
 
 func _place_tool(layer: Node, custom := false) -> void:
@@ -382,8 +420,12 @@ func _place_tool(layer: Node, custom := false) -> void:
 	var attack := layer.get_node_or_null("TouchScreenButton") as TouchScreenButton
 	if not custom and attack != null and attack.texture_normal != null:
 		var attack_size := attack.texture_normal.get_size() * attack.scale
-		wheel.place_button(Vector2(attack.position.x - GAP - button_size.x,
-				attack.position.y + attack_size.y * 0.5 + GAP + WHEEL_GAP))
+		wheel.place_button(
+			Vector2(
+				attack.position.x - GAP - button_size.x,
+				attack.position.y + attack_size.y * 0.5 + GAP + WHEEL_GAP
+			)
+		)
 	else:
 		var x := run.position.x - WHEEL_GAP - button_size.x
 		var y := run.position.y + (_size_of(run).y - button_size.y) * 0.5
@@ -408,7 +450,6 @@ func _size_of(control: Control) -> Vector2:
 	return Vector2(maxf(control.size.x, need.x), maxf(control.size.y, need.y))
 
 
-
 func place_custom_popups(layer: Node) -> void:
 	_place_tool(layer, true)
 	var buildings := layer.get_node_or_null("BuildingsButton") as Button
@@ -417,7 +458,9 @@ func place_custom_popups(layer: Node) -> void:
 		# Normalized positions can overlap when the saved layout is used at a new aspect ratio.
 		var rect := buildings.get_global_rect()
 		var view := get_viewport().get_visible_rect().grow(-SIDE)
-		var clear_rect := HudLayoutVisual.nearest_clear_rect(rect, view, _picker_obstacles(layer, buildings))
+		var clear_rect := HudLayoutVisual.nearest_clear_rect(
+			rect, view, _picker_obstacles(layer, buildings)
+		)
 		buildings.global_position = clear_rect.position
 	place_build_picker(layer)
 

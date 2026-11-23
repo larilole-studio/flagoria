@@ -33,13 +33,22 @@ func _test_saved_world_round_trip() -> int:
 		menu._on_load_world_pressed()
 		await process_frame
 		await process_frame
-		if scene.save_name != "round-trip" or scene.world_params == null \
-				or scene.world_params.altitude_seed != 424242 \
-				or not is_equal_approx(scene.world_params.water_max_alt, 0.41):
-			printerr("FAIL saved_world_round_trip: hosted %s seed %s water %s" % [
-					scene.save_name,
-					scene.world_params.altitude_seed if scene.world_params else 0,
-					scene.world_params.water_max_alt if scene.world_params else 0])
+		if (
+			scene.save_name != "round-trip"
+			or scene.world_params == null
+			or scene.world_params.altitude_seed != 424242
+			or not is_equal_approx(scene.world_params.water_max_alt, 0.41)
+		):
+			printerr(
+				(
+					"FAIL saved_world_round_trip: hosted %s seed %s water %s"
+					% [
+						scene.save_name,
+						scene.world_params.altitude_seed if scene.world_params else 0,
+						scene.world_params.water_max_alt if scene.world_params else 0
+					]
+				)
+			)
 			fail += 1
 	_release_scene(scene)
 	map_gen.params = saved_params
@@ -81,9 +90,16 @@ func _test_two_worlds_stay_separate() -> int:
 		fail += 1
 	var loaded_a := MapSave.load_world(MapSave.path_for("world-a"))
 	var loaded_b := MapSave.load_world(MapSave.path_for("world-b"))
-	if loaded_a["world"].params.altitude_seed != 333333 or loaded_b["world"].params.altitude_seed != 222222:
-		printerr("FAIL two_worlds: seeds %s and %s" % [
-				loaded_a["world"].params.altitude_seed, loaded_b["world"].params.altitude_seed])
+	if (
+		loaded_a["world"].params.altitude_seed != 333333
+		or loaded_b["world"].params.altitude_seed != 222222
+	):
+		printerr(
+			(
+				"FAIL two_worlds: seeds %s and %s"
+				% [loaded_a["world"].params.altitude_seed, loaded_b["world"].params.altitude_seed]
+			)
+		)
 		fail += 1
 	var main_menu = scene.get_node("CanvasLayer2/MainMenu")
 	main_menu._on_worlds_pressed()
@@ -95,8 +111,11 @@ func _test_two_worlds_stay_separate() -> int:
 		list.select(_row_named(list, "world-b"))
 		main_menu._on_delete_world_pressed()
 		main_menu._on_delete_yes_pressed()
-		if _row_named(list, "world-b") >= 0 or FileAccess.file_exists(MapSave.path_for("world-b")) \
-				or _row_named(list, "world-a") < 0:
+		if (
+			_row_named(list, "world-b") >= 0
+			or FileAccess.file_exists(MapSave.path_for("world-b"))
+			or _row_named(list, "world-a") < 0
+		):
 			printerr("FAIL two_worlds: delete left %s" % _list_text(list))
 			fail += 1
 	DirAccess.remove_absolute(MapSave.path_for("world-a"))
@@ -136,10 +155,17 @@ func _test_saved_world_rename_panel() -> int:
 	menu._on_rename_yes_pressed()
 	await process_frame
 	var ok_row := _row_named(list, "rename-ok")
-	if ok_row < 0 or FileAccess.file_exists(MapSave.path_for("rename-a")) \
-			or not list.get_selected_items().has(ok_row):
-		printerr("FAIL saved_world_rename_panel: success list=%s selected=%s" % [
-				_list_text(list), list.get_selected_items()])
+	if (
+		ok_row < 0
+		or FileAccess.file_exists(MapSave.path_for("rename-a"))
+		or not list.get_selected_items().has(ok_row)
+	):
+		printerr(
+			(
+				"FAIL saved_world_rename_panel: success list=%s selected=%s"
+				% [_list_text(list), list.get_selected_items()]
+			)
+		)
 		fail += 1
 
 	list.select(ok_row)
@@ -147,10 +173,18 @@ func _test_saved_world_rename_panel() -> int:
 	field.text = "rename-b"
 	menu._on_rename_yes_pressed()
 	await process_frame
-	if status.text == "" or not "already exists" in status.text \
-			or not FileAccess.file_exists(MapSave.path_for("rename-ok")) \
-			or _row_named(list, "rename-b") < 0:
-		printerr("FAIL saved_world_rename_panel: duplicate status=%s list=%s" % [status.text, _list_text(list)])
+	if (
+		status.text == ""
+		or not "already exists" in status.text
+		or not FileAccess.file_exists(MapSave.path_for("rename-ok"))
+		or _row_named(list, "rename-b") < 0
+	):
+		printerr(
+			(
+				"FAIL saved_world_rename_panel: duplicate status=%s list=%s"
+				% [status.text, _list_text(list)]
+			)
+		)
 		fail += 1
 	menu._on_rename_no_pressed()
 
@@ -159,8 +193,10 @@ func _test_saved_world_rename_panel() -> int:
 	field.text = "rename-cancelled"
 	menu._on_rename_no_pressed()
 	await process_frame
-	if FileAccess.file_exists(MapSave.path_for("rename-cancelled")) \
-			or _row_named(list, "rename-cancelled") >= 0:
+	if (
+		FileAccess.file_exists(MapSave.path_for("rename-cancelled"))
+		or _row_named(list, "rename-cancelled") >= 0
+	):
 		printerr("FAIL saved_world_rename_panel: cancel renamed anyway")
 		fail += 1
 
@@ -208,11 +244,20 @@ func _test_legacy_save_stays_in_the_list() -> int:
 		menu._on_load_world_pressed()
 		await process_frame
 		await process_frame
-		if scene.world_params == null or scene.world_params.altitude_seed != 4242 \
-				or FileAccess.get_file_as_bytes(path) != before:
-			printerr("FAIL legacy_save: seed %s file changed %s" % [
-					scene.world_params.altitude_seed if scene.world_params else 0,
-					FileAccess.get_file_as_bytes(path) != before])
+		if (
+			scene.world_params == null
+			or scene.world_params.altitude_seed != 4242
+			or FileAccess.get_file_as_bytes(path) != before
+		):
+			printerr(
+				(
+					"FAIL legacy_save: seed %s file changed %s"
+					% [
+						scene.world_params.altitude_seed if scene.world_params else 0,
+						FileAccess.get_file_as_bytes(path) != before
+					]
+				)
+			)
 			fail += 1
 	_release_scene(scene)
 	map_gen.params = saved_params
@@ -281,7 +326,9 @@ func _test_world_save_preview() -> int:
 	if land_frac < WorldSavePreview.MIN_LAND_FRACTION:
 		printerr("FAIL world_save_preview: land fraction %.3f below minimum" % land_frac)
 		fail += 1
-	var flat := Image.create(WorldSavePreview.ICON_SIZE.x, WorldSavePreview.ICON_SIZE.y, false, Image.FORMAT_RGBA8)
+	var flat := Image.create(
+		WorldSavePreview.ICON_SIZE.x, WorldSavePreview.ICON_SIZE.y, false, Image.FORMAT_RGBA8
+	)
 	flat.fill(MapChart.SKY_DEEP)
 	if WorldSavePreview.land_pixel_fraction(flat) >= WorldSavePreview.MIN_LAND_FRACTION:
 		printerr("FAIL world_save_preview: land fraction check accepted an all-water image")

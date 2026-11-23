@@ -105,8 +105,13 @@ func logical_ground(map, cell: Vector2i) -> Vector2i:
 	if _logical.has(cell):
 		return _logical[cell]
 	var b: int = map.biome_at(cell)
-	var tile := ground_tile(map, map.cell_altitude(cell, b), map.moisture.get_noise_2d(cell.x, cell.y),
-			map.items_chance.get_noise_2d(cell.x, cell.y), b)
+	var tile := ground_tile(
+		map,
+		map.cell_altitude(cell, b),
+		map.moisture.get_noise_2d(cell.x, cell.y),
+		map.items_chance.get_noise_2d(cell.x, cell.y),
+		b
+	)
 	_logical[cell] = tile
 	return tile
 
@@ -126,8 +131,11 @@ func display_ground(map, cell: Vector2i) -> Vector2i:
 func paint_window(map, center: Vector2i, size: Vector2i) -> void:
 	# Native TileMap.clear() can bypass script methods. A painted cell always
 	# has either a ground tile or a sea collider, even after gameplay edits.
-	if _painted_probe != Vector2i.MAX and map.get_cell_source_id(0, _painted_probe) == -1 \
-			and map.get_cell_source_id(SEA_LAYER, _painted_probe) == -1:
+	if (
+		_painted_probe != Vector2i.MAX
+		and map.get_cell_source_id(0, _painted_probe) == -1
+		and map.get_cell_source_id(SEA_LAYER, _painted_probe) == -1
+	):
 		_clear_drawn()
 	var window := Rect2i(center - size / 2, size)
 	if window == _last_window:
@@ -160,8 +168,14 @@ func paint_window(map, center: Vector2i, size: Vector2i) -> void:
 		clouds_painted.emit(window)
 	for cell in cells:
 		var b: int = map.biome_at(cell)
-		map.set_tile_type_z1(cell, map.cell_altitude(cell, b), map.moisture.get_noise_2d(cell.x, cell.y),
-				map.temperature.get_noise_2d(cell.x, cell.y), map.items_chance.get_noise_2d(cell.x, cell.y), b)
+		map.set_tile_type_z1(
+			cell,
+			map.cell_altitude(cell, b),
+			map.moisture.get_noise_2d(cell.x, cell.y),
+			map.temperature.get_noise_2d(cell.x, cell.y),
+			map.items_chance.get_noise_2d(cell.x, cell.y),
+			b
+		)
 	if painted.has_area():
 		map.ground_changed.emit(painted)
 
@@ -257,8 +271,12 @@ func _paint_bridge(map, cell: Vector2i) -> void:
 
 
 func _spawnable(logical: Vector2i) -> bool:
-	return logical != TileCatalog.WATER and logical != TileCatalog.SAND \
-			and logical != TileCatalog.SWAMP and logical != TileCatalog.SWAMP_SPECIAL
+	return (
+		logical != TileCatalog.WATER
+		and logical != TileCatalog.SAND
+		and logical != TileCatalog.SWAMP
+		and logical != TileCatalog.SWAMP_SPECIAL
+	)
 
 
 func _ensure_layers(map) -> void:
@@ -288,14 +306,35 @@ func _paint_clouds(map, origin: Vector2i, w: int, h: int) -> void:
 			if roll == 0:
 				_stamp(map, rect, cell, [Vector2i.ZERO], [TileCatalog.CLOUD_S])
 			elif roll == 1:
-				_stamp(map, rect, cell, [Vector2i.ZERO, Vector2i.RIGHT],
-						[TileCatalog.CLOUD_M_0, TileCatalog.CLOUD_M_1])
+				_stamp(
+					map,
+					rect,
+					cell,
+					[Vector2i.ZERO, Vector2i.RIGHT],
+					[TileCatalog.CLOUD_M_0, TileCatalog.CLOUD_M_1]
+				)
 			elif roll == 2:
-				_stamp(map, rect, cell, [
-					Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0),
-					Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)], [
-					TileCatalog.CLOUD_L_0, TileCatalog.CLOUD_L_1, TileCatalog.CLOUD_L_2,
-					TileCatalog.CLOUD_L_3, TileCatalog.CLOUD_L_4, TileCatalog.CLOUD_L_5])
+				_stamp(
+					map,
+					rect,
+					cell,
+					[
+						Vector2i(0, 0),
+						Vector2i(1, 0),
+						Vector2i(2, 0),
+						Vector2i(0, 1),
+						Vector2i(1, 1),
+						Vector2i(2, 1)
+					],
+					[
+						TileCatalog.CLOUD_L_0,
+						TileCatalog.CLOUD_L_1,
+						TileCatalog.CLOUD_L_2,
+						TileCatalog.CLOUD_L_3,
+						TileCatalog.CLOUD_L_4,
+						TileCatalog.CLOUD_L_5
+					]
+				)
 
 
 func _stamp(map, rect: Rect2i, anchor: Vector2i, offsets: Array, atlases: Array) -> void:

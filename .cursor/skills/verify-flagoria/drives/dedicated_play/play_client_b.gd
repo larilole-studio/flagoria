@@ -12,14 +12,17 @@ func run() -> void:
 	await snapshot("joined")
 	step("see-cut")
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	var removed := await wait_until(func() -> bool:
-		var cuts: Dictionary = map.cut_changes()
-		for chunk in cuts:
-			for key in cuts[chunk]:
-				var cell = WorldSave.parse_cell(key)
-				if cell != null and map.get_cell_atlas_coords(1, cell) == Vector2i(-1, -1):
-					return true
-		return false, OBSERVE_S)
+	var removed := await wait_until(
+		func() -> bool:
+			var cuts: Dictionary = map.cut_changes()
+			for chunk in cuts:
+				for key in cuts[chunk]:
+					var cell = WorldSave.parse_cell(key)
+					if cell != null and map.get_cell_atlas_coords(1, cell) == Vector2i(-1, -1):
+						return true
+			return false,
+		OBSERVE_S
+	)
 	print("dedicated_play: client-b removed=%s wood=%s" % [removed, wood()])
 	await snapshot("after-cut")
 	if not removed:
@@ -39,7 +42,10 @@ func run() -> void:
 			saw_dying = saw_dying or mob.state == Mob.State.DYING
 			seen[str(mob.name)] = mob.state
 		for name in seen.keys():
-			if not now.has(name) and (seen[name] == Mob.State.HURT or seen[name] == Mob.State.DYING):
+			if (
+				not now.has(name)
+				and (seen[name] == Mob.State.HURT or seen[name] == Mob.State.DYING)
+			):
 				missing_after_hurt = true
 		await process_frame
 	var dead := saw_dying or missing_after_hurt

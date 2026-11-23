@@ -7,7 +7,6 @@ extends SceneTree
 ##
 ## Writes JSON every 100 ms. PATH.walk holds an input action. PATH.stop ends it.
 
-
 var _out := ""
 var _walking := ""
 var _id := 0
@@ -41,7 +40,12 @@ func _run() -> void:
 	main.address_entry.text = address
 	print("JOIN_DIAL text=%s port_arg=%s" % [main.address_entry.text, port])
 	main.add_player_joined(port)
-	print("JOIN_ENDPOINT host=%s port=%s endpoint=%s" % [main._join_host, main._join_port, main._join_address])
+	print(
+		(
+			"JOIN_ENDPOINT host=%s port=%s endpoint=%s"
+			% [main._join_host, main._join_port, main._join_address]
+		)
+	)
 	var world: Node = main.get_node("World")
 	var deadline := Time.get_ticks_msec() + 90000
 	var next_write := 0
@@ -79,12 +83,22 @@ func _write(main: Node, world: Node) -> void:
 	var file := FileAccess.open(_out + ".tmp", FileAccess.WRITE)
 	if file == null:
 		return
-	file.store_string(JSON.stringify({
-		"id": str(_id),
-		"endpoint": "%s:%s" % [main._join_host, main._join_port],
-		"status": status,
-		"seed": seed_value,
-		"players": players,
-	}))
+	(
+		file
+		. store_string(
+			(
+				JSON
+				. stringify(
+					{
+						"id": str(_id),
+						"endpoint": "%s:%s" % [main._join_host, main._join_port],
+						"status": status,
+						"seed": seed_value,
+						"players": players,
+					}
+				)
+			)
+		)
+	)
 	file.close()
 	DirAccess.rename_absolute(_out + ".tmp", _out)

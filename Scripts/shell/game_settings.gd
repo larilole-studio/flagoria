@@ -73,7 +73,9 @@ func set_tower_damage(value: float, save := true) -> void:
 
 
 func set_tower_cooldown(value: float, save := true) -> void:
-	tower_cooldown = clampf(snappedf(value, TOWER_COOLDOWN_STEP), TOWER_COOLDOWN_MIN, TOWER_COOLDOWN_MAX)
+	tower_cooldown = clampf(
+		snappedf(value, TOWER_COOLDOWN_STEP), TOWER_COOLDOWN_MIN, TOWER_COOLDOWN_MAX
+	)
 	if save:
 		save_to_disk()
 
@@ -85,7 +87,9 @@ func set_raids_enabled(value: bool, save := true) -> void:
 
 
 func set_raid_interval_s(value: float, save := true) -> void:
-	raid_interval_s = clampf(snappedf(value, RAID_INTERVAL_STEP), RAID_INTERVAL_MIN, RAID_INTERVAL_MAX)
+	raid_interval_s = clampf(
+		snappedf(value, RAID_INTERVAL_STEP), RAID_INTERVAL_MIN, RAID_INTERVAL_MAX
+	)
 	if save:
 		save_to_disk()
 
@@ -144,7 +148,10 @@ func load_from_disk() -> void:
 	if enabled is bool:
 		set_raids_enabled(enabled, false)
 	var interval: Variant = cfg.get_value(SECTION, "raid_interval_s", RAID_INTERVAL_DEFAULT)
-	if (typeof(interval) == TYPE_INT or typeof(interval) == TYPE_FLOAT) and is_finite(float(interval)):
+	if (
+		(typeof(interval) == TYPE_INT or typeof(interval) == TYPE_FLOAT)
+		and is_finite(float(interval))
+	):
 		set_raid_interval_s(float(interval), false)
 	var group: Variant = cfg.get_value(SECTION, "raid_group", RAID_GROUP_DEFAULT)
 	if typeof(group) == TYPE_INT or typeof(group) == TYPE_FLOAT:

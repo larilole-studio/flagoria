@@ -25,3 +25,6 @@ artifacts/
 # Python bytecode
 __pycache__/
 *.pyc
+
+# GDScript development tools
+/.venv-gdtoolkit/

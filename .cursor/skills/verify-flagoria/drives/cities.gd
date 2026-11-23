@@ -29,8 +29,16 @@ func run() -> void:
 	step("closed")
 	var origin = _find_clear(map, Vector2i(5, 5))
 	if origin == null:
-		for off in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1),
-				Vector2(1, 1), Vector2(-1, 1), Vector2(1, -1), Vector2(-1, -1)]:
+		for off in [
+			Vector2(1, 0),
+			Vector2(-1, 0),
+			Vector2(0, 1),
+			Vector2(0, -1),
+			Vector2(1, 1),
+			Vector2(-1, 1),
+			Vector2(1, -1),
+			Vector2(-1, -1)
+		]:
 			map.generate_chunk(off)
 		origin = _find_clear(map, Vector2i(5, 5))
 	if origin == null:
@@ -51,7 +59,9 @@ func run() -> void:
 		return
 	cities.rebuild()
 	if not cities.cities.has(id):
-		printerr("cities: closed ring did not make a city for %s; have %s" % [id, cities.cities.keys()])
+		printerr(
+			"cities: closed ring did not make a city for %s; have %s" % [id, cities.cities.keys()]
+		)
 		done(false)
 		return
 	# Pan camera toward the new city if possible.
@@ -100,8 +110,12 @@ func _find_clear(map: TileMap, size: Vector2i) -> Variant:
 		for y in size.y:
 			for x in size.x:
 				var c := cell + Vector2i(x, y)
-				if map.get_cell_source_id(0, c) == -1 or not map.predicted_clear(c) \
-						or map.has_wall(c) or map._structures.has_cell(c):
+				if (
+					map.get_cell_source_id(0, c) == -1
+					or not map.predicted_clear(c)
+					or map.has_wall(c)
+					or map._structures.has_cell(c)
+				):
 					ok = false
 					break
 			if not ok:
@@ -143,4 +157,3 @@ func settle(timeout_s: float = 5.0) -> bool:
 		await physics_frame
 	printerr("cities: hero did not settle")
 	return false
-

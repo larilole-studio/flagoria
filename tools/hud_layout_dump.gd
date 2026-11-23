@@ -1,7 +1,9 @@
 extends RefCounted
 ## Stock HUD snapshots and their shared overlap-test fixture.
 
-const SIZES := [Vector2i(2400, 1080), Vector2i(1920, 1080), Vector2i(1600, 720), Vector2i(2048, 1536)]
+const SIZES := [
+	Vector2i(2400, 1080), Vector2i(1920, 1080), Vector2i(1600, 720), Vector2i(2048, 1536)
+]
 
 
 static func dump(tree: SceneTree) -> String:
@@ -23,10 +25,24 @@ static func dump(tree: SceneTree) -> String:
 			var targets := collect_targets(hud)
 			for node: Node in targets:
 				var rect: Rect2 = stretch * targets[node]
-				lines.append("%dx%d %s %s %.1f %.1f %.1f %.1f" % [
-					size.x, size.y, state, node.name, rect.position.x, rect.position.y,
-					rect.size.x, rect.size.y,
-				])
+				(
+					lines
+					. append(
+						(
+							"%dx%d %s %s %.1f %.1f %.1f %.1f"
+							% [
+								size.x,
+								size.y,
+								state,
+								node.name,
+								rect.position.x,
+								rect.position.y,
+								rect.size.x,
+								rect.size.y,
+							]
+						)
+					)
+				)
 			return 0
 		failures += await visit_states(hud, visit)
 	scene.queue_free()
@@ -95,8 +111,14 @@ static func _collect_targets(parent: Node, targets: Dictionary) -> void:
 		if node is CanvasItem and (not node.is_visible_in_tree() or node.is_queued_for_deletion()):
 			continue
 		# The wheel options ignore pointer input. The wheel selects by drag angle.
-		if node is MapWoodButton or (node is BaseButton and not node.disabled
-				and node.mouse_filter != Control.MOUSE_FILTER_IGNORE):
+		if (
+			node is MapWoodButton
+			or (
+				node is BaseButton
+				and not node.disabled
+				and node.mouse_filter != Control.MOUSE_FILTER_IGNORE
+			)
+		):
 			targets[node] = node.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, node.size)
 		elif node.has_method("start_reach"):
 			var radius := Vector2.ONE * float(node.start_reach())
@@ -105,7 +127,9 @@ static func _collect_targets(parent: Node, targets: Dictionary) -> void:
 			# The joystick knob is drawn with a TouchScreenButton but moves with the stick.
 			continue
 		elif node is TouchScreenButton:
-			var size: Vector2 = node.texture_normal.get_size() if node.texture_normal else Vector2.ZERO
+			var size: Vector2 = (
+				node.texture_normal.get_size() if node.texture_normal else Vector2.ZERO
+			)
 			var rect := Rect2(Vector2.ZERO, size)
 			if node.shape != null:
 				rect = node.shape.get_rect()

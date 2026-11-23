@@ -4,6 +4,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## a full gold pool, and the ground between the pools is darker than either
 ## centre. The cycle is 10 minutes, so the drive seeks the night hold.
 
+
 func run() -> void:
 	if not await start_game():
 		return
@@ -11,16 +12,21 @@ func run() -> void:
 	var lights: Node = root.get_node("DayNight/NightLights")
 	step("night-lights")
 	clock.seek_phase("night")
-	var shown: bool = await wait_until(func() -> bool:
-		return lights.has_method("active_count") and int(lights.active_count()) >= 2
-	, 3.0)
+	var shown: bool = await wait_until(
+		func() -> bool:
+			return lights.has_method("active_count") and int(lights.active_count()) >= 2,
+		3.0
+	)
 	await process_frame
 	await RenderingServer.frame_post_draw
 	var player_light := _light_scale(lights, 1.0)
 	var castle_light := _light_scale(lights, 1.5)
-	var energies := player_light != null and castle_light != null \
-			and is_equal_approx(player_light.energy, 1.1) \
-			and is_equal_approx(castle_light.energy, 1.2)
+	var energies := (
+		player_light != null
+		and castle_light != null
+		and is_equal_approx(player_light.energy, 1.1)
+		and is_equal_approx(castle_light.energy, 1.2)
+	)
 	var darker := false
 	if player_light != null and castle_light != null:
 		darker = _between_is_darker(player_light.global_position, castle_light.global_position)

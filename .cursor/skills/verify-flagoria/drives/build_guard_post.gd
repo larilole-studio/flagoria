@@ -2,12 +2,17 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Place a guard post for 20 wood, save and reload.
 
-
 const ROTATE_BTN := "CanvasLayer1/FootprintRotateButton"
 const MAIN_MENU_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MainMenu"
 const STAND_OFFS := [
-	Vector2i(0, 5), Vector2i(5, 0), Vector2i(-5, 0), Vector2i(0, -5),
-	Vector2i(0, 4), Vector2i(4, 0), Vector2i(-4, 0), Vector2i(0, -4),
+	Vector2i(0, 5),
+	Vector2i(5, 0),
+	Vector2i(-5, 0),
+	Vector2i(0, -5),
+	Vector2i(0, 4),
+	Vector2i(4, 0),
+	Vector2i(-4, 0),
+	Vector2i(0, -4),
 ]
 
 
@@ -58,12 +63,17 @@ func run() -> void:
 	step("save")
 	var saved := []
 	root.get_node("MapGen").map_saved.connect(func(path: String) -> void: saved.append(path))
-	if not await menu_save() or not await wait_until(func() -> bool: return not saved.is_empty(), 5.0):
+	if (
+		not await menu_save()
+		or not await wait_until(func() -> bool: return not saved.is_empty(), 5.0)
+	):
 		printerr("build_guard_post: save failed")
 		done(false)
 		return
 	await click(MAIN_MENU_BUTTON)
-	await wait_until(func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0)
+	await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0
+	)
 	var err: String = root.get_node("MapGen").load_map_inputs(saved[0])
 	if err != "" or not await start_game():
 		printerr("build_guard_post: load %s" % err)
@@ -94,15 +104,26 @@ func _find_anchor(map: TileMap, placer: ConstructionPlacer) -> Variant:
 	return null
 
 
-func _stand_near(it: Interaction, map: TileMap, placer: ConstructionPlacer,
-		inventory: Inventory, anchor: Vector2i) -> bool:
+func _stand_near(
+	it: Interaction,
+	map: TileMap,
+	placer: ConstructionPlacer,
+	inventory: Inventory,
+	anchor: Vector2i
+) -> bool:
 	var one: Array[Vector2i] = [anchor]
 	for off: Vector2i in STAND_OFFS:
 		hero().global_position = map.to_global(map.map_to_local(anchor + off))
 		for i in 8:
 			await process_frame
-		if it.in_reach(anchor) \
-				and placer.can_place(BuildCosts.GUARD_POST, one, inventory, it.build.footprint_rotation).is_empty():
+		if (
+			it.in_reach(anchor)
+			and (
+				placer
+				. can_place(BuildCosts.GUARD_POST, one, inventory, it.build.footprint_rotation)
+				. is_empty()
+			)
+		):
 			return true
 	return false
 

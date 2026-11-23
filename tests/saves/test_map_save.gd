@@ -67,10 +67,22 @@ func _test_map_save_round_trip() -> int:
 	world.generate_chunk(Vector2(0, 0))
 	var mismatched := 0
 	for cell in cells.keys():
-		if cells[cell] != [world.get_cell_atlas_coords(0, cell), world.get_cell_atlas_coords(1, cell)]:
+		if (
+			cells[cell]
+			!= [world.get_cell_atlas_coords(0, cell), world.get_cell_atlas_coords(1, cell)]
+		):
 			mismatched += 1
-	if cells.size() == 0 or mismatched > 0 or world.get_used_cells(0).size() + world.sea_cells().size() != cells.size():
-		printerr("FAIL map_save_round_trip regenerated chunk: %s of %s cells differ" % [mismatched, cells.size()])
+	if (
+		cells.size() == 0
+		or mismatched > 0
+		or world.get_used_cells(0).size() + world.sea_cells().size() != cells.size()
+	):
+		printerr(
+			(
+				"FAIL map_save_round_trip regenerated chunk: %s of %s cells differ"
+				% [mismatched, cells.size()]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	if fail == 0:
@@ -83,7 +95,10 @@ func _test_map_save_rejects_bad_files() -> int:
 	print("-- test_map_save_rejects_bad_files")
 	var fail := 0
 	var unresolved = MapSave.save_map(_pre_biome_defaults(), "test_unresolved")
-	if not "unresolved" in unresolved["error"] or FileAccess.file_exists(MapSave.path_for("test_unresolved")):
+	if (
+		not "unresolved" in unresolved["error"]
+		or FileAccess.file_exists(MapSave.path_for("test_unresolved"))
+	):
 		printerr("FAIL map_save_rejects_bad_files unresolved seeds: %s" % unresolved["error"])
 		fail += 1
 
@@ -103,8 +118,10 @@ func _test_map_save_rejects_bad_files() -> int:
 		DirAccess.remove_absolute(path)
 		if result["params"] != null or not cases[save_name][1] in result["error"]:
 			printerr(
-				"FAIL map_save_rejects_bad_files %s error=%s want it to mention %s"
-				% [save_name, result["error"], cases[save_name][1]]
+				(
+					"FAIL map_save_rejects_bad_files %s error=%s want it to mention %s"
+					% [save_name, result["error"], cases[save_name][1]]
+				)
 			)
 			fail += 1
 	if fail == 0:
@@ -134,7 +151,12 @@ func _test_map_save_needs_every_seed() -> int:
 		var written := FileAccess.file_exists(MapSave.path_for(save_name))
 		DirAccess.remove_absolute(MapSave.path_for(save_name))
 		if not unset_key in result["error"] or written:
-			printerr("FAIL map_save_needs_every_seed %s=0: error=%s file written=%s" % [unset_key, result["error"], written])
+			printerr(
+				(
+					"FAIL map_save_needs_every_seed %s=0: error=%s file written=%s"
+					% [unset_key, result["error"], written]
+				)
+			)
 			fail += 1
 	if fail == 0:
 		print("PASS test_map_save_needs_every_seed (%s seeds)" % seed_keys.size())
@@ -147,7 +169,9 @@ func _test_saved_maps_list_rename_delete() -> int:
 	## the saves folder is refused. Runs in a temporary directory.
 	print("-- test_saved_maps_list_rename_delete")
 	var fail := 0
-	var base := OS.get_temp_dir().path_join("flagoria_test_saved_maps_%d_%d" % [OS.get_process_id(), Time.get_ticks_usec()])
+	var base := OS.get_temp_dir().path_join(
+		"flagoria_test_saved_maps_%d_%d" % [OS.get_process_id(), Time.get_ticks_usec()]
+	)
 	var dir := base + "/saves/"
 	if MapSave.list_saves(dir) != []:
 		printerr("FAIL saved_maps: missing directory lists %s, want []" % [MapSave.list_saves(dir)])
@@ -160,12 +184,19 @@ func _test_saved_maps_list_rename_delete() -> int:
 		file.store_string('{"format_version": 1, "params": {}}')
 		file.close()
 		# Godot cannot set a file's modified time; touch sets it to the second.
-		OS.execute("touch", ["-d", "@%d" % entry[1], ProjectSettings.globalize_path(dir + entry[0] + ".json")])
+		OS.execute(
+			"touch",
+			["-d", "@%d" % entry[1], ProjectSettings.globalize_path(dir + entry[0] + ".json")]
+		)
 	FileAccess.open(dir + "notes.txt", FileAccess.WRITE).close()
 
 	var listed: Array[Dictionary] = MapSave.list_saves(dir)
 	var names: Array = listed.map(func(row): return row["name"])
-	if names != ["beta", "Gamma", "Alpha"] or listed[0]["modified"] != 3000 or listed[0]["path"] != dir + "beta.json":
+	if (
+		names != ["beta", "Gamma", "Alpha"]
+		or listed[0]["modified"] != 3000
+		or listed[0]["path"] != dir + "beta.json"
+	):
 		printerr("FAIL saved_maps: listed %s, want beta, Gamma, Alpha newest first" % [listed])
 		fail += 1
 
@@ -178,8 +209,16 @@ func _test_saved_maps_list_rename_delete() -> int:
 	for case in cases:
 		var err: String = MapSave.rename_save(case[0][0], case[0][1], dir)
 		var after: Array = MapSave.list_saves(dir).map(func(row): return row["name"])
-		if (err != "" if case[1] == "" else not case[1] in err) or (case[2] != null and after != case[2]):
-			printerr("FAIL saved_maps: rename %s -> %s gave error=%s list=%s" % [case[0][0], case[0][1], err, after])
+		if (
+			(err != "" if case[1] == "" else not case[1] in err)
+			or (case[2] != null and after != case[2])
+		):
+			printerr(
+				(
+					"FAIL saved_maps: rename %s -> %s gave error=%s list=%s"
+					% [case[0][0], case[0][1], err, after]
+				)
+			)
 			fail += 1
 	if FileAccess.get_file_as_string(dir + "Delta.json") != '{"format_version": 1, "params": {}}':
 		printerr("FAIL saved_maps: renamed save lost its contents")
@@ -189,7 +228,9 @@ func _test_saved_maps_list_rename_delete() -> int:
 	var missing_error: String = MapSave.delete_save("beta", dir)
 	var left: Array = MapSave.list_saves(dir).map(func(row): return row["name"])
 	if delete_error != "" or not "no map save" in missing_error or left != ["Delta", "Alpha"]:
-		printerr("FAIL saved_maps: delete gave %s / %s, list %s" % [delete_error, missing_error, left])
+		printerr(
+			"FAIL saved_maps: delete gave %s / %s, list %s" % [delete_error, missing_error, left]
+		)
 		fail += 1
 
 	# A decoy save beside the saves folder: "../x" must not reach it.
@@ -200,8 +241,17 @@ func _test_saved_maps_list_rename_delete() -> int:
 		"rename ../x": MapSave.rename_save("../x", "y", dir),
 	}
 	for what in escapes:
-		if not "not a map save name" in escapes[what] or not FileAccess.file_exists(decoy) or FileAccess.file_exists(dir + "y.json"):
-			printerr("FAIL saved_maps: %s gave error=%s, decoy kept=%s" % [what, escapes[what], FileAccess.file_exists(decoy)])
+		if (
+			not "not a map save name" in escapes[what]
+			or not FileAccess.file_exists(decoy)
+			or FileAccess.file_exists(dir + "y.json")
+		):
+			printerr(
+				(
+					"FAIL saved_maps: %s gave error=%s, decoy kept=%s"
+					% [what, escapes[what], FileAccess.file_exists(decoy)]
+				)
+			)
 			fail += 1
 
 	for name in DirAccess.get_files_at(dir):

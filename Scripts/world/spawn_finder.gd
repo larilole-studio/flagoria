@@ -7,8 +7,14 @@ extends RefCounted
 const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
 const SPAWN_NEIGHBORS := [
-	Vector2i(0, -1), Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1),
-	Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1),
+	Vector2i(0, -1),
+	Vector2i(1, -1),
+	Vector2i(1, 0),
+	Vector2i(1, 1),
+	Vector2i(0, 1),
+	Vector2i(-1, 1),
+	Vector2i(-1, 0),
+	Vector2i(-1, -1),
 ]
 # Player moves between cells by 4-neighbour steps.
 const SPAWN_STEPS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -38,8 +44,9 @@ static func count_walkable_neighbors(map: _WorldMap, cell: Vector2i) -> int:
 	return n
 
 
-static func reachable_clear_cells(map: _WorldMap, start: Vector2i, limit: int = SPAWN_MIN_REACHABLE,
-		blocked: Dictionary = {}) -> Array[Vector2i]:
+static func reachable_clear_cells(
+	map: _WorldMap, start: Vector2i, limit: int = SPAWN_MIN_REACHABLE, blocked: Dictionary = {}
+) -> Array[Vector2i]:
 	## Clear-ground cells reachable from start by 4-neighbour steps, start
 	## included, in flood order, never entering a `blocked` cell. Stops once
 	## limit cells are found.
@@ -64,10 +71,15 @@ static func reachable_clear_cells(map: _WorldMap, start: Vector2i, limit: int = 
 	return found
 
 
-static func resolve_player_spawn(map: _WorldMap, origin_cell: Vector2i = Vector2i(0, 0), max_radius: int = 192) -> Vector2i:
+static func resolve_player_spawn(
+	map: _WorldMap, origin_cell: Vector2i = Vector2i(0, 0), max_radius: int = 192
+) -> Vector2i:
 	var preferred := map.spawn_biome
-	if preferred >= BiomeCatalog.OCEANIC and preferred <= BiomeCatalog.ARCHIPELAGO_DENSE \
-			and (map.biome_frequency > 0.0 or preferred == BiomeCatalog.TEMPERATE):
+	if (
+		preferred >= BiomeCatalog.OCEANIC
+		and preferred <= BiomeCatalog.ARCHIPELAGO_DENSE
+		and (map.biome_frequency > 0.0 or preferred == BiomeCatalog.TEMPERATE)
+	):
 		var radius := maxi(max_radius, map.archipelago_world_extent + map.archipelago_spacing)
 		var named := _search(map, origin_cell, radius, preferred)
 		if last_fallback_size != 0:
@@ -75,7 +87,9 @@ static func resolve_player_spawn(map: _WorldMap, origin_cell: Vector2i = Vector2
 	return _search(map, origin_cell, max_radius, MapGenParams.ANY_SPAWN_BIOME)
 
 
-static func _search(map: _WorldMap, origin_cell: Vector2i, max_radius: int, preferred: int) -> Vector2i:
+static func _search(
+	map: _WorldMap, origin_cell: Vector2i, max_radius: int, preferred: int
+) -> Vector2i:
 	## Nearest clear-ground cell to origin_cell (ring order) from which the
 	## player can walk to at least SPAWN_MIN_REACHABLE clear cells. If none is
 	## within max_radius, the candidate with the largest reachable area (and a
@@ -93,9 +107,12 @@ static func _search(map: _WorldMap, origin_cell: Vector2i, max_radius: int, pref
 		var cell: Vector2i = queue[head]
 		head += 1
 		var matches := preferred == MapGenParams.ANY_SPAWN_BIOME or map.biome_at(cell) == preferred
-		if matches and not small_area.has(cell) \
-				and (preferred < 0 or map.cell_altitude(cell, preferred) > map.water_max_alt) \
-				and map.is_clear_ground(cell):
+		if (
+			matches
+			and not small_area.has(cell)
+			and (preferred < 0 or map.cell_altitude(cell, preferred) > map.water_max_alt)
+			and map.is_clear_ground(cell)
+		):
 			var area := reachable_clear_cells(map, cell)
 			if area.size() >= SPAWN_MIN_REACHABLE:
 				map.spawn_point = cell
@@ -109,7 +126,10 @@ static func _search(map: _WorldMap, origin_cell: Vector2i, max_radius: int, pref
 			var next: Vector2i = cell + d
 			if visited.has(next):
 				continue
-			if absi(next.x - origin_cell.x) > max_radius or absi(next.y - origin_cell.y) > max_radius:
+			if (
+				absi(next.x - origin_cell.x) > max_radius
+				or absi(next.y - origin_cell.y) > max_radius
+			):
 				continue
 			visited[next] = true
 			queue.append(next)
@@ -117,8 +137,10 @@ static func _search(map: _WorldMap, origin_cell: Vector2i, max_radius: int, pref
 	last_fallback_size = best_size
 	if preferred < 0 and best_size < SPAWN_MIN_REACHABLE:
 		push_warning(
+			(
 				"SpawnFinder.resolve_player_spawn: fallback to pocket of %s clear cells at %s (need %s within radius %s)"
 				% [best_size, best, SPAWN_MIN_REACHABLE, max_radius]
+			)
 		)
 	map.spawn_point = best
 	return best
@@ -154,7 +176,9 @@ static func starter_wood_cells(map: _WorldMap, origin: Vector2i) -> Array[Vector
 	return grove
 
 
-static func spawn_spots(map: _WorldMap, origin_cell: Vector2i, limit: int = SPAWN_SEARCH_LIMIT) -> Array[Vector2]:
+static func spawn_spots(
+	map: _WorldMap, origin_cell: Vector2i, limit: int = SPAWN_SEARCH_LIMIT
+) -> Array[Vector2]:
 	## Centres of up to limit clear cells a player can walk to from
 	## origin_cell, nearest first (ties by y, then x), so every peer gets the
 	## same order.
@@ -162,18 +186,22 @@ static func spawn_spots(map: _WorldMap, origin_cell: Vector2i, limit: int = SPAW
 	var spots: Array[Vector2] = []
 	for cell in reachable_clear_cells(map, origin_cell, limit):
 		spots.append(map.map_to_local(cell))
-	spots.sort_custom(func(a: Vector2, b: Vector2) -> bool:
-		var da := a.distance_squared_to(origin)
-		var db := b.distance_squared_to(origin)
-		if da != db:
-			return da < db
-		if a.y != b.y:
-			return a.y < b.y
-		return a.x < b.x)
+	spots.sort_custom(
+		func(a: Vector2, b: Vector2) -> bool:
+			var da := a.distance_squared_to(origin)
+			var db := b.distance_squared_to(origin)
+			if da != db:
+				return da < db
+			if a.y != b.y:
+				return a.y < b.y
+			return a.x < b.x
+	)
 	return spots
 
 
-static func free_spawn_position(map: _WorldMap, origin_cell: Vector2i, taken: Array[Vector2]) -> Vector2:
+static func free_spawn_position(
+	map: _WorldMap, origin_cell: Vector2i, taken: Array[Vector2]
+) -> Vector2:
 	## The nearest spot to origin_cell clear of every position in taken. That
 	## is within SPAWN_RADIUS unless the area is full; then the nearest free
 	## spot further out. One position blocks at most per_taken cell centres,
@@ -182,7 +210,9 @@ static func free_spawn_position(map: _WorldMap, origin_cell: Vector2i, taken: Ar
 	## fall back to origin_cell itself.
 	var span := 2 * ceili(SPAWN_CLEARANCE / map.tile_set.tile_size.x) + 1
 	var per_taken := span * span
-	for spot in spawn_spots(map, origin_cell, maxi(SPAWN_SEARCH_LIMIT, per_taken * taken.size() + 1)):
+	for spot in spawn_spots(
+		map, origin_cell, maxi(SPAWN_SEARCH_LIMIT, per_taken * taken.size() + 1)
+	):
 		if _clear_of(spot, taken):
 			return spot
 	return map.map_to_local(origin_cell)

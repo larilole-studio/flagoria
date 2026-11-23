@@ -18,7 +18,9 @@ static func refresh(map, delta):
 
 
 static func generate_chunk(map, position) -> void:
-	map._sky.paint_window(map, map.local_to_map(position), Vector2i(map.chunk_width, map.chunk_height))
+	map._sky.paint_window(
+		map, map.local_to_map(position), Vector2i(map.chunk_width, map.chunk_height)
+	)
 
 
 static func invalidate_painted_cell(map, cell: Vector2i) -> void:
@@ -43,7 +45,9 @@ static func get_random_ground_vec(map, chance):
 	return TileCatalog.GRASS_D
 
 
-static func set_tile_type_z1(map, pos_vec, alt, moist, _temp, chance, biome_id: int = BiomeCatalog.TEMPERATE):
+static func set_tile_type_z1(
+	map, pos_vec, alt, moist, _temp, chance, biome_id: int = BiomeCatalog.TEMPERATE
+):
 	if map._object_removals.has_removed(pos_vec):
 		return
 	if map._structures.has_cell(pos_vec):
@@ -56,9 +60,22 @@ static func set_tile_type_z1(map, pos_vec, alt, moist, _temp, chance, biome_id: 
 	if not map.is_walkable_land(pos_vec) or map._bridges.has_bridge(pos_vec):
 		return
 	if map._tree_cuts.has_cut(pos_vec):
-		map.set_cell(map.GROUND_DECOR_LAYER, pos_vec, TileCatalog.SOURCE_ID, map._tree_cuts.leftover(pos_vec))
+		map.set_cell(
+			map.GROUND_DECOR_LAYER, pos_vec, TileCatalog.SOURCE_ID, map._tree_cuts.leftover(pos_vec)
+		)
 		return
-	var tile: Vector2i = BirchTrees.foliage_tile(map, pos_vec, alt, moist, chance, biome_id, map.get_cell_atlas_coords(0, pos_vec) == TileCatalog.SAND or map._sky.logical_ground(map, pos_vec) == TileCatalog.SAND)
+	var tile: Vector2i = BirchTrees.foliage_tile(
+		map,
+		pos_vec,
+		alt,
+		moist,
+		chance,
+		biome_id,
+		(
+			map.get_cell_atlas_coords(0, pos_vec) == TileCatalog.SAND
+			or map._sky.logical_ground(map, pos_vec) == TileCatalog.SAND
+		)
+	)
 	if map.starter_grove.has(pos_vec):
 		tile = TileCatalog.TREE
 	if tile == map.NO_PLANT:
@@ -81,7 +98,9 @@ static func predict_cell(map, cell: Vector2i) -> Array:
 	var chance: float = map.items_chance.get_noise_2d(cell.x, cell.y)
 	var b: int = map.biome_at(cell)
 	var alt: float = map.cell_altitude(cell, b)
-	var ground: Vector2i = map._bridges.piece_or(cell, map._structures.ground_at(cell, map._sky.display_ground(map, cell)))
+	var ground: Vector2i = map._bridges.piece_or(
+		cell, map._structures.ground_at(cell, map._sky.display_ground(map, cell))
+	)
 	var top: Vector2i = map.NO_PLANT
 	if map._structures.has_cell(cell):
 		top = map._structures.object_at(cell)
@@ -90,7 +109,15 @@ static func predict_cell(map, cell: Vector2i) -> Array:
 	elif map._object_removals.has_removed(cell):
 		top = map.NO_PLANT
 	elif map.ground_is_walkable(ground) and not map._bridges.has_bridge(cell):
-		top = BirchTrees.foliage_tile(map, cell, alt, moist, chance, b, ground == TileCatalog.SAND or map._sky.logical_ground(map, cell) == TileCatalog.SAND)
+		top = BirchTrees.foliage_tile(
+			map,
+			cell,
+			alt,
+			moist,
+			chance,
+			b,
+			ground == TileCatalog.SAND or map._sky.logical_ground(map, cell) == TileCatalog.SAND
+		)
 		if map.starter_grove.has(cell):
 			top = TileCatalog.TREE
 		if top == map.NO_PLANT:
@@ -107,7 +134,9 @@ static func predicted_clear(map, cell: Vector2i) -> bool:
 	var p: Array = map.predict_cell(cell)
 	if not map.ground_is_walkable(p[0]):
 		return false
-	return p[1] == map.NO_PLANT or p[1] == TileCatalog.FLOWER or InteractableCatalog.is_leftover(p[1])
+	return (
+		p[1] == map.NO_PLANT or p[1] == TileCatalog.FLOWER or InteractableCatalog.is_leftover(p[1])
+	)
 
 
 static func repaint_ground_cell(map, cell: Vector2i) -> void:

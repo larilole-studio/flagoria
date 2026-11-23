@@ -132,7 +132,6 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 ## name the field loads with the cycle on.
 @export var day_night_cycle: bool = true
 
-
 ## Playable ranges for Random specs (#335): narrower than @export_range where
 ## the editor limits allow broken maps (all water, no land, missing biomes).
 ## Keys match exported property names. Values are [min, max, step]. Seeds and
@@ -175,25 +174,46 @@ const PLAYABLE_RANGES := {
 
 ## Properties Random specs never changes (#335).
 const RANDOM_SPECS_SKIP := [
-	"chunk_width", "chunk_height", "chunk_refresh_frames",
-	"building_width", "building_height", "building_style",
+	"chunk_width",
+	"chunk_height",
+	"chunk_refresh_frames",
+	"building_width",
+	"building_height",
+	"building_style",
 	"day_night_cycle",
-	"oceanic_altitude_bias", "temperate_altitude_bias", "continental_altitude_bias",
-	"archipelago_dense_altitude_bias", "oceanic_island_density", "temperate_island_density",
-	"continental_island_density", "archipelago_dense_island_density",
+	"oceanic_altitude_bias",
+	"temperate_altitude_bias",
+	"continental_altitude_bias",
+	"archipelago_dense_altitude_bias",
+	"oceanic_island_density",
+	"temperate_island_density",
+	"continental_island_density",
+	"archipelago_dense_island_density",
 ]
 
 
 func biome_altitude_biases() -> PackedFloat32Array:
 	## Per-biome altitude bias, indexed by BiomeCatalog biome id.
-	return PackedFloat32Array([oceanic_altitude_bias, temperate_altitude_bias,
-			continental_altitude_bias, archipelago_dense_altitude_bias])
+	return PackedFloat32Array(
+		[
+			oceanic_altitude_bias,
+			temperate_altitude_bias,
+			continental_altitude_bias,
+			archipelago_dense_altitude_bias
+		]
+	)
 
 
 func biome_island_densities() -> PackedFloat32Array:
 	## Per-biome archipelago island density, indexed by BiomeCatalog biome id.
-	return PackedFloat32Array([oceanic_island_density, temperate_island_density,
-			continental_island_density, archipelago_dense_island_density])
+	return PackedFloat32Array(
+		[
+			oceanic_island_density,
+			temperate_island_density,
+			continental_island_density,
+			archipelago_dense_island_density
+		]
+	)
 
 
 static func make_defaults() -> MapGenParams:
@@ -211,8 +231,9 @@ static func make_world_defaults() -> MapGenParams:
 func island_size_choice() -> int:
 	if not island_preset or archipelago_island_count != 0:
 		return -1
-	return ISLAND_PRESETS.find([island_radius, archipelago_spacing,
-			archipelago_island_radius, archipelago_world_extent])
+	return ISLAND_PRESETS.find(
+		[island_radius, archipelago_spacing, archipelago_island_radius, archipelago_world_extent]
+	)
 
 
 func set_island_size(choice: int) -> void:
@@ -249,6 +270,7 @@ func randomize_seeds() -> void:
 	temperature_seed = randi()
 	items_seed = randi()
 	biome_seed = randi()
+
 
 func randomize_specs() -> void:
 	## Set every map-gen property (except chunk_*) to a random value inside
@@ -329,8 +351,6 @@ func _rand_range(key: String) -> float:
 	return lo + float(randi() % (n + 1)) * step
 
 
-
-
 func ensure_seeds() -> void:
 	## Replace any zero seed with a fresh random value (0 is the "unset" sentinel).
 	if altitude_seed == 0:
@@ -355,8 +375,13 @@ func exported_properties() -> Array[Dictionary]:
 
 
 func to_dict() -> Dictionary:
-	var data := {"island_preset": island_preset, "spawn_biome": spawn_biome, "starter_wood": starter_wood,
-			"starter_grove": starter_grove.duplicate(), "swamp_trees": swamp_trees}
+	var data := {
+		"island_preset": island_preset,
+		"spawn_biome": spawn_biome,
+		"starter_wood": starter_wood,
+		"starter_grove": starter_grove.duplicate(),
+		"swamp_trees": swamp_trees
+	}
 	for prop in exported_properties():
 		data[prop["name"]] = get(prop["name"])
 	return data
@@ -366,8 +391,12 @@ func from_dict(data: Dictionary) -> void:
 	for key in to_dict().keys():
 		if key == "starter_grove":
 			var cells: Variant = data.get(key)
-			if cells is Array and cells.size() <= 6 and cells.size() % 2 == 0 \
-					and cells.all(func(value): return value is int or value is float):
+			if (
+				cells is Array
+				and cells.size() <= 6
+				and cells.size() % 2 == 0
+				and cells.all(func(value): return value is int or value is float)
+			):
 				starter_grove.assign(cells.map(func(value): return int(value)))
 		elif data.has(key):
 			set(key, data[key])

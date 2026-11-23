@@ -2,6 +2,7 @@ extends SceneTree
 ## Opens Map Settings and writes a PNG to the skill's ignored artifacts/out/ folder.
 ## Invoked by drive-map-settings-screenshot.sh (not by tools/verify.sh).
 
+
 func _initialize() -> void:
 	call_deferred("_run")
 

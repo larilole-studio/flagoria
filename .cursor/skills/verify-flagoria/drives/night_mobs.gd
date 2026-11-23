@@ -3,7 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Day, then night, on one map. The host ticks the ambient band once at
 ## each hold. The night shot has more mobs. The 45 s band is not waited out.
 
-
 const RATE := 0.5
 const FRAME_ZOOMS: Array[float] = [0.525, 0.42, 0.34]
 
@@ -12,8 +11,10 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		_fail("cannot load " + MAIN)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(HOST_BUTTON), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON),
+		START_TIMEOUT_S
+	):
 		_fail("no " + HOST_BUTTON)
 		return
 	step("rate")
@@ -45,9 +46,18 @@ func run() -> void:
 	var night_seen := _on_screen_count()
 	await snapshot("night-mobs")
 	var scale := float(clock.call("spawn_scale"))
-	var ok := str(clock.phase()) == "night" and is_equal_approx(scale, 2.0) \
-			and night_n > day_n and night_seen > day_seen
-	print("night mobs: day=%d night=%d on_screen %d -> %d phase=%s scale=%s zoom=%s" % [day_n, night_n, day_seen, night_seen, clock.phase(), scale, _zoom()])
+	var ok := (
+		str(clock.phase()) == "night"
+		and is_equal_approx(scale, 2.0)
+		and night_n > day_n
+		and night_seen > day_seen
+	)
+	print(
+		(
+			"night mobs: day=%d night=%d on_screen %d -> %d phase=%s scale=%s zoom=%s"
+			% [day_n, night_n, day_seen, night_seen, clock.phase(), scale, _zoom()]
+		)
+	)
 	if not ok:
 		printerr("night mobs: night did not show more mobs")
 	done(ok)
@@ -137,7 +147,9 @@ func _reveal() -> void:
 	## A mob stays hidden until the ground tile under it exists.
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var origin := map.local_to_map(map.to_local(hero().global_position))
-	for off in [Vector2i.ZERO, Vector2i(32, 0), Vector2i(-32, 0), Vector2i(0, 32), Vector2i(0, -32)]:
+	for off in [
+		Vector2i.ZERO, Vector2i(32, 0), Vector2i(-32, 0), Vector2i(0, 32), Vector2i(0, -32)
+	]:
 		map.generate_chunk(map.map_to_local(origin + off))
 	for child in current_scene.get_node("World/Mobs").get_children():
 		if child is Mob and not (child as Node).is_queued_for_deletion():
@@ -162,7 +174,12 @@ func _mob_count() -> int:
 func _on_screen_count() -> int:
 	var n := 0
 	for child in current_scene.get_node("World/Mobs").get_children():
-		if child is Mob and child.visible and not (child as Node).is_queued_for_deletion() and _in_view(child):
+		if (
+			child is Mob
+			and child.visible
+			and not (child as Node).is_queued_for_deletion()
+			and _in_view(child)
+		):
 			n += 1
 	return n
 

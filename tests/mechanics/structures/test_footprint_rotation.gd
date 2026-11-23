@@ -25,12 +25,21 @@ func _test_structure_rotation_four_turns() -> int:
 	for turn in 4:
 		var foot: Array = _footprint_cells(structure, anchor, turn)
 		if foot.size() != turn0.size():
-			printerr("FAIL structure_rotation_four_turns: turn %d size %d, want %d"
-					% [turn, foot.size(), turn0.size()])
+			printerr(
+				(
+					"FAIL structure_rotation_four_turns: turn %d size %d, want %d"
+					% [turn, foot.size(), turn0.size()]
+				)
+			)
 			return 1
 		seen[str(foot)] = true
 	if seen.size() != 4:
-		printerr("FAIL structure_rotation_four_turns: only %d distinct footprints in four turns" % seen.size())
+		printerr(
+			(
+				"FAIL structure_rotation_four_turns: only %d distinct footprints in four turns"
+				% seen.size()
+			)
+		)
 		return 1
 	var again: Array = _footprint_cells(structure, anchor, 4)
 	if str(again) != str(turn0):
@@ -63,7 +72,12 @@ func _test_structure_rotation_blocked() -> int:
 		return 1
 	for turn in [1, 2, 3]:
 		if world.can_place_structure(structure, anchor, turn).is_empty():
-			printerr("FAIL structure_rotation_blocked: turn %d should refuse overlap at %s" % [turn, anchor])
+			printerr(
+				(
+					"FAIL structure_rotation_blocked: turn %d should refuse overlap at %s"
+					% [turn, anchor]
+				)
+			)
 			fail += 1
 	scene.queue_free()
 	if fail == 0:
@@ -109,12 +123,19 @@ func _test_structure_rotation_save_roundtrip() -> int:
 		printerr("FAIL structure_rotation_save_roundtrip: restore returned %s" % placed)
 		fail += 1
 	elif str(world.structures_for_sync()) != str(want):
-		printerr("FAIL structure_rotation_save_roundtrip: want %s got %s" % [want, world.structures_for_sync()])
+		printerr(
+			(
+				"FAIL structure_rotation_save_roundtrip: want %s got %s"
+				% [want, world.structures_for_sync()]
+			)
+		)
 		fail += 1
 	else:
 		var p: Dictionary = world.placed_structures().values()[0]
 		if int(p.get("rotation", 0)) != 1:
-			printerr("FAIL structure_rotation_save_roundtrip: rotation %s, want 1" % p.get("rotation"))
+			printerr(
+				"FAIL structure_rotation_save_roundtrip: rotation %s, want 1" % p.get("rotation")
+			)
 			fail += 1
 	scene.queue_free()
 	if fail == 0:

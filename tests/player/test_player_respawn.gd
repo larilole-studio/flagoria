@@ -97,13 +97,25 @@ func _test_player_respawn_no_snapback() -> int:
 				snapped = "frame %d at %s" % [f, at]
 			await physics_frame
 		if not reached:
-			printerr("FAIL respawn_snapback server copy never reached the spawn (%s)" % s_copy.position)
+			printerr(
+				"FAIL respawn_snapback server copy never reached the spawn (%s)" % s_copy.position
+			)
 			fail += 1
 		if snapped != "":
-			printerr("FAIL respawn_snapback server copy jumped back to the death spot (%s)" % snapped)
+			printerr(
+				"FAIL respawn_snapback server copy jumped back to the death spot (%s)" % snapped
+			)
 			fail += 1
-		if owner_copy.position.distance_to(spawn) > 64.0 or s_copy.position.distance_to(owner_copy.position) > 64.0:
-			printerr("FAIL respawn_snapback copies apart: owner %s, server %s" % [owner_copy.position, s_copy.position])
+		if (
+			owner_copy.position.distance_to(spawn) > 64.0
+			or s_copy.position.distance_to(owner_copy.position) > 64.0
+		):
+			printerr(
+				(
+					"FAIL respawn_snapback copies apart: owner %s, server %s"
+					% [owner_copy.position, s_copy.position]
+				)
+			)
 			fail += 1
 		cpeer.close()
 		for i in 3:
@@ -138,10 +150,21 @@ func _test_player_respawn_hold_releases() -> int:
 	var fail := 0
 	var spawn := Vector2(400, 400)
 	fail += await _respawn_follow_case("died on the spawn", spawn, spawn, Vector2(3, 0), 0)
-	fail += await _respawn_follow_case("died near the spawn, first updates lost",
-			spawn + Vector2(-16, 0), spawn, Vector2(-3, 0), 80)
-	fail += await _respawn_follow_case("observer joined after earlier respawns",
-			spawn + Vector2(-20, 0), spawn, Vector2(3, 0), 0, 3)
+	fail += await _respawn_follow_case(
+		"died near the spawn, first updates lost",
+		spawn + Vector2(-16, 0),
+		spawn,
+		Vector2(-3, 0),
+		80
+	)
+	fail += await _respawn_follow_case(
+		"observer joined after earlier respawns",
+		spawn + Vector2(-20, 0),
+		spawn,
+		Vector2(3, 0),
+		0,
+		3
+	)
 	if fail == 0:
 		print("PASS test_player_respawn_hold_releases")
 	return fail
@@ -172,7 +195,12 @@ func _test_player_respawn_hold_before_first_sync() -> int:
 	copy.owner_respawns = n - 1
 	sync.synchronized.emit()
 	if copy.position != spawn:
-		printerr("FAIL respawn_first_sync stale update shown: copy at %s, spawn %s" % [copy.position, spawn])
+		printerr(
+			(
+				"FAIL respawn_first_sync stale update shown: copy at %s, spawn %s"
+				% [copy.position, spawn]
+			)
+		)
 		fail += 1
 	var fresh := spawn + Vector2(6, 0)
 	copy.position = fresh  # fresh update: sent after the owner saw respawn n
@@ -182,7 +210,12 @@ func _test_player_respawn_hold_before_first_sync() -> int:
 	copy.position = next
 	sync.synchronized.emit()
 	if copy.position != next:
-		printerr("FAIL respawn_first_sync copy still held after the fresh update: at %s, owner %s" % [copy.position, next])
+		printerr(
+			(
+				"FAIL respawn_first_sync copy still held after the fresh update: at %s, owner %s"
+				% [copy.position, next]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -210,8 +243,20 @@ func _test_respawn_teleport_ghosts() -> int:
 	#  where the other died, where each respawns]
 	var cases := [
 		["onto the other's death spot", spot + Vector2(-32, 0), spot, spot, spot + Vector2(32, 0)],
-		["just above the other's death spot", spot + Vector2(-32, 0), spot + Vector2(0, 6), spot, spot + Vector2(32, 6)],
-		["side by side with it", spot + Vector2(-32, 0), spot + Vector2(5, 0), spot, spot + Vector2(32, 0)],
+		[
+			"just above the other's death spot",
+			spot + Vector2(-32, 0),
+			spot + Vector2(0, 6),
+			spot,
+			spot + Vector2(32, 6)
+		],
+		[
+			"side by side with it",
+			spot + Vector2(-32, 0),
+			spot + Vector2(5, 0),
+			spot,
+			spot + Vector2(32, 0)
+		],
 		["standing where it lay dead", null, spot, spot, spot + Vector2(32, 0)],
 	]
 	for c in cases:
@@ -247,12 +292,20 @@ func _test_respawn_teleport_ghosts() -> int:
 			await physics_frame
 			worst = maxf(worst, (me.position as Vector2).distance_to(c[3]))
 		if worst > 0.5 or not (other.position as Vector2).is_equal_approx(c[4]):
-			printerr("FAIL respawn_teleport_ghosts %s: the local player ends at %s, up to %.1f px off its spot %s; the other at %s, sent to %s"
-					% [label, me.position, worst, c[3], other.position, c[4]])
+			printerr(
+				(
+					"FAIL respawn_teleport_ghosts %s: the local player ends at %s, up to %.1f px off its spot %s; the other at %s, sent to %s"
+					% [label, me.position, worst, c[3], other.position, c[4]]
+				)
+			)
 			fail += 1
 		if me.body_shape.disabled or other.body_shape.disabled:
-			printerr("FAIL respawn_teleport_ghosts %s: collision still off after the respawn (%s, %s)"
-					% [label, me.body_shape.disabled, other.body_shape.disabled])
+			printerr(
+				(
+					"FAIL respawn_teleport_ghosts %s: collision still off after the respawn (%s, %s)"
+					% [label, me.body_shape.disabled, other.body_shape.disabled]
+				)
+			)
 			fail += 1
 		me.free()
 		other.free()

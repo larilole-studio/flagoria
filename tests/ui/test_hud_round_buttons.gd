@@ -28,13 +28,23 @@ func _test_hud_round_buttons() -> int:
 	var wall: Button = picker.get_node("WallButton")
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var wheel: ToolWheel = scene.get_node("CanvasLayer1/ToolWheel")
-	if interaction.build.tool != BuildPlacement.Tool.CUT or plank.visible or tower.visible or wall.visible:
+	if (
+		interaction.build.tool != BuildPlacement.Tool.CUT
+		or plank.visible
+		or tower.visible
+		or wall.visible
+	):
 		printerr("FAIL hud_round_buttons: list starts open, tool %s" % interaction.build.tool)
 		fail += 1
 	var build_closed := _face(buildings, "normal")
 	buildings.set_pressed(true)
 	await process_frame
-	if _face(buildings, "normal") == build_closed or not plank.visible or not tower.visible or not wall.visible:
+	if (
+		_face(buildings, "normal") == build_closed
+		or not plank.visible
+		or not tower.visible
+		or not wall.visible
+	):
 		printerr("FAIL hud_round_buttons: Buildings did not open the picker")
 		fail += 1
 	buildings.set_pressed(false)
@@ -46,10 +56,20 @@ func _test_hud_round_buttons() -> int:
 	await process_frame
 	plank.pressed.emit()
 	await process_frame
-	if interaction.build.tool != BuildPlacement.Tool.PLANK or plank.visible \
-			or not plank.button_pressed or not _is_selected(plank) \
-			or tower.button_pressed or wall.button_pressed:
-		printerr("FAIL hud_round_buttons: plank select tool %s open %s" % [interaction.build.tool, plank.visible])
+	if (
+		interaction.build.tool != BuildPlacement.Tool.PLANK
+		or plank.visible
+		or not plank.button_pressed
+		or not _is_selected(plank)
+		or tower.button_pressed
+		or wall.button_pressed
+	):
+		printerr(
+			(
+				"FAIL hud_round_buttons: plank select tool %s open %s"
+				% [interaction.build.tool, plank.visible]
+			)
+		)
 		fail += 1
 	buildings.set_pressed(true)
 	await process_frame
@@ -63,7 +83,11 @@ func _test_hud_round_buttons() -> int:
 	outside.pressed = false
 	root.push_input(outside, true)
 	await process_frame
-	if buildings.button_pressed or plank.visible or interaction.build.tool != BuildPlacement.Tool.PLANK:
+	if (
+		buildings.button_pressed
+		or plank.visible
+		or interaction.build.tool != BuildPlacement.Tool.PLANK
+	):
 		printerr("FAIL hud_round_buttons: outside tap did not close the picker or changed the tool")
 		fail += 1
 	var before := interaction.mode
@@ -71,20 +95,31 @@ func _test_hud_round_buttons() -> int:
 	var sword_face := _face(tool_button, "normal")
 	wheel.select(ToolWheel.Tool.CHOP)
 	var chop_face := _face(tool_button, "normal")
-	if interaction.mode == before or interaction.mode != Interaction.Mode.INTERACT \
-			or chop_face == null or chop_face == sword_face:
+	if (
+		interaction.mode == before
+		or interaction.mode != Interaction.Mode.INTERACT
+		or chop_face == null
+		or chop_face == sword_face
+	):
 		printerr("FAIL hud_round_buttons: chop did not switch to interact (%s)" % interaction.mode)
 		fail += 1
 	if interaction.build.tool != BuildPlacement.Tool.PLANK:
 		printerr("FAIL hud_round_buttons: entering interact cleared the plank tool")
 		fail += 1
 	wheel.select(ToolWheel.Tool.SWORD)
-	if interaction.mode != Interaction.Mode.COMBAT or interaction.build.tool != BuildPlacement.Tool.CUT \
-			or _face(tool_button, "normal") != sword_face \
-			or sword_face.get_size() != Vector2(24, 24) \
-			or tool_button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS:
-		printerr("FAIL hud_round_buttons: leaving interact mode %s tool %s"
-				% [interaction.mode, interaction.build.tool])
+	if (
+		interaction.mode != Interaction.Mode.COMBAT
+		or interaction.build.tool != BuildPlacement.Tool.CUT
+		or _face(tool_button, "normal") != sword_face
+		or sword_face.get_size() != Vector2(24, 24)
+		or tool_button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	):
+		printerr(
+			(
+				"FAIL hud_round_buttons: leaving interact mode %s tool %s"
+				% [interaction.mode, interaction.build.tool]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -104,8 +139,10 @@ func _test_build_picker_saved_layout_tap() -> int:
 	var scene := await HudLayoutDump.play_scene(tree)
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
 	layout.edit_begin(hud)
-	var placed: bool = layout.try_place("buildings", 0.90, 0.40, 1.0, hud) \
-			and layout.try_place("map", 0.84, 0.40, 1.75, hud)
+	var placed: bool = (
+		layout.try_place("buildings", 0.90, 0.40, 1.0, hud)
+		and layout.try_place("map", 0.84, 0.40, 1.75, hud)
+	)
 	layout.save_to_disk()
 	layout.edit_end()
 	layout.forget_memory()
@@ -121,7 +158,10 @@ func _test_build_picker_saved_layout_tap() -> int:
 	await process_frame
 	var visible_count := 0
 	for button: Button in picker.get_children():
-		if button.is_visible_in_tree() and root.get_visible_rect().encloses(button.get_global_rect()):
+		if (
+			button.is_visible_in_tree()
+			and root.get_visible_rect().encloses(button.get_global_rect())
+		):
 			visible_count += 1
 	var opened := buildings.button_pressed and visible_count == 6
 	_tap_sequence(at, ["touch_down", "touch_up"])
@@ -134,8 +174,12 @@ func _test_build_picker_saved_layout_tap() -> int:
 	layout.load_from_disk()
 	await HudLayoutDump.resize(tree, original_size)
 	if not (placed and opened and closed):
-		printerr("FAIL build_picker_saved_layout_tap: setup %s, opened %s (%d in bounds), closed %s"
-				% [placed, opened, visible_count, closed])
+		printerr(
+			(
+				"FAIL build_picker_saved_layout_tap: setup %s, opened %s (%d in bounds), closed %s"
+				% [placed, opened, visible_count, closed]
+			)
+		)
 		return 1
 	print("PASS test_build_picker_saved_layout_tap")
 	return 0

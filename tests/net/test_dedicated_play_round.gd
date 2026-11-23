@@ -59,7 +59,12 @@ func _test_dedicated_play_round() -> int:
 	await process_frame
 	var port := _free_udp_port()
 	if plant_id == "" or mob_i < 0 or port == 0:
-		printerr("FAIL dedicated_play_round seed %s plant %s mob %s port %s" % [ROUND_SEED, plant, mob_i, port])
+		printerr(
+			(
+				"FAIL dedicated_play_round seed %s plant %s mob %s port %s"
+				% [ROUND_SEED, plant, mob_i, port]
+			)
+		)
 		return 1
 	var saved := MapSave.save_map(params, "test_dedicated_play_%d_%d" % [OS.get_process_id(), port])
 	if saved["error"] != "":
@@ -79,7 +84,13 @@ func _test_dedicated_play_round() -> int:
 	var read := read_probe_at.bind(probes)
 	var wait_for := wait_until
 	var fail := 0
-	launch.call(["--dedicated", "--rate=%s" % rate, "--save=" + ProjectSettings.globalize_path(saved["path"])])
+	launch.call(
+		[
+			"--dedicated",
+			"--rate=%s" % rate,
+			"--save=" + ProjectSettings.globalize_path(saved["path"])
+		]
+	)
 	if not await wait_for.call(func() -> bool: return read.call(0).get("ready", false), 30000):
 		printerr("FAIL dedicated_play_round server did not listen: %s" % read.call(0))
 		fail = 1
@@ -99,8 +110,12 @@ func _test_dedicated_play_round() -> int:
 					return false
 			return true
 		if not await wait_for.call(spawned, 30000):
-			printerr("FAIL dedicated_play_round clients did not both spawn: server %s A %s B %s"
-					% [read.call(0), read.call(1), read.call(2)])
+			printerr(
+				(
+					"FAIL dedicated_play_round clients did not both spawn: server %s A %s B %s"
+					% [read.call(0), read.call(1), read.call(2)]
+				)
+			)
 			fail = 1
 		elif "1" in read.call(0).get("players", []):
 			printerr("FAIL dedicated_play_round server has a local player 1: %s" % read.call(0))
@@ -113,15 +128,27 @@ func _test_dedicated_play_round() -> int:
 						return false
 				return true
 			if not await wait_for.call(drawn, 10000):
-				printerr("FAIL dedicated_play_round plant %s %s was not drawn on both clients: A %s B %s"
-						% [plant_id, plant, read.call(1).get("cells", {}), read.call(2).get("cells", {})])
+				printerr(
+					(
+						"FAIL dedicated_play_round plant %s %s was not drawn on both clients: A %s B %s"
+						% [
+							plant_id,
+							plant,
+							read.call(1).get("cells", {}),
+							read.call(2).get("cells", {})
+						]
+					)
+				)
 				fail = 1
 			else:
 				var order := FileAccess.open(outs[1] + ".cut", FileAccess.WRITE)
 				order.store_string(cell_key)
 				order.close()
 				var removed := func() -> bool:
-					if int(read.call(1).get("wood", 0)) != yield_wood or int(read.call(2).get("wood", -1)) != 0:
+					if (
+						int(read.call(1).get("wood", 0)) != yield_wood
+						or int(read.call(2).get("wood", -1)) != 0
+					):
 						return false
 					for i in [0, 1, 2]:
 						if not (cell_key in read.call(i).get("cuts", [])):
@@ -132,8 +159,19 @@ func _test_dedicated_play_round() -> int:
 							return false
 					return true
 				if not await wait_for.call(removed, 10000):
-					printerr("FAIL dedicated_play_round cut %s %s yield %s: server %s A %s B %s"
-							% [plant_id, plant, yield_wood, read.call(0), read.call(1), read.call(2)])
+					printerr(
+						(
+							"FAIL dedicated_play_round cut %s %s yield %s: server %s A %s B %s"
+							% [
+								plant_id,
+								plant,
+								yield_wood,
+								read.call(0),
+								read.call(1),
+								read.call(2)
+							]
+						)
+					)
 					fail = 1
 				else:
 					FileAccess.open(outs[1] + ".hit", FileAccess.WRITE).close()
@@ -148,8 +186,12 @@ func _test_dedicated_play_round() -> int:
 								return false
 						return true
 					if not await wait_for.call(killed, 20000):
-						printerr("FAIL dedicated_play_round %s not seen hurt and dead by both clients: A %s B %s"
-								% [mob_name, read.call(1), read.call(2)])
+						printerr(
+							(
+								"FAIL dedicated_play_round %s not seen hurt and dead by both clients: A %s B %s"
+								% [mob_name, read.call(1), read.call(2)]
+							)
+						)
 						fail = 1
 		for i in outs.size():
 			var errors: Array = read.call(i).get("errors", [])
@@ -160,6 +202,10 @@ func _test_dedicated_play_round() -> int:
 	_remove_dir(dir)
 	DirAccess.remove_absolute(saved["path"])
 	if fail == 0:
-		print("PASS test_dedicated_play_round (%s %s cut, wood %s; %s hurt and dead on both clients; server players %s)"
-				% [plant_id, plant, yield_wood, mob_name, read.call(0).get("players", [])])
+		print(
+			(
+				"PASS test_dedicated_play_round (%s %s cut, wood %s; %s hurt and dead on both clients; server players %s)"
+				% [plant_id, plant, yield_wood, mob_name, read.call(0).get("players", [])]
+			)
+		)
 	return fail

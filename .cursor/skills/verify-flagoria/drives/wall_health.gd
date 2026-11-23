@@ -2,7 +2,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Solo host: a palisade line, then sword hits until it breaks.
 
-
 const SETTLE := 15
 
 
@@ -71,8 +70,10 @@ func _touch_line(map: TileMap) -> Array[Vector2i]:
 			if not map.predicted_clear(cell):
 				continue
 			var run: Array[Vector2i] = [cell, cell + Vector2i.RIGHT, cell + Vector2i.RIGHT * 2]
-			if run.all(func(c: Vector2i) -> bool:
-					return not map._structures.has_cell(c) and not map.has_wall(c)):
+			if run.all(
+				func(c: Vector2i) -> bool:
+					return not map._structures.has_cell(c) and not map.has_wall(c)
+			):
 				return run
 	return []
 
@@ -82,8 +83,10 @@ func _wall_line(map: TileMap) -> Array[Vector2i]:
 	for r in range(6, 40):
 		var start: Vector2i = front + Vector2i(r, 0)
 		var run: Array[Vector2i] = [start, start + Vector2i.RIGHT, start + Vector2i.RIGHT * 2]
-		if run.all(func(c: Vector2i) -> bool:
-				return map.predicted_clear(c) and not map._structures.has_cell(c)):
+		if run.all(
+			func(c: Vector2i) -> bool:
+				return map.predicted_clear(c) and not map._structures.has_cell(c)
+		):
 			return run
 	return []
 

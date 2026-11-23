@@ -1,7 +1,6 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## On-demand building: same seed paints the same tiles, on layer 7 (#26).
 
-
 const ORIGIN := Vector2i(4, -3)
 
 
@@ -21,7 +20,12 @@ func _layouts_match() -> int:
 	var first := GeneratedBuildings.layout_cells(6, 5, 42, 0)
 	var again := GeneratedBuildings.layout_cells(6, 5, 42, 0)
 	if first.is_empty() or first != again:
-		printerr("FAIL generated_building_determinism: seed 42 style 0 %s vs %s" % [first.size(), again.size()])
+		printerr(
+			(
+				"FAIL generated_building_determinism: seed 42 style 0 %s vs %s"
+				% [first.size(), again.size()]
+			)
+		)
 		fail += 1
 	var other := GeneratedBuildings.layout_cells(6, 5, 43, 0)
 	if other.is_empty() or other == first:
@@ -43,8 +47,18 @@ func _layouts_match() -> int:
 		if cell["piece"] == "door":
 			moss_doors += 1
 			moss_door = cell["tile"]
-	if doors != 1 or moss_doors != 1 or door_tile != "WALL_GATE_H_OPEN" or moss_door != "WALL_MOSS_GATE_H_OPEN":
-		printerr("FAIL generated_building_determinism: doors %s/%s tiles %s %s" % [doors, moss_doors, door_tile, moss_door])
+	if (
+		doors != 1
+		or moss_doors != 1
+		or door_tile != "WALL_GATE_H_OPEN"
+		or moss_door != "WALL_MOSS_GATE_H_OPEN"
+	):
+		printerr(
+			(
+				"FAIL generated_building_determinism: doors %s/%s tiles %s %s"
+				% [doors, moss_doors, door_tile, moss_door]
+			)
+		)
 		fail += 1
 	if GeneratedBuildings.LAYER == 0 or GeneratedBuildings.LAYER == 1:
 		printerr("FAIL generated_building_determinism: layer %s" % GeneratedBuildings.LAYER)
@@ -66,7 +80,9 @@ func _paint_and_button() -> int:
 	var world: TileMap = scene.get_node("World/worldMap")
 	world.set_process(false)
 	var buildings: GeneratedBuildings = scene.get_node("World/GeneratedBuildings")
-	var menu_button: Button = scene.get_node("CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MapSettings")
+	var menu_button: Button = scene.get_node(
+		"CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MapSettings"
+	)
 	if menu_button.text != "Map Settings":
 		printerr("FAIL generated_building_determinism: menu button '%s'" % menu_button.text)
 		fail += 1
@@ -78,17 +94,23 @@ func _paint_and_button() -> int:
 		fail += 1
 	else:
 		panel._spin_boxes["building_width"].value = 6
-		var player: CharacterBody2D = load("res://Scripts/player/character_body_2d.tscn").instantiate()
+		var player: CharacterBody2D = (
+			load("res://Scripts/player/character_body_2d.tscn").instantiate()
+		)
 		player.name = "1"
 		scene.get_node("World").add_child(player)
 		player.position = world.map_to_local(Vector2i(10, 8))
 		button.pressed.emit()
 		await process_frame
 		if buildings.record_count() != 1 or buildings.grid_of(0).size() != 5:
-			printerr("FAIL generated_building_determinism: button placed %s" % buildings.record_count())
+			printerr(
+				"FAIL generated_building_determinism: button placed %s" % buildings.record_count()
+			)
 			fail += 1
 		elif buildings.grid_of(0)[0].size() != 6:
-			printerr("FAIL generated_building_determinism: width %s" % buildings.grid_of(0)[0].size())
+			printerr(
+				"FAIL generated_building_determinism: width %s" % buildings.grid_of(0)[0].size()
+			)
 			fail += 1
 		else:
 			fail += await _painted(world, buildings)
@@ -104,18 +126,27 @@ func _paint_and_button() -> int:
 			Input.parse_input_event(key)
 			await process_frame
 			if buildings.record_count() != 2 or buildings.grid_of(0) == buildings.grid_of(1):
-				printerr("FAIL generated_building_determinism: key count %s" % buildings.record_count())
+				printerr(
+					"FAIL generated_building_determinism: key count %s" % buildings.record_count()
+				)
 				fail += 1
 		scene.world_params = params.duplicate_params()
 		scene.get_node("CanvasLayer2/MainMenu").open_settings_over_match()
 		var start: Button = panel.get_node("Margin/VBox/Buttons2/Start")
 		if not panel.visible or not start.disabled:
-			printerr("FAIL generated_building_determinism: settings over match visible %s start %s" % [panel.visible, start.disabled])
+			printerr(
+				(
+					"FAIL generated_building_determinism: settings over match visible %s start %s"
+					% [panel.visible, start.disabled]
+				)
+			)
 			fail += 1
 		scene.get_node("CanvasLayer2/MainMenu").hide()
 		panel._on_back_pressed()
 		if scene.get_node("CanvasLayer2/MainMenu").visible:
-			printerr("FAIL generated_building_determinism: Back opened the main menu during a match")
+			printerr(
+				"FAIL generated_building_determinism: Back opened the main menu during a match"
+			)
 			fail += 1
 	var source := world.tile_set.get_source(TileCatalog.SOURCE_ID) as TileSetAtlasSource
 	var roof := source.get_tile_data(TileCatalog.SKY_DOCK_N_ROOT, 0)
@@ -137,13 +168,20 @@ func _painted(world: TileMap, buildings: GeneratedBuildings) -> int:
 		var tile := GeneratedBuildings.tile_name_for(piece, 0)
 		var atlas: Vector2i = TileCatalog.TILES[tile]["atlas"]
 		if world.get_cell_atlas_coords(GeneratedBuildings.LAYER, cell) != atlas:
-			printerr("FAIL generated_building_determinism: %s painted %s want %s" % [
-				cell, world.get_cell_atlas_coords(GeneratedBuildings.LAYER, cell), atlas])
+			printerr(
+				(
+					"FAIL generated_building_determinism: %s painted %s want %s"
+					% [cell, world.get_cell_atlas_coords(GeneratedBuildings.LAYER, cell), atlas]
+				)
+			)
 			fail += 1
 			break
 		if piece == "door":
 			door = cell
-		elif wall.x == 1 << 20 and (piece == "wall_straight" or piece == "wall_corner" or piece == "window"):
+		elif (
+			wall.x == 1 << 20
+			and (piece == "wall_straight" or piece == "wall_corner" or piece == "window")
+		):
 			wall = cell
 	world.generate_chunk(world.map_to_local(door))
 	await physics_frame
@@ -159,9 +197,17 @@ func _painted(world: TileMap, buildings: GeneratedBuildings) -> int:
 		fail += 1
 	if not _hits(world, wall) or _hits(world, door):
 		var alt := world.get_cell_alternative_tile(GeneratedBuildings.LAYER, wall)
-		printerr("FAIL generated_building_determinism: wall blocked %s door blocked %s alt %s atlas %s" % [
-			_hits(world, wall), _hits(world, door), alt,
-			world.get_cell_atlas_coords(GeneratedBuildings.LAYER, wall)])
+		printerr(
+			(
+				"FAIL generated_building_determinism: wall blocked %s door blocked %s alt %s atlas %s"
+				% [
+					_hits(world, wall),
+					_hits(world, door),
+					alt,
+					world.get_cell_atlas_coords(GeneratedBuildings.LAYER, wall)
+				]
+			)
+		)
 		fail += 1
 	return fail
 

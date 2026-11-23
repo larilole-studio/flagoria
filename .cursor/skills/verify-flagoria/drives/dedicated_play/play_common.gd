@@ -31,14 +31,19 @@ func other_players() -> int:
 func join_dedicated(who: String) -> bool:
 	if change_scene_to_file(MAIN) != OK:
 		return _fail("cannot load " + MAIN)
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(JOIN_BUTTON), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(JOIN_BUTTON),
+		START_TIMEOUT_S
+	):
 		return _fail("no " + JOIN_BUTTON)
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 	step("join")
 	await click(JOIN_BUTTON)
-	if not await wait_until(func() -> bool:
-			return hero() != null and current_scene.world_params != null and other_players() >= 1, JOIN_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool:
+			return hero() != null and current_scene.world_params != null and other_players() >= 1,
+		JOIN_TIMEOUT_S
+	):
 		return _fail("%s did not see the other client" % who)
 	if players().has("1"):
 		return _fail("%s sees a local server player 1" % who)
@@ -73,6 +78,11 @@ func wood() -> int:
 func mobs_by_distance() -> Array:
 	var ranked: Array = current_scene.get_node("World/Mobs").mobs()
 	var me := hero()
-	ranked.sort_custom(func(a: Mob, b: Mob) -> bool:
-		return me.global_position.distance_to(a.global_position) < me.global_position.distance_to(b.global_position))
+	ranked.sort_custom(
+		func(a: Mob, b: Mob) -> bool:
+			return (
+				me.global_position.distance_to(a.global_position)
+				< me.global_position.distance_to(b.global_position)
+			)
+	)
 	return ranked

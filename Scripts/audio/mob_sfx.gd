@@ -21,90 +21,114 @@ extends Node2D
 
 const EVENTS := ["notice", "attack", "hurt", "death", "idle"]
 const SOUNDS := {
-	"slime": {
-		"notice": [
+	"slime":
+	{
+		"notice":
+		[
 			preload("res://art/audio/sfx/mobs/slime/slime_notice_01.wav"),
 		],
-		"attack": [
+		"attack":
+		[
 			preload("res://art/audio/sfx/mobs/slime/slime_attack_01.wav"),
 			preload("res://art/audio/sfx/mobs/slime/slime_attack_02.wav"),
 			preload("res://art/audio/sfx/mobs/slime/slime_attack_03.wav"),
 		],
-		"hurt": [
+		"hurt":
+		[
 			preload("res://art/audio/sfx/mobs/slime/slime_hurt_01.wav"),
 			preload("res://art/audio/sfx/mobs/slime/slime_hurt_02.wav"),
 			preload("res://art/audio/sfx/mobs/slime/slime_hurt_03.wav"),
 		],
-		"death": [
+		"death":
+		[
 			preload("res://art/audio/sfx/mobs/slime/slime_death_01.wav"),
 		],
-		"idle": [
+		"idle":
+		[
 			preload("res://art/audio/sfx/mobs/slime/slime_idle_01.wav"),
 			preload("res://art/audio/sfx/mobs/slime/slime_idle_02.wav"),
 		],
 	},
-	"crab": {
-		"notice": [
+	"crab":
+	{
+		"notice":
+		[
 			preload("res://art/audio/sfx/mobs/crab/crab_notice_01.wav"),
 		],
-		"attack": [
+		"attack":
+		[
 			preload("res://art/audio/sfx/mobs/crab/crab_attack_01.wav"),
 			preload("res://art/audio/sfx/mobs/crab/crab_attack_02.wav"),
 			preload("res://art/audio/sfx/mobs/crab/crab_attack_03.wav"),
 		],
-		"hurt": [
+		"hurt":
+		[
 			preload("res://art/audio/sfx/mobs/crab/crab_hurt_01.wav"),
 			preload("res://art/audio/sfx/mobs/crab/crab_hurt_02.wav"),
 			preload("res://art/audio/sfx/mobs/crab/crab_hurt_03.wav"),
 		],
-		"death": [
+		"death":
+		[
 			preload("res://art/audio/sfx/mobs/crab/crab_death_01.wav"),
 		],
-		"idle": [
+		"idle":
+		[
 			preload("res://art/audio/sfx/mobs/crab/crab_idle_01.wav"),
 			preload("res://art/audio/sfx/mobs/crab/crab_idle_02.wav"),
 		],
 	},
-	"piglet": {
-		"notice": [
+	"piglet":
+	{
+		"notice":
+		[
 			preload("res://art/audio/sfx/mobs/piglet/piglet_notice_01.wav"),
 		],
-		"attack": [
+		"attack":
+		[
 			preload("res://art/audio/sfx/mobs/piglet/piglet_attack_01.wav"),
 			preload("res://art/audio/sfx/mobs/piglet/piglet_attack_02.wav"),
 			preload("res://art/audio/sfx/mobs/piglet/piglet_attack_03.wav"),
 		],
-		"hurt": [
+		"hurt":
+		[
 			preload("res://art/audio/sfx/mobs/piglet/piglet_hurt_01.wav"),
 			preload("res://art/audio/sfx/mobs/piglet/piglet_hurt_02.wav"),
 			preload("res://art/audio/sfx/mobs/piglet/piglet_hurt_03.wav"),
 		],
-		"death": [
+		"death":
+		[
 			preload("res://art/audio/sfx/mobs/piglet/piglet_death_01.wav"),
 		],
-		"idle": [
+		"idle":
+		[
 			preload("res://art/audio/sfx/mobs/piglet/piglet_idle_01.wav"),
 			preload("res://art/audio/sfx/mobs/piglet/piglet_idle_02.wav"),
 		],
 	},
-	"soldier": {
-		"notice": [
+	"soldier":
+	{
+		"notice":
+		[
 			preload("res://art/audio/sfx/mobs/soldier/soldier_notice_01.wav"),
 		],
-		"attack": [
+		"attack":
+		[
 			preload("res://art/audio/sfx/mobs/soldier/soldier_attack_01.wav"),
 			preload("res://art/audio/sfx/mobs/soldier/soldier_attack_02.wav"),
 			preload("res://art/audio/sfx/mobs/soldier/soldier_attack_03.wav"),
 		],
-		"hurt": [
+		"hurt":
+		[
 			preload("res://art/audio/sfx/mobs/soldier/soldier_hurt_01.wav"),
 			preload("res://art/audio/sfx/mobs/soldier/soldier_hurt_02.wav"),
 			preload("res://art/audio/sfx/mobs/soldier/soldier_hurt_03.wav"),
 		],
-		"death": [
+		"death":
+		[
 			preload("res://art/audio/sfx/mobs/soldier/soldier_death_01.wav"),
 		],
-		"idle": [
+		"idle":
+		[
 			preload("res://art/audio/sfx/mobs/soldier/soldier_idle_01.wav"),
 			preload("res://art/audio/sfx/mobs/soldier/soldier_idle_02.wav"),
 		],
@@ -156,7 +180,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	var mob := get_parent() as Mob
-	if not idle_enabled or mob == null or not (mob.state == Mob.State.IDLE or mob.state == Mob.State.WALK):
+	if (
+		not idle_enabled
+		or mob == null
+		or not (mob.state == Mob.State.IDLE or mob.state == Mob.State.WALK)
+	):
 		return
 	idle_left -= delta
 	if idle_left <= 0.0:

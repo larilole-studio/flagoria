@@ -46,7 +46,12 @@ func run() -> void:
 		return
 	for c in rest:
 		if map.has_bridge(c) or not map.is_open_sea(c):
-			printerr("bridge_joins: removed %s stayed %s bridge %s" % [c, map.get_cell_atlas_coords(0, c), map.has_bridge(c)])
+			printerr(
+				(
+					"bridge_joins: removed %s stayed %s bridge %s"
+					% [c, map.get_cell_atlas_coords(0, c), map.has_bridge(c)]
+				)
+			)
 			done(false)
 			return
 	print("bridge_joins: removed %s" % _keys(map, first))
@@ -82,7 +87,10 @@ func run() -> void:
 
 	step("vertical-joined")
 	var v_land_after := _land(map, column[column.size() - 1] + Vector2i.DOWN)
-	if not map.build_bridge(vrest[0], vrest[vrest.size() - 1]) or not _is_deck(map, column, false, v_land_after):
+	if (
+		not map.build_bridge(vrest[0], vrest[vrest.size() - 1])
+		or not _is_deck(map, column, false, v_land_after)
+	):
 		printerr("bridge_joins: vertical joined pieces %s" % _keys(map, column))
 		done(false)
 		return
@@ -92,12 +100,22 @@ func run() -> void:
 
 	step("vertical-removed")
 	if not map._bridges.erase_cells(vrest) or not _is_deck(map, vfirst, false, false):
-		printerr("bridge_joins: vertical removed pieces %s erase failed or deck changed" % _keys(map, vfirst))
+		printerr(
+			(
+				"bridge_joins: vertical removed pieces %s erase failed or deck changed"
+				% _keys(map, vfirst)
+			)
+		)
 		done(false)
 		return
 	for c in vrest:
 		if map.has_bridge(c) or not map.is_open_sea(c):
-			printerr("bridge_joins: vertical removed %s stayed %s bridge %s" % [c, map.get_cell_atlas_coords(0, c), map.has_bridge(c)])
+			printerr(
+				(
+					"bridge_joins: vertical removed %s stayed %s bridge %s"
+					% [c, map.get_cell_atlas_coords(0, c), map.has_bridge(c)]
+				)
+			)
 			done(false)
 			return
 	print("bridge_joins: vertical removed %s" % _keys(map, vfirst))
@@ -105,7 +123,10 @@ func run() -> void:
 	await snapshot("vertical-removed")
 
 	step("vertical-rejoined")
-	if not map.build_bridge(vrest[0], vrest[vrest.size() - 1]) or not _is_deck(map, column, false, v_land_after):
+	if (
+		not map.build_bridge(vrest[0], vrest[vrest.size() - 1])
+		or not _is_deck(map, column, false, v_land_after)
+	):
 		printerr("bridge_joins: vertical rejoined pieces %s" % _keys(map, column))
 		done(false)
 		return
@@ -135,11 +156,25 @@ func settle(timeout_s: float = 5.0) -> bool:
 
 
 func _beside_row() -> Array:
-	return [Vector2i(0, -2), Vector2i(0, -3), Vector2i(0, 2), Vector2i(0, 3), Vector2i(-3, -2), Vector2i(3, -2)]
+	return [
+		Vector2i(0, -2),
+		Vector2i(0, -3),
+		Vector2i(0, 2),
+		Vector2i(0, 3),
+		Vector2i(-3, -2),
+		Vector2i(3, -2)
+	]
 
 
 func _beside_column() -> Array:
-	return [Vector2i(2, 0), Vector2i(3, 0), Vector2i(-2, 0), Vector2i(-3, 0), Vector2i(2, -2), Vector2i(-2, 2)]
+	return [
+		Vector2i(2, 0),
+		Vector2i(3, 0),
+		Vector2i(-2, 0),
+		Vector2i(-3, 0),
+		Vector2i(2, -2),
+		Vector2i(-2, 2)
+	]
 
 
 func _look(map: TileMap, cell: Vector2i, deltas: Array) -> void:
@@ -182,8 +217,11 @@ func _search_gap(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2i]:
 			if blocked.has(w):
 				hits_avoid = true
 				break
-			if not map.is_drawn(w) or map.predict_cell(w)[0] != TileCatalog.WATER \
-					or map.has_bridge(w):
+			if (
+				not map.is_drawn(w)
+				or map.predict_cell(w)[0] != TileCatalog.WATER
+				or map.has_bridge(w)
+			):
 				break
 			run.append(w)
 		if hits_avoid or run.size() < 4 or not _land(map, cell + step * (run.size() + 1)):
@@ -223,8 +261,12 @@ func _search_column(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2
 		var stopped := false
 		for i in range(1, 9):
 			var w: Vector2i = cell + step * i
-			if blocked.has(w) or not map.is_drawn(w) \
-					or map.predict_cell(w)[0] != TileCatalog.WATER or map.has_bridge(w):
+			if (
+				blocked.has(w)
+				or not map.is_drawn(w)
+				or map.predict_cell(w)[0] != TileCatalog.WATER
+				or map.has_bridge(w)
+			):
 				stopped = true
 				break
 			run.append(w)
@@ -234,7 +276,11 @@ func _search_column(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2
 		if not map.is_drawn(far) or blocked.has(far) or (stopped and blocked.has(far)):
 			continue
 		var landed := _land(map, far)
-		if best.is_empty() or (landed and not best_landed) or (landed == best_landed and run.size() < best.size()):
+		if (
+			best.is_empty()
+			or (landed and not best_landed)
+			or (landed == best_landed and run.size() < best.size())
+		):
 			best = run
 			best_landed = landed
 			if best_landed and best.size() == 4:
@@ -243,8 +289,11 @@ func _search_column(map: TileMap, step: Vector2i, avoid: Array) -> Array[Vector2
 
 
 func _land(map: TileMap, cell: Vector2i) -> bool:
-	return map.is_drawn(cell) and not map.has_bridge(cell) \
-			and map.ground_is_walkable(map.predict_cell(cell)[0])
+	return (
+		map.is_drawn(cell)
+		and not map.has_bridge(cell)
+		and map.ground_is_walkable(map.predict_cell(cell)[0])
+	)
 
 
 func _is_deck(map: TileMap, cells: Array[Vector2i], horizontal: bool, land_after: bool) -> bool:
@@ -282,7 +331,10 @@ func _key(map: TileMap, cell: Vector2i) -> String:
 		return ""
 	var atlas: Vector2i = map.get_cell_atlas_coords(0, cell)
 	for tile_name: String in TileCatalog.TILES:
-		if tile_name.begins_with("BRIDGE_PLANK_") and TileCatalog.TILES[tile_name]["atlas"] == atlas:
+		if (
+			tile_name.begins_with("BRIDGE_PLANK_")
+			and TileCatalog.TILES[tile_name]["atlas"] == atlas
+		):
 			var key := tile_name.trim_prefix("BRIDGE_PLANK_")
 			return key.trim_suffix("_WATER")
 	return ""

@@ -2,8 +2,16 @@ class_name SoldierRequests
 extends Node2D
 ## Host pipeline for barracks soldier training and follow/hold (#553).
 
-const NEIGHBOR_CLOCK := [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1),
-		Vector2i(1, 1), Vector2i(-1, 1), Vector2i(-1, -1), Vector2i(1, -1)]
+const NEIGHBOR_CLOCK := [
+	Vector2i(1, 0),
+	Vector2i(0, 1),
+	Vector2i(-1, 0),
+	Vector2i(0, -1),
+	Vector2i(1, 1),
+	Vector2i(-1, 1),
+	Vector2i(-1, -1),
+	Vector2i(1, -1)
+]
 
 var _jobs: Array[Dictionary] = []
 var _next_index := {}
@@ -141,14 +149,22 @@ func _spawn_job(job: Dictionary) -> void:
 	var index := int(_next_index.get(peer_id, 0))
 	_next_index[peer_id] = index + 1
 	var node_name := "soldier_%d_%d" % [peer_id, index]
-	spawner.spawn(_spawn_dict(node_name, {
-		"pos": pos,
-		"owner": peer_id,
-		"order": "follow",
-		"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
-		"barracks_anchor": anchor,
-		"seed": hash(Vector2i(peer_id, index)),
-	}))
+	(
+		spawner
+		. spawn(
+			_spawn_dict(
+				node_name,
+				{
+					"pos": pos,
+					"owner": peer_id,
+					"order": "follow",
+					"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
+					"barracks_anchor": anchor,
+					"seed": hash(Vector2i(peer_id, index)),
+				}
+			)
+		)
+	)
 
 
 static func spawn_cell(map: TileMap, anchor: Vector2i, rotation: int) -> Vector2:
@@ -207,8 +223,11 @@ func _barracks_entry(peer_id: int, anchor: Vector2i) -> Dictionary:
 	if map == null:
 		return {}
 	for entry in map.placed_structures().values():
-		if str(entry.get("name")) == "barracks" and int(entry.get("owner")) == peer_id \
-				and entry.get("anchor", Vector2i.ZERO) == anchor:
+		if (
+			str(entry.get("name")) == "barracks"
+			and int(entry.get("owner")) == peer_id
+			and entry.get("anchor", Vector2i.ZERO) == anchor
+		):
 			return entry
 	return {}
 
@@ -234,8 +253,12 @@ func _in_reach(body: Node2D, map: TileMap, entry: Dictionary) -> bool:
 func _slots_used(peer_id: int, anchor: Vector2i) -> int:
 	var count := 0
 	for child in get_children():
-		if child is Soldier and child.owner_peer == peer_id and child.barracks_anchor == anchor \
-				and child.state != Soldier.State.DYING:
+		if (
+			child is Soldier
+			and child.owner_peer == peer_id
+			and child.barracks_anchor == anchor
+			and child.state != Soldier.State.DYING
+		):
 			count += 1
 	for job in _jobs:
 		if int(job["peer_id"]) == peer_id and job["anchor"] == anchor:

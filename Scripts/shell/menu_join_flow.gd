@@ -1,7 +1,6 @@
 extends RefCounted
 ## Handles menu transitions for hosting, joining and connection feedback.
 
-
 const JoinAddress = preload("res://Scripts/net/join_address.gd")
 
 
@@ -20,7 +19,8 @@ static func _on_host_button_pressed(menu: PanelContainer):
 	if not map_gen.has_loaded_world():
 		var menu_script: GDScript = load("res://Scripts/shell/ingame_menu.gd")
 		game.save_name = menu_script.unused_save_name(
-				menu_script.auto_save_name(Time.get_datetime_dict_from_system()))
+			menu_script.auto_save_name(Time.get_datetime_dict_from_system())
+		)
 	menu._begin_host()
 
 

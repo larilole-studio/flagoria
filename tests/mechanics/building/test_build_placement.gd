@@ -10,14 +10,22 @@ func _test_build_placement_snap_run() -> int:
 	var fail := 0
 	var horiz := BuildPlacement.snap_run(Vector2i(3, 5), Vector2i(7, 8))
 	var want_h: Array[Vector2i] = [
-		Vector2i(3, 5), Vector2i(4, 5), Vector2i(5, 5), Vector2i(6, 5), Vector2i(7, 5),
+		Vector2i(3, 5),
+		Vector2i(4, 5),
+		Vector2i(5, 5),
+		Vector2i(6, 5),
+		Vector2i(7, 5),
 	]
 	if horiz != want_h:
 		printerr("FAIL build_placement_snap_run: diagonal->H got %s" % [horiz])
 		fail += 1
 	var vert := BuildPlacement.snap_run(Vector2i(3, 5), Vector2i(4, 9))
 	var want_v: Array[Vector2i] = [
-		Vector2i(3, 5), Vector2i(3, 6), Vector2i(3, 7), Vector2i(3, 8), Vector2i(3, 9),
+		Vector2i(3, 5),
+		Vector2i(3, 6),
+		Vector2i(3, 7),
+		Vector2i(3, 8),
+		Vector2i(3, 9),
 	]
 	if vert != want_v:
 		printerr("FAIL build_placement_snap_run: diagonal->V got %s" % [vert])
@@ -48,8 +56,12 @@ func _test_build_picker_switches_tool() -> int:
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
 	if picker == null or picker.get_child_count() != 6 or not picker.visible:
-		printerr("FAIL build_picker_switches_tool: picker %s children %s"
-				% [picker, picker.get_child_count() if picker else null])
+		printerr(
+			(
+				"FAIL build_picker_switches_tool: picker %s children %s"
+				% [picker, picker.get_child_count() if picker else null]
+			)
+		)
 		fail += 1
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	await process_frame
@@ -121,8 +133,12 @@ func _boot_interact_scene(world_seed_finder: bool = true, shore_minimum: int = 2
 	interaction.bind(player)
 	await process_frame
 	return {
-		"scene": scene, "world": world, "interaction": interaction,
-		"inventory": inventory, "player": player, "found": found,
+		"scene": scene,
+		"world": world,
+		"interaction": interaction,
+		"inventory": inventory,
+		"player": player,
+		"found": found,
 	}
 
 
@@ -154,33 +170,55 @@ func _test_build_plank_preview_tint_and_cost() -> int:
 	var end := _cell_vp(interaction, world, water_run[water_run.size() - 1])
 	interaction.build.update_preview(start, end)
 	if interaction.build.cells != water_run:
-		printerr("FAIL build_plank_preview_tint_and_cost: cells %s want %s"
-				% [interaction.build.cells, water_run])
+		printerr(
+			(
+				"FAIL build_plank_preview_tint_and_cost: cells %s want %s"
+				% [interaction.build.cells, water_run]
+			)
+		)
 		fail += 1
-	if interaction.build.cell_ok.size() != water_run.size() \
-			or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok):
+	if (
+		interaction.build.cell_ok.size() != water_run.size()
+		or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+	):
 		printerr("FAIL build_plank_preview_tint_and_cost: cell_ok %s" % [interaction.build.cell_ok])
 		fail += 1
 	var want_cost := ConstructionPlacer.new(world).cost(BuildCosts.PLANK, water_run)
 	if interaction.build.cost != want_cost or not interaction.build.reasons.is_empty():
-		printerr("FAIL build_plank_preview_tint_and_cost: cost %d want %d, reasons %s"
-				% [interaction.build.cost, want_cost, interaction.build.reasons])
+		printerr(
+			(
+				"FAIL build_plank_preview_tint_and_cost: cost %d want %d, reasons %s"
+				% [interaction.build.cost, want_cost, interaction.build.reasons]
+			)
+		)
 		fail += 1
 	# Land cell is invalid (red).
 	var shore: Vector2i = found["shore"]
-	interaction.build.update_preview(_cell_vp(interaction, world, shore), _cell_vp(interaction, world, shore))
+	interaction.build.update_preview(
+		_cell_vp(interaction, world, shore), _cell_vp(interaction, world, shore)
+	)
 	if interaction.build.cell_ok.is_empty() or interaction.build.cell_ok[0]:
-		printerr("FAIL build_plank_preview_tint_and_cost: land should be red, ok=%s reasons=%s"
-				% [interaction.build.cell_ok, interaction.build.reasons])
+		printerr(
+			(
+				"FAIL build_plank_preview_tint_and_cost: land should be red, ok=%s reasons=%s"
+				% [interaction.build.cell_ok, interaction.build.reasons]
+			)
+		)
 		fail += 1
 	# Zero wood on a water run: nothing placeable, all red, refusal shown.
 	inventory.spend(Inventory.WOOD, inventory.count_of(Inventory.WOOD))
 	interaction.build.update_preview(start, end)
-	if interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok) \
-			or ConstructionPlacer.NOT_ENOUGH_WOOD not in interaction.build.reasons \
-			or interaction.build.cost != 0:
-		printerr("FAIL build_plank_preview_tint_and_cost: zero wood ok=%s cost=%d reasons=%s"
-				% [interaction.build.cell_ok, interaction.build.cost, interaction.build.reasons])
+	if (
+		interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok)
+		or ConstructionPlacer.NOT_ENOUGH_WOOD not in interaction.build.reasons
+		or interaction.build.cost != 0
+	):
+		printerr(
+			(
+				"FAIL build_plank_preview_tint_and_cost: zero wood ok=%s cost=%d reasons=%s"
+				% [interaction.build.cell_ok, interaction.build.cost, interaction.build.reasons]
+			)
+		)
 		fail += 1
 	ctx["scene"].queue_free()
 	await process_frame
@@ -227,12 +265,25 @@ func _test_build_cut_mode_unchanged() -> int:
 		e.pressed = pressed
 		vp.push_input(e, true)
 	var want_wood := inventory.count_of(Inventory.WOOD)
-	_chop_toward(vp, interaction, player, scene.get_node("CanvasLayer1/TouchScreenButton"), world.to_global(world.map_to_local(Vector2i(10, 6))))
+	_chop_toward(
+		vp,
+		interaction,
+		player,
+		scene.get_node("CanvasLayer1/TouchScreenButton"),
+		world.to_global(world.map_to_local(Vector2i(10, 6)))
+	)
 	interaction.step_chop(1.0)
 	var tree_wood := InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD)
-	if world.has_tree(Vector2i(10, 6)) or inventory.count_of(Inventory.WOOD) != want_wood + tree_wood:
-		printerr("FAIL build_cut_mode_unchanged: tap did not cut (10, 6); wood %d"
-				% inventory.count_of(Inventory.WOOD))
+	if (
+		world.has_tree(Vector2i(10, 6))
+		or inventory.count_of(Inventory.WOOD) != want_wood + tree_wood
+	):
+		printerr(
+			(
+				"FAIL build_cut_mode_unchanged: tap did not cut (10, 6); wood %d"
+				% inventory.count_of(Inventory.WOOD)
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -284,17 +335,26 @@ func _test_build_plank_drag_places() -> int:
 	await process_frame
 	var placed := water_run.filter(func(c: Vector2i) -> bool: return world.has_bridge(c))
 	if placed != water_run.slice(0, 10):
-		printerr("FAIL build_plank_drag_places: expected the first 10 cells placed, got %s" % [placed])
+		printerr(
+			"FAIL build_plank_drag_places: expected the first 10 cells placed, got %s" % [placed]
+		)
 		fail += 1
 	var player: Node2D = ctx["player"]
-	if not placed.any(func(c: Vector2i) -> bool:
-		return player.global_position.distance_to(interaction.cell_center(c)) > Interaction.REACH
+	if not placed.any(
+		func(c: Vector2i) -> bool:
+			return (
+				player.global_position.distance_to(interaction.cell_center(c)) > Interaction.REACH
+			)
 	):
 		printerr("FAIL build_plank_drag_places: no placed cell beyond normal reach")
 		fail += 1
 	if inventory.count_of(Inventory.WOOD) != before - 10:
-		printerr("FAIL build_plank_drag_places: wood %d -> %d"
-				% [before, inventory.count_of(Inventory.WOOD)])
+		printerr(
+			(
+				"FAIL build_plank_drag_places: wood %d -> %d"
+				% [before, inventory.count_of(Inventory.WOOD)]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -308,7 +368,10 @@ func _shore_run_min(world, want: int) -> Dictionary:
 	var land := func(c: Vector2i) -> bool:
 		return not world.has_bridge(c) and world.ground_is_walkable(world.predict_cell(c)[0])
 	var dirs: Array[Vector2i] = [
-		Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+		Vector2i(1, 0),
+		Vector2i(-1, 0),
+		Vector2i(0, 1),
+		Vector2i(0, -1),
 	]
 	for s in range(1, 120):
 		world.apply_map_params(_spawn_params(s, 0.0))
@@ -348,8 +411,12 @@ func _boot_shore_min(want: int) -> Dictionary:
 	interaction.bind(player)
 	await process_frame
 	return {
-		"scene": scene, "world": world, "interaction": interaction,
-		"inventory": inventory, "player": player, "found": found,
+		"scene": scene,
+		"world": world,
+		"interaction": interaction,
+		"inventory": inventory,
+		"player": player,
+		"found": found,
 	}
 
 
@@ -387,8 +454,12 @@ func _test_build_preview_matches_commit_short_wood() -> int:
 	var green := _preview_green(interaction.build)
 	var preview_cost := interaction.build.cost
 	if green != [drag[0]] or preview_cost != 1 or not interaction.build.reasons.is_empty():
-		printerr("FAIL preview_matches_commit_short_wood: green %s cost %d reasons %s cell_ok %s"
-				% [green, preview_cost, interaction.build.reasons, interaction.build.cell_ok])
+		printerr(
+			(
+				"FAIL preview_matches_commit_short_wood: green %s cost %d reasons %s cell_ok %s"
+				% [green, preview_cost, interaction.build.reasons, interaction.build.cell_ok]
+			)
+		)
 		fail += 1
 	var before := inventory.count_of(Inventory.WOOD)
 	if not interaction.build.commit():
@@ -399,12 +470,17 @@ func _test_build_preview_matches_commit_short_wood() -> int:
 		if world.has_bridge(cell):
 			placed.append(cell)
 	if placed != green:
-		printerr("FAIL preview_matches_commit_short_wood: placed %s want green %s"
-				% [placed, green])
+		printerr(
+			"FAIL preview_matches_commit_short_wood: placed %s want green %s" % [placed, green]
+		)
 		fail += 1
 	if inventory.count_of(Inventory.WOOD) != before - preview_cost:
-		printerr("FAIL preview_matches_commit_short_wood: wood %d -> %d (cost %d)"
-				% [before, inventory.count_of(Inventory.WOOD), preview_cost])
+		printerr(
+			(
+				"FAIL preview_matches_commit_short_wood: wood %d -> %d (cost %d)"
+				% [before, inventory.count_of(Inventory.WOOD), preview_cost]
+			)
+		)
 		fail += 1
 	ctx["scene"].queue_free()
 	await process_frame
@@ -443,10 +519,17 @@ func _test_build_preview_matches_commit_mid_invalid() -> int:
 	var green := _preview_green(interaction.build)
 	var preview_cost := interaction.build.cost
 	var want_green: Array[Vector2i] = [drag[0], drag[1]]
-	if green != want_green or preview_cost != want_green.size() \
-			or not interaction.build.reasons.is_empty():
-		printerr("FAIL preview_matches_commit_mid_invalid: green %s cost %d reasons %s cell_ok %s"
-				% [green, preview_cost, interaction.build.reasons, interaction.build.cell_ok])
+	if (
+		green != want_green
+		or preview_cost != want_green.size()
+		or not interaction.build.reasons.is_empty()
+	):
+		printerr(
+			(
+				"FAIL preview_matches_commit_mid_invalid: green %s cost %d reasons %s cell_ok %s"
+				% [green, preview_cost, interaction.build.reasons, interaction.build.cell_ok]
+			)
+		)
 		fail += 1
 	for i in range(2, drag.size()):
 		if i < interaction.build.cell_ok.size() and interaction.build.cell_ok[i]:
@@ -461,12 +544,17 @@ func _test_build_preview_matches_commit_mid_invalid() -> int:
 		if world.has_bridge(cell):
 			placed_now.append(cell)
 	if placed_now != green:
-		printerr("FAIL preview_matches_commit_mid_invalid: placed %s want green %s"
-				% [placed_now, green])
+		printerr(
+			"FAIL preview_matches_commit_mid_invalid: placed %s want green %s" % [placed_now, green]
+		)
 		fail += 1
 	if inventory.count_of(Inventory.WOOD) != before - preview_cost:
-		printerr("FAIL preview_matches_commit_mid_invalid: wood %d -> %d (cost %d)"
-				% [before, inventory.count_of(Inventory.WOOD), preview_cost])
+		printerr(
+			(
+				"FAIL preview_matches_commit_mid_invalid: wood %d -> %d (cost %d)"
+				% [before, inventory.count_of(Inventory.WOOD), preview_cost]
+			)
+		)
 		fail += 1
 	ctx["scene"].queue_free()
 	await process_frame
@@ -498,19 +586,31 @@ func _test_build_preview_cache_invalidates_on_wood() -> int:
 	var start := _cell_vp(interaction, world, water_run[0])
 	var end := _cell_vp(interaction, world, water_run[water_run.size() - 1])
 	interaction.build.update_preview(start, end)
-	if interaction.build.cell_ok.is_empty() \
-			or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok):
-		printerr("FAIL preview_cache_invalidates_on_wood: expected green before spend, ok=%s"
-				% [interaction.build.cell_ok])
+	if (
+		interaction.build.cell_ok.is_empty()
+		or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+	):
+		printerr(
+			(
+				"FAIL preview_cache_invalidates_on_wood: expected green before spend, ok=%s"
+				% [interaction.build.cell_ok]
+			)
+		)
 		fail += 1
 	inventory.spend(Inventory.WOOD, inventory.count_of(Inventory.WOOD))
 	# Same cells as the green preview — must not skip.
 	interaction.build.update_preview(start, end)
-	if interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok) \
-			or ConstructionPlacer.NOT_ENOUGH_WOOD not in interaction.build.reasons \
-			or interaction.build.cost != 0:
-		printerr("FAIL preview_cache_invalidates_on_wood: after zero wood ok=%s cost=%d reasons=%s"
-				% [interaction.build.cell_ok, interaction.build.cost, interaction.build.reasons])
+	if (
+		interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok)
+		or ConstructionPlacer.NOT_ENOUGH_WOOD not in interaction.build.reasons
+		or interaction.build.cost != 0
+	):
+		printerr(
+			(
+				"FAIL preview_cache_invalidates_on_wood: after zero wood ok=%s cost=%d reasons=%s"
+				% [interaction.build.cell_ok, interaction.build.cost, interaction.build.reasons]
+			)
+		)
 		fail += 1
 	ctx["scene"].queue_free()
 	await process_frame
@@ -533,9 +633,12 @@ func _test_build_picker_buttons() -> int:
 	var buildings: Button = hud.get_node("BuildingsButton")
 	var picker: Control = hud.get_node("BuildPicker")
 	var tools := {
-		"PlankButton": BuildPlacement.Tool.PLANK, "TowerButton": BuildPlacement.Tool.TOWER,
-		"CastleButton": BuildPlacement.Tool.CASTLE, "GuardButton": BuildPlacement.Tool.GUARD,
-		"BarracksButton": BuildPlacement.Tool.BARRACKS, "WallButton": BuildPlacement.Tool.WALL,
+		"PlankButton": BuildPlacement.Tool.PLANK,
+		"TowerButton": BuildPlacement.Tool.TOWER,
+		"CastleButton": BuildPlacement.Tool.CASTLE,
+		"GuardButton": BuildPlacement.Tool.GUARD,
+		"BarracksButton": BuildPlacement.Tool.BARRACKS,
+		"WallButton": BuildPlacement.Tool.WALL,
 	}
 	var peer := ENetMultiplayerPeer.new()
 	var api := SceneMultiplayer.new()
@@ -566,13 +669,17 @@ func _test_build_picker_buttons() -> int:
 	return fail
 
 
-func _check_picker_buttons(buildings: Button, picker: Control, build: BuildPlacement, tools: Dictionary, online: bool) -> int:
+func _check_picker_buttons(
+	buildings: Button, picker: Control, build: BuildPlacement, tools: Dictionary, online: bool
+) -> int:
 	var fail := 0
 	buildings.button_pressed = true
 	for button_name in tools:
 		var button := picker.get_node_or_null(button_name) as Button
 		if button == null or not button.is_visible_in_tree() or button.disabled:
-			printerr("FAIL build_picker_buttons: %s unavailable (multiplayer=%s)" % [button_name, online])
+			printerr(
+				"FAIL build_picker_buttons: %s unavailable (multiplayer=%s)" % [button_name, online]
+			)
 			fail += 1
 	for button_name in tools:
 		buildings.button_pressed = true
@@ -581,6 +688,11 @@ func _check_picker_buttons(buildings: Button, picker: Control, build: BuildPlace
 			continue
 		button.pressed.emit()
 		if build.tool != tools[button_name] or not build.tracks_pointer():
-			printerr("FAIL build_picker_buttons: %s did not select its tool (multiplayer=%s)" % [button_name, online])
+			printerr(
+				(
+					"FAIL build_picker_buttons: %s did not select its tool (multiplayer=%s)"
+					% [button_name, online]
+				)
+			)
 			fail += 1
 	return fail

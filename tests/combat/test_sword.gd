@@ -28,13 +28,20 @@ func _test_sword_only_hits_mid_swing() -> int:
 	# Idle swords overlapping the other player's hurt box: no damage either way.
 	await settle.call()
 	if a.health.health != 6 or b.health.health != 6:
-		printerr("FAIL sword_mid_swing idle overlap hurt: a %s, b %s" % [a.health.health, b.health.health])
+		printerr(
+			(
+				"FAIL sword_mid_swing idle overlap hurt: a %s, b %s"
+				% [a.health.health, b.health.health]
+			)
+		)
 		fail += 1
 	# A swing still hits the player standing there, once.
 	a.attack_animation()
 	await settle.call()
 	if b.health.health != 5 or a.health.health != 6:
-		printerr("FAIL sword_mid_swing swing: b %s (want 5), a %s" % [b.health.health, a.health.health])
+		printerr(
+			"FAIL sword_mid_swing swing: b %s (want 5), a %s" % [b.health.health, a.health.health]
+		)
 		fail += 1
 	var until := Time.get_ticks_msec() + 3000
 	while a.isAttacking and Time.get_ticks_msec() < until:
@@ -54,7 +61,12 @@ func _test_sword_only_hits_mid_swing() -> int:
 	await settle.call()
 	var hit_alive: KinematicCollision2D = b.move_and_collide(Vector2(-24, 0), true)
 	if hit_alive == null or hit_alive.get_collider() != a:
-		printerr("FAIL sword_mid_swing live body did not block (%s)" % [hit_alive.get_collider() if hit_alive else null])
+		printerr(
+			(
+				"FAIL sword_mid_swing live body did not block (%s)"
+				% [hit_alive.get_collider() if hit_alive else null]
+			)
+		)
 		fail += 1
 	a.health.take_damage(6)
 	await settle.call()
@@ -78,9 +90,18 @@ func _test_sword_only_hits_mid_swing() -> int:
 	a.health.advance(a.health.respawn_delay + 0.01)
 	await settle.call()
 	var next_to: float = a.position.distance_to(spawn)
-	if a.health.is_dead() or next_to < world.get_node("worldMap").SPAWN_CLEARANCE \
-			or next_to > world.get_node("worldMap").SPAWN_RADIUS or b.health.health != 6:
-		printerr("FAIL sword_mid_swing respawn hit: b %s, a at %s (spawn %s)" % [b.health.health, a.position, spawn])
+	if (
+		a.health.is_dead()
+		or next_to < world.get_node("worldMap").SPAWN_CLEARANCE
+		or next_to > world.get_node("worldMap").SPAWN_RADIUS
+		or b.health.health != 6
+	):
+		printerr(
+			(
+				"FAIL sword_mid_swing respawn hit: b %s, a at %s (spawn %s)"
+				% [b.health.health, a.position, spawn]
+			)
+		)
 		fail += 1
 	if a.body_shape.disabled:
 		printerr("FAIL sword_mid_swing body collision still off after respawn")

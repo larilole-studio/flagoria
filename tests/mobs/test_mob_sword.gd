@@ -49,7 +49,9 @@ func _test_mob_sword() -> int:
 		_sword_on(player, mob)
 		await physics_frame
 	if mob.hp != 1 or not saw_hurt:
-		printerr("FAIL mob_sword %s after one swing: hp %s, hurt shown %s" % [label, mob.hp, saw_hurt])
+		printerr(
+			"FAIL mob_sword %s after one swing: hp %s, hurt shown %s" % [label, mob.hp, saw_hurt]
+		)
 		fail += 1
 	if mob.state == Mob.State.HURT:
 		printerr("FAIL mob_sword %s stayed hurt past HURT_TIME" % label)
@@ -67,10 +69,20 @@ func _test_mob_sword() -> int:
 		saw_dying = saw_dying or mob.state == Mob.State.DYING
 		saw_puff = saw_puff or (mob.puff.visible and not mob.sprite.visible)
 	if is_instance_valid(mob):
-		printerr("FAIL mob_sword %s not freed after the last hit (hp %s, state %s)" % [label, mob.hp, mob.state])
+		printerr(
+			(
+				"FAIL mob_sword %s not freed after the last hit (hp %s, state %s)"
+				% [label, mob.hp, mob.state]
+			)
+		)
 		fail += 1
 	elif not saw_dying or not saw_puff:
-		printerr("FAIL mob_sword %s died without the hurt row and puff (%s, %s)" % [label, saw_dying, saw_puff])
+		printerr(
+			(
+				"FAIL mob_sword %s died without the hurt row and puff (%s, %s)"
+				% [label, saw_dying, saw_puff]
+			)
+		)
 		fail += 1
 	if fail == 0:
 		print("PASS test_mob_sword (%s)" % label)
@@ -98,14 +110,23 @@ func _test_mob_sword_two_players() -> int:
 	if port == 0:
 		printerr("FAIL mob_sword_two_players found no free UDP port")
 		return 1
-	var saved := MapSave.save_map(_spawn_params(MOB_SWORD_SEED, 0.003), "test_mob_sword_two_players")
+	var saved := MapSave.save_map(
+		_spawn_params(MOB_SWORD_SEED, 0.003), "test_mob_sword_two_players"
+	)
 	if saved["error"] != "":
 		printerr("FAIL mob_sword_two_players could not save the map: %s" % saved["error"])
 		return 1
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server", "--port=%d" % port,
-				"--params=" + ProjectSettings.globalize_path(saved["path"])]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--",
+			"--server",
+			"--port=%d" % port,
+			"--params=" + ProjectSettings.globalize_path(saved["path"])
+		]
 	)
 	if pid <= 0:
 		printerr("FAIL mob_sword_two_players could not start the server process")
@@ -115,9 +136,10 @@ func _test_mob_sword_two_players() -> int:
 	var mobs_node: MobSpawner = scene.get_node("World/Mobs")
 	var kills: Array = []  # [peer, amount] of each mob_kill award seen on the client
 	scene.get_node("Points").total_changed.connect(
-			func(peer_id: int, _total: int, amount: int, reason: String) -> void:
-				if reason == "mob_kill":
-					kills.append([peer_id, amount]))
+		func(peer_id: int, _total: int, amount: int, reason: String) -> void:
+			if reason == "mob_kill":
+				kills.append([peer_id, amount])
+	)
 	scene.add_player_joined(port)
 	var fail := 0
 	var player: Node2D = null
@@ -156,8 +178,12 @@ func _test_mob_sword_two_players() -> int:
 		printerr("FAIL mob_sword_two_players no player or mobs on the client")
 		fail += 1
 	elif gap < isolated:
-		printerr("FAIL mob_sword_two_players seed %s: the most isolated mob %s is %s px from another, want %s; pin another seed"
-				% [MOB_SWORD_SEED, label, gap, isolated])
+		printerr(
+			(
+				"FAIL mob_sword_two_players seed %s: the most isolated mob %s is %s px from another, want %s; pin another seed"
+				% [MOB_SWORD_SEED, label, gap, isolated]
+			)
+		)
 		fail += 1
 	else:
 		var seen := {}
@@ -171,10 +197,17 @@ func _test_mob_sword_two_players() -> int:
 				next_swing = Time.get_ticks_msec() + 600
 			await process_frame
 		if is_instance_valid(mob):
-			printerr("FAIL mob_sword_two_players %s still alive on the client (state %s)" % [label, mob.state])
+			printerr(
+				(
+					"FAIL mob_sword_two_players %s still alive on the client (state %s)"
+					% [label, mob.state]
+				)
+			)
 			fail += 1
 		elif not seen.has(Mob.State.HURT) or not seen.has(Mob.State.DYING):
-			printerr("FAIL mob_sword_two_players %s states seen on the client: %s" % [label, seen.keys()])
+			printerr(
+				"FAIL mob_sword_two_players %s states seen on the client: %s" % [label, seen.keys()]
+			)
 			fail += 1
 		var want := [[scene.multiplayer.get_unique_id(), Points.MOB_KILL_POINTS[mob_type]]]
 		deadline = Time.get_ticks_msec() + 3000
@@ -183,7 +216,12 @@ func _test_mob_sword_two_players() -> int:
 		for i in 30:  # a second award would arrive with these frames
 			await process_frame
 		if kills != want:
-			printerr("FAIL mob_sword_two_players %s kill awards on the client %s, want %s" % [label, kills, want])
+			printerr(
+				(
+					"FAIL mob_sword_two_players %s kill awards on the client %s, want %s"
+					% [label, kills, want]
+				)
+			)
 			fail += 1
 	OS.kill(pid)
 	DirAccess.remove_absolute(saved["path"])
@@ -191,7 +229,9 @@ func _test_mob_sword_two_players() -> int:
 	scene.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	scene.queue_free()
 	if fail == 0:
-		print("PASS test_mob_sword_two_players (%s, %s px from the next mob)" % [label, roundi(gap)])
+		print(
+			"PASS test_mob_sword_two_players (%s, %s px from the next mob)" % [label, roundi(gap)]
+		)
 	return fail
 
 
@@ -222,8 +262,16 @@ func _test_mob_sword_two_attackers() -> int:
 	var shape: CollisionShape2D = a.get_node("CollisionShape2D")
 	var size: Vector2 = shape.shape.size
 	var want := Rect2(a.position + shape.position - size * 0.5, size)
-	if Mob.player_box(a) != want or Mob.player_box(_contact_player(scene.get_node("World"))).size != size:
-		printerr("FAIL mob_sword_two_attackers player box %s, want %s from the scene" % [Mob.player_box(a), want])
+	if (
+		Mob.player_box(a) != want
+		or Mob.player_box(_contact_player(scene.get_node("World"))).size != size
+	):
+		printerr(
+			(
+				"FAIL mob_sword_two_attackers player box %s, want %s from the scene"
+				% [Mob.player_box(a), want]
+			)
+		)
 		fail += 1
 	var mob: Mob = null
 	for m in scene.get_node("World/Mobs").mobs():
@@ -249,7 +297,12 @@ func _test_mob_sword_two_attackers() -> int:
 	swing.call(a, false)
 	a.position = mob.position + Vector2(200, 0)
 	if mob.hp != 1 or mob.state != Mob.State.HURT:
-		printerr("FAIL mob_sword_two_attackers %s first swing: hp %s, state %s" % [label, mob.hp, mob.state])
+		printerr(
+			(
+				"FAIL mob_sword_two_attackers %s first swing: hp %s, state %s"
+				% [label, mob.hp, mob.state]
+			)
+		)
 		fail += 1
 	# b swings into the hurt window and holds past its end: one hit, after the window.
 	swing.call(b, true)
@@ -260,8 +313,12 @@ func _test_mob_sword_two_attackers() -> int:
 		await physics_frame
 	swing.call(b, false)
 	if not is_instance_valid(mob) or mob.hp != 0 or mob.state != Mob.State.DYING:
-		printerr("FAIL mob_sword_two_attackers %s second player's swing was used up in the hurt window (hp %s)"
-				% [label, mob.hp if is_instance_valid(mob) else "freed"])
+		printerr(
+			(
+				"FAIL mob_sword_two_attackers %s second player's swing was used up in the hurt window (hp %s)"
+				% [label, mob.hp if is_instance_valid(mob) else "freed"]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame

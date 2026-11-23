@@ -9,14 +9,22 @@ func _test_main_menu_input_no_log_spam() -> int:
 	## in-process. --quit-after bounds the run.
 	print("-- test_main_menu_input_no_log_spam")
 	var output := []
-	var code := OS.execute(
-		OS.get_executable_path(),
-		[
-			"--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--quit-after", "600", "--script", "res://tests/menu_input_probe.gd",
-		],
-		output,
-		true
+	var code := (
+		OS
+		. execute(
+			OS.get_executable_path(),
+			[
+				"--headless",
+				"--path",
+				ProjectSettings.globalize_path("res://"),
+				"--quit-after",
+				"600",
+				"--script",
+				"res://tests/menu_input_probe.gd",
+			],
+			output,
+			true
+		)
 	)
 	var log_text: String = "".join(output)
 	var fail := 0

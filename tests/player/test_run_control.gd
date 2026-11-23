@@ -24,8 +24,11 @@ func _test_run_control() -> int:
 	var run_button = scene.get_node("CanvasLayer1/RunButton")
 	var run_rect: Rect2 = run_button.get_global_rect()
 	var zoom = body.get_node("Camera2D/MapZoom")
-	if not _run_icon_ok(run_button) or run_button.button_pressed \
-			or not zoom.starts_on_hud(run_rect.get_center()):
+	if (
+		not _run_icon_ok(run_button)
+		or run_button.button_pressed
+		or not zoom.starts_on_hud(run_rect.get_center())
+	):
 		printerr("FAIL run_control button initial appearance or HUD input at %s" % run_rect)
 		fail += 1
 	if not body.is_multiplayer_authority():
@@ -45,7 +48,12 @@ func _test_run_control() -> int:
 	for _i in RunControl.TAP_FRAMES + 4:
 		await process_frame
 	if not run_button.button_pressed or not _run_on(run_button):
-		printerr("FAIL run_control hold did not show the on face (pressed %s)" % run_button.button_pressed)
+		printerr(
+			(
+				"FAIL run_control hold did not show the on face (pressed %s)"
+				% run_button.button_pressed
+			)
+		)
 		fail += 1
 	if not run_button.running() or run_button.latched:
 		printerr("FAIL run_control long press latched")
@@ -130,13 +138,32 @@ func _test_run_control() -> int:
 		printerr("FAIL run_control joystick axis walk %s run %s" % [axis_walk, axis_run])
 		fail += 1
 	var stick: float = body.JOYSTICK_MAX_SPEED
-	if joy_walk < stick * 0.9 or joy_walk > stick + 0.05 or joy_run < stick * RunControl.SPEED_SCALE * 0.9:
-		printerr("FAIL run_control joystick speed walk %s run %s (cap %s)" % [joy_walk, joy_run, stick])
+	if (
+		joy_walk < stick * 0.9
+		or joy_walk > stick + 0.05
+		or joy_run < stick * RunControl.SPEED_SCALE * 0.9
+	):
+		printerr(
+			"FAIL run_control joystick speed walk %s run %s (cap %s)" % [joy_walk, joy_run, stick]
+		)
 		fail += 1
-	if Interaction.REACH != reach or Interaction.CHOP_REACH != chop or body.SWORD_DAMAGE != sword \
-			or body.sword_active():
-		printerr("FAIL run_control changed reach %s/%s or sword %s active %s" % [
-			Interaction.REACH, Interaction.CHOP_REACH, body.SWORD_DAMAGE, body.sword_active()])
+	if (
+		Interaction.REACH != reach
+		or Interaction.CHOP_REACH != chop
+		or body.SWORD_DAMAGE != sword
+		or body.sword_active()
+	):
+		printerr(
+			(
+				"FAIL run_control changed reach %s/%s or sword %s active %s"
+				% [
+					Interaction.REACH,
+					Interaction.CHOP_REACH,
+					body.SWORD_DAMAGE,
+					body.sword_active()
+				]
+			)
+		)
 		fail += 1
 
 	Input.action_release("ui_right")
@@ -144,7 +171,12 @@ func _test_run_control() -> int:
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
-		print("PASS test_run_control (walk %s run %s, stick %s -> %s)" % [walked, ran, joy_walk, joy_run])
+		print(
+			(
+				"PASS test_run_control (walk %s run %s, stick %s -> %s)"
+				% [walked, ran, joy_walk, joy_run]
+			)
+		)
 	return fail
 
 
@@ -200,12 +232,25 @@ func _test_run_two_players() -> int:
 			s_button.button_down.emit()
 			s_button.button_up.emit()
 			if not s_button.running() or c_button.running():
-				printerr("FAIL run_two_players latch server %s client %s" % [s_button.running(), c_button.running()])
+				printerr(
+					(
+						"FAIL run_two_players latch server %s client %s"
+						% [s_button.running(), c_button.running()]
+					)
+				)
 				fail += 1
-			elif not s_runner.is_multiplayer_authority() or not c_walker.is_multiplayer_authority() \
-					or c_runner.is_multiplayer_authority() or s_walker.is_multiplayer_authority():
-				printerr("FAIL run_two_players owners runner %s walker %s" % [
-					s_runner.is_multiplayer_authority(), c_walker.is_multiplayer_authority()])
+			elif (
+				not s_runner.is_multiplayer_authority()
+				or not c_walker.is_multiplayer_authority()
+				or c_runner.is_multiplayer_authority()
+				or s_walker.is_multiplayer_authority()
+			):
+				printerr(
+					(
+						"FAIL run_two_players owners runner %s walker %s"
+						% [s_runner.is_multiplayer_authority(), c_walker.is_multiplayer_authority()]
+					)
+				)
 				fail += 1
 			else:
 				Input.action_press("ui_right")
@@ -215,8 +260,10 @@ func _test_run_two_players() -> int:
 				var settled := false
 				for _i in 30:
 					await physics_frame
-					if absf(c_runner.position.x - s_runner.position.x) < 16.0 \
-							and absf(s_walker.position.x - c_walker.position.x) < 16.0:
+					if (
+						absf(c_runner.position.x - s_runner.position.x) < 16.0
+						and absf(s_walker.position.x - c_walker.position.x) < 16.0
+					):
 						settled = true
 						break
 				var run_x: float = s_runner.position.x
@@ -224,9 +271,22 @@ func _test_run_two_players() -> int:
 				if walk_x < 8.0 or run_x < walk_x * 1.4:
 					printerr("FAIL run_two_players distance run %s walk %s" % [run_x, walk_x])
 					fail += 1
-				if not settled or absf(s_runner.position.y) > 2.0 or absf(c_walker.position.y - 40.0) > 2.0:
-					printerr("FAIL run_two_players copies runner owner %s copy %s walker owner %s copy %s" % [
-						s_runner.position, c_runner.position, c_walker.position, s_walker.position])
+				if (
+					not settled
+					or absf(s_runner.position.y) > 2.0
+					or absf(c_walker.position.y - 40.0) > 2.0
+				):
+					printerr(
+						(
+							"FAIL run_two_players copies runner owner %s copy %s walker owner %s copy %s"
+							% [
+								s_runner.position,
+								c_runner.position,
+								c_walker.position,
+								s_walker.position
+							]
+						)
+					)
 					fail += 1
 	Input.action_release("ui_right")
 	Input.action_release("run")
@@ -262,14 +322,22 @@ func _run_world(peer: Node) -> Node2D:
 
 func _run_icon_ok(button: Button) -> bool:
 	var box := button.get_theme_stylebox("normal") as StyleBoxTexture
-	return box != null and box.texture != null and box.texture.get_size() == Vector2(32, 32) \
-			and is_equal_approx(button.size.x, RoundHudStyle.RUN_HIT)
+	return (
+		box != null
+		and box.texture != null
+		and box.texture.get_size() == Vector2(32, 32)
+		and is_equal_approx(button.size.x, RoundHudStyle.RUN_HIT)
+	)
 
 
 func _run_on(button: Button) -> bool:
 	var box := button.get_theme_stylebox("pressed") as StyleBoxTexture
-	return button.button_pressed and box != null and box.texture != null \
-			and box.texture != (button.get_theme_stylebox("normal") as StyleBoxTexture).texture
+	return (
+		button.button_pressed
+		and box != null
+		and box.texture != null
+		and box.texture != (button.get_theme_stylebox("normal") as StyleBoxTexture).texture
+	)
 
 
 func _run_body(world: Node, id: String, at: Vector2) -> CharacterBody2D:

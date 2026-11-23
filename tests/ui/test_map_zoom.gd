@@ -39,7 +39,9 @@ func _test_map_zoom() -> int:
 	var default_zoom: Vector2 = camera.zoom
 	var joystick = scene.get_node("CanvasLayer1/player_joystick")
 	var attack: TouchScreenButton = scene.get_node("CanvasLayer1/TouchScreenButton")
-	var attack_center: Vector2 = attack.get_global_transform() * (attack.texture_normal.get_size() / 2.0)
+	var attack_center: Vector2 = (
+		attack.get_global_transform() * (attack.texture_normal.get_size() / 2.0)
+	)
 	var vp: Viewport = scene.get_viewport()
 	var touch := func(index: int, pos: Vector2, pressed: bool, double := false) -> void:
 		var e := InputEventScreenTouch.new()
@@ -53,8 +55,7 @@ func _test_map_zoom() -> int:
 		e.index = index
 		e.position = vp.get_final_transform() * pos
 		vp.push_input(e)
-	var factor := func() -> float:
-		return camera.zoom.x / default_zoom.x
+	var factor := func() -> float: return camera.zoom.x / default_zoom.x
 
 	# Fingers apart on the open map: zoom in, clamped at MAX_FACTOR.
 	touch.call(0, Vector2(200, 120), true)
@@ -97,8 +98,11 @@ func _test_map_zoom() -> int:
 		touch.call(0, start, false)
 		touch.call(1, Vector2(300, 60), false)
 		zoom.reset()
-	if not zoom.starts_on_hud(joystick.global_position) or not zoom.starts_on_hud(attack_center) \
-			or zoom.starts_on_hud(Vector2(240, 120)):
+	if (
+		not zoom.starts_on_hud(joystick.global_position)
+		or not zoom.starts_on_hud(attack_center)
+		or zoom.starts_on_hud(Vector2(240, 120))
+	):
 		printerr("FAIL map_zoom HUD hit test (joystick, attack, map)")
 		fail += 1
 
@@ -109,7 +113,12 @@ func _test_map_zoom() -> int:
 	touch.call(3, Vector2(240, 120), true)
 	drag.call(2, joystick.global_position + Vector2(10, 0))
 	if joystick.ongoing_drag != -1 or local.velocity != Vector2.ZERO:
-		printerr("FAIL map_zoom pinch finger grabbed the joystick (drag %s, v %s)" % [joystick.ongoing_drag, local.velocity])
+		printerr(
+			(
+				"FAIL map_zoom pinch finger grabbed the joystick (drag %s, v %s)"
+				% [joystick.ongoing_drag, local.velocity]
+			)
+		)
 		fail += 1
 	touch.call(2, joystick.global_position, false)
 	touch.call(3, Vector2(240, 120), false)
@@ -122,7 +131,9 @@ func _test_map_zoom() -> int:
 	drag.call(1, center + Vector2(40, 0))
 	drag.call(1, center + Vector2(60, 0))
 	if not is_equal_approx(factor.call(), 1.5):
-		printerr("FAIL map_zoom overlapping contacts did not establish a pinch (%s)" % factor.call())
+		printerr(
+			"FAIL map_zoom overlapping contacts did not establish a pinch (%s)" % factor.call()
+		)
 		fail += 1
 	touch.call(0, center, false)
 	touch.call(1, center + Vector2(60, 0), false)
@@ -144,7 +155,12 @@ func _test_map_zoom() -> int:
 	key.keycode = KEY_0
 	vp.push_input(key, true)
 	if not (zoomed_in > 1.0 and zoomed_out < 1.0 and camera.zoom == default_zoom):
-		printerr("FAIL map_zoom desktop wheel/keys (in %s, out %s, reset %s)" % [zoomed_in, zoomed_out, camera.zoom])
+		printerr(
+			(
+				"FAIL map_zoom desktop wheel/keys (in %s, out %s, reset %s)"
+				% [zoomed_in, zoomed_out, camera.zoom]
+			)
+		)
 		fail += 1
 
 	scene.queue_free()

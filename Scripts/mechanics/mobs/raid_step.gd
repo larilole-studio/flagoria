@@ -99,10 +99,16 @@ static func _nearest_city_wall(mob: Mob, reach: float) -> Vector2i:
 	for cell: Vector2i in walls:
 		if not mob._world.has_wall(cell):
 			continue
-		var dist := mob.global_position.distance_to(mob._world.to_global(mob._world.map_to_local(cell)))
+		var dist := mob.global_position.distance_to(
+			mob._world.to_global(mob._world.map_to_local(cell))
+		)
 		if dist > reach:
 			continue
-		if not found or dist < best_d or (is_equal_approx(dist, best_d) and _cell_before(cell, best)):
+		if (
+			not found
+			or dist < best_d
+			or (is_equal_approx(dist, best_d) and _cell_before(cell, best))
+		):
 			found = true
 			best = cell
 			best_d = dist

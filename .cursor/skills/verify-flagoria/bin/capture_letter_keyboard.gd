@@ -2,6 +2,7 @@ extends SceneTree
 ## Open the main-menu letter keyboard and save a PNG at the project viewport
 ## size (480x270). Invoked by drive-letter-keyboard-screenshot.sh.
 
+
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -43,7 +44,15 @@ func _run() -> void:
 		push_error("capture_letter_keyboard: save_png failed %s" % save_err)
 		quit(1)
 		return
-	print("wrote %s (%dx%d) panel_min=%s"
-			% [abs_out, img.get_width(), img.get_height(),
-			kb.get_node("Panel").get_combined_minimum_size()])
+	print(
+		(
+			"wrote %s (%dx%d) panel_min=%s"
+			% [
+				abs_out,
+				img.get_width(),
+				img.get_height(),
+				kb.get_node("Panel").get_combined_minimum_size()
+			]
+		)
+	)
 	quit(0)
