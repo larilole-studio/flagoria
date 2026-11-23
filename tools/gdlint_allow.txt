@@ -16,7 +16,6 @@
 .cursor/skills/verify-flagoria/drives/footprint_rotation.gd	unused-argument	unused function argument 'map'
 .cursor/skills/verify-flagoria/drives/free_form_walls.gd	max-returns	Function "run" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/generated_building.gd	max-returns	Function "run" has more than 6 return statements
-.cursor/skills/verify-flagoria/drives/generated_building.gd	unused-argument	unused function argument 'map'
 .cursor/skills/verify-flagoria/drives/hud_round_buttons.gd	max-returns	Function "_cluster_ok" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/join_port.gd	max-line-length	Max allowed line length (100) exceeded	c773b2e27519da81
 .cursor/skills/verify-flagoria/drives/join_port.gd	max-returns	Function "run" has more than 6 return statements
@@ -418,6 +417,7 @@ tools/audio_check.gd	max-line-length	Max allowed line length (100) exceeded	41e3
 tools/audio_check.gd	max-line-length	Max allowed line length (100) exceeded	6e08a7b7418a3405
 tools/bench_frame.gd	max-line-length	Max allowed line length (100) exceeded	567f15168792f2d3
 tools/bench_frame.gd	max-line-length	Max allowed line length (100) exceeded	925651d6220277bd
+tools/capture_cloud_parallax.gd	max-returns	Function "run" has more than 6 return statements
 tools/cli.gd	max-line-length	Max allowed line length (100) exceeded	e4f44fec22d83514
 tools/generator_smoke.gd	max-line-length	Max allowed line length (100) exceeded	fc37debd4f4ff64c
 tools/render_biomes.gd	max-line-length	Max allowed line length (100) exceeded	162cfd2d48729975
