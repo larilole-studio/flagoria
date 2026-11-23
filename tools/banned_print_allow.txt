@@ -1,0 +1,11 @@
+# Existing debug calls. Tab-separated path, exact source line, and count.
+# Reduce or remove entries as sites are cleaned up. Additions require an intentional exception.
+Scripts/mechanics/building_blocks/generated_buildings.gd			push_warning("GeneratedBuildings: no grid for %s" % key)	1
+Scripts/mechanics/interactables/interactable_type.gd		push_warning(	1
+Scripts/ui/MapAdminPanel.gd				push_warning("MapGenParams.%s has no @export_range; no Map Settings row" % key)	1
+Scripts/world/spawn_finder.gd			push_warning(	1
+flagoria_main.gd		print("Dedicated server listening on UDP port %s" % port)	1
+flagoria_main.gd		print("Dedicated server stopped.")	1
+flagoria_main.gd		print("SUCCESS!! Join address: %s" % upnp.query_external_address())	1
+flagoria_main.gd		print("player added", player.name)	1
+flagoria_main.gd		print("player_joined")	1

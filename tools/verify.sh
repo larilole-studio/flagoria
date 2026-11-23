@@ -80,6 +80,10 @@ echo "== Architecture inventory (tools/architecture_inventory.py) =="
 python3 "$ROOT/tools/architecture_inventory.py" --self-test
 python3 "$ROOT/tools/architecture_inventory.py" --check
 
+echo "== Banned patterns (tools/banned_patterns.py) =="
+python3 "$ROOT/tools/banned_patterns.py" --self-test
+python3 "$ROOT/tools/banned_patterns.py"
+
 echo "== File size budget (tools/file_budget.py) =="
 # Fast and needs no Godot. Budgets and the allowlist are in
 # tools/file_budget.py and tools/file_budget_allow.txt.
