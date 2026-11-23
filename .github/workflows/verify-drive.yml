@@ -107,10 +107,7 @@ jobs:
             fi
             echo "::group::drive ${name} (--display)"
             out="$(mktemp)"
-            args=(--display)
-            seed="$(sed -n 's/^## launch: --seed \([0-9]\{1,10\}\)$/\1/p' "${skill}/drives/${name}.gd" | head -n 1)"
-            [[ -n "${seed}" ]] && args+=(--seed "${seed}")
-            "${skill}/bin/launch.sh" "drives/${name}.gd" "${args[@]}" | tee "${out}"
+            "${skill}/bin/launch.sh" "drives/${name}.gd" --display | tee "${out}"
             code="${PIPESTATUS[0]}"
             run="$(sed -n 's/^launch: run=\([^ ]*\) .*/\1/p' "${out}" | head -n 1)"
             if [[ "${code}" -eq 0 ]] && grep -q '^VERIFY_IDLE' "${out}"; then
