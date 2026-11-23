@@ -1,7 +1,6 @@
 # Private access counts can only go down. Regenerate with python3 tools/test_lint.py --write-private-baseline.
 5 tests/audio/test_ui_sfx.gd
 1 tests/castle_sync_probe.gd
-1 tests/combat/test_attack_aim.gd
 3 tests/combat/test_combat_sfx.gd
 3 tests/cut_sync_probe.gd
 1 tests/dedicated_play_probe.gd
