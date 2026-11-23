@@ -78,8 +78,8 @@ func _test_build_picker_switches_tool() -> int:
 	return fail
 
 
-func _shore_run(world) -> Dictionary:
-	## `{shore, water_run}` for a 2+ water cells east of land near the origin.
+func _shore_run(world, minimum: int = 2) -> Dictionary:
+	## `{shore, water_run}` for at least `minimum` water cells east of land near the origin.
 	var land := func(c: Vector2i) -> bool:
 		return not world.has_bridge(c) and world.ground_is_walkable(world.predict_cell(c)[0])
 	for s in [11, 42, 7, 1, 99, 3, 5]:
@@ -89,17 +89,17 @@ func _shore_run(world) -> Dictionary:
 			if not land.call(cell):
 				continue
 			var run: Array[Vector2i] = []
-			for i in range(1, 4):
+			for i in range(1, maxi(3, minimum) + 1):
 				var w: Vector2i = cell + Vector2i(i, 0)
 				if world.predict_cell(w)[0] != TileCatalog.WATER or world.has_bridge(w):
 					break
 				run.append(w)
-			if run.size() >= 2:
+			if run.size() >= minimum:
 				return {"shore": cell, "water_run": run}
 	return {}
 
 
-func _boot_interact_scene(world_seed_finder: bool = true) -> Dictionary:
+func _boot_interact_scene(world_seed_finder: bool = true, shore_minimum: int = 2) -> Dictionary:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
@@ -109,7 +109,7 @@ func _boot_interact_scene(world_seed_finder: bool = true) -> Dictionary:
 	var world = scene.get_node("World/worldMap")
 	var found := {}
 	if world_seed_finder:
-		found = _shore_run(world)
+		found = _shore_run(world, shore_minimum)
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var inventory: Inventory = scene.get_node("Inventory")
@@ -246,7 +246,7 @@ func _test_build_plank_drag_places() -> int:
 	## about 0.6 s in tools/verify.sh (~2.3 s alone with --only=).
 	print("-- test_build_plank_drag_places")
 	var fail := 0
-	var ctx := await _boot_interact_scene()
+	var ctx := await _boot_interact_scene(true, 11)
 	var found: Dictionary = ctx["found"]
 	if found.is_empty():
 		printerr("FAIL build_plank_drag_places: no shore run")
@@ -274,17 +274,25 @@ func _test_build_plank_drag_places() -> int:
 	drag.index = 0
 	drag.relative = end - start
 	vp.push_input(drag, true)
+	if _preview_green(interaction.build) != water_run.slice(0, 10) or interaction.build.cost != 10:
+		printerr("FAIL build_plank_drag_places: expected the first 10 cells green for 10 wood")
+		fail += 1
 	var release := InputEventScreenTouch.new()
 	release.position = end
 	release.pressed = false
 	vp.push_input(release, true)
 	await process_frame
-	if not water_run.all(func(c: Vector2i) -> bool: return world.has_bridge(c)):
-		printerr("FAIL build_plank_drag_places: bridges %s cells preview was %s"
-				% [water_run.map(func(c: Vector2i) -> bool: return world.has_bridge(c)),
-					interaction.build.cells])
+	var placed := water_run.filter(func(c: Vector2i) -> bool: return world.has_bridge(c))
+	if placed != water_run.slice(0, 10):
+		printerr("FAIL build_plank_drag_places: expected the first 10 cells placed, got %s" % [placed])
 		fail += 1
-	if inventory.count_of(Inventory.WOOD) != before - water_run.size():
+	var player: Node2D = ctx["player"]
+	if not placed.any(func(c: Vector2i) -> bool:
+		return player.global_position.distance_to(interaction.cell_center(c)) > Interaction.REACH
+	):
+		printerr("FAIL build_plank_drag_places: no placed cell beyond normal reach")
+		fail += 1
+	if inventory.count_of(Inventory.WOOD) != before - 10:
 		printerr("FAIL build_plank_drag_places: wood %d -> %d"
 				% [before, inventory.count_of(Inventory.WOOD)])
 		fail += 1

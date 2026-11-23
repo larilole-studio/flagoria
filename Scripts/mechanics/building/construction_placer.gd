@@ -7,6 +7,9 @@ extends RefCounted
 
 const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
+const MAX_PLANK_RUN := 10
+
+const TOO_LONG := "too long"
 const WRONG_GROUND := "wrong ground"
 const OCCUPIED := "occupied"
 const NOT_ADJACENT := "not adjacent"
@@ -33,7 +36,7 @@ const GUARD_STRUCTURE := "guard_post"
 const BARRACKS_STRUCTURE := "barracks"
 
 const _REASON_ORDER := [
-	EMPTY_CELLS, UNKNOWN_KIND, WRONG_GROUND, OCCUPIED, NOT_STRAIGHT, NOT_ADJACENT,
+	EMPTY_CELLS, UNKNOWN_KIND, TOO_LONG, WRONG_GROUND, OCCUPIED, NOT_STRAIGHT, NOT_ADJACENT,
 	NOT_ENOUGH_WOOD, MULTIPLAYER_ON,
 ]
 
@@ -231,6 +234,8 @@ func _check_plank(cells: Array[Vector2i], found: Dictionary) -> void:
 	## mob overlapping a cell, is occupied (#380 item 2).
 	if cells.is_empty():
 		return
+	if cells.size() > MAX_PLANK_RUN:
+		found[TOO_LONG] = true
 	for cell in cells:
 		if _map.has_bridge(cell) or _map.has_wall(cell) or _map._structures.has_cell(cell):
 			found[OCCUPIED] = true

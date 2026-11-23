@@ -119,6 +119,28 @@ func _test_construction_placer_plank_occupied() -> int:
 		if occupier != null:
 			occupier.get_parent().remove_child(occupier)
 			occupier.free()
+	# Check the length limit on clear water before writing the allowed prefix.
+	var long_run := _shore_water_run(world, 11).slice(1)
+	inventory.add(Inventory.WOOD, 11)
+	var wood := inventory.count_of(Inventory.WOOD)
+	if long_run.size() != 11:
+		printerr("FAIL construction_placer_plank_occupied: no 11-cell water run")
+		fail += 1
+	else:
+		var reasons := placer.can_place(BuildCosts.PLANK, long_run, inventory)
+		var placed := placer.place(BuildCosts.PLANK, long_run, inventory)
+		var written := placer.place_for_peer(BuildCosts.PLANK, long_run, 2, null)
+		if reasons != ["too long"] or placed or written \
+				or long_run.any(func(c: Vector2i) -> bool: return world.has_bridge(c)) \
+				or inventory.count_of(Inventory.WOOD) != wood:
+			printerr("FAIL construction_placer_plank_occupied: 11 cells must be refused without writing or spending, got %s"
+					% [reasons])
+			fail += 1
+		var prefix := long_run.slice(0, 10)
+		if not placer.place(BuildCosts.PLANK, prefix, inventory) \
+				or not prefix.all(func(c: Vector2i) -> bool: return world.has_bridge(c)):
+			printerr("FAIL construction_placer_plank_occupied: the 10-cell prefix must place")
+			fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:

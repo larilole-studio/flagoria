@@ -32,6 +32,7 @@ func _run() -> void:
 		return not world.has_bridge(c) and world.ground_is_walkable(world.predict_cell(c)[0])
 	var shore := Vector2i.ZERO
 	var water_run: Array[Vector2i] = []
+	var drag_length := ConstructionPlacer.MAX_PLANK_RUN + 1
 	for s in [11, 42, 7, 1, 99, 3, 5]:
 		var params := MapGenParams.make_defaults()
 		params.altitude_seed = s
@@ -45,12 +46,12 @@ func _run() -> void:
 			if not land.call(cell):
 				continue
 			var run: Array[Vector2i] = []
-			for i in range(1, 4):
+			for i in range(1, drag_length + 1):
 				var w: Vector2i = cell + Vector2i(i, 0)
 				if world.predict_cell(w)[0] != TileCatalog.WATER or world.has_bridge(w):
 					break
 				run.append(w)
-			if run.size() >= 2:
+			if run.size() == drag_length:
 				shore = cell
 				water_run = run
 				break

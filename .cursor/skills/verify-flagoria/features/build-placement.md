@@ -24,8 +24,9 @@ only when the snapped cells, wood count, player position and map revision are
 unchanged, so a wood spend, a walk out of reach, or a map change cannot leave a
 stale green preview. The tool wheel and the lilac picker discs use Candy Glass sprites from `art/ui/hud_e4/`.
 
-Reach (`Interaction.REACH`) is the length bound for a drag preview; no separate
-run-length cap was added (#380 item 1 left open).
+Plank drags start at the first snapped cell within normal reach. Preview and
+commit use up to 10 consecutive cells from that start at one wood per cell
+(#684). Cells beyond the cap stay red.
 
 ## Sub-features
 
@@ -74,10 +75,13 @@ under xvfb.
   `-- test_build_preview_cache_invalidates_on_wood` and
   `-- test_build_picker_buttons` in `artifacts/verify.log`
   with no `FAIL` after them. Visual: `docs/screenshots/build_placement_preview.png`
-  shows the picker and a green/red plank preview (captured under xvfb).
+  shows the picker and a green/red plank preview. The existing
+  `bin/capture_build_placement.gd` screenshot helper captures a 10-tile preview
+  under xvfb.
 
 Plank placement and per-cell charges are covered at the
-[construction seam](./construction-placement.md). The drag test covers input.
+[construction seam](./construction-placement.md). The drag test covers the 10-cell preview, placement beyond normal reach,
+and the 10-wood charge through input.
 
 ## Gotchas
 
@@ -85,7 +89,5 @@ Plank placement and per-cell charges are covered at the
   UI layer.
 - Preview green cells and cost must come from the same `longest_placeable`
   prefix that `commit` places; do not tint from a full-run `can_place`.
-- Do not invent a run-length cap for the preview; raise it as a question if
-  REACH is not enough (#380).
 - Preview skip cache must include wood, player position and map revision, not
   only the snapped cells (#383).
