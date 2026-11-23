@@ -3,16 +3,18 @@
 Drive: drives/sky_islands.gd
 Source: Scripts/world/world_chunks.gd
 Source: Scripts/world/sky_islands.gd
+Source: Scripts/world/cloud_motion.gd
 
 The map node delegates `predict_cell` to `Scripts/world/world_chunks.gd`.
 
-Open sea is an empty cell, so the clear colour (`#7cc8f2`) is the sky. Land is the Island terrain: a coast cell is an island-edge piece, and an inland cell stays grass, sand or swamp. Sand and swamp do not touch the sky. Clouds sit on their own layer, only on sky. A plank bridge from the shore uses the plain (transparent) pieces. Sea still blocks movement.
+Open sea is an empty cell, so the clear colour (`#7cc8f2`) is the sky. Land is the Island terrain: a coast cell is an island-edge piece, and an inland cell stays grass, sand or swamp. Sand and swamp do not touch the sky. The map paints cloud stamps on sky. Display peers animate those stamps locally. A plank bridge from the shore uses the plain (transparent) pieces. Sea still blocks movement.
 
 ## Sub-features
 
 - `sky-clear` the view at gameplay zoom (camera zoom 0.7) has no grey void.
 - `sky-edge` the coast is an island-edge piece over sky, not a hard grass tile against a water tile.
 - `sky-collision` the hero cannot walk onto the sky.
+- `cloud-drift` pixel-snapped parallax moves fainter far clouds at 0.5 world px/s and a smaller near layer at 1.0 world px/s, fading at wraps and hiding over land or bridges.
 
 ## How to get to it (user POV)
 
