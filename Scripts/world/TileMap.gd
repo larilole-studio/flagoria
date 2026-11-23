@@ -74,6 +74,7 @@ var pine_min_chance: float = 0.3
 var bushy_tree_min_moist: float = 0.3
 var swamp_bush_min_chance: float = 0.3
 var birch_min_chance: float = 0.55
+var swamp_trees: bool = false
 var spawn_biome := MapGenParams.ANY_SPAWN_BIOME
 var starter_grove: Dictionary = {}
 var biome_frequency: float = 0.0

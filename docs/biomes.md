@@ -143,7 +143,7 @@ generation produces on the `render_biomes` wide grid, pooled over seeds 11,
 | OCEANIC           | 0.0005       | 0.0013 / 0 / 0                |
 | TEMPERATE         | 0.04         | 0.0391 / 0.0393 / 0.0407      |
 | CONTINENTAL       | 0.27         | 0.2704 / 0.2700 / 0.2707      |
-| ARCHIPELAGO_DENSE | 0.01         | 0.0126 / 0.0119 / 0.0056      |
+| ARCHIPELAGO_DENSE | 0.03         | 0.0293 / 0.0289 / 0.0278 (with swamp trees) |
 
 OCEANIC's value rounds to 0 trees in a 3x3-chunk area, so it never sprouts.
 
@@ -182,7 +182,7 @@ moderately moist land and bushy trees take the wettest tree land:
 | OCEANIC           | 0.0                  | 0 % (its land grows almost no trees) |
 | TEMPERATE         | 2.0 (none)           | 0 %                              |
 | CONTINENTAL       | +0.15 (wettest only) | about 1.0-1.2 %                  |
-| ARCHIPELAGO_DENSE | -0.2 (most trees)    | about 0.2-0.9 %                  |
+| ARCHIPELAGO_DENSE | -0.2 (most trees)    | about 2.6 % with swamp trees (see below) |
 
 TEMPERATE with biomes on still matches the map with biomes off. Saves from
 before bushy trees load with `bushy_tree_min_moist = 2.0` (none), so they
@@ -203,11 +203,34 @@ bare mud:
 | OCEANIC           | 2.0 (none)          | about 0.6-0.7 % (unchanged)           |
 | TEMPERATE         | 2.0 (none)          | about 1.6-2.0 % (unchanged)           |
 | CONTINENTAL       | 2.0 (none)          | about 1.6-1.8 % (unchanged)           |
-| ARCHIPELAGO_DENSE | 0.0                 | about 9.2-9.4 % (was 3.1-3.2 %)       |
+| ARCHIPELAGO_DENSE | 0.0                 | about 7.2-7.4 % (9.1-9.3 % before swamp trees) |
 
 TEMPERATE with biomes on still matches the map with biomes off. Saves from
 before swamp scrub load with `swamp_bush_min_chance = 2.0` (none), so they
 regenerate unchanged.
+
+### Swamp trees
+
+With biomes on, the highest-chance swamp cells grow a bushy tree
+(`TileCatalog.TREE_BUSHY`, chopped as the tree type) instead of scrub: a
+swamp cell's plant chance must be above `swamp_bush_min_chance` plus the
+biome's `swamp_tree_chance` (`BiomeCatalog.PLANTS`). There is no Map Settings
+row for it. Only ARCHIPELAGO_DENSE has any, so its swamp islands, about 71 %
+of its land, hold trees and wood instead of scrub alone:
+
+| Biome             | `swamp_tree_chance` | Swamp tree share of land (seeds 11, 42, 99) |
+|-------------------|---------------------|---------------------------------------------|
+| OCEANIC           | 2.0 (none)          | 0 %                                         |
+| TEMPERATE         | 2.0 (none)          | 0 %                                         |
+| CONTINENTAL       | 2.0 (none)          | 0 %                                         |
+| ARCHIPELAGO_DENSE | 0.1                 | about 2 % (bushy trees 0.6-0.8 % -> 2.6 %)  |
+
+The swamp trees take cells that grew scrub before, so ARCHIPELAGO_DENSE
+bushes drop from about 9.2 % to 7.3 % of its land and its tree share rises
+from about 0.009 to 0.029 (`TREE_SHARE` is now 0.03). TEMPERATE with biomes
+on still matches the map with biomes off. Saves from before swamp trees have
+no `swamp_trees` field and load with none (`MapGenParams.swamp_trees`
+false), so they regenerate unchanged.
 
 ### Birches
 
