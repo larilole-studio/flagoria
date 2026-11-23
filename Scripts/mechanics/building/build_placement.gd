@@ -162,7 +162,7 @@ func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 
 func longest_placeable(run: Array[Vector2i], inventory: Inventory) -> Array[Vector2i]:
 	## Longest prefix of `run` ConstructionPlacer will accept (no gaps).
-	for n in range(run.size(), 0, -1):
+	for n in range(mini(run.size(), ConstructionPlacer.MAX_PLANK_RUN), 0, -1):
 		var prefix: Array[Vector2i] = []
 		for i in n:
 			prefix.append(run[i])
@@ -248,11 +248,8 @@ func _update_plank_preview(start_viewport: Vector2, end_viewport: Vector2, inven
 		return
 	_remember_preview_inputs(from_cell, to_cell, inventory)
 	cells = snap_run(from_cell, to_cell)
-	var in_reach: Array[Vector2i] = []
-	for cell in cells:
-		if _interaction.in_reach(cell):
-			in_reach.append(cell)
-	var placeable := longest_placeable(in_reach, inventory)
+	var anchored_run := _plank_run_from_reachable_start()
+	var placeable := longest_placeable(anchored_run, inventory)
 	var placeable_set := {}
 	for cell in placeable:
 		placeable_set[cell] = true
@@ -261,7 +258,7 @@ func _update_plank_preview(start_viewport: Vector2, end_viewport: Vector2, inven
 		cell_ok.append(placeable_set.has(cell))
 	if placeable.is_empty():
 		cost = 0
-		reasons = _placer.can_place(BuildCosts.PLANK, in_reach, inventory) if not in_reach.is_empty() \
+		reasons = _placer.can_place(BuildCosts.PLANK, anchored_run, inventory) if not anchored_run.is_empty() \
 				else [ConstructionPlacer.EMPTY_CELLS]
 	else:
 		cost = _placer.cost(BuildCosts.PLANK, placeable)
@@ -299,12 +296,15 @@ func _update_footprint_preview(end_viewport: Vector2, inventory: Inventory, kind
 	_position_rotate_button(end_viewport)
 
 
+func _plank_run_from_reachable_start() -> Array[Vector2i]:
+	for i in cells.size():
+		if _interaction.in_reach(cells[i]):
+			return cells.slice(i)
+	return []
+
+
 func _commit_plank(inventory: Inventory) -> bool:
-	var in_reach: Array[Vector2i] = []
-	for cell in cells:
-		if _interaction.in_reach(cell):
-			in_reach.append(cell)
-	var placeable := longest_placeable(in_reach, inventory)
+	var placeable := longest_placeable(_plank_run_from_reachable_start(), inventory)
 	# Route through Interaction so multiplayer asks the host (#297). Offline
 	# and host-alone still spend and write through ConstructionPlacer.place.
 	return not placeable.is_empty() and _interaction.place_planks(placeable)

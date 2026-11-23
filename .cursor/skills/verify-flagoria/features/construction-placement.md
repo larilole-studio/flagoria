@@ -8,13 +8,15 @@ preview. `place(kind, cells, inventory, turns)` uses the local inventory and
 owner. In multiplayer, named footprints and walls go through
 `StructureRequests`; `Interaction` submits plank requests. Both handlers check
 reach before calling `place_for_peer(kind, cells, owner, inventory, turns)`.
+For planks, the host checks only the start cell against normal reach plus slack.
 The host supplies inventory for its own purchase and sends the existing wood
 charge after a successful remote purchase. A refused writer refunds the
 full charge. Peers apply live named placements through `apply_replica` and
 read the result through `TileMap.placed_structures` or `structures_for_sync`.
 
 Registered kinds are plank, wall block, wooden tower, castle, guard post and
-barracks. Planks need a straight water run touching land or a plank. Walls
+barracks. Planks need a straight water run of up to 10 tiles touching land or a plank
+(#684). Walls
 need a straight land run touching a wall or structure. Named buildings take
 an anchor and quarter turns. Refusals describe empty cells, unknown kinds,
 wrong ground, occupancy, straightness, adjacency and insufficient wood.
@@ -24,7 +26,8 @@ wrong ground, occupancy, straightness, adjacency and insufficient wood.
 - `construction-plank` a straight water run next to land or a plank places and
   spends one wood per cell; land, an existing plank, a bent run, a floating
   cell and too little wood are refused with a reason and spend nothing.
-  Planks place while multiplayer is on (#297).
+  Planks place while multiplayer is on (#297). Runs of 11 or more return
+  `too long` and write nothing in either placement path (#684).
 - `construction-plank-occupied` a plank cell under a player, a mob, a wall or
   a structure is `occupied`: nothing is written, no wood is spent, and the
   host's `place_for_peer` for a peer's request refuses it too (#380 item 2).
@@ -61,7 +64,8 @@ wrong ground, occupancy, straightness, adjacency and insufficient wood.
   charges for planks, walls and towers and full rollback after a refused
   write. `test_build_costs_spend_failed` checks that a failed spend never
   calls its writer (#380 item 3). `test_construction_placer_plank_occupied`
-  checks the host and local placement paths (#380 item 2).
+  checks occupancy and the plank cap through the host and local placement paths
+  (#380 item 2, #684).
   `test_construction_writers_all_or_nothing` checks partial multi-cell
   refusals at the writer boundary (#380 item 3, #381).
 - **Peer scenarios.** `test_building_seam_connecting` covers the connecting

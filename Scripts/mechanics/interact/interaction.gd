@@ -413,14 +413,13 @@ func host_place_planks(cells: Array[Vector2i], peer_id: int) -> bool:
 	## Host: write the plank run for `peer_id`, send it to every other peer,
 	## and charge that peer. When the host places for itself, spend and write
 	## stay atomic through ConstructionPlacer.place.
-	if not multiplayer.is_server() or cells.is_empty():
+	if not multiplayer.is_server() or cells.is_empty() or cells.size() > ConstructionPlacer.MAX_PLANK_RUN:
 		return false
 	var placer_node := get_node_or_null("../" + str(peer_id)) as Node2D
 	if placer_node == null or player_dead(placer_node):
 		return false
-	for cell in cells:
-		if placer_node.global_position.distance_to(cell_center(cell)) > REACH + REACH_SLACK:
-			return false
+	if placer_node.global_position.distance_to(cell_center(cells[0])) > REACH + REACH_SLACK:
+		return false
 	var placer := ConstructionPlacer.new(world_map)
 	var local := peer_id == multiplayer.get_unique_id()
 	var inventory := get_node_or_null(INVENTORY_PATH) as Inventory if local else null
