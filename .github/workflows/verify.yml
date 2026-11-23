@@ -50,6 +50,7 @@ jobs:
         if: steps.path.outputs.fast_path == 'true'
         run: |
           set -euo pipefail
+          python3 tools/architecture_inventory.py --check
           python3 tools/required_checks_test.py
           python3 tools/required_checks.py
 

@@ -72,8 +72,12 @@ echo "Godot user dirs: XDG_CONFIG_HOME=${XDG_CONFIG_HOME} XDG_DATA_HOME=${XDG_DA
 echo "== Drive picks (tools/verify_drive_picks.py) =="
 python3 "$ROOT/tools/verify_drive_picks.py" --self-test
 
+echo "== Architecture inventory (tools/architecture_inventory.py) =="
+python3 "$ROOT/tools/architecture_inventory.py" --self-test
+python3 "$ROOT/tools/architecture_inventory.py" --check
+
 echo "== File size budget (tools/file_budget.py) =="
-# Fast and needs no Godot, so it runs first. Budgets and the allowlist are in
+# Fast and needs no Godot. Budgets and the allowlist are in
 # tools/file_budget.py and tools/file_budget_allow.txt.
 python3 "$ROOT/tools/file_budget.py" --self-test
 if ! python3 "$ROOT/tools/file_budget.py"; then
