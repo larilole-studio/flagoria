@@ -10,6 +10,8 @@ extends RefCounted
 ## neighbour is sea, and the logical tile inland. Sand and swamp never touch
 ## the sky.
 
+signal clouds_painted(window: Rect2i)
+
 const SEA_LAYER := 8
 const CLOUD_LAYER := 9
 const _SIDES := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -29,6 +31,7 @@ var _painted_probe := Vector2i.MAX
 func clear() -> void:
 	_logical.clear()
 	_clear_drawn()
+	clouds_painted.emit(Rect2i())
 
 
 func _clear_drawn() -> void:
@@ -149,7 +152,12 @@ func paint_window(map, center: Vector2i, size: Vector2i) -> void:
 		for cell in cells:
 			_paint_cell(map, cell)
 	# Stamps are clipped and resolved in window order, including on revisits.
-	_paint_clouds(map, window.position, window.size.x, window.size.y)
+	if DisplayServer.get_name() != "headless":
+		if not map.has_node("CloudMotion"):
+			var motion := CloudMotion.attach(map, CLOUD_LAYER)
+			clouds_painted.connect(motion.refresh)
+		_paint_clouds(map, window.position, window.size.x, window.size.y)
+		clouds_painted.emit(window)
 	for cell in cells:
 		var b: int = map.biome_at(cell)
 		map.set_tile_type_z1(cell, map.cell_altitude(cell, b), map.moisture.get_noise_2d(cell.x, cell.y),
@@ -260,17 +268,13 @@ func _ensure_layers(map) -> void:
 	map.set_layer_enabled(SEA_LAYER, true)
 	map.set_layer_modulate(SEA_LAYER, Color(1, 1, 1, 0))
 	map.set_layer_z_index(SEA_LAYER, -1)
-	map.set_layer_name(CLOUD_LAYER, "clouds")
-	map.set_layer_enabled(CLOUD_LAYER, true)
-	map.set_layer_modulate(CLOUD_LAYER, Color(1, 1, 1, 1))
-	map.set_layer_z_index(CLOUD_LAYER, -1)
+	if map.get_layer_name(CLOUD_LAYER) != "clouds":
+		map.set_layer_name(CLOUD_LAYER, "clouds")
+		map.set_layer_enabled(CLOUD_LAYER, true)
+		map.set_layer_z_index(CLOUD_LAYER, -1)
 
 
 func _paint_clouds(map, origin: Vector2i, w: int, h: int) -> void:
-	## Visual only. Headless hosts skip it: a cloud pass on every chunk refresh
-	## has starved netcode stress before, and a server has nothing to draw.
-	if DisplayServer.get_name() == "headless":
-		return
 	var rect := Rect2i(origin, Vector2i(w, h))
 	for x in w:
 		for y in h:

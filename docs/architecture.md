@@ -199,6 +199,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/world/MapGenParams.gd`
 - `Scripts/world/TileMap.gd`
 - `Scripts/world/birch_trees.gd`
+- `Scripts/world/cloud_motion.gd`
 - `Scripts/world/explored_map.gd`
 - `Scripts/world/map_gen.gd`
 - `Scripts/world/object_removals.gd`
