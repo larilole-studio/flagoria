@@ -32,7 +32,7 @@ Project-local verification for Flagoria. Read this cold mid-task. Prefer the fea
 ./.cursor/skills/verify-flagoria/bin/launch.sh drives/smoke.gd           # a drive that finishes
 ./.cursor/skills/verify-flagoria/bin/launch.sh drives/wait.gd            # stays up; headless
 ./.cursor/skills/verify-flagoria/bin/launch.sh drives/wait.gd --display  # xvfb-run + opengl3
-./.cursor/skills/verify-flagoria/bin/launch.sh drives/chop_trees.gd --seed 49  # a fixed map
+./.cursor/skills/verify-flagoria/bin/launch.sh drives/chop_trees.gd          # uses seed 49 from the drive
 ```
 
 In a fresh checkout, import once first (`"$GODOT" --headless --path . --import`), as `tools/verify.sh` does.
@@ -114,7 +114,7 @@ Uses `xvfb-run` + `opengl3` and a short SceneTree script to open **Map Settings*
 
 ### Feature drives
 
-A feature drive is `drives/<feature>.gd`. It plays the real game through the input a player gives it and ends with `done(ok)`:
+A player-path feature drive is `drives/<feature>.gd`. It plays the real game through the input a player gives it and ends with `done(ok)`:
 
 ```gdscript
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
@@ -145,11 +145,15 @@ Start it with `bin/launch.sh drives/<feature>.gd` and read its result from the e
 
 Clicks and taps go to the centre of the node's rect or the cell, read at run time and converted to window pixels through the canvas and window stretch transforms, so they land in the same place headless (a 64x64 window) and under `--display` (1280x720). Never pass a screen position written as a literal.
 
-**Drive rule:** a drive may read game state to decide when to go on or whether it passed, but never sets it: no `set_cell`, no inventory writes, no calls into `Interaction` internals, no emitting a button's `pressed`. Everything it changes goes through input. Setup is chosen by seed in `user://map_gen_params.cfg`, written into the run's scratch user dir before launch, never by the drive. `bin/launch.sh <drive> --seed N` writes it, with the five seeds N .. N+4 (as `tools/map_cli.gd --seed`); without `--seed`, or with 0, every launch gets a random map. A drive that needs a fixed map names its seed on a line `## launch: --seed N` at its top, which `verify-drive.yml` passes to `launch.sh` and an agent passes by hand; `drives/chop_trees.gd` uses seed 49, which spawns the hero 64 px from a tree. A drive with no seed line must pass on any map: the sample only checks that the hero moved at all, since a tree or water may stop it a few px to the right.
+**Drive rule:** player-path drives may read game state and change it only through player input. The fast check in `tools/verify.sh` runs `tools/drive_lint.py` over all drives to catch known shortcuts such as seeking the clock, teleporting nodes, changing tiles or inventory, and emitting a button's `pressed` signal. Creating and injecting `InputEvent` objects is allowed. Existing player-path shortcuts are tracked by drive, rule and count in `tools/drive_lint_allow.txt`. Remove or reduce entries as shortcuts are removed. New player-path drives get no allowances.
+
+Fixture drives may set up game state directly to capture a specific scenario. Put `## fixture` on the first line. The lint skips these drives and their evidence summaries say `category: fixture`. Use their screenshots to show the configured scenario. Player-path runs say `category: player-path`. Consult the allowlist when reviewing older player-path evidence.
+
+For a fixed map, add `## launch: --seed N` to the drive header. The launcher reads it and writes the five seeds N through N+4 into the run's scratch `user://map_gen_params.cfg`. An explicit `--seed N` overrides the annotation. Use `--seed 0` for a random map. Without an annotation or override, the map is random and the drive must pass on any map. `bin/launch.sh --print-seed drives/chop_trees.gd` prints 49 without starting Godot.
 
 ### Drives in CI
 
-`verify-drive.yml` runs on gameplay pull requests (gated by `tools/play_review_paths.py`). `tools/verify_drive_picks.py` collects top-level `Drive: drives/<name>.gd` entries from changed feature pages and from pages with a `Source:` entry that exactly matches a changed path. Each feature with a drive declares its tracked production scripts with one `Source: <path>` line per script. Automatic selection skips paired and other nested drives. CI launches the selected drives with `bin/launch.sh --display` under xvfb, uploads the `drive-screenshots` artifact, and fails when a drive prints `VERIFY_DONE fail`. If no feature drive is selected, CI uses the default smoke fallback. The picker reports changed gameplay source paths with no auto-selectable drive. `workflow_dispatch` still runs named drives (default `smoke`).
+`verify-drive.yml` runs on gameplay pull requests (gated by `tools/play_review_paths.py`). `tools/verify_drive_picks.py` collects top-level `Drive: drives/<name>.gd` entries from changed feature pages and from pages with a `Source:` entry that exactly matches a changed path. Each feature with a drive declares its tracked production scripts with one `Source: <path>` line per script. Automatic selection skips paired and other nested drives. CI launches the selected drives with `bin/launch.sh --display` under xvfb and uses the same annotated seed default as local launches. CI uploads the `drive-screenshots` artifact, which identifies fixture runs in their evidence summaries, and fails when a drive prints `VERIFY_DONE fail`. If no feature drive is selected, CI uses the default smoke fallback. The picker reports changed gameplay source paths with no auto-selectable drive. `workflow_dispatch` still runs named drives (default `smoke`).
 
 ### Two-player Host/Join
 
@@ -177,7 +181,7 @@ Each launch keeps its evidence in `.cursor/skills/verify-flagoria/artifacts/out/
 | `<NN>-<label>.png` | `snapshot(label)` under `--display` | The window. A headless run has no image; its JSON says `"png": "skipped: headless run, ..."`. |
 | `game.log` | `launch.sh` when the game exits; `collect-evidence.sh` | The game's output, with the `VERIFY_*` lines. |
 | `user/` | `collect-evidence.sh` | The scratch `user://`: `saves/` and `*.cfg`. |
-| `summary.txt` | `collect-evidence.sh` | Run id, drive, seed (`random` without `--seed`), commit, Godot version, steps seen, result, snapshots. |
+| `summary.txt` | `collect-evidence.sh` | Run id, drive, category, resolved seed (or `random`), commit, Godot version, steps seen, result, snapshots. |
 
 The result is `ok` or `fail` from `VERIFY_DONE`; `idle (then stopped by cleanup or killed)` after `VERIFY_IDLE`; `killed (...)` when the game ended by a signal, or launch was not there to see it end, without `VERIFY_DONE`; `exited <code> without VERIFY_DONE` otherwise. Cleanup runs `collect-evidence.sh <run-id>` for every run before it removes `.run/`, so a failed or killed drive keeps its evidence. Run it by hand to look at a run that is still up.
 
@@ -209,7 +213,7 @@ All under `.cursor/skills/verify-flagoria/bin/` (executable):
 
 | Script | Role |
 |---|---|
-| `launch.sh` | Start a drive from a scratch user dir (`--seed N` for a fixed map); print its lines; exit with its result |
+| `launch.sh` | Start a drive from a scratch user dir (annotated seed by default, `--seed N` to override); print its lines; exit with its result |
 | `drive_base.gd` | Base script for drives: `start_game`, input helpers, `snapshot`, `step` / `done` / `idle` |
 | `doctor.sh` | Read-only health of the checkout; `--instance <run-id>` also checks a launched game |
 | `drive-verify.sh` | Run `tools/verify.sh`, copy log to artifacts |
