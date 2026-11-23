@@ -1,6 +1,8 @@
 # Build guard post
 
 Drive: drives/build_guard_post.gd
+Source: Scripts/mechanics/building/build_placement.gd
+Source: Scripts/mechanics/structures/structure_placer.gd
 
 Interact-mode Guard post tool places `structures/guard_post.txt` for 20 wood
 (#528). The preview greens the full rotated footprint and charges 20 wood when

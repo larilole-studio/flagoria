@@ -1,6 +1,8 @@
 # Map Settings panel
 
 Drive: drives/map_settings_random.gd
+Source: Scripts/ui/MapAdminPanel.gd
+Source: Scripts/world/MapGenParams.gd
 
 Main Menu → **Map Settings** opens the Map Generation panel. The in-game host menu opens the same panel with **Host with these** disabled.
 

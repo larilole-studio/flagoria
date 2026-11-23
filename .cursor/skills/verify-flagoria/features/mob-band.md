@@ -1,6 +1,7 @@
 # Mob band
 
 Drive: drives/mob_band.gd
+Source: Scripts/mechanics/mobs/mob_spawner.gd
 
 The host keeps spawning and removing mobs around living players. The opening wave from the world seed stays. Later ticks add mobs in a ring around each player and remove mobs that have wandered far away, up to a cap. A mob that is chasing is kept.
 

@@ -1,6 +1,8 @@
 # Join failure returns to the main menu
 
 Drive: drives/join_fail.gd
+Source: flagoria_main.gd
+Source: Scripts/shell/menu_join_flow.gd
 
 Assertion owner for failed-join UI: `drives/join_fail.gd` checks the returned menu, hidden HUD, and exact visible status.
 

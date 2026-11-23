@@ -1,6 +1,7 @@
 # Player save
 
 Drive: drives/player_save.gd
+Source: Scripts/saves/player_save.gd
 
 A world save keeps the host's own progress in `player`: position, health, wood, score and charted ground. Loading that file and hosting it puts the host back there. An older save with no player section, or `{}`, starts a default player at the spawn with full health, no wood, no score and nothing charted. Format: [World saves](../../../../docs/world-saves.md).
 

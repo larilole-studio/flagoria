@@ -1,6 +1,8 @@
 # Build barracks
 
 Drive: drives/build_barracks.gd
+Source: Scripts/mechanics/building/build_placement.gd
+Source: Scripts/mechanics/building/construction_placer.gd
 
 Interact-mode Barracks tool places `structures/barracks.txt` for 30 wood (#556).
 The preview greens the full rotated footprint and charges 30 wood when `commit`

@@ -1,6 +1,7 @@
 # Wall and tower junctions
 
 Drive: drives/wall_collar_sides.gd
+Source: Scripts/mechanics/walls/wall_solver.gd
 
 Free-form palisades, castle and guard-post walls, and the wooden tower's ring
 are solved together (`WallSolver`, `WallBuilder.resolve`). A cell's piece comes

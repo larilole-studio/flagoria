@@ -1,6 +1,7 @@
 # Land score
 
 Drive: drives/land_score.gd
+Source: Scripts/mechanics/conquest/land_score.gd
 
 A player's conquest score is the number of interior city cells inside one of their flag towers' range (#279). `LandScore` (`Scripts/mechanics/conquest/land_score.gd`, the `World/LandScore` node) measures a Euclidean disk of `range_cells` (default 5) around each flag cell. A cell counts once when it is inside a city that player owns and inside that disk. Cells in the city but outside every such disk do not count. The host sets the count through `Points.set_land` (reason `land`), so the score HUD and the scoreboard show it with every other award. Losing the city, or handing the tower away, removes those points. While `LandScore.enabled` is true (the default) the flags-held timer does not pay; turn it off and `FlagsHeldPoints.tick` is the fallback.
 

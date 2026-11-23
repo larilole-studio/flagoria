@@ -1,6 +1,7 @@
 # Map zoom
 
 Drive: drives/map_zoom.gd
+Source: Scripts/player/map_zoom.gd
 
 After hosting or joining, spread two fingers on the world to zoom in and bring them together to zoom out. The camera stays between 0.75× and 2× of its default. Zoom is local to each player.
 

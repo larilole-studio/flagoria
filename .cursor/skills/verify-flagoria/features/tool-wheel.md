@@ -1,6 +1,7 @@
 # Tool wheel
 
 Drive: drives/tool_wheel.gd
+Source: Scripts/ui/tool_wheel.gd
 
 Assertion owner for touch selection: `drives/tool_wheel.gd` checks hold, drag and release, and tap-to-swap.
 

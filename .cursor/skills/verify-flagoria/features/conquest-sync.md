@@ -1,6 +1,7 @@
 # Conquest sync (towers and flag captures)
 
 Drive: drives/tower_capture.gd
+Source: Scripts/mechanics/conquest/tower_capture.gd
 
 In a two-player game the host owns tower placement, capture progress and
 flags-held points (#497). A client's tower is a request. The host checks the

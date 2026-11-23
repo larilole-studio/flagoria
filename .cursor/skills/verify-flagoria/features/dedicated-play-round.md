@@ -1,6 +1,7 @@
 # Dedicated cut-and-hit round
 
 Drive: drives/dedicated_play/play_client_a.gd
+Source: flagoria_main.gd
 
 Also driven by: `drives/dedicated_play/play_common.gd` (shared setup for the three launches below).
 

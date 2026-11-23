@@ -1,6 +1,8 @@
 # Walls and cities sync
 
 Drive: drives/walls_cities.gd
+Source: Scripts/mechanics/walls/wall_builder.gd
+Source: Scripts/mechanics/conquest/cities.gd
 
 In a two-player game the host owns free-form walls and city formation (#498).
 The Wall tool stays visible. A client's wall drag is a request on

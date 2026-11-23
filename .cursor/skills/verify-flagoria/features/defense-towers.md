@@ -1,6 +1,7 @@
 # Defense towers
 
 Drive: drives/defense_tower.gd
+Source: Scripts/mechanics/defense/tower_guns.gd
 
 A player-owned flag tower shoots other players (#37). Wooden towers, castles and guard posts already place and capture; this does not add a second tower. `World/TowerGuns` (`Scripts/mechanics/defense/tower_guns.gd`) ticks on the host only. Each tick, every tower whose `owner_of` is greater than 0 picks the nearest living player other than that owner inside the range, checks line of sight, then `PlayerHealth.take_damage`. A 0.2 s tracer follows a hit. There is no projectile. Neutral (`0`) and mob (`-1`) owners do not shoot. The owner is read live, so a captured tower shoots for the new peer on the next tick. Cooldown is not saved and is not sent on join. Damage uses the existing health RPC, so a late joiner sees the health.
 

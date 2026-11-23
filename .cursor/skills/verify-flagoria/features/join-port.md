@@ -1,6 +1,9 @@
 # Join an address with an optional port
 
 Drive: drives/join_port.gd
+Source: Scripts/net/join_address.gd
+Source: Scripts/net/join_dial.gd
+Source: Scripts/shell/menu_join_flow.gd
 
 Main Menu Join accepts a hostname or an IPv4 address, with an optional `:port`. The default port is UDP `9786`. A blank field joins `localhost` on that port. `127.0.0.1:9799` and `localhost:9799` dial port 9799, and the typed text stays in the address field and in `Could not join …`. `:9799`, `host:`, `host:abc`, port `0` and port `65536` are rejected on the menu before any connection attempt. Port `1` is valid: with nothing listening, the menu shows `Could not join 127.0.0.1:1`. An address with more than one colon, such as `::1`, is rejected instead of being split into a host and a port.
 

@@ -1,6 +1,10 @@
 # Points
 
 Drive: drives/combat_hud.gd
+Source: Scripts/mechanics/conquest/points.gd
+Source: Scripts/mechanics/conquest/discovery_points.gd
+Source: Scripts/mechanics/conquest/flags_held_points.gd
+Source: Scripts/mechanics/conquest/land_score.gd
 
 Players earn points for discovering ground and for killing mobs. The host owns every total and tells each peer. The score shows top left as `N pts`.
 

@@ -1,6 +1,8 @@
 # Explored map
 
 Drive: drives/explored_map.gd
+Source: Scripts/world/explored_map.gd
+Source: Scripts/ui/parchment_map.gd
 
 Map beside Menu, or M, opens the full parchment sheet directly. The chart reveals cells within 10 cells of the local hero and stores them in 32 × 32 cell chunks. `MapChart` paints newly revealed cells and their coastline neighbours. World saves keep the explored cells in `player.charted`.
 

@@ -1,6 +1,8 @@
 # Mob raids
 
 Drive: drives/mob_raid.gd
+Source: Scripts/mechanics/mobs/raid_director.gd
+Source: Scripts/mechanics/mobs/raid_step.gd
 
 The host can send a small group of idle mobs at the nearest player city, or at the nearest owned tower when no city is in range. On arrival they damage free-form palisades and can capture an undefended flag the way any mob already can. Raids stay off until the host turns them on from the main menu.
 

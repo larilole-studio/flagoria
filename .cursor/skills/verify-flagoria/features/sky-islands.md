@@ -1,6 +1,8 @@
 # Sky islands
 
 Drive: drives/sky_islands.gd
+Source: Scripts/world/world_chunks.gd
+Source: Scripts/world/sky_islands.gd
 
 The map node delegates `predict_cell` to `Scripts/world/world_chunks.gd`.
 

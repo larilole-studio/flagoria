@@ -5,6 +5,7 @@
 #   - every feature file (except README) has exactly one Drive: line:
 #       Drive: drives/<path>.gd   (file must exist under the skill)
 #       Drive: not player-facing
+#   - features with drives declare tracked production scripts on Source: lines;
 #   - every test name a feature file cites (`test_<name>`) is a registered test;
 #   - every registered test is cited by at least one feature file.
 #   - with --gameplay and --changed-files <path>: a gameplay PR fails when a
@@ -63,6 +64,19 @@ check_drive_value() {
   problem "${name} Drive: '${value}' is not 'drives/<path>.gd' or 'not player-facing'"
 }
 
+check_feature_sources() {
+  local file="$1" name="$2" source count=0
+  while IFS= read -r source; do
+    count=$((count + 1))
+    if [[ ! "$source" =~ ^(Scripts/[^[:space:]]+\.gd|flagoria_main\.gd)$ ]]; then
+      problem "${name} has an invalid Source: '${source}' (want a production script path)"
+    elif [[ ! -f "$source" ]] || ! env -u GH_TOKEN -u GITHUB_TOKEN git --literal-pathspecs ls-files -- "$source" | grep -qxF -- "$source"; then
+      problem "${name} Source: ${source} is not an existing tracked file"
+    fi
+  done < <(sed -nE '/^Source:/ { s/^Source:[[:blank:]]+//; s/[[:space:]]+$//; p; }' "$file")
+  [[ "$count" -gt 0 ]] || problem "${name} has no Source: line"
+}
+
 check_feature_drives() {
   local f name value
   for f in "${MAP}"/*.md; do
@@ -75,6 +89,7 @@ check_feature_drives() {
     check_drive_value "${name}" "${value}"
     # A drive that covers a feature must take at least one snapshot (screen proof).
     if [[ "${value}" == drives/* ]]; then
+      check_feature_sources "$f" "$name"
       if ! grep -qE 'snapshot\("' "${SKILL}/${value}"; then
         problem "${name} Drive: ${value} never calls snapshot(\"…\")"
       fi
@@ -192,7 +207,7 @@ self_test() {
   cp "${SKILL}/bin/check-map.sh" "$check"
   printf '%s\n' 'func _test_dummy() -> int:' > "${tmp}/tests/run_tests.gd"
   printf '%s\n' '## Features' '- [Good](./good.md)' '- [Npf](./npf.md)' > "${fixture}/features/README.md"
-  printf '%s\n' 'Drive: drives/ok.gd' 'See test_dummy.' \
+  printf '%s\n' 'Drive: drives/ok.gd' 'Source: flagoria_main.gd' 'See test_dummy.' \
     'Also driven by: `drives/nested/helper.gd`' > "${fixture}/features/good.md"
   printf '%s\n' 'Drive: not player-facing' '[Good](./good.md#heading)' \
     '[Anchor](#heading) and [web](https://example.com/page)' \
@@ -201,6 +216,9 @@ self_test() {
     > "${fixture}/SKILL.md"
   printf '%s\n' 'await snapshot("start")' > "${fixture}/drives/ok.gd"
   touch "${fixture}/drives/nested/helper.gd"
+  touch "${tmp}/flagoria_main.gd"
+  env -u GH_TOKEN -u GITHUB_TOKEN git -C "${tmp}" init -q
+  env -u GH_TOKEN -u GITHUB_TOKEN git -C "${tmp}" add -- flagoria_main.gd
 
   expect_fail() {
     local label="$1" diagnostic="$2"; shift 2
@@ -220,6 +238,13 @@ self_test() {
   }
 
   expect_ok "valid links, drives and test citations" "$check"
+  sed -i '/^Source:/d' "${fixture}/features/good.md"
+  expect_fail "missing Source line" "good.md has no Source: line" "$check"
+  mkdir "${tmp}/Scripts"
+  touch "${tmp}/Scripts/untracked.gd"
+  printf '%s\n' 'Source: Scripts/untracked.gd' >> "${fixture}/features/good.md"
+  expect_fail "untracked source" "Scripts/untracked.gd is not an existing tracked file" "$check"
+  sed -i 's|^Source:.*|Source: flagoria_main.gd|' "${fixture}/features/good.md"
   printf '%s\n' '[Broken](./missing.md)' >> "${fixture}/features/npf.md"
   expect_fail "dead feature link" "features/npf.md links ./missing.md" "$check"
   sed -i '$d' "${fixture}/features/npf.md"

@@ -1,6 +1,7 @@
 # Train soldier
 
 Drive: drives/train_soldier.gd
+Source: Scripts/mechanics/npcs/soldier_requests.gd
 
 ## What it does
 

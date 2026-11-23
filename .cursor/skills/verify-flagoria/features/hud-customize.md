@@ -1,6 +1,8 @@
 # Customize HUD layout
 
 Drive: drives/hud_customize.gd
+Source: Scripts/ui/hud_layout.gd
+Source: Scripts/ui/hud_layout_edit.gd
 
 The in-game menu has a Customize HUD entry. It opens an edit mode over the live touch controls: joystick, attack, run, the tool wheel, Buildings and Map. Layout save version 5 resets older layouts to the defaults. Map sits beside Menu, Attack mirrors the joystick, Run and the tool wheel sit around Attack, and Buildings sits beside that cluster. Solo play pauses while editing; in multiplayer only the local layout changes. Drag moves a control; the size slider or a pinch resizes it between today’s size and 1.75×. Controls stay on screen and cannot overlap. The two-ring picker follows Buildings and opens inward. If obstructed, it tries the other side, then increases both radii together. In cramped layouts, all six discs stay visible and captions can be hidden to fit. The open picker dims the playfield during play. Save writes the layout to user settings on this device (not in world saves). Reset restores the default layout, including the thumb-side wheel button. Positions are stored relative to screen size.
 

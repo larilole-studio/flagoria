@@ -1,6 +1,7 @@
 # Round HUD buttons
 
 Drive: drives/hud_round_buttons.gd
+Source: Scripts/ui/round_hud_style.gd
 
 The match starts with the parchment map and build picker closed. Map sits left of Menu on the top edge. Attack mirrors the joystick and matches its base diameter. Run sits inward and above the wheel on the inside of Attack. Buildings sits above and outward from Attack and opens two compact rings over the dimmed playfield. Captions appear where they fit. From the top, the inner ring holds Plank, Wall and Tower, and the outer ring holds Castle, Guard post and Barracks. The picker follows Buildings in a custom layout. Tap Buildings again, pick a tool or tap outside to close the picker. The selected tool keeps its ring when reopened.
 

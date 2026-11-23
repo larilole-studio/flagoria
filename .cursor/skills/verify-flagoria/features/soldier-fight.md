@@ -1,6 +1,8 @@
 # Soldier fight
 
 Drive: drives/soldier_fight.gd
+Source: Scripts/mechanics/npcs/soldier.gd
+Source: Scripts/mechanics/npcs/soldier_target.gd
 
 ## What it does
 

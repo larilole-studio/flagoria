@@ -1,6 +1,8 @@
 # Footprint rotation
 
 Drive: drives/footprint_rotation.gd
+Source: Scripts/mechanics/building/footprint_orientation.gd
+Source: Scripts/mechanics/building/build_placement_rotate.gd
 
 While placing a footprint structure (tower, extra castle, guard post or
 barracks — `BuildToolRow.FOOTPRINT_KIND`), interact mode shows a round Rotate

@@ -1,6 +1,8 @@
 # Generated building
 
 Drive: drives/generated_building.gd
+Source: Scripts/mechanics/building_blocks/generated_buildings.gd
+Source: Scripts/mechanics/building_blocks/wfc_solver.gd
 
 A host generates one building at the local player (#26). The debug key is B. The same action is the Generate building button at the bottom of Map Settings, opened from the in-game menu while hosting. Building width, height and style are Map Settings fields (`building_width`, `building_height`, `building_style` on `MapGenParams`). Style 0 uses the stone piece tiles. Style 1 remaps the wall, corner, door and window onto the moss tiles and shifts the solve seed.
 

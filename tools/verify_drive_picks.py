@@ -2,11 +2,10 @@
 """Pick gameplay drives for verify-drive.yml (Gameplay drives job).
 
 On pull_request, after tools/play_review_paths.py marks gameplay, read changed
-paths and collect Drive: drives/<name>.gd from changed feature files under
-.cursor/skills/verify-flagoria/features/*.md (README skipped). Skip
-drives/two_player/* and nested drives/<folder>/*.gd. When gameplay is true and
-no drive names were collected, use the default smoke drive (same as
-workflow_dispatch with empty inputs: smoke).
+paths and collect top-level Drive: entries from changed feature pages and pages
+whose Source: entries exactly match changed gameplay paths. Skip README and
+nested drives, including drives/two_player/*. Report gameplay source paths with
+no auto-selectable drive. If nothing is collected, fall back to smoke.
 
 Writes drives=<space-separated names> and optional reason= to $GITHUB_OUTPUT
 when set. Does not set gameplay=; play_review_paths does that on PRs.
@@ -22,49 +21,50 @@ import argparse
 import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 DEFAULT_SMOKE = "smoke"
 FEATURE_PREFIX = ".cursor/skills/verify-flagoria/features/"
-DRIVE_LINE = re.compile(r"^Drive:\s+(\S+)\s*$", re.MULTILINE)
+DRIVE_LINE = re.compile(r"^Drive:[ \t]+drives/(_*[^\W_]\w*)\.gd[ \t]*$", re.MULTILINE)
+SOURCE_LINE = re.compile(
+    r"^Source:[ \t]+(Scripts/[^\s]+\.gd|flagoria_main\.gd)[ \t]*$", re.MULTILINE
+)
 
 
-def drive_names_from_feature(path: Path) -> list[str]:
-    """Return launch names (no drives/ prefix, no .gd) for one feature file."""
-    if not path.is_file():
-        return []
-    text = path.read_text(encoding="utf-8", errors="replace")
-    m = DRIVE_LINE.search(text)
-    if not m:
-        return []
-    value = m.group(1).strip()
-    if value == "not player-facing":
-        return []
-    if not value.startswith("drives/") or not value.endswith(".gd"):
-        return []
-    if value.startswith("drives/two_player/"):
-        return []
-    rel = value[len("drives/") : -len(".gd")]
-    if "/" in rel:
-        return []
-    if not rel.replace("_", "").isalnum():
-        return []
-    return [rel]
+def feature_pages(root: Path) -> list[Path]:
+    return sorted((root / FEATURE_PREFIX).glob("*.md"))
 
 
-def collect_from_paths(paths: list[str], root: Path) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for rel in paths:
-        if not rel.startswith(FEATURE_PREFIX) or rel.endswith("/README.md"):
+def collect_from_paths(paths: list[str], root: Path) -> tuple[list[str], list[str]]:
+    changed = dict.fromkeys(root / path for path in paths if path.startswith(FEATURE_PREFIX))
+    gameplay_paths = {
+        path for path in paths if path.startswith("Scripts/") or path == "flagoria_main.gd"
+    }
+    matched: set[str] = set()
+    names: list[str] = []
+    candidates = dict.fromkeys([*changed, *feature_pages(root)])
+    for page in candidates:
+        if page.name == "README.md" or page.suffix != ".md" or not page.is_file():
             continue
-        if not rel.endswith(".md"):
+        text = page.read_text(encoding="utf-8", errors="replace")
+        drive = DRIVE_LINE.search(text)
+        if not drive:
             continue
-        for name in drive_names_from_feature(root / rel):
-            if name not in seen:
-                seen.add(name)
-                out.append(name)
-    return out
+        sources = gameplay_paths.intersection(SOURCE_LINE.findall(text))
+        if page in changed or sources:
+            names.append(drive[1])
+            matched.update(sources)
+    return dedupe(names), sorted(gameplay_paths - matched)
+
+
+def selection_reason(gameplay: bool, names: list[str], unmatched: list[str]) -> str:
+    if not gameplay:
+        return "not gameplay"
+    reason = "selected feature drives" if names else "default smoke fallback"
+    if unmatched:
+        reason += " (unmatched gameplay source paths: %s)" % ", ".join(unmatched)
+    return reason
 
 
 def dedupe(names: list[str]) -> list[str]:
@@ -92,6 +92,8 @@ def finalize(gameplay: bool, names: list[str], *, dispatch: bool) -> list[str]:
 def write_output(drives: list[str], reason: str) -> None:
     joined = " ".join(drives)
     print("Selected drives: '%s'" % joined)
+    if reason:
+        print("Reason: %s" % reason)
     out = os.environ.get("GITHUB_OUTPUT")
     if out:
         with open(out, "a", encoding="utf-8") as fh:
@@ -100,86 +102,82 @@ def write_output(drives: list[str], reason: str) -> None:
 
 def self_test() -> int:
     root = Path(__file__).resolve().parent.parent
-    fail = 0
+    fail = cases = 0
 
-    def check(label: str, got: list[str], want: list[str]) -> None:
-        nonlocal fail
+    def check(label: str, got: object, want: object) -> None:
+        nonlocal fail, cases
+        cases += 1
         if got != want:
             fail += 1
             print("FAIL %s: got %r, want %r" % (label, got, want), file=sys.stderr)
 
-    feat = FEATURE_PREFIX
-    with_tmp = [
-        (feat + "chop-trees.md", "Drive: drives/chop_trees.gd\n"),
-        (feat + "combat.md", "Drive: drives/combat_hud.gd\n"),
-        (feat + "two-player.md", "Drive: drives/two_player/two_player_host.gd\n"),
-        (feat + "nested.md", "Drive: drives/dedicated_play/play_server.gd\n"),
-        (feat + "npf.md", "Drive: not player-facing\n"),
-        (feat + "nodrive.md", "No drive here\n"),
-    ]
-    import tempfile
-
+    player = "Scripts/player/player.gd"
+    chop = "Scripts/mechanics/trees/chop_action.gd"
+    two = "Scripts/net/join_dial.gd"
+    nested = "flagoria_main.gd"
+    unowned = "Scripts/world/map_gen.gd"
+    fixtures = {
+        "chop": f"Drive: drives/chop_trees.gd\nSource: {chop}\n",
+        "combat": f"Drive: drives/combat_hud.gd\nSource: {player}\nSee `{unowned}`.\n",
+        "two-player": f"Drive: drives/two_player/two_player_host.gd\nSource: {two}\n",
+        "nested": f"Drive: drives/dedicated_play/play_server.gd\nSource: {nested}\n",
+        "npf": "Drive: not player-facing\n",
+        "nodrive": "No drive here\n",
+        "README": f"Drive: drives/wait.gd\nSource: {player}\n",
+    }
     with tempfile.TemporaryDirectory() as td:
         tmproot = Path(td)
-        for rel, body in with_tmp:
-            p = tmproot / rel
-            p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text(body, encoding="utf-8")
+        for name, body in fixtures.items():
+            page = tmproot / FEATURE_PREFIX / f"{name}.md"
+            page.parent.mkdir(parents=True, exist_ok=True)
+            page.write_text(body, encoding="utf-8")
 
-        paths_gameplay_only = ["Scripts/player/player.gd"]
+        def pick(paths: list[str]) -> list[str]:
+            names, _ = collect_from_paths(paths, tmproot)
+            return finalize(True, names, dispatch=False)
+
+        chop_page = FEATURE_PREFIX + "chop.md"
+        check("source only", pick([player]), ["combat_hud"])
+        check("feature drive", pick([chop_page]), ["chop_trees"])
+        check("skip two_player", pick([FEATURE_PREFIX + "two-player.md", two]), [DEFAULT_SMOKE])
+        check("skip nested", pick([FEATURE_PREFIX + "nested.md", nested]), [DEFAULT_SMOKE])
+        check("not player-facing", pick([FEATURE_PREFIX + "npf.md"]), [DEFAULT_SMOKE])
+        check("missing Drive line", pick([FEATURE_PREFIX + "nodrive.md"]), [DEFAULT_SMOKE])
+        check("skip README", pick([FEATURE_PREFIX + "README.md", player]), ["combat_hud"])
+        check("markdown and source", pick([chop_page, player]), ["chop_trees", "combat_hud"])
+        check("dedupe", pick([chop_page, chop_page, chop]), ["chop_trees"])
+
+        names, unmatched = collect_from_paths([unowned], tmproot)
+        check("unowned source fallback", finalize(True, names, dispatch=False), [DEFAULT_SMOKE])
         check(
-            "gameplay no features",
-            finalize(True, collect_from_paths(paths_gameplay_only, tmproot), dispatch=False),
-            [DEFAULT_SMOKE],
+            "fallback reason", selection_reason(True, names, unmatched),
+            f"default smoke fallback (unmatched gameplay source paths: {unowned})",
         )
-        paths_chop = [feat + "chop-trees.md", "Scripts/player/player.gd"]
+        names, unmatched = collect_from_paths([player, nested], tmproot)
         check(
-            "feature drive",
-            finalize(True, collect_from_paths(paths_chop, tmproot), dispatch=False),
-            ["chop_trees"],
-        )
-        paths_two = [feat + "two-player.md"]
-        check(
-            "skip two_player",
-            finalize(True, collect_from_paths(paths_two, tmproot), dispatch=False),
-            [DEFAULT_SMOKE],
-        )
-        paths_nested = [feat + "nested.md"]
-        check(
-            "skip nested",
-            finalize(True, collect_from_paths(paths_nested, tmproot), dispatch=False),
-            [DEFAULT_SMOKE],
-        )
-        paths_npf = [feat + "npf.md", "Scripts/mechanics/mobs/mob.gd"]
-        check(
-            "not player-facing feature",
-            finalize(True, collect_from_paths(paths_npf, tmproot), dispatch=False),
-            [DEFAULT_SMOKE],
-        )
-        paths_both = [feat + "chop-trees.md", feat + "combat.md"]
-        check(
-            "two features",
-            finalize(True, collect_from_paths(paths_both, tmproot), dispatch=False),
-            ["chop_trees", "combat_hud"],
-        )
-        paths_dup = [feat + "chop-trees.md", feat + "chop-trees.md"]
-        check(
-            "dedupe",
-            finalize(True, collect_from_paths(paths_dup, tmproot), dispatch=False),
-            ["chop_trees"],
+            "selection reason", selection_reason(True, names, unmatched),
+            f"selected feature drives (unmatched gameplay source paths: {nested})",
         )
 
-    check("non-gameplay", finalize(False, [], dispatch=False), [])
+    check("non-gameplay", finalize(False, ["combat_hud"], dispatch=False), [])
     check("dispatch empty", finalize(True, [], dispatch=True), [DEFAULT_SMOKE])
     check("dispatch named", finalize(True, ["wait", "smoke", "wait"], dispatch=True), ["wait", "smoke"])
 
-    # Real repo: default smoke drive file exists
-    smoke = root / ".cursor/skills/verify-flagoria/drives/smoke.gd"
-    if not smoke.is_file():
-        fail += 1
-        print("FAIL smoke.gd missing", file=sys.stderr)
+    expected = {"combat_hud", "ranged_bow"}
+    for page in feature_pages(root):
+        if page.name == "README.md":
+            continue
+        text = page.read_text(encoding="utf-8")
+        drive = DRIVE_LINE.search(text)
+        if drive and player in SOURCE_LINE.findall(text):
+            expected.add(drive[1])
+    names, _ = collect_from_paths([player], root)
+    selected = set(finalize(True, names, dispatch=False))
+    check("real player source missing drives", sorted(expected - selected), [])
+    check("real player source skips smoke", DEFAULT_SMOKE in selected, False)
+    smoke = (root / FEATURE_PREFIX).parent / "drives/smoke.gd"
+    check("smoke drive exists", smoke.is_file(), True)
 
-    cases = 10
     print("verify_drive_picks self-test: %d/%d ok" % (cases - fail, cases))
     return 1 if fail else 0
 
@@ -211,12 +209,9 @@ def main() -> int:
         text = sys.stdin.read()
     paths = [p.strip() for p in text.splitlines() if p.strip()]
     gameplay = args.gameplay == "true"
-    collected = collect_from_paths(paths, root)
+    collected, unmatched = collect_from_paths(paths, root) if gameplay else ([], [])
     drives = finalize(gameplay, collected, dispatch=False)
-    reason = "gameplay PR" if gameplay else "not gameplay"
-    if gameplay and not collected:
-        reason = "gameplay PR (default %s)" % DEFAULT_SMOKE
-    write_output(drives, reason)
+    write_output(drives, selection_reason(gameplay, collected, unmatched))
     return 0
 
 

@@ -1,6 +1,13 @@
 # Map save files
 
 Drive: drives/structure_save.gd
+Source: Scripts/world/map_gen.gd
+Source: Scripts/saves/map_save.gd
+Source: Scripts/saves/world_save.gd
+Source: Scripts/mechanics/structures/structure_saves.gd
+Source: Scripts/saves/player_save.gd
+Source: Scripts/shell/ingame_menu.gd
+Source: Scripts/shell/menu_worlds.gd
 
 A world save holds a world's generation inputs (params and seeds) plus what was done to it since, and is saved to and loaded from versioned files in `user://saves/`. The current file is gzip of one compact JSON document, with a game version and created/updated times in the header. Version 1 and 2 files are plain JSON and still load. Terrain is never stored; the generator rebuilds it. The format is in `docs/world-saves.md`.
 
