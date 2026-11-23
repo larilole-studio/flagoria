@@ -175,6 +175,15 @@ func _touches_support(map: TileMap, cell: Vector2i) -> bool:
 	return false
 
 
+func _has_two_cell_run(it: Interaction, map: TileMap, cell0: Vector2i) -> bool:
+	for step_dir in [Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN, Vector2i.RIGHT]:
+		var next: Vector2i = cell0 + step_dir
+		var end: Vector2i = cell0 + step_dir * 2
+		if _land_clear(map, next) and _land_clear(map, end) and it.in_reach(next) and it.in_reach(end):
+			return true
+	return false
+
+
 func _clear_land_in_reach(it: Interaction, map: TileMap) -> Variant:
 	var at := map.local_to_map(map.to_local(hero().global_position))
 	var best: Variant = null
@@ -186,13 +195,9 @@ func _clear_land_in_reach(it: Interaction, map: TileMap) -> Variant:
 				continue
 			if not _touches_support(map, c):
 				continue
-			# Prefer a cell that has at least one clear 4-neighbour for the chain.
-			var has_n := false
-			for n in [c + Vector2i.LEFT, c + Vector2i.RIGHT, c + Vector2i.UP, c + Vector2i.DOWN]:
-				if _land_clear(map, n) and it.in_reach(n):
-					has_n = true
-					break
-			if not has_n:
+			# The chain step needs a 2-cell clear run off this tip, not just
+			# one neighbour.
+			if not _has_two_cell_run(it, map, c):
 				continue
 			var d := hero().global_position.distance_to(it.cell_center(c))
 			if d < best_d:
