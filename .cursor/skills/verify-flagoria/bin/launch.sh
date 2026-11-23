@@ -2,13 +2,15 @@
 # Launch: start a drive in the background from a scratch user dir, print its
 # ready, step and done lines as they come, and exit with the drive's result.
 #
-# Usage: bin/launch.sh <drive.gd> [--seed N] [--display]
+# Usage: bin/launch.sh <drive.gd> [--seed N] [--display] [--print-seed]
 #   <drive.gd> is relative to the skill dir (drives/wait.gd), to the repo, or
 #   a res:// path. --display runs under xvfb-run with opengl3 instead of
 #   --headless. --seed N writes the scratch user://map_gen_params.cfg before
 #   launch with the altitude, moisture, temperature, items and biome seeds
 #   N .. N+4 (as tools/map_cli.gd --seed), so the host gets the same map every
-#   run; without it, or with 0, every seed is random.
+#   run. If --seed is omitted, use the drive's ## launch: --seed N line.
+#   With no annotation or with --seed 0, use a random map. --print-seed prints
+#   the resolved seed (0 for random) and exits without starting Godot.
 #
 # Exit: 0 when the drive prints VERIFY_DONE ok and quits 0; 1 on VERIFY_DONE
 # fail, or when the game exits without a done line. On VERIFY_IDLE it exits 0
@@ -24,26 +26,27 @@ cd "$ROOT"
 source "${ROOT}/.cursor/skills/verify-flagoria/bin/run_lib.sh"
 
 usage() {
-  echo "usage: bin/launch.sh <drive.gd> [--seed N] [--display]" >&2
+  echo "usage: bin/launch.sh <drive.gd> [--seed N] [--display] [--print-seed]" >&2
   exit 2
 }
-drive="${1:-}"
-[[ -z "${drive}" || "${drive}" == --* ]] && usage
-shift
+drive=
 display=0
-seed=0
+print_seed=0
+seed=
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --display) display=1; shift ;;
+    --print-seed) print_seed=1; shift ;;
     --seed)
-      # A whole number up to 2^31 - 5, so N+4 still fits a 32-bit seed.
-      if [[ ! "${2:-}" =~ ^[0-9]{1,10}$ ]] || ((10#$2 > 2147483643)); then
-        usage
-      fi
-      seed=$((10#$2)); shift 2 ;;
-    *) usage ;;
+      [[ -n "${2:-}" ]] || usage
+      seed="$2"; shift 2 ;;
+    --*) usage ;;
+    *)
+      [[ -z "${drive}" ]] || usage
+      drive="$1"; shift ;;
   esac
 done
+[[ -n "${drive}" ]] || usage
 if [[ "${drive}" != res://* ]]; then
   if [[ -f "${SKILL}/${drive}" ]]; then
     drive="res://.cursor/skills/verify-flagoria/${drive}"
@@ -55,10 +58,34 @@ if [[ "${drive}" != res://* ]]; then
   fi
 fi
 
+drive_file="${ROOT}/${drive#res://}"
+if [[ ! -f "${drive_file}" ]]; then
+  echo "launch: no drive at ${drive}" >&2
+  exit 2
+fi
+if [[ -z "${seed}" ]]; then
+  seed="$(sed -nE 's/^## launch: --seed (.*)$/\1/p' "${drive_file}" | sed -n '1p')"
+  seed="${seed:-0}"
+fi
+# A whole number up to 2^31 - 5, so N+4 still fits a 32-bit seed.
+if [[ ! "${seed}" =~ ^[0-9]{1,10}$ ]] || ((10#$seed > 2147483643)); then
+  usage
+fi
+seed=$((10#$seed))
+if ((print_seed)); then
+  echo "${seed}"
+  exit 0
+fi
+
 run_find_godot launch
 run_new "$(basename "${drive}" .gd)"
 log="${RUN_DIR}/game.log"
 echo "${drive}" >"${RUN_DIR}/drive"
+category=player-path
+if [[ "$(head -n 1 "${drive_file}")" == "## fixture" ]]; then
+  category=fixture
+fi
+echo "${category}" >"${RUN_DIR}/category"
 if ((seed > 0)); then
   # The MapGen autoload reads this file (section map_gen) at start-up.
   user="${XDG_DATA_HOME}/godot/app_userdata/Flagoria"

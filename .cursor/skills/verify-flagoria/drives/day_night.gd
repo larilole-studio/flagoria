@@ -1,3 +1,4 @@
+## fixture
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Day, dusk and night on one map. The cycle is 10 minutes, so the drive

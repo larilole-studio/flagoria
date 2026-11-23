@@ -1,3 +1,4 @@
+## fixture
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Train a host-owned soldier, spawn a second player body beside it, capture the strike.
