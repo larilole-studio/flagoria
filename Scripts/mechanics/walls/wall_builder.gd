@@ -33,6 +33,10 @@ func has_wall(cell: Vector2i) -> bool:
 	return _wall_cells.has(cell)
 
 
+func free_cells() -> Array:
+	return _wall_cells.keys()
+
+
 func hp(cell: Vector2i) -> int:
 	## Remaining hits on a free-form wall, or -1 when `cell` is not one.
 	if not _wall_cells.has(cell):
@@ -253,7 +257,7 @@ func _display_atlas(cell: Vector2i) -> Vector2i:
 	var amount: int = hp(cell)
 	if amount >= MAX_HP:
 		return base
-	var name := _atlas_wall_name(base)
+	var name := atlas_wall_name(base)
 	if not (name.ends_with("_H") or name.ends_with("_V")):
 		return base
 	var dmg := name
@@ -277,6 +281,10 @@ func _tile_blocks(atlas: Vector2i) -> bool:
 
 
 static func _atlas_wall_name(atlas: Vector2i) -> String:
+	return atlas_wall_name(atlas)
+
+
+static func atlas_wall_name(atlas: Vector2i) -> String:
 	## WALL_*, PALISADE_* or TOWER_STONE_* name at `atlas`, or "".
 	for name: String in TileCatalog.TILES:
 		if not name.begins_with("WALL_") and not name.begins_with("PALISADE_") \

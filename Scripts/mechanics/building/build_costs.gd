@@ -16,6 +16,24 @@ const GUARD_POST := &"guard_post"
 const BARRACKS := &"barracks"
 const START_CASTLE := &"start_castle"
 
+## Requestable named structures take one anchor cell.
+const NAMED_STRUCTURES := {
+	TOWER: "tower_wood",
+	CASTLE: "castle",
+	GUARD_POST: "guard_post",
+	BARRACKS: "barracks",
+}
+
+const CITY_KINDS := {
+	CASTLE: true,
+	GUARD_POST: true,
+}
+
+
+static func is_requestable(kind: StringName) -> bool:
+	return kind == WALL_BLOCK or NAMED_STRUCTURES.has(kind)
+
+
 ## Kind -> wood for one unit: a plank is one bridge cell, a wall block one
 ## wall cell, a tower one tower, a castle one extra castle (#527). The
 ## starting castle each player gets is free.

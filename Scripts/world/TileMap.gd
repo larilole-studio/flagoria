@@ -192,6 +192,24 @@ func place_wall_cells(cells: Array[Vector2i]) -> bool:
 	return _walls.place_cells(cells)
 func has_wall(cell: Vector2i) -> bool:
 	return _walls.has_wall(cell)
+func free_wall_cells() -> Array:
+	return _walls.free_cells()
+func wall_hp(cell: Vector2i) -> int:
+	return _walls.hp(cell)
+func damage_wall_cell(cell: Vector2i) -> int:
+	return _walls.damage(cell)
+func erase_wall_cells(cells: Array[Vector2i]) -> bool:
+	return _walls.erase_cells(cells)
+func replace_wall_cells_from_host(cells: Array) -> void:
+	_walls.replace_from_host(cells)
+func set_wall_hp(cell: Vector2i, amount: int) -> void:
+	_walls.set_hp(cell, amount)
+func auto_structure_cells() -> Array:
+	return _structures.auto_cells().keys()
+func structure_object_at(cell: Vector2i) -> Vector2i:
+	return _structures.object_at(cell)
+func apply_solved_auto_junction(cell: Vector2i, tile_name: String) -> void:
+	_structures.apply_solved(cell, tile_name)
 func can_place_structure(structure: Structure, anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[String]:
 	return _structures.can_place(structure, anchor_cell, quarter_turns)
 func place_structure(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turns: int = 0) -> int:
