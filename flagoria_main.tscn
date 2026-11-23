@@ -209,8 +209,13 @@ script = ExtResource("7_n5hto")
 [node name="Interaction" type="Node2D" parent="World"]
 script = ExtResource("15_interaction")
 
-[node name="StructureRequests" type="Node" parent="World"]
+[node name="StructureRequests" type="Node" parent="World" node_paths=PackedStringArray("map", "interaction", "inventory", "cities", "world")]
 script = ExtResource("21_requests")
+map = NodePath("../worldMap")
+interaction = NodePath("../Interaction")
+inventory = NodePath("../../Inventory")
+cities = NodePath("../Cities")
+world = NodePath("..")
 
 [node name="TowerCapture" type="Node2D" parent="World"]
 script = ExtResource("16_tower_capture")

@@ -19,21 +19,10 @@ const NOT_ENOUGH_WOOD := BuildCosts.NOT_ENOUGH_WOOD
 const MULTIPLAYER_ON := BuildCosts.MULTIPLAYER_ON
 const UNKNOWN_KIND := BuildCosts.UNKNOWN_KIND
 
-## Kinds this module can place. Each entry is one rule set; a new buildable
-## adds a line here and a `_check_<kind>` / `_write_<kind>` pair.
-const KINDS := {
-	BuildCosts.PLANK: true,
-	BuildCosts.TOWER: true,
-	BuildCosts.CASTLE: true,
-	BuildCosts.GUARD_POST: true,
-	BuildCosts.BARRACKS: true,
-	BuildCosts.WALL_BLOCK: true,
-}
-
-const TOWER_STRUCTURE := "tower_wood"
-const CASTLE_STRUCTURE := "castle"
-const GUARD_STRUCTURE := "guard_post"
-const BARRACKS_STRUCTURE := "barracks"
+const TOWER_STRUCTURE := BuildCosts.NAMED_STRUCTURES[BuildCosts.TOWER]
+const CASTLE_STRUCTURE := BuildCosts.NAMED_STRUCTURES[BuildCosts.CASTLE]
+const GUARD_STRUCTURE := BuildCosts.NAMED_STRUCTURES[BuildCosts.GUARD_POST]
+const BARRACKS_STRUCTURE := BuildCosts.NAMED_STRUCTURES[BuildCosts.BARRACKS]
 
 const _REASON_ORDER := [
 	EMPTY_CELLS, UNKNOWN_KIND, TOO_LONG, WRONG_GROUND, OCCUPIED, NOT_STRAIGHT, NOT_ADJACENT,
@@ -54,7 +43,7 @@ func can_place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, q
 	## A tower takes exactly one cell (its anchor); a plank or wall run takes
 	## every cell in `cells`.
 	var reasons := can_place_geometry(kind, cells, quarter_turns)
-	if not cells.is_empty() and KINDS.has(kind):
+	if not cells.is_empty() and _can_build(kind):
 		var why := BuildCosts.refusal(inventory, kind, _units(kind, cells))
 		if why != "":
 			reasons.append(why)
@@ -67,16 +56,14 @@ func can_place_geometry(kind: StringName, cells: Array[Vector2i], quarter_turns:
 	var found := {}
 	if cells.is_empty():
 		found[EMPTY_CELLS] = true
-	if not KINDS.has(kind):
+	if not _can_build(kind):
 		found[UNKNOWN_KIND] = true
+	elif kind == BuildCosts.PLANK:
+		_check_plank(cells, found)
+	elif kind == BuildCosts.WALL_BLOCK:
+		_check_wall(cells, found)
 	else:
-		match kind:
-			BuildCosts.PLANK:
-				_check_plank(cells, found)
-			BuildCosts.TOWER, BuildCosts.CASTLE, BuildCosts.GUARD_POST, BuildCosts.BARRACKS:
-				_check_named(kind, cells, found, quarter_turns)
-			BuildCosts.WALL_BLOCK:
-				_check_wall(cells, found)
+		_check_named(kind, cells, found, quarter_turns)
 	return _ordered(found)
 
 
@@ -89,7 +76,7 @@ func cost(kind: StringName, cells: Array) -> int:
 	## Wood for placing `kind` on `cells`; -1 for an unknown kind. A tower is
 	## always one unit (10 wood) regardless of footprint size; a wall block is
 	## one unit per cell (2 wood each).
-	if not KINDS.has(kind) and not BuildCosts.WOOD.has(kind):
+	if not _can_build(kind) and not BuildCosts.WOOD.has(kind):
 		return -1
 	return BuildCosts.cost(kind, _units(kind, cells))
 
@@ -111,7 +98,7 @@ func place_for_peer(kind: StringName, cells: Array[Vector2i], owner: int,
 		inventory: Inventory, quarter_turns: int = 0) -> bool:
 	## Host-only write after reach checks. Supply inventory for the host's own
 	## purchase; a remote buyer is charged by the request handler after success.
-	if not _map.multiplayer.is_server() or not KINDS.has(kind) or cells.is_empty():
+	if not _map.multiplayer.is_server() or not _can_build(kind) or cells.is_empty():
 		return false
 	if kind == BuildCosts.PLANK and inventory != null and not can_place(kind, cells, inventory).is_empty():
 		return false
@@ -154,16 +141,11 @@ func _purchase(kind: StringName, cells: Array[Vector2i], inventory: Inventory,
 
 static func named_structure_file(kind: StringName) -> String:
 	## Structure text file for a one-cell footprint buildable kind.
-	match kind:
-		BuildCosts.TOWER:
-			return TOWER_STRUCTURE
-		BuildCosts.CASTLE:
-			return CASTLE_STRUCTURE
-		BuildCosts.GUARD_POST:
-			return GUARD_STRUCTURE
-		BuildCosts.BARRACKS:
-			return BARRACKS_STRUCTURE
-	return ""
+	return BuildCosts.NAMED_STRUCTURES.get(kind, "")
+
+
+static func _can_build(kind: StringName) -> bool:
+	return kind == BuildCosts.PLANK or BuildCosts.is_requestable(kind)
 
 
 func _load_named(kind: StringName) -> Structure:
@@ -197,8 +179,7 @@ func guard_footprint(anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vec
 
 
 func _units(kind: StringName, cells: Array) -> int:
-	return 1 if kind == BuildCosts.TOWER or kind == BuildCosts.CASTLE \
-			or kind == BuildCosts.GUARD_POST or kind == BuildCosts.BARRACKS else cells.size()
+	return 1 if BuildCosts.NAMED_STRUCTURES.has(kind) else cells.size()
 
 
 func _check_wall(cells: Array[Vector2i], found: Dictionary) -> void:
