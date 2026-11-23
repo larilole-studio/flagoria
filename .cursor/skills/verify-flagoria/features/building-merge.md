@@ -1,6 +1,7 @@
 # Building merge
 
 Drive: drives/building_merge.gd
+Source: Scripts/mechanics/building_blocks/building_merge.gd
 
 Full-edge neighbours merge into one solved footprint with a shared wall (#27). Shift+B removes the building under the hero and re-broadcasts the remaining records. Every peer rebuilds from the list, including late joiners on `sync_to_peer`.
 

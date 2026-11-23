@@ -1,6 +1,8 @@
 # Two-player Host/Join
 
 Drive: drives/two_player/two_player_host.gd
+Source: flagoria_main.gd
+Source: Scripts/shell/menu_join_flow.gd
 
 Two-player Host/Join starts a listen-server on one instance and connects a second instance so both players share one map.
 

@@ -149,7 +149,7 @@ Clicks and taps go to the centre of the node's rect or the cell, read at run tim
 
 ### Drives in CI
 
-`verify-drive.yml` runs on gameplay pull requests (gated by `tools/play_review_paths.py`). `tools/verify_drive_picks.py` reads `Drive: drives/<name>.gd` from each changed feature file, launches those top-level drives with `bin/launch.sh --display` under xvfb, uploads screenshot evidence as the `drive-screenshots` artifact, and fails when a drive prints `VERIFY_DONE fail` (hard assert via `done(ok)`). No pixel-diff goldens. Paired `drives/two_player/*` drives and nested `drives/<folder>/*.gd` are skipped on the auto path. When a gameplay pull request changes no collectible `Drive:` line, CI runs exactly one default smoke drive (`drives/smoke.gd`, same as `workflow_dispatch` with empty inputs). `workflow_dispatch` still runs named drives (default `smoke`).
+`verify-drive.yml` runs on gameplay pull requests (gated by `tools/play_review_paths.py`). `tools/verify_drive_picks.py` collects top-level `Drive: drives/<name>.gd` entries from changed feature pages and from pages with a `Source:` entry that exactly matches a changed path. Each feature with a drive declares its tracked production scripts with one `Source: <path>` line per script. Automatic selection skips paired and other nested drives. CI launches the selected drives with `bin/launch.sh --display` under xvfb, uploads the `drive-screenshots` artifact, and fails when a drive prints `VERIFY_DONE fail`. If no feature drive is selected, CI uses the default smoke fallback. The picker reports changed gameplay source paths with no auto-selectable drive. `workflow_dispatch` still runs named drives (default `smoke`).
 
 ### Two-player Host/Join
 

@@ -1,6 +1,8 @@
 # Build castle
 
 Drive: drives/build_castle.gd
+Source: Scripts/mechanics/building/build_placement.gd
+Source: Scripts/mechanics/structures/structure_placer.gd
 
 Interact-mode Castle tool places an extra `structures/castle.txt` footprint for
 50 wood (#527). The preview greens the full rotated footprint and charges

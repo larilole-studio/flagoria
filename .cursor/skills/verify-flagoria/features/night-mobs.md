@@ -1,6 +1,7 @@
 # Night mobs
 
 Drive: drives/night_mobs.gd
+Source: Scripts/mechanics/mobs/mob_spawner.gd
 
 Nights are more dangerous. The host's ambient caps follow the shared clock: the day hold stays at today's caps, night doubles the per-player and total caps, and dusk and dawn ramp between those with the same smoothstep as the tint. At dawn, mobs above the day cap despawn only once they are past `DESPAWN_RADIUS` of every player, so nothing vanishes on screen. With the cycle off in Map Settings, the caps stay at the day figures. The host decides. A joiner reads the same clock and sees the host's mobs.
 

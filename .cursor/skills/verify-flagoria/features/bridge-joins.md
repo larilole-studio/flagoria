@@ -1,6 +1,7 @@
 # Bridge joins
 
 Drive: drives/bridge_joins.gd
+Source: Scripts/mechanics/bridges/bridge_builder.gd
 
 Separately placed plank runs that share a side become one deck (#416).
 `BridgeBuilder` picks each cell's plain plank piece from the planks and walkable

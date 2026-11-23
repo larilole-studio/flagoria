@@ -1,6 +1,8 @@
 # In-game menu and quit prompt
 
 Drive: drives/combat_hud.gd
+Source: Scripts/shell/ingame_menu.gd
+Source: Scripts/shell/quit_prompt.gd
 
 The in-game menu button (three bars, top right) or Esc opens a Pause panel with Resume, Save, Scores, Customize HUD, Music volume, Main menu and a status label. The host also sees [Map Settings](./map-settings-panel.md). Nothing is paused, locally or for other players. The Android back button or a window close asks "Do you want to quit?" first.
 

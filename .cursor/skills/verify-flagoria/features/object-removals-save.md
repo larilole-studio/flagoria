@@ -1,6 +1,8 @@
 # Object removals save
 
 Drive: drives/object_removals_save.gd
+Source: Scripts/world/object_removals.gd
+Source: Scripts/saves/world_save.gd
 
 Picked ground flowers and stones destroyed by a sword swing are recorded in
 `world.object_changes` as `{"removed": true}` on each cell (#198). They stay

@@ -1,6 +1,7 @@
 # Cities
 
 Drive: drives/cities.gd
+Source: Scripts/mechanics/conquest/cities.gd
 
 A closed wall loop around a flag tower makes a city (#277). `Cities`
 (`Scripts/mechanics/conquest/cities.gd`, the `World/Cities` node) flood-fills

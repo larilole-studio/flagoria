@@ -1,6 +1,11 @@
 # Ranged bow
 
 Drive: drives/ranged_bow.gd
+Source: Scripts/ui/tool_wheel.gd
+Source: Scripts/mechanics/combat/ranged_shots.gd
+Source: Scripts/player/player.gd
+Source: Scripts/player/player_combat.gd
+Source: Scripts/mechanics/combat/ranged_shot.gd
 
 One bow on the existing aim (#362). The bow stays off until the tool wheel arms it. An aimed attack then fires one shot along that aim and does not swing the sword. The host decides the hit. Peers draw a short line. A plain sword attack is unchanged while the bow is off.
 

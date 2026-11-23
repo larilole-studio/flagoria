@@ -1,6 +1,7 @@
 # Free-form walls
 
 Drive: drives/free_form_walls.gd
+Source: Scripts/mechanics/walls/wall_builder.gd
 
 Free-form wooden palisade walls as one connected chain (#276). Wall sits in the inner Buildings ring. The tool keeps a persistent tip
 while selected: the first placement must 4-touch an existing tower, castle or

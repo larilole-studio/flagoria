@@ -1,6 +1,8 @@
 # Soldier vs peer
 
 Drive: drives/soldier_vs_peer.gd
+Source: Scripts/mechanics/npcs/soldier.gd
+Source: Scripts/mechanics/npcs/soldier_target.gd
 
 ## What it does
 

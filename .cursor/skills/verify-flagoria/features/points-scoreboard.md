@@ -1,6 +1,8 @@
 # Points scoreboard
 
 Drive: drives/points_scoreboard.gd
+Source: Scripts/ui/scoreboard_panel.gd
+Source: Scripts/ui/score_hud.gd
 
 Menu → Scores opens the scoreboard with every connected player's point total. Rows sort highest first and update when totals change or players join or leave.
 

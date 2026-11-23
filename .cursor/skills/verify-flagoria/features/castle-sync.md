@@ -1,6 +1,8 @@
 # Castle sync
 
 Drive: drives/castle_sync.gd
+Source: Scripts/world/start_castle.gd
+Source: Scripts/world/world_map_params.gd
 
 In a two-player game the host owns castle placement and ownership (#278).
 The host's starting castle is placed while it is still alone and travels with

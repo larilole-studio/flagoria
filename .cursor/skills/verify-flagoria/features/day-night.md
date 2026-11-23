@@ -1,6 +1,7 @@
 # Day and night
 
 Drive: drives/day_night.gd
+Source: Scripts/mechanics/day_night/day_night.gd
 
 The host owns a 10 minute clock. The world is tinted through day, dusk, night and dawn. The HUD stays at full brightness. Map Settings has a Day and night switch, on by default. The elapsed time is saved with the world. An older save loads at the start of day with the cycle on. Clients and a late joiner follow the host.
 

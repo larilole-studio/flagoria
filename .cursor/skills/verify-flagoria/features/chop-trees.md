@@ -1,6 +1,8 @@
 # Chop trees (live drive)
 
 Drive: drives/chop_trees.gd
+Source: Scripts/mechanics/interact/interaction.gd
+Source: Scripts/mechanics/trees/chop_action.gd
 
 In interact mode the attack button aims one chop sweep. A drag past 6 viewport pixels from the button's centre sets the cone's direction and its reach, and that reach is the drag's world length clamped to `CHOP_REACH` (240 px, 8× the sword's 30 px). A shorter press chops in the facing direction at full reach. A drag on the map does not chop. Every plant in the cone is queued. Each plays the full two-hit chop, nearest first, before the next starts. Moving, dying, or leaving interact mode during the swing or the recovery clears the rest of the queue. This file is the live-drive recipe. The mechanics, bushes, regrowth and their headless tests are in [Chopping trees and bushes](./chop-trees-and-bushes.md).
 

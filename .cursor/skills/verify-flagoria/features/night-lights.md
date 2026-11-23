@@ -1,6 +1,7 @@
 # Night lights
 
 Drive: drives/night_lights.gd
+Source: Scripts/mechanics/day_night/night_lights.gd
 
 At night a gold pool sits on each player and on castles, towers and guard posts. The pools fade in across dusk and out across dawn. Each peer draws them from the players and buildings it already has, and from the shared clock. A headless host creates none.
 
