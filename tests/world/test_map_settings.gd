@@ -74,7 +74,7 @@ func _test_map_settings_covers_params() -> int:
 	}
 	var fail := 0
 	for prop in params.get_property_list():
-		if not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE) or prop["name"] in ["island_preset", "starter_grove", "starter_wood"]:
+		if not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE) or prop["name"] in ["island_preset", "starter_grove", "starter_wood", "swamp_trees"]:
 			continue
 		var key: String = prop["name"]
 		if not data.has(key) or panel.find_child(control_names.get(key, key), true, false) == null:

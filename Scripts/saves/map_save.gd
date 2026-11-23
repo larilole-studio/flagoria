@@ -206,6 +206,8 @@ static func load_world(path: String) -> Dictionary:
 	params.swamp_bush_min_chance = 2.0
 	# Saves written before birches have no birch_min_chance; they load with none.
 	params.birch_min_chance = 2.0
+	# Saves written before swamp trees have no swamp_trees; they load with none.
+	params.swamp_trees = false
 	params.from_dict(parsed["params"])
 	var world := WorldSave.new(params)
 	var section_error := world.world_from_dict(parsed["world"])

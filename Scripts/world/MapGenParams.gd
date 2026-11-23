@@ -14,6 +14,9 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 @export_storage var starter_wood: bool = false
 # Flat x/y pairs keep the generation override portable across JSON saves and RPC.
 @export_storage var starter_grove: Array[int] = []
+# Biomes on: swamp trees (BiomeCatalog.PLANTS swamp_tree_chance). Not a Map
+# Settings row; saves without it load off, so their swamps stay as they were.
+@export_storage var swamp_trees: bool = true
 
 # Seeds (0 means "pick a random seed when applied", matching prior randi() behaviour)
 @export var altitude_seed: int = 0
@@ -353,7 +356,7 @@ func exported_properties() -> Array[Dictionary]:
 
 func to_dict() -> Dictionary:
 	var data := {"island_preset": island_preset, "spawn_biome": spawn_biome, "starter_wood": starter_wood,
-			"starter_grove": starter_grove.duplicate()}
+			"starter_grove": starter_grove.duplicate(), "swamp_trees": swamp_trees}
 	for prop in exported_properties():
 		data[prop["name"]] = get(prop["name"])
 	return data

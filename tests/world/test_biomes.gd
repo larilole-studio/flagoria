@@ -279,7 +279,10 @@ func _test_biome_plants() -> int:
 		[0.6, -0.3, 0.9, cont, NONE],
 		[0.6, 0.6, 0.9, cont, TileCatalog.TREE_BUSHY],
 		[0.6, 0.6, 0.9, T, TileCatalog.TREE],
-		[0.6, -0.1, 0.5, dense, TileCatalog.BUSH],
+		[0.6, -0.1, 0.35, dense, TileCatalog.BUSH],
+		[0.6, -0.1, 0.35, T, NONE],
+		# Swamp trees: the highest chances on ARCHIPELAGO_DENSE swamp only.
+		[0.6, -0.1, 0.5, dense, TileCatalog.TREE_BUSHY],
 		[0.6, -0.1, 0.5, T, NONE],
 	]:
 		if world.plant_tile(c[0], c[1], c[2], c[3]) != c[4]:
@@ -361,13 +364,26 @@ func _test_biome_plants() -> int:
 			if BirchTrees.foliage_tile(world, birch_cell, bb, bmo, bch, cont, false) != TileCatalog.TREE:
 				printerr("FAIL biome_plants: pre-birch save grew birches")
 				fail += 1
+	# A save from after swamp scrub but before swamp trees keeps scrub only.
+	var pre_trees: Dictionary = older.to_dict()
+	pre_trees.erase("swamp_trees")
+	file = FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"format_version": 1, "params": pre_trees}))
+	file.close()
+	loaded = MapSave.load_map(path)
+	DirAccess.remove_absolute(path)
+	world.apply_map_params(loaded["params"])
+	if loaded["error"] != "" or world.plant_tile(0.6, -0.1, 0.5, dense) != TileCatalog.BUSH:
+		printerr("FAIL biome_plants: pre-swamp-tree save grew swamp trees (error=%s)" % loaded["error"])
+		fail += 1
 	var saved = MapSave.save_map(older, "test_pine_save")
 	var reloaded = MapSave.load_map(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
 	if reloaded["error"] != "" or reloaded["params"].pine_min_chance != older.pine_min_chance \
 			or reloaded["params"].bushy_tree_min_moist != older.bushy_tree_min_moist \
 			or reloaded["params"].swamp_bush_min_chance != older.swamp_bush_min_chance \
-			or reloaded["params"].birch_min_chance != older.birch_min_chance:
+			or reloaded["params"].birch_min_chance != older.birch_min_chance \
+			or not reloaded["params"].swamp_trees:
 		printerr("FAIL biome_plants: pine save reloaded error=%s" % reloaded["error"])
 		fail += 1
 

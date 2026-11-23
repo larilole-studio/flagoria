@@ -11,12 +11,13 @@ const PARAMS := [
 	"bush_min_alt", "bush_max_alt", "bush_min_chance", "tree_min_alt", "tree_min_chance",
 	"flower_min_alt", "flower_max_alt", "flower_min_chance", "pine_min_alt", "pine_min_moist",
 	"pine_min_chance", "bushy_tree_min_moist", "swamp_bush_min_chance", "birch_min_chance",
+	"swamp_trees",
 ]
 
 
 static func plant_tile(map: _WorldMap, alt: float, moist: float, chance: float, biome_id: int = BiomeCatalog.TEMPERATE) -> Vector2i:
 	## Bush, tree, bushy tree, pine or flower for one walkable cell, or NO_PLANT. With biomes
-	## on, BiomeCatalog.PLANTS shifts the tree, bush, pine, bushy tree and swamp scrub
+	## on, BiomeCatalog.PLANTS shifts the tree, bush, pine, bushy tree, swamp tree and swamp scrub
 	## thresholds and BiomeCatalog.TERRAIN the flower one; off, no pines, bushy trees or
 	## swamp scrub, Map Settings apply.
 	var bush_chance := map.bush_min_chance
@@ -39,7 +40,10 @@ static func plant_tile(map: _WorldMap, alt: float, moist: float, chance: float, 
 		if moist > pine_moist and chance > map.pine_min_chance + BiomeCatalog.plants(biome_id, "pine_chance"):
 			return TileCatalog.PINE
 	if map.biome_frequency > 0.0 and moist < BiomeCatalog.terrain(biome_id, "swamp_moisture"):
-		# Swamp scrub: callers skip sand, so walkable land this wet is swamp.
+		# Swamp scrub: callers skip sand, so walkable land this wet is swamp. The
+		# highest chances in a biome with swamp_tree_chance grow swamp trees.
+		if map.swamp_trees and chance > map.swamp_bush_min_chance + BiomeCatalog.plants(biome_id, "swamp_tree_chance"):
+			return TileCatalog.TREE_BUSHY
 		if chance > map.swamp_bush_min_chance + BiomeCatalog.plants(biome_id, "swamp_bush_chance"):
 			return TileCatalog.BUSH
 	if moist > 0 and alt > map.flower_min_alt and alt <= map.flower_max_alt and chance > flower_chance:
