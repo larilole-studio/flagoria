@@ -99,13 +99,20 @@ func _test_attack_aim_mouse() -> int:
 	await wait_swing.call()
 
 	# The cone covers the sword's hitbox at mid-swing, every direction.
-	for direction in AttackAim.DIRECTIONS:
-		aim._pointer = at.call(AttackAim.direction_vector(direction) * 50.0)
+	var offsets := {"Right": Vector2(50, 0), "Left": Vector2(-50, 0),
+		"Up": Vector2(0, -50), "Down": Vector2(0, 50)}
+	for direction in offsets:
+		var spot: Vector2 = at.call(Vector2.ZERO) + offsets[direction]
+		mouse.call(MOUSE_BUTTON_LEFT, spot, true)
+		if not aim.aiming or aim.aim_direction() != direction:
+			printerr("FAIL attack_aim_mouse expected %s aim, got %s (aiming %s)"
+				% [direction, aim.aim_direction(), aim.aiming])
+			fail += 1
 		var cone := aim.cone_points()
-		player.attack_animation(direction)
+		mouse.call(MOUSE_BUTTON_LEFT, spot, false)
 		player.animations.seek(0.1, true)
 		var blade: Vector2 = aim.to_local(player.sword_shape.global_position)
-		if not Geometry2D.is_point_in_polygon(blade, cone):
+		if not player.isAttacking or not Geometry2D.is_point_in_polygon(blade, cone):
 			printerr("FAIL attack_aim_mouse %s cone misses the blade at %s" % [direction, blade])
 			fail += 1
 		await wait_swing.call()
