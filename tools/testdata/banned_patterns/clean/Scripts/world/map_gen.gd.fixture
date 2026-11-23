@@ -1,0 +1,11 @@
+extends Node
+
+# TODO(#8): linked
+# HOTFIX(#8): linked
+# print("example") with 37
+const OFFSET = -1.0
+const LABEL = """Text with 42
+and print("example")"""
+
+func run():
+	printerr("example with 19")
