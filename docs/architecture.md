@@ -1,6 +1,6 @@
 # Architecture map and folder convention
 
-Where each part of the game lives today, how data moves between the parts, and where new code goes. The structure checkpoint (#253) moves code into the target layout one small pull request at a time. This page lists both the current place and the target home, so it stays correct during the moves. Update it in the same pull request that moves or adds a script.
+Where each part of the game lives today, how data moves between the parts, and where new code goes. The script inventory is generated from the tracked tree and checked by `tools/verify.sh`. After adding, moving or removing a tracked production script, run `python3 tools/architecture_inventory.py --write`.
 
 ## Entry points
 
@@ -24,13 +24,208 @@ Where each part of the game lives today, how data moves between the parts, and w
 - **Saves.** `Scripts/saves/map_save.gd` reads and writes versioned saves in `user://saves/` (gzip of one JSON document; older plain JSON still loads), written by the in-game menu's Save through `MapGen.save_world`. Each match has its own file: the main menu lists them and loads one, and Save replaces that file. `Scripts/saves/world_save.gd` is one save in memory: the generation inputs plus the world's changes. The dedicated server loads one with `--params`. The day/night elapsed time is the `clock` object (#558). See `docs/world-saves.md`.
 - **Audio.** Buses are in `default_bus_layout.tres` and volumes in `Scripts/audio/audio_settings.gd`. Music comes from `Scripts/audio/music_player.gd` and UI sounds from `Scripts/audio/ui_sfx.gd`. Per-instance sounds come from `Scripts/audio/combat_sfx.gd`, `Scripts/audio/footsteps.gd` and `Scripts/audio/mob_sfx.gd`, with files in `art/audio/` (made by `tools/audio/`). See `docs/audio.md`.
 
-## Folders today
+## Production script inventory
 
-| Folder | Holds |
+<!-- BEGIN GENERATED SCRIPT INVENTORY -->
+
+### `Scripts/audio/`
+
+- `Scripts/audio/audio_settings.gd`
+- `Scripts/audio/combat_sfx.gd`
+- `Scripts/audio/footsteps.gd`
+- `Scripts/audio/mob_sfx.gd`
+- `Scripts/audio/music_player.gd`
+- `Scripts/audio/ui_sfx.gd`
+
+### `Scripts/mechanics/`
+
+#### `bridges/`
+
+- `Scripts/mechanics/bridges/bridge_builder.gd`
+
+#### `building/`
+
+- `Scripts/mechanics/building/build_costs.gd`
+- `Scripts/mechanics/building/build_placement.gd`
+- `Scripts/mechanics/building/build_placement_rotate.gd`
+- `Scripts/mechanics/building/build_tool_row.gd`
+- `Scripts/mechanics/building/construction_placer.gd`
+- `Scripts/mechanics/building/footprint_orientation.gd`
+- `Scripts/mechanics/building/structure_requests.gd`
+
+#### `building_blocks/`
+
+- `Scripts/mechanics/building_blocks/building_block_catalog.gd`
+- `Scripts/mechanics/building_blocks/building_block_piece.gd`
+- `Scripts/mechanics/building_blocks/building_merge.gd`
+- `Scripts/mechanics/building_blocks/generated_buildings.gd`
+- `Scripts/mechanics/building_blocks/wfc_building_constraints.gd`
+- `Scripts/mechanics/building_blocks/wfc_solver.gd`
+
+#### `combat/`
+
+- `Scripts/mechanics/combat/ranged_shot.gd`
+- `Scripts/mechanics/combat/ranged_shots.gd`
+
+#### `conquest/`
+
+- `Scripts/mechanics/conquest/cities.gd`
+- `Scripts/mechanics/conquest/discovery_points.gd`
+- `Scripts/mechanics/conquest/flags_held_points.gd`
+- `Scripts/mechanics/conquest/land_score.gd`
+- `Scripts/mechanics/conquest/points.gd`
+- `Scripts/mechanics/conquest/tower_capture.gd`
+
+#### `day_night/`
+
+- `Scripts/mechanics/day_night/day_night.gd`
+- `Scripts/mechanics/day_night/night_lights.gd`
+
+#### `defense/`
+
+- `Scripts/mechanics/defense/tower_guns.gd`
+
+#### `interact/`
+
+- `Scripts/mechanics/interact/chop_stick.gd`
+- `Scripts/mechanics/interact/cut_rate_limit.gd`
+- `Scripts/mechanics/interact/interaction.gd`
+
+#### `interactables/`
+
+- `Scripts/mechanics/interactables/interactable_catalog.gd`
+- `Scripts/mechanics/interactables/interactable_type.gd`
+
+#### `mobs/`
+
+- `Scripts/mechanics/mobs/mob.gd`
+- `Scripts/mechanics/mobs/mob_catalog.gd`
+- `Scripts/mechanics/mobs/mob_spawner.gd`
+- `Scripts/mechanics/mobs/raid_director.gd`
+- `Scripts/mechanics/mobs/raid_step.gd`
+
+#### `npcs/`
+
+- `Scripts/mechanics/npcs/soldier.gd`
+- `Scripts/mechanics/npcs/soldier_requests.gd`
+- `Scripts/mechanics/npcs/soldier_saves.gd`
+- `Scripts/mechanics/npcs/soldier_stats.gd`
+- `Scripts/mechanics/npcs/soldier_target.gd`
+
+#### `run/`
+
+- `Scripts/mechanics/run/run_control.gd`
+
+#### `structures/`
+
+- `Scripts/mechanics/structures/structure.gd`
+- `Scripts/mechanics/structures/structure_placer.gd`
+- `Scripts/mechanics/structures/structure_saves.gd`
+
+#### `trees/`
+
+- `Scripts/mechanics/trees/chop_action.gd`
+- `Scripts/mechanics/trees/inventory.gd`
+- `Scripts/mechanics/trees/sprout_scheduler.gd`
+- `Scripts/mechanics/trees/tree_cuts.gd`
+- `Scripts/mechanics/trees/tree_sprouts.gd`
+
+#### `walls/`
+
+- `Scripts/mechanics/walls/wall_builder.gd`
+- `Scripts/mechanics/walls/wall_solver.gd`
+
+### `Scripts/net/`
+
+- `Scripts/net/join_address.gd`
+- `Scripts/net/join_dial.gd`
+- `Scripts/net/join_enet_timeout.gd`
+
+### `Scripts/player/`
+
+- `Scripts/player/aim_cone_style.gd`
+- `Scripts/player/attack_aim.gd`
+- `Scripts/player/map_zoom.gd`
+- `Scripts/player/player.gd`
+- `Scripts/player/player_camera.gd`
+- `Scripts/player/player_combat.gd`
+- `Scripts/player/player_health.gd`
+- `Scripts/player/player_hud.gd`
+- `Scripts/player/player_input.gd`
+- `Scripts/player/player_wall_draw.gd`
+
+### `Scripts/saves/`
+
+- `Scripts/saves/map_save.gd`
+- `Scripts/saves/player_save.gd`
+- `Scripts/saves/world_save.gd`
+
+### `Scripts/shell/`
+
+- `Scripts/shell/MainMenu.gd`
+- `Scripts/shell/game_settings.gd`
+- `Scripts/shell/ingame_menu.gd`
+- `Scripts/shell/menu_gameplay_settings.gd`
+- `Scripts/shell/menu_join_flow.gd`
+- `Scripts/shell/menu_volume.gd`
+- `Scripts/shell/menu_worlds.gd`
+- `Scripts/shell/quit_prompt.gd`
+- `Scripts/shell/worlds_save_list.gd`
+
+### `Scripts/ui/`
+
+- `Scripts/ui/MapAdminPanel.gd`
+- `Scripts/ui/hearts_hud.gd`
+- `Scripts/ui/hud_layout.gd`
+- `Scripts/ui/hud_layout_defaults.gd`
+- `Scripts/ui/hud_layout_edit.gd`
+- `Scripts/ui/hud_layout_visual.gd`
+- `Scripts/ui/hud_tool_row.gd`
+- `Scripts/ui/map_chart.gd`
+- `Scripts/ui/map_wood_button.gd`
+- `Scripts/ui/number_pad.gd`
+- `Scripts/ui/parchment_map.gd`
+- `Scripts/ui/resource_hud.gd`
+- `Scripts/ui/round_hud_style.gd`
+- `Scripts/ui/score_hud.gd`
+- `Scripts/ui/scoreboard_panel.gd`
+- `Scripts/ui/status_plate_hud.gd`
+- `Scripts/ui/tool_wheel.gd`
+- `Scripts/ui/world_save_preview.gd`
+
+### `Scripts/world/`
+
+- `Scripts/world/BiomeCatalog.gd`
+- `Scripts/world/MapGenParams.gd`
+- `Scripts/world/TileMap.gd`
+- `Scripts/world/birch_trees.gd`
+- `Scripts/world/explored_map.gd`
+- `Scripts/world/map_gen.gd`
+- `Scripts/world/object_removals.gd`
+- `Scripts/world/plant_picker.gd`
+- `Scripts/world/sky_islands.gd`
+- `Scripts/world/spawn_finder.gd`
+- `Scripts/world/start_castle.gd`
+- `Scripts/world/terrain_shape.gd`
+- `Scripts/world/tile_catalog.gd`
+- `Scripts/world/world_cell_queries.gd`
+- `Scripts/world/world_chunks.gd`
+- `Scripts/world/world_map_params.gd`
+
+### Root and other
+
+- `TouchScreenButton.gd`
+- `flagoria_main.gd`
+
+<!-- END GENERATED SCRIPT INVENTORY -->
+
+## Scenes, resources and tooling
+
+| Location | Holds |
 |---|---|
-| `Scripts/` | Game scripts, mostly flat. `Scripts/mechanics/interactables/` is the first mechanic folder. |
-| root (`flagoria_main.gd`, `*.tscn`, `TouchScreenButton.gd`) | Main scene and top-level UI scenes. |
-| `Player/`, `Mobs/` | Player, sword and mob scenes. |
+| Repository root | Main scene and top-level UI scenes. |
+| `Scripts/player/` | Player and sword scenes (`character_body_2d.tscn` and `sword.tscn`). |
+| `Mobs/` | Mob and soldier scenes. |
 | `data/` | Resource files a mechanic loads (`data/interactables/tree.tres`, `pine.tres`, `bush.tres`). |
 | `art/` | Tiles, sprites, sounds, theme and their credits. |
 | `assets/ui/hud/` | HUD button icons for Buildings, Map, Run and the two mode states. Imported without mipmaps; the buttons draw them nearest-neighbour. |
@@ -39,15 +234,15 @@ Where each part of the game lives today, how data moves between the parts, and w
 | `addons/server_shutdown/` | Linux SIGTERM helper for `-- --server` only. |
 | `Dockerfile`, `docker-compose.yml`, `docker/` | Non-root dedicated-server image. The game is not rebuilt there beyond Godot's import. |
 | `tests/` | Runner (`tests/run_tests.gd`, plus its own self-checks), area test files (`tests/<area>/test_*.gd`), shared helpers (`tests/helpers/test_helpers.gd`), probes started as separate processes, `tests/fixtures/`, `tests/golden/`. |
-| `tools/` | Verify, CLI, renders, asset generators, CI helpers (`tools/pr_hygiene.py`, `tools/private_server_doc.py`, `tools/file_budget.py`, `tools/play_review_paths.py`, `tools/verify_drive_picks.py`, `tools/stress_netcode.py`, `tools/stress_scenario_lint.py`, `tools/ci_job_times.py`, `tools/issue_triage.py`, `tools/required_checks.py`, `tools/parse_scripts.gd`), and local git hooks (`tools/commit_identity_hook.py`, `tools/staged_import_hook.py`). |
+| `tools/` | Verify, CLI, renders, asset generators, CI helpers (`tools/pr_hygiene.py`, `tools/private_server_doc.py`, `tools/architecture_inventory.py`, `tools/file_budget.py`, `tools/play_review_paths.py`, `tools/verify_drive_picks.py`, `tools/stress_netcode.py`, `tools/stress_scenario_lint.py`, `tools/ci_job_times.py`, `tools/issue_triage.py`, `tools/required_checks.py`, `tools/parse_scripts.gd`), and local git hooks (`tools/commit_identity_hook.py`, `tools/staged_import_hook.py`). |
 | `.github/workflows/` | verify, pr-hygiene, play-review-label, play-review, pr-debug-apk, android-apk, job-times, issue-triage. |
 | `.cursor/skills/verify-flagoria/` | Launch, doctor and drive scripts, and one feature file per feature under `.cursor/skills/verify-flagoria/features/`. |
 | `docs/` | Feature and process notes, e.g. `docs/interactables.md` (checklist for a new choppable type). |
 
-## Target layout (#253)
+## Layout conventions
 
 - `Scripts/world/`: map generation helpers (terrain shape, plant picking, spawn search, starting castle).
-- `Scripts/mechanics/<mechanic>/`: one folder per mechanic: `trees/`, `bridges/`, `walls/`, `structures/`, `interact/`, `interactables/`, later `building/` and `conquest/`.
+- `Scripts/mechanics/<mechanic>/`: one folder per mechanic: `trees/`, `bridges/`, `walls/`, `structures/`, `interact/`, `interactables/`, `building/` and `conquest/`.
 - `tests/<area>/test_*.gd`: tests per area (`world/`, `saves/`, `mobs/`, `combat/`, `player/`, `points/`, `ui/`, `audio/`, `net/`) or per mechanic (`tests/mechanics/<mechanic>/`), with shared helpers in `tests/helpers/test_helpers.gd`. The runner finds these files (#255). `tests/run_tests.gd` keeps only its own self-checks.
 
 ## Rules
@@ -62,113 +257,6 @@ Where each part of the game lives today, how data moves between the parts, and w
 - Netcode stress scenarios are deterministic and the stress job stops at the first failed run. The rule is [Writing netcode stress scenarios](../AGENTS.md#writing-netcode-stress-scenarios). `tools/verify.sh` runs `tools/stress_scenario_lint.py`.
 - Every new player-facing mechanic (a new choppable, a tower, a wall type, a city rule) adds its feature file, `.cursor/skills/verify-flagoria/features/<feature>.md`, and its index line in `features/README.md` in the same pull request. When a player can reach the feature in a running game, the same pull request also adds a drive under `.cursor/skills/verify-flagoria/drives/`. A change that is not player-facing says so on the pull request template's feature-file line (#291).
 - Before each checkpoint in #253's gate, a verification maintenance pass runs over `.cursor/skills/verify-flagoria/`. The pass covers index hygiene (every feature file is in the index, and every index line points at a file that exists), one source read per feature file (its paths, names and steps still match the code), and one live drive per reachable feature. Its outcome goes in a short comment on #253: clean, changed (with the PR link), or blocked (with the reason). The pass edits only the skill directory; any product bug it finds gets its own issue.
-
-## Every script and its home
-
-"Stays" means no move is planned in #253.
-
-| Script | Owns | Target home |
-|---|---|---|
-| `flagoria_main.gd` | Host, join, dedicated server, spawn placement, params sync | stays |
-| `TouchScreenButton.gd` | On-screen attack button look and place | stays |
-| `Scripts/world/TileMap.gd` | World map node, map state and public entry points | moves with its sibling helpers to `Scripts/world/`. Moved: terrain shape is in `Scripts/world/terrain_shape.gd` and spawn search in `Scripts/world/spawn_finder.gd` (#260); `Scripts/world/TileMap.gd` keeps wrappers with the old names. Tree and bush cuts and regrowth are in `Scripts/mechanics/trees/tree_cuts.gd` and bridges in `Scripts/mechanics/bridges/bridge_builder.gd` (#261), also behind same-name wrappers. Plant and stone picking is in `Scripts/world/plant_picker.gd`, behind the `plant_tile` and `structure_tile` wrappers. |
-| `Scripts/world/world_map_params.gd` | Applies generation settings and resets generated map state | `Scripts/world/` with `TileMap.gd` |
-| `Scripts/world/world_chunks.gd` | Refreshes, paints and predicts generated chunks | `Scripts/world/` with `TileMap.gd` |
-| `Scripts/world/world_cell_queries.gd` | Cell collision, occupancy and resolved spawn lookup | `Scripts/world/` with `TileMap.gd` |
-| `Scripts/mechanics/interact/interaction.gd` | Combat/interact mode, selection, reach, gating; wrappers for the chop | moved from `Scripts/interaction.gd` (#262) |
-| `Scripts/mechanics/trees/chop_action.gd` | One chop: timing, hits, effects, sounds, hero pose | split from `Scripts/interaction.gd` (#262); `Interaction` keeps wrappers with the old names |
-| `Scripts/mechanics/walls/wall_solver.gd` | Wall piece and collar list per cell from neighbours, including tower rings | moved from `Scripts/wall_solver.gd` (#261) |
-| `Scripts/mechanics/structures/structure.gd` | Parse hand-drawn structures | moved from `Scripts/structure.gd` (#261) |
-| `Scripts/mechanics/structures/structure_placer.gd` | Check and place a parsed structure on the map, keep placements across redraws | new (#270) |
-| `Scripts/mechanics/building/build_costs.gd` | Wood cost and refund per buildable; buy: check wood, spend, place | new (#272) |
-| `Scripts/mechanics/building/build_tool_row.gd` | Build picker icons, labels, tips, footprint kinds and buttons | new (#556) |
-| `Scripts/mechanics/building/build_placement.gd` | Snapped plank/wall and footprint preview via ConstructionPlacer; picker from BuildToolRow | stays (#225 / #273 / #276, #480, #528, #556) |
-| `Scripts/mechanics/building/build_placement_rotate.gd` | Round rotate control beside footprint placement preview | new (#493) |
-| `Scripts/mechanics/building/footprint_orientation.gd` | Rotated facing marker on preview and placed footprint tools | new (#493) |
-| `Scripts/mechanics/building/structure_requests.gd` | Host-request pipeline for towers, castles, guard posts, barracks, free-form walls, and a joining peer's starting castle | new (#497, #498, #278, #527, #528, #556) |
-| `Scripts/mechanics/building_blocks/building_block_piece.gd` | One WFC modular piece: TileCatalog tile and cardinal edge sockets | new (#23) |
-| `Scripts/mechanics/building_blocks/building_block_catalog.gd` | Piece set, socket compatibility and adjacency table for WFC | new (#23) |
-| `Scripts/mechanics/building_blocks/wfc_solver.gd` | Pure GDScript WFC: collapse, propagate, seeded restarts (#24) | new (#24) |
-| `Scripts/mechanics/building_blocks/wfc_building_constraints.gd` | Building footprint rules: ring, door, reachability, roof, pre-seed + re-solve (#25) | new (#25) |
-| `Scripts/mechanics/building_blocks/generated_buildings.gd` | Host places one WFC building at the player; peers solve the same seed and paint layer 7 (#26) | new (#26) |
-| `Scripts/mechanics/building_blocks/building_merge.gd` | Merge two full-edge footprints with a constrained WFC re-solve and stitch fallback (#27) | new (#27) |
-| `Scripts/mechanics/walls/wall_builder.gd` | Free-form palisade cells, shared solve with structure walls and towers, piece and collar paint, kept on redraw | new (#276) |
-| `Scripts/world/plant_picker.gd` | Plant or stones for one walkable cell from altitude, moisture, chance and biome | moved from `Scripts/world/TileMap.gd` (#370 put that file over its 500-line budget); `Scripts/world/TileMap.gd` keeps `plant_tile` and `structure_tile` wrappers |
-| `Scripts/world/sky_islands.gd` | Open sea as an empty cell, island-edge terrain, invisible sea collision, clouds on their own layer | new. `Scripts/world/TileMap.gd` keeps `ground_tile`, `is_drawn`, `is_open_sea`, `sea_cells` and `claim_ground` |
-| `Scripts/world/object_removals.gd` | Picked flowers and destroyed stones on the map; `world.object_changes` entries with `removed` | new (#198) |
-| `Scripts/world/start_castle.gd` | Find the spot for a player's starting castle next to the spawn and place it, including a joining peer's castle outside the shared spawn | new (#271, #278) |
-| `Scripts/mechanics/conquest/tower_capture.gd` | Flag towers change hands: who stands by each flag, capture progress, the progress bars | new (#274) |
-| `Scripts/mechanics/defense/tower_guns.gd` | Host tick: a player-owned flag tower damages the nearest other living player in range and draws a short tracer | new (#37) |
-| `Scripts/mechanics/conquest/cities.gd` | Closed wall loop around a flag tower → city; boundary tint; parchment walls; host decides in multiplayer | new (#277, #498) |
-| `Scripts/mechanics/conquest/land_score.gd` | Interior city cells inside an owned flag's range; host sets the Points total; range ring on a tapped flag | new (#279) |
-| `Scripts/mechanics/interactables/interactable_type.gd` | One choppable type (resource) | already home |
-| `Scripts/mechanics/interactables/interactable_catalog.gd` | Every choppable type, tile lookup | already home |
-| `Scripts/world/tile_catalog.gd` | Tile names to atlas coords | stays (shared data table) |
-| `Scripts/world/BiomeCatalog.gd` | Biome ids and per-biome tables | stays (shared catalogue) |
-| `Scripts/world/MapGenParams.gd` | Map generation parameters resource | stays (shared) |
-| `Scripts/world/map_gen.gd` | Autoload: active params, save/load hooks | stays (autoload) |
-| `Scripts/mechanics/day_night/day_night.gd` | Host-owned day/night clock, world tint, save elapsed and peer sync | new (#558) |
-| `Scripts/mechanics/day_night/night_lights.gd` | Local night pools on players, castles, towers and guard posts; no netcode, idle on a headless host | new (#560) |
-| `Scripts/saves/map_save.gd` | Versioned save files (gzip of JSON) | stays |
-| `Scripts/ui/world_save_preview.gd` | Cached terrain thumbnails for the saved-worlds list | stays |
-| `Scripts/saves/world_save.gd` | One saved world in memory | stays |
-| `Scripts/saves/player_save.gd` | Player section of a world save: position, health, wood, score, charted ground | new (#197) |
-| `Scripts/player/player.gd` | Player actor, respawn, scene callbacks and player RPCs | stays |
-| `Scripts/player/player_input.gd` | Keyboard and joystick axes, run scaling, movement and facing | stays with `player.gd` |
-| `Scripts/player/player_combat.gd` | Aimed bow shots, sword swings and world hits | stays with `player.gd` |
-| `Scripts/player/player_camera.gd` | Local zoom setup and full-map visibility | stays with `player.gd` |
-| `Scripts/player/player_hud.gd` | Local player HUD bindings | stays with `player.gd` |
-| `Scripts/player/player_wall_draw.gd` | Wall overlap and player draw order | stays with `player.gd` |
-| `Scripts/mechanics/run/run_control.gd` | Run button: hold or tap to walk faster | new (#449) |
-| `Scripts/mechanics/combat/ranged_shot.gd` | One bow shot: speed, range, and the first body on the segment | new (#362) |
-| `Scripts/mechanics/combat/ranged_shots.gd` | Host-checked shots and the short line. The tool wheel arms the bow | new (#362, #574) |
-| `Scripts/ui/tool_wheel.gd` | Hold-to-select sword, bow and chop. The button is a Customize HUD slot and the arc stays on screen. No per-frame work. A headless dedicated host does not build it | new (#574, #575) |
-| `Scripts/player/player_health.gd` | Health, regen, death, respawn (server owned) | stays |
-| `Scripts/player/attack_aim.gd` | Attack aim by mouse or drag | stays |
-| `Scripts/player/aim_cone_style.gd` | Aim cone look (resource) | stays |
-| `Scripts/player/map_zoom.gd` | Camera pinch, wheel and key zoom | stays |
-| `Scripts/mechanics/trees/inventory.gd` | Gathered resources: add and spend | stays |
-| `Scripts/mechanics/mobs/mob.gd` | One mob's behaviour and sync | stays |
-| `Scripts/mechanics/mobs/mob_spawner.gd` | Server mob placement and the ambient band | stays |
-| `Scripts/mechanics/mobs/raid_director.gd` | Host raid clock: a group of mobs walks to the nearest player city or owned tower | new (#529) |
-| `Scripts/mechanics/npcs/soldier.gd` | Trained soldier movement: follow the owner or hold position | new (#553) |
-| `Scripts/mechanics/npcs/soldier_requests.gd` | Host train pipeline, follow/hold toggle, `World/Soldiers` spawner | new (#553) |
-| `Scripts/mechanics/npcs/soldier_saves.gd` | `world.soldiers` capture and restore beside structures | new (#553) |
-| `Scripts/mechanics/npcs/soldier_stats.gd` | Train cost, cap, timings and walk speed constants | new (#553) |
-| `Scripts/mechanics/mobs/raid_step.gd` | One raiding mob's walk and free-form wall strike | new (#529) |
-| `Scripts/mechanics/mobs/mob_catalog.gd` | Mob types and sheet layout | stays (shared catalogue) |
-| `Scripts/mechanics/conquest/points.gd` | Point totals (server owned) | stays |
-| `Scripts/mechanics/conquest/discovery_points.gd` | First-visit discovery points | stays |
-| `Scripts/world/explored_map.gd` | Explored cells per chunk | stays |
-| `Scripts/ui/map_chart.gd` | Local explored terrain, chart textures and save restoration (#660) | stays |
-| `Scripts/ui/round_hud_style.gd` | Circle style, selected ring and tap target for the HUD buttons | stays (#450, #480) |
-| `Scripts/ui/hud_tool_row.gd` | Candy Glass controls, floating status row, event-driven layout, tool wheel beside Run | stays (#450, #480, #492, #574) |
-| `Scripts/ui/map_wood_button.gd` | Wood header button shared by the panel and the parchment | stays |
-| `Scripts/ui/parchment_map.gd` | Full-screen parchment of explored ground | stays |
-| `Scripts/ui/hearts_hud.gd` | Hearts row | stays |
-| `Scripts/ui/score_hud.gd` | Point total label | stays |
-| `Scripts/ui/scoreboard_panel.gd` | All players' totals, highest first (#509) | stays |
-| `Scripts/ui/resource_hud.gd` | Wood count | stays |
-| `Scripts/shell/MainMenu.gd` | Menu shell, scene entry points and Map Settings panel lifecycle | stays |
-| `Scripts/shell/menu_join_flow.gd` | Host and Join transitions and connection feedback | stays |
-| `Scripts/shell/menu_worlds.gd` | Saved-world picker, load, rename and delete | stays |
-| `Scripts/shell/menu_volume.gd` | Music and SFX slider bindings | stays |
-| `Scripts/shell/menu_gameplay_settings.gd` | Host mob, tower and raid control bindings | stays |
-| `Scripts/ui/MapAdminPanel.gd` | Map Settings panel | stays |
-| `Scripts/ui/number_pad.gd` | Touch keys for number fields | stays |
-| `Scripts/shell/ingame_menu.gd` | In-game menu, Save, Customize HUD | stays |
-| `Scripts/ui/hud_layout.gd` | Per-device touch HUD positions in user settings, including the tool wheel | stays (#492, #575) |
-| `Scripts/ui/hud_layout_defaults.gd` | HUD layout save/load, capture, and reset helpers | stays (#492) |
-| `Scripts/ui/hud_layout_edit.gd` | Customize HUD edit overlay | stays (#492) |
-| `Scripts/ui/hud_layout_visual.gd` | HUD control visual rects for edit overlap | stays (#492) |
-| `Scripts/shell/quit_prompt.gd` | Quit prompt | stays |
-| `Scripts/shell/game_settings.gd` | Autoload: mob spawn rate and raid tunables | stays (autoload) |
-| `Scripts/audio/audio_settings.gd` | Autoload: bus volumes | stays (autoload) |
-| `Scripts/audio/music_player.gd` | Autoload: music | stays (autoload) |
-| `Scripts/audio/ui_sfx.gd` | Autoload: UI sounds | stays (autoload) |
-| `Scripts/audio/combat_sfx.gd` | Player combat and health sounds | stays |
-| `Scripts/audio/footsteps.gd` | Terrain footsteps | stays |
-| `Scripts/audio/mob_sfx.gd` | Mob sounds | stays |
 
 ## Where does X go
 
