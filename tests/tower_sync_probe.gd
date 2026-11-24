@@ -3,6 +3,10 @@ extends "res://tests/helpers/probe_base.gd"
 ## Host: --host --save --port --out. Client: --port --out --mode [--shot].
 
 
+const PLACE_REPLICATE_FRAMES := 12
+const PLACE_FRAMES := 480
+const PLACE_RESEND_EVERY := 15
+
 var _refused_wood := -1
 var _aside := false
 var _shot := false
@@ -114,15 +118,26 @@ func _do_place(main, world, me: Node2D, mode: String) -> String:
 		if _refused_wood != before:
 			return "refused request spent wood (%d -> %d)" % [before, _refused_wood]
 	me.global_position = interaction.cell_center(land) + Vector2(0, 48)
-	await _wait(800)
+	# The host reach-rejects a request that arrives before this teleport
+	# replicates, and a sent RPC is not retried. Wait a few physics frames
+	# for the new position to start syncing, then resend until the tower
+	# exists or a physics-frame deadline passes.
+	var tree := me.get_tree()
+	for _i in PLACE_REPLICATE_FRAMES:
+		await tree.physics_frame
 	var one: Array[Vector2i] = [land]
-	if not requests.place(BuildCosts.TOWER, one):
-		return "place was not sent"
-	var until := Time.get_ticks_msec() + 5000
-	while Time.get_ticks_msec() < until and _tower_owner(world) <= 0:
-		await process_frame
+	var sent := false
+	var frames := 0
+	while frames < PLACE_FRAMES and _tower_owner(world) <= 0:
+		if frames % PLACE_RESEND_EVERY == 0:
+			if requests.place(BuildCosts.TOWER, one):
+				sent = true
+		await tree.physics_frame
+		frames += 1
 	if _tower_owner(world) <= 0:
-		return "tower was not applied"
+		if not sent:
+			return "place was not sent"
+		return "tower was not applied after %d physics frames" % frames
 	if mode != "place":
 		var info := _tower_wood(world)
 		me.global_position = interaction.cell_center(info["flag"]) + Vector2(48, 0)
