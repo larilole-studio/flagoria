@@ -8,7 +8,10 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 const CAPTURE_STEPS := 40  ## 40 * 0.125 s = TowerCapture.CAPTURE_TIME
 const CLIENT_JOIN_S := 30.0
 const CLIENT_SHOT_S := 20.0
-const WALK_LEG_S := 8.0
+const WALK_LEG_FRAMES := 480
+const STILL_FRAMES := 120
+const CLOSE_PX := 4.0
+const LEG_OK_PX := 5.0
 
 
 func run() -> void:
@@ -97,35 +100,103 @@ func _walk_to_flag(flag: Vector2i) -> bool:
 	# to the flag's column, then approach the north edge of the tower.
 	step("walk-into-range")
 	if not await _walk_leg(host, 1, gate_exit.y):
+		printerr("tower capture: south leg failed, want y=%s at %s" % [gate_exit.y, host.global_position])
 		return false
 	if not await _walk_leg(host, 0, centre.x):
+		printerr("tower capture: east leg failed, want x=%s at %s" % [centre.x, host.global_position])
 		return false
-	if not await _walk_leg(host, 1, centre.y - (TowerCapture.CAPTURE_RADIUS - 4.0)):
+	var north_y := centre.y - (TowerCapture.CAPTURE_RADIUS - 4.0)
+	if not await _walk_leg(host, 1, north_y):
+		printerr("tower capture: north leg failed, want y=%s at %s" % [north_y, host.global_position])
 		return false
-	return host.global_position.distance_to(centre) <= TowerCapture.CAPTURE_RADIUS
+	if host.global_position.distance_to(centre) <= TowerCapture.CAPTURE_RADIUS:
+		return true
+	printerr(
+		"tower capture: after the three legs, host at %s is outside range of %s"
+		% [host.global_position, centre]
+	)
+	return false
+
+
+func _release_walk() -> void:
+	for action: String in ["ui_left", "ui_right", "ui_up", "ui_down"]:
+		_action(action, false)
 
 
 func _walk_leg(host: CharacterBody2D, axis: int, target: float) -> bool:
-	var remaining := target - host.global_position[axis]
-	if absf(remaining) <= 4.0:
-		return true
-	var direction := signf(remaining)
-	var action: StringName
-	if axis == 0:
-		action = &"ui_right" if direction > 0 else &"ui_left"
-	else:
-		action = &"ui_down" if direction > 0 else &"ui_up"
-	# Release early so the host can coast to a stop before turning.
-	var friction: float = host.FRICTION
-	Input.action_press(action)
-	var reached := await wait_until(func() -> bool:
-		var speed := host.velocity[axis]
-		var coast := speed * speed / (2.0 * friction)
-		return direction * (target - host.global_position[axis]) <= coast + 1.0, WALK_LEG_S)
-	Input.action_release(action)
-	if not reached or not await wait_until(func() -> bool: return host.velocity.is_zero_approx(), 2.0):
+	## Hold only while the remaining distance is greater than the current
+	## stopping distance. Do not stop the loop just because the position is
+	## already close: leftover speed would coast past during _wait_still.
+	## After each stop, correct if the host is still off the target (a long
+	## tick can jump past the coast window). Every wait is a physics-frame
+	## budget, not wall-clock time.
+	if not await _wait_still(host):
+		printerr("tower capture: host still moving at %s before a walk leg" % host.global_position)
 		return false
-	return absf(target - host.global_position[axis]) <= 5.0
+	if absf(target - host.global_position[axis]) <= LEG_OK_PX:
+		return true
+	var friction: float = float(host.FRICTION)
+	var frames := 0
+	var corrections := 0
+	while corrections < 8 and frames < WALK_LEG_FRAMES:
+		corrections += 1
+		var remaining: float = target - host.global_position[axis]
+		var sign0 := signf(remaining)
+		if sign0 == 0.0:
+			break
+		var action := _axis_action(axis, remaining)
+		var stalled := 0
+		var last: float = host.global_position[axis]
+		while frames < WALK_LEG_FRAMES:
+			remaining = target - host.global_position[axis]
+			var speed: float = absf(host.velocity[axis])
+			if speed <= 8.0 and (absf(remaining) <= LEG_OK_PX or signf(remaining) != sign0):
+				_action(action, false)
+				break
+			var stop_dist: float = (speed * speed) / (2.0 * friction) if friction > 0.0 else 0.0
+			if absf(remaining) > stop_dist + CLOSE_PX and signf(remaining) == sign0:
+				_action(action, true)
+			else:
+				_action(action, false)
+			await physics_frame
+			frames += 1
+			var now_pos: float = host.global_position[axis]
+			if absf(now_pos - last) < 0.25:
+				stalled += 1
+				if stalled >= 30 and absf(remaining) > 12.0 and speed <= 8.0:
+					_release_walk()
+					printerr(
+						"tower capture: stalled on axis %d at %s after %d frames, want %s remaining %s"
+						% [axis, host.global_position, frames, target, remaining]
+					)
+					return false
+			else:
+				stalled = 0
+				last = now_pos
+		_release_walk()
+		if not await _wait_still(host):
+			printerr("tower capture: host still moving at %s after a walk leg toward %s" % [host.global_position, target])
+			return false
+		if absf(target - host.global_position[axis]) <= LEG_OK_PX:
+			return true
+	if absf(target - host.global_position[axis]) <= LEG_OK_PX:
+		return true
+	printerr("tower capture: walk leg ended at %s after %d corrections, want axis %d = %s" % [host.global_position, corrections, axis, target])
+	return false
+
+
+func _axis_action(axis: int, remaining: float) -> String:
+	if axis == 0:
+		return "ui_right" if remaining > 0.0 else "ui_left"
+	return "ui_down" if remaining > 0.0 else "ui_up"
+
+
+func _wait_still(host: CharacterBody2D) -> bool:
+	for _i in STILL_FRAMES:
+		if host.velocity.length() <= 8.0:
+			return true
+		await physics_frame
+	return host.velocity.length() <= 20.0
 
 
 func _launch_client(client_out: String, shot: String) -> int:
