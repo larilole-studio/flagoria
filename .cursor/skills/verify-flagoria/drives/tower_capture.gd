@@ -4,7 +4,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## TowerCapture.tick after walking out of the gate and around the terrain.
 ## Snapshots: tower-tool, host-captured, client-captured.png.
 
-
 const CAPTURE_STEPS := 40  ## 40 * 0.125 s = TowerCapture.CAPTURE_TIME
 const CLIENT_JOIN_S := 30.0
 const CLIENT_SHOT_S := 20.0
@@ -30,7 +29,9 @@ func run() -> void:
 		printerr("tower capture: the client process did not start")
 		done(false)
 		return
-	if not await wait_until(func() -> bool: return _client(client_out).get("ready", false), CLIENT_JOIN_S):
+	if not await wait_until(
+		func() -> bool: return _client(client_out).get("ready", false), CLIENT_JOIN_S
+	):
 		printerr("tower capture: the client did not join: %s" % _client(client_out))
 		await _stop_client(pid, client_out)
 		done(false)
@@ -44,7 +45,9 @@ func run() -> void:
 		done(false)
 		return
 	await click("CanvasLayer1/BuildingsButton")
-	var tower_btn := current_scene.get_node_or_null("CanvasLayer1/BuildPicker/TowerButton") as Button
+	var tower_btn := (
+		current_scene.get_node_or_null("CanvasLayer1/BuildPicker/TowerButton") as Button
+	)
 	if not await wait_until(func() -> bool: return tower_btn != null and tower_btn.visible, 2.0):
 		printerr("tower capture: the Tower tool was not visible with a peer connected")
 		await _stop_client(pid, client_out)
@@ -52,10 +55,13 @@ func run() -> void:
 		return
 	await snapshot("tower-tool")
 	step("built")
-	if not await wait_until(func() -> bool:
-		var info := _client(client_out)
-		var builder := int(str(info.get("id", "0")))
-		return info.get("aside", false) and builder > 1 and _owner() == builder, CLIENT_JOIN_S):
+	if not await wait_until(
+		func() -> bool:
+			var info := _client(client_out)
+			var builder := int(str(info.get("id", "0")))
+			return info.get("aside", false) and builder > 1 and _owner() == builder,
+		CLIENT_JOIN_S
+	):
 		printerr("tower capture: the client did not build a tower: %s" % _client(client_out))
 		await _stop_client(pid, client_out)
 		done(false)
@@ -68,20 +74,32 @@ func run() -> void:
 			node.global_position = Vector2(100000, 100000)
 	var flag: Vector2i = _flag()
 	if not await _walk_to_flag(flag):
-		printerr("tower capture: host at %s could not walk within range of flag %s" % [hero().global_position, flag])
+		printerr(
+			(
+				"tower capture: host at %s could not walk within range of flag %s"
+				% [hero().global_position, flag]
+			)
+		)
 		await _stop_client(pid, client_out)
 		done(false)
 		return
 	for _i in CAPTURE_STEPS:
 		capture.tick(0.125)
 	if _owner() != 1:
-		printerr("tower capture: owner after %d ticks is %d, want the host" % [CAPTURE_STEPS, _owner()])
+		printerr(
+			"tower capture: owner after %d ticks is %d, want the host" % [CAPTURE_STEPS, _owner()]
+		)
 		await _stop_client(pid, client_out)
 		done(false)
 		return
 	await snapshot("host-captured")
 	step("client-view")
-	if shot != "" and not await wait_until(func() -> bool: return _client(client_out).get("shot", false), CLIENT_SHOT_S):
+	if (
+		shot != ""
+		and not await wait_until(
+			func() -> bool: return _client(client_out).get("shot", false), CLIENT_SHOT_S
+		)
+	):
 		printerr("tower capture: the client did not save its view: %s" % _client(client_out))
 		await _stop_client(pid, client_out)
 		done(false)
@@ -100,20 +118,28 @@ func _walk_to_flag(flag: Vector2i) -> bool:
 	# to the flag's column, then approach the north edge of the tower.
 	step("walk-into-range")
 	if not await _walk_leg(host, 1, gate_exit.y):
-		printerr("tower capture: south leg failed, want y=%s at %s" % [gate_exit.y, host.global_position])
+		printerr(
+			"tower capture: south leg failed, want y=%s at %s" % [gate_exit.y, host.global_position]
+		)
 		return false
 	if not await _walk_leg(host, 0, centre.x):
-		printerr("tower capture: east leg failed, want x=%s at %s" % [centre.x, host.global_position])
+		printerr(
+			"tower capture: east leg failed, want x=%s at %s" % [centre.x, host.global_position]
+		)
 		return false
 	var north_y := centre.y - (TowerCapture.CAPTURE_RADIUS - 4.0)
 	if not await _walk_leg(host, 1, north_y):
-		printerr("tower capture: north leg failed, want y=%s at %s" % [north_y, host.global_position])
+		printerr(
+			"tower capture: north leg failed, want y=%s at %s" % [north_y, host.global_position]
+		)
 		return false
 	if host.global_position.distance_to(centre) <= TowerCapture.CAPTURE_RADIUS:
 		return true
 	printerr(
-		"tower capture: after the three legs, host at %s is outside range of %s"
-		% [host.global_position, centre]
+		(
+			"tower capture: after the three legs, host at %s is outside range of %s"
+			% [host.global_position, centre]
+		)
 	)
 	return false
 
@@ -166,8 +192,10 @@ func _walk_leg(host: CharacterBody2D, axis: int, target: float) -> bool:
 				if stalled >= 30 and absf(remaining) > 12.0 and speed <= 8.0:
 					_release_walk()
 					printerr(
-						"tower capture: stalled on axis %d at %s after %d frames, want %s remaining %s"
-						% [axis, host.global_position, frames, target, remaining]
+						(
+							"tower capture: stalled on axis %d at %s after %d frames, want %s remaining %s"
+							% [axis, host.global_position, frames, target, remaining]
+						)
 					)
 					return false
 			else:
@@ -175,13 +203,23 @@ func _walk_leg(host: CharacterBody2D, axis: int, target: float) -> bool:
 				last = now_pos
 		_release_walk()
 		if not await _wait_still(host):
-			printerr("tower capture: host still moving at %s after a walk leg toward %s" % [host.global_position, target])
+			printerr(
+				(
+					"tower capture: host still moving at %s after a walk leg toward %s"
+					% [host.global_position, target]
+				)
+			)
 			return false
 		if absf(target - host.global_position[axis]) <= LEG_OK_PX:
 			return true
 	if absf(target - host.global_position[axis]) <= LEG_OK_PX:
 		return true
-	printerr("tower capture: walk leg ended at %s after %d corrections, want axis %d = %s" % [host.global_position, corrections, axis, target])
+	printerr(
+		(
+			"tower capture: walk leg ended at %s after %d corrections, want axis %d = %s"
+			% [host.global_position, corrections, axis, target]
+		)
+	)
 	return false
 
 
@@ -218,12 +256,20 @@ func _launch_client(client_out: String, shot: String) -> int:
 		args = "--headless "
 	else:
 		args = "--rendering-driver opengl3 "
-	var cmd := "export XDG_CONFIG_HOME='%s' XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; exec '%s' %s--path '%s' --script '%s' -- --port=9786 --out='%s' --mode=drive --shot='%s'" % [
-		config.path_join("client"), data.path_join("client"), cache.path_join("client"),
-		godot, args, ProjectSettings.globalize_path("res://"),
-		ProjectSettings.globalize_path("res://tests/tower_sync_probe.gd"),
-		client_out, shot,
-	]
+	var cmd := (
+		"export XDG_CONFIG_HOME='%s' XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; exec '%s' %s--path '%s' --script '%s' -- --port=9786 --out='%s' --mode=drive --shot='%s'"
+		% [
+			config.path_join("client"),
+			data.path_join("client"),
+			cache.path_join("client"),
+			godot,
+			args,
+			ProjectSettings.globalize_path("res://"),
+			ProjectSettings.globalize_path("res://tests/tower_sync_probe.gd"),
+			client_out,
+			shot,
+		]
+	)
 	return OS.create_process("/bin/bash", ["-c", cmd])
 
 

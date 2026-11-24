@@ -16,6 +16,7 @@
 .cursor/skills/verify-flagoria/drives/footprint_rotation.gd	unused-argument	unused function argument 'map'
 .cursor/skills/verify-flagoria/drives/free_form_walls.gd	max-returns	Function "run" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/generated_building.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/generated_building.gd	max-returns	Function "_walk_into_wall" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/hud_round_buttons.gd	max-returns	Function "_cluster_ok" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/join_port.gd	max-line-length	Max allowed line length (100) exceeded	c773b2e27519da81
 .cursor/skills/verify-flagoria/drives/join_port.gd	max-returns	Function "run" has more than 6 return statements
@@ -28,6 +29,7 @@
 .cursor/skills/verify-flagoria/drives/tool_wheel.gd	max-returns	Function "run" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/tower_capture.gd	max-line-length	Max allowed line length (100) exceeded	c3e4376f6546021b
 .cursor/skills/verify-flagoria/drives/tower_capture.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/tower_capture.gd	max-returns	Function "_walk_leg" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/wall_collar_sides.gd	max-returns	Function "run" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/wall_junctions.gd	max-returns	Function "run" has more than 6 return statements
 .cursor/skills/verify-flagoria/drives/walls_cities.gd	max-line-length	Max allowed line length (100) exceeded	c3e4376f6546021b
