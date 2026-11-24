@@ -3,6 +3,10 @@ extends "res://tests/helpers/probe_base.gd"
 ## Host: --host --save --port --out --mode. Client: --port --out --mode [--shot].
 
 
+const PLACE_REPLICATE_FRAMES := 12
+const PLACE_FRAMES := 480
+const PLACE_RESEND_EVERY := 15
+
 var _refused_wood := -1
 var _place_error := ""
 var _shot := false
@@ -147,28 +151,52 @@ func _place_city(main, world, me: Node2D, inventory: Inventory, requests, intera
 		return err
 	for side in spot["sides"]:
 		var run: Array[Vector2i] = side
-		if not requests.place(BuildCosts.WALL_BLOCK, run):
-			return "wall side was not sent"
-		if not await wait_for_state(func() -> bool: return _cells_walled(world, run), 8000):
-			return "wall side was not applied"
+		var side_err := await _place_wall_side_until_applied(me, requests, world, run)
+		if side_err != "":
+			return side_err
 	if not _ring_applied(world, spot["ring"]):
 		return "ring was not applied"
 	return ""
+
+
+func _place_wall_side_until_applied(me: Node2D, requests, world, run: Array[Vector2i]) -> String:
+	## The host reach-rejects a request that arrives before this teleport
+	## replicates, and a sent RPC is not retried. Resend on a physics-frame
+	## cadence until the run is on the map or a frame deadline passes.
+	var tree := me.get_tree()
+	var sent := false
+	var frames := 0
+	while frames < PLACE_FRAMES and not _cells_walled(world, run):
+		if frames % PLACE_RESEND_EVERY == 0:
+			if requests.place(BuildCosts.WALL_BLOCK, run):
+				sent = true
+		await tree.physics_frame
+		frames += 1
+	if _cells_walled(world, run):
+		return ""
+	if not sent:
+		return "wall side was not sent"
+	return "wall side was not applied after %d physics frames" % frames
 
 
 func _ready_to_build(main, me: Node2D, where: Vector2, mode: String) -> String:
 	## Stress peers publish positions in the host probe's status file. The live
 	## drive hosts from the game itself, which does not write that file.
 	if mode == "drive":
-		await _drive_settle(me, where, 400)
+		# Drive hosts from the game itself and does not publish the host
+		# probe file, so wait on physics frames after the teleport instead
+		# of a wall-clock settle that starves under load.
+		await _drive_settle(me, where, PLACE_REPLICATE_FRAMES)
 		return ""
 	return await _wait_host_position(main, me, where, 5000)
 
 
-func _drive_settle(me: Node2D, where: Vector2, ms: int) -> void:
+func _drive_settle(me: Node2D, where: Vector2, frames: int) -> void:
 	## Bounded settle for the screenshot drive only. Stress mode does not call this.
-	_pin(me, where)
-	await _wait(ms)
+	var tree := me.get_tree()
+	for _i in frames:
+		_pin(me, where)
+		await tree.physics_frame
 
 
 func _wait_host_position(main, me: Node2D, where: Vector2, ms: int) -> String:
