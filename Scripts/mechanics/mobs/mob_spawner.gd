@@ -113,7 +113,15 @@ static func home_kind(world: TileMap, cell: Vector2i) -> int:
 	return -1
 
 
-static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed_value: int, tick: int, rate: float, scale := 1.0) -> Dictionary:
+static func plan_tick(
+	world: TileMap,
+	player_cells: Array,
+	existing: Array,
+	seed_value: int,
+	tick: int,
+	rate: float,
+	scale := 1.0
+) -> Dictionary:
 	## {spawn: [{name, type, cell}], despawn: [name]} for one ambient tick.
 	## Pure: the same arguments return the same dictionary. No spawn and no
 	## despawn when `player_cells` is empty, so an opening wave with nobody
@@ -131,7 +139,10 @@ static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed
 	var staying: Array = []
 	for item in existing:
 		var cell: Vector2i = item["cell"]
-		if _beyond_everyone(cell, player_cells, DESPAWN_RADIUS) and not bool(item.get("pinned", false)):
+		if (
+			_beyond_everyone(cell, player_cells, DESPAWN_RADIUS)
+			and not bool(item.get("pinned", false))
+		):
 			despawn.append(str(item["name"]))
 		else:
 			staying.append(item)
@@ -165,13 +176,19 @@ static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed
 					continue
 				var rank := _rank(cell, seed_value)
 				var prev: Dictionary = best.get(chunk, {})
-				if prev.is_empty() or rank < int(prev["rank"]) or (rank == int(prev["rank"]) and _cell_before(cell, prev["cell"])):
+				if (
+					prev.is_empty()
+					or rank < int(prev["rank"])
+					or (rank == int(prev["rank"]) and _cell_before(cell, prev["cell"]))
+				):
 					best[chunk] = {"cell": cell, "rank": rank, "home": home}
 	var offers: Array = best.values()
-	offers.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		if int(a["rank"]) != int(b["rank"]):
-			return int(a["rank"]) < int(b["rank"])
-		return _cell_before(a["cell"], b["cell"]))
+	offers.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			if int(a["rank"]) != int(b["rank"]):
+				return int(a["rank"]) < int(b["rank"])
+			return _cell_before(a["cell"], b["cell"])
+	)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector3i(seed_value, tick, 0))
 	var next_i := _next_ambient_index(existing)
@@ -183,11 +200,16 @@ static func plan_tick(world: TileMap, player_cells: Array, existing: Array, seed
 		var owner := _nearest_player(cell, player_cells)
 		if per[owner] >= int(cap["per_player"]):
 			continue
-		spawn.append({
-			"name": "mob_a_%d" % next_i,
-			"type": _type_for(int(offer["home"]), roll),
-			"cell": cell,
-		})
+		(
+			spawn
+			. append(
+				{
+					"name": "mob_a_%d" % next_i,
+					"type": _type_for(int(offer["home"]), roll),
+					"cell": cell,
+				}
+			)
+		)
 		next_i += 1
 		per[owner] += 1
 		global += 1
@@ -214,12 +236,20 @@ static func plan(world: TileMap, origin: Vector2i, seed_value: int, rate := 1.0)
 		if island.size() < MIN_ISLAND_CELLS or out.size() >= max_mobs:
 			break
 		var want := clampi(island.size() / int(cap["cells_per_mob"]), 1, cap["per_island"])
-		var order: Array = island.filter(func(c: Vector2i) -> bool:
-			return maxi(absi(c.x - origin.x), absi(c.y - origin.y)) > SAFE_RADIUS)
-		order.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-			return _rank(a, seed_value) < _rank(b, seed_value))
-		var sand: Array = order.filter(func(c: Vector2i) -> bool: return is_home_cell(world, c, MobCatalog.HOME_SAND))
-		var grass: Array = order.filter(func(c: Vector2i) -> bool: return is_home_cell(world, c, MobCatalog.HOME_GRASS))
+		var order: Array = island.filter(
+			func(c: Vector2i) -> bool:
+				return maxi(absi(c.x - origin.x), absi(c.y - origin.y)) > SAFE_RADIUS
+		)
+		order.sort_custom(
+			func(a: Vector2i, b: Vector2i) -> bool:
+				return _rank(a, seed_value) < _rank(b, seed_value)
+		)
+		var sand: Array = order.filter(
+			func(c: Vector2i) -> bool: return is_home_cell(world, c, MobCatalog.HOME_SAND)
+		)
+		var grass: Array = order.filter(
+			func(c: Vector2i) -> bool: return is_home_cell(world, c, MobCatalog.HOME_GRASS)
+		)
 		for slot in want:
 			if out.size() >= max_mobs:
 				break
@@ -227,7 +257,11 @@ static func plan(world: TileMap, origin: Vector2i, seed_value: int, rate := 1.0)
 			var pool := sand
 			if slot > 0 or sand.size() < MIN_BEACH_CELLS:
 				pool = grass
-				type = MobCatalog.SLIME if (_rank(island[0], seed_value) + slot) % 2 == 0 else MobCatalog.PIGLET
+				type = (
+					MobCatalog.SLIME
+					if (_rank(island[0], seed_value) + slot) % 2 == 0
+					else MobCatalog.PIGLET
+				)
 			var cell = _first_free(pool, taken)
 			if cell == null:
 				continue
@@ -339,7 +373,9 @@ func opening_roster(world: TileMap, origin: Vector2i, seed_value: int, rate: flo
 	return true
 
 
-func spawn_for_world(world: TileMap, origin: Vector2i, seed_value: int, rate := 1.0, reset_credits := true) -> int:
+func spawn_for_world(
+	world: TileMap, origin: Vector2i, seed_value: int, rate := 1.0, reset_credits := true
+) -> int:
 	## Server only: replace any mobs with this map's plan at `rate`. Returns
 	## the count. Clients get the server's mobs and never plan their own.
 	## `reset_credits` false skips the kill-credit packet. The caller uses
@@ -356,12 +392,17 @@ func spawn_for_world(world: TileMap, origin: Vector2i, seed_value: int, rate := 
 	var plans := plan(world, origin, seed_value, rate)
 	for i in plans.size():
 		var p: Dictionary = plans[i]
-		spawner.spawn({
-			"name": "mob_%d" % i,
-			"type": p["type"],
-			"pos": world.map_to_local(p["cell"]),
-			"seed": hash(Vector2i(seed_value, i)),
-		})
+		(
+			spawner
+			. spawn(
+				{
+					"name": "mob_%d" % i,
+					"type": p["type"],
+					"pos": world.map_to_local(p["cell"]),
+					"seed": hash(Vector2i(seed_value, i)),
+				}
+			)
+		)
 	return plans.size()
 
 
@@ -408,7 +449,15 @@ func run_ambient_tick() -> Dictionary:
 	if _player_since < 0:
 		_player_since = Time.get_ticks_msec()
 	_last_ambient_ms = Time.get_ticks_msec()
-	var plan := plan_tick(world, players, _existing_for_plan(world), _map_seed(), _ambient_tick, _rate(), ambient_scale())
+	var plan := plan_tick(
+		world,
+		players,
+		_existing_for_plan(world),
+		_map_seed(),
+		_ambient_tick,
+		_rate(),
+		ambient_scale()
+	)
 	_ambient_tick += 1
 	for mob_name in plan["despawn"]:
 		var node := get_node_or_null(str(mob_name))
@@ -417,12 +466,17 @@ func run_ambient_tick() -> Dictionary:
 	for item in plan["spawn"]:
 		var cell: Vector2i = item["cell"]
 		var index := int(str(item["name"]).trim_prefix("mob_a_"))
-		spawner.spawn({
-			"name": item["name"],
-			"type": item["type"],
-			"pos": world.map_to_local(cell),
-			"seed": hash(Vector2i(_map_seed(), index)),
-		})
+		(
+			spawner
+			. spawn(
+				{
+					"name": item["name"],
+					"type": item["type"],
+					"pos": world.map_to_local(cell),
+					"seed": hash(Vector2i(_map_seed(), index)),
+				}
+			)
+		)
 	return plan
 
 
@@ -461,11 +515,16 @@ func _existing_for_plan(world: TileMap) -> Array:
 	for m in mobs():
 		if (m as Mob).is_queued_for_deletion():
 			continue
-		out.append({
-			"name": str(m.name),
-			"cell": world.local_to_map(m.position),
-			"pinned": (m as Mob).pinned(),
-		})
+		(
+			out
+			. append(
+				{
+					"name": str(m.name),
+					"cell": world.local_to_map(m.position),
+					"pinned": (m as Mob).pinned(),
+				}
+			)
+		)
 	return out
 
 

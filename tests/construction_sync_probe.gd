@@ -13,8 +13,10 @@ func _run() -> void:
 	var save := option("--save")
 	var wood := option("--wood").to_int()
 	_turns = option("--turns").to_int()
-	if _structure not in [BuildCosts.CASTLE, BuildCosts.BARRACKS, BuildCosts.GUARD_POST] \
-			or (host and save.is_empty()):
+	if (
+		_structure not in [BuildCosts.CASTLE, BuildCosts.BARRACKS, BuildCosts.GUARD_POST]
+		or (host and save.is_empty())
+	):
 		printerr("construction_sync_probe: needs a supported --structure and --save with --host")
 		quit(1)
 		return
@@ -40,8 +42,12 @@ func _run() -> void:
 		var me := local_player(main)
 		if snapshot_due(main):
 			_write(main, world, me)
-		if should_place and main.world_params != null and me != null \
-				and (not host or FileAccess.file_exists(probe_out + ".build")):
+		if (
+			should_place
+			and main.world_params != null
+			and me != null
+			and (not host or FileAccess.file_exists(probe_out + ".build"))
+		):
 			should_place = false
 			_place_error = await _do_place(main, world, me, wood)
 		await process_frame
@@ -52,27 +58,38 @@ func _do_place(main, world, me: Node2D, wood: int) -> String:
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var requests = main.get_node("World/StructureRequests")
 	var inventory: Inventory = main.get_node("Inventory")
-	var land: Variant = _search(world, func(cell: Vector2i) -> bool:
-		return _anchor_ok(world, cell))
+	var land: Variant = _search(world, func(cell: Vector2i) -> bool: return _anchor_ok(world, cell))
 	if land == null:
 		return "no clear %s anchor" % _structure
-	var water: Variant = _search(world, func(cell: Vector2i) -> bool:
-		return world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell))
+	var water: Variant = _search(
+		world,
+		func(cell: Vector2i) -> bool:
+			return world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell)
+	)
 	if water == null:
 		return "no water cell"
-	var err := await _wait_host_position(main, me, interaction.cell_center(water) + Vector2(0, 48), 5000)
+	var err := await _wait_host_position(
+		main, me, interaction.cell_center(water) + Vector2(0, 48), 5000
+	)
 	if err != "":
 		return err
 	var before := inventory.count_of(Inventory.WOOD)
 	inventory.add(Inventory.WOOD, wood)
 	var bad: Array[Vector2i] = [water]
 	requests.place(_structure, bad)
-	if not await _until(func() -> bool: return inventory.count_of(Inventory.WOOD) == before + wood, 8000):
+	if not await _until(
+		func() -> bool: return inventory.count_of(Inventory.WOOD) == before + wood, 8000
+	):
 		return "refused request did not settle wood"
 	_refused_wood = inventory.count_of(Inventory.WOOD)
 	if _refused_wood != before + wood:
 		return "refused request spent wood (%d -> %d)" % [before + wood, _refused_wood]
-	err = await _wait_host_position(main, me, interaction.cell_center(land) + (Vector2(-48, 0) if _turns == 1 else Vector2(0, 48)), 5000)
+	err = await _wait_host_position(
+		main,
+		me,
+		interaction.cell_center(land) + (Vector2(-48, 0) if _turns == 1 else Vector2(0, 48)),
+		5000
+	)
 	if err != "":
 		return err
 	var one: Array[Vector2i] = [land]
@@ -161,13 +178,15 @@ func _write(main, world, me: Node2D) -> void:
 			peers[str(child.name)] = [child.global_position.x, child.global_position.y]
 	var structures: Array = world.structures_for_sync()
 	structures.sort_custom(func(a: Array, b: Array) -> bool: return str(a) < str(b))
-	write_result({
-		"id": str(me.name) if me != null else "",
-		"ready": main.world_params != null and me != null,
-		"wood": inventory.count_of(Inventory.WOOD),
-		"refused_wood": _refused_wood,
-		"place_error": _place_error,
-		"peers": peers,
-		"sync": structures,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": str(me.name) if me != null else "",
+			"ready": main.world_params != null and me != null,
+			"wood": inventory.count_of(Inventory.WOOD),
+			"refused_wood": _refused_wood,
+			"place_error": _place_error,
+			"peers": peers,
+			"sync": structures,
+			"errors": _errors.snapshot(),
+		}
+	)

@@ -13,7 +13,10 @@ static func try_bow_shot(player, direction: String, angle: float) -> bool:
 		return false
 	var shots: Node = player.get_node_or_null(RANGED_PATH)
 	if shots != null and shots.has_method("send_shot"):
-		shots.send_shot(player.global_position + AttackAimScript.ORIGIN, _bow_aim(direction, angle, player.lastAnimDirection))
+		shots.send_shot(
+			player.global_position + AttackAimScript.ORIGIN,
+			_bow_aim(direction, angle, player.lastAnimDirection)
+		)
 	return true
 
 
@@ -70,19 +73,27 @@ static func _swing_world_decor(player, direction: String, angle: float) -> void:
 	var map: Node = player.get_node_or_null(MAP_PATH)
 	if map == null or player.health.is_dead():
 		return
-	var facing := direction if direction in AttackAimScript.DIRECTIONS else str(player.lastAnimDirection)
+	var facing := (
+		direction if direction in AttackAimScript.DIRECTIONS else str(player.lastAnimDirection)
+	)
 	var swing := _facing_to_angle(facing)
 	if not is_nan(angle) and facing in AttackAimScript.DIRECTIONS:
 		var turn := AttackAimScript.turn_to(facing, angle)
 		if not is_nan(turn):
 			swing += turn
-	map._object_removals.cells_in_arc(player.global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC, true)
+	map._object_removals.cells_in_arc(
+		player.global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC, true
+	)
 	if not player.multiplayer.is_server():
 		return
-	var requests: StructureRequests = player.get_node_or_null("../StructureRequests") as StructureRequests
+	var requests: StructureRequests = (
+		player.get_node_or_null("../StructureRequests") as StructureRequests
+	)
 	if requests == null:
 		return
-	var cell: Vector2i = map._walls.nearest_in_arc(player.global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC)
+	var cell: Vector2i = map._walls.nearest_in_arc(
+		player.global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC
+	)
 	if cell == WallBuilder.NO_WALL:
 		return
 	requests.host_damage_wall(cell)
@@ -90,7 +101,11 @@ static func _swing_world_decor(player, direction: String, angle: float) -> void:
 
 static func _facing_to_angle(facing: String) -> float:
 	match facing:
-		"Up": return Vector2.UP.angle()
-		"Left": return Vector2.LEFT.angle()
-		"Right": return Vector2.RIGHT.angle()
-		_: return Vector2.DOWN.angle()
+		"Up":
+			return Vector2.UP.angle()
+		"Left":
+			return Vector2.LEFT.angle()
+		"Right":
+			return Vector2.RIGHT.angle()
+		_:
+			return Vector2.DOWN.angle()

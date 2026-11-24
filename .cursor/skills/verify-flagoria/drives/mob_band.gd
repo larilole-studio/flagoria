@@ -3,7 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Opening mobs around the host, then one mob standing in the spawn ring
 ## (features/mob-band.md). The drive only reads positions and walks.
 
-
 const APPROACH_MS := 20000
 
 
@@ -12,9 +11,12 @@ func run() -> void:
 	if not await start_game():
 		return
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	var ground := await wait_until(func() -> bool:
-		var cell := map.local_to_map(map.to_local(hero().global_position))
-		return map.get_cell_source_id(0, cell) != -1, 5.0)
+	var ground := await wait_until(
+		func() -> bool:
+			var cell := map.local_to_map(map.to_local(hero().global_position))
+			return map.get_cell_source_id(0, cell) != -1,
+		5.0
+	)
 	await snapshot("band-near-hero")
 	if not ground:
 		printerr("mob band: the ground under the hero never drew")
@@ -23,12 +25,19 @@ func run() -> void:
 	step("ring")
 	var mob := await _bring_ring_mob(map)
 	if mob == null:
-		printerr("mob band: no mob stayed in the %d..%d ring on screen" % [MobSpawner.SPAWN_MIN_RADIUS + 1, MobSpawner.SPAWN_MAX_RADIUS])
+		printerr(
+			(
+				"mob band: no mob stayed in the %d..%d ring on screen"
+				% [MobSpawner.SPAWN_MIN_RADIUS + 1, MobSpawner.SPAWN_MAX_RADIUS]
+			)
+		)
 		done(false)
 		return
 	await snapshot("band-mob-in-ring")
 	var dist := _apart(map, hero(), mob)
-	var ok := dist > MobSpawner.SPAWN_MIN_RADIUS and dist <= MobSpawner.SPAWN_MAX_RADIUS and mob.visible
+	var ok := (
+		dist > MobSpawner.SPAWN_MIN_RADIUS and dist <= MobSpawner.SPAWN_MAX_RADIUS and mob.visible
+	)
 	if not ok:
 		printerr("mob band: %s ended %d cells from the hero" % [mob.name, dist])
 	else:
@@ -38,7 +47,12 @@ func run() -> void:
 
 func _bring_ring_mob(map: TileMap) -> Mob:
 	var listed := _list_mobs(map)
-	print("mob band: %d mobs, nearest %s" % [listed.size(), listed[0] if not listed.is_empty() else "none"])
+	print(
+		(
+			"mob band: %d mobs, nearest %s"
+			% [listed.size(), listed[0] if not listed.is_empty() else "none"]
+		)
+	)
 	var deadline := Time.get_ticks_msec() + APPROACH_MS
 	var focus: Mob = null
 	while Time.get_ticks_msec() < deadline:
@@ -48,7 +62,12 @@ func _bring_ring_mob(map: TileMap) -> Mob:
 			continue
 		focus = mob
 		var dist := _apart(map, hero(), mob)
-		if dist > MobSpawner.SPAWN_MIN_RADIUS and dist <= MobSpawner.SPAWN_MAX_RADIUS and mob.visible and _on_screen(mob):
+		if (
+			dist > MobSpawner.SPAWN_MIN_RADIUS
+			and dist <= MobSpawner.SPAWN_MAX_RADIUS
+			and mob.visible
+			and _on_screen(mob)
+		):
 			return mob
 		var toward := dist > MobSpawner.SPAWN_MIN_RADIUS + 1
 		if not await _step_toward(mob, toward):
@@ -114,7 +133,9 @@ func _actions_for(delta: Vector2) -> Array:
 	if not horizontal:
 		primary = "ui_down" if delta.y > 0.0 else "ui_up"
 		other = "ui_right" if delta.x > 0.0 else "ui_left"
-	var opposite := {"ui_right": "ui_left", "ui_left": "ui_right", "ui_up": "ui_down", "ui_down": "ui_up"}
+	var opposite := {
+		"ui_right": "ui_left", "ui_left": "ui_right", "ui_up": "ui_down", "ui_down": "ui_up"
+	}
 	var back: String = opposite[primary]
 	return [primary, other, back]
 

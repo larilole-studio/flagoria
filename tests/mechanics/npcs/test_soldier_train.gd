@@ -16,7 +16,9 @@ func _barracks_anchor(world, quarter_turns := 0) -> Variant:
 			var cells: Array = StructurePlacer.footprint(s, cell).keys()
 			if cells.is_empty():
 				continue
-			if cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				return cell
 	return null
 
@@ -77,8 +79,12 @@ func _test_soldier_train() -> int:
 	requests.advance(SoldierStats.TRAIN_TIME)
 	await process_frame
 	var troops := requests.soldiers()
-	if troops.size() != 1 or str(troops[0].name) != "soldier_%d_0" % peer \
-			or troops[0].owner_peer != peer or troops[0].order != "follow":
+	if (
+		troops.size() != 1
+		or str(troops[0].name) != "soldier_%d_0" % peer
+		or troops[0].owner_peer != peer
+		or troops[0].order != "follow"
+	):
 		printerr("FAIL soldier_train: spawn %s" % troops)
 		fail += 1
 	if inventory.count_of(Inventory.WOOD) != 0:
@@ -105,7 +111,9 @@ func _test_soldier_train() -> int:
 			fail += 1
 			break
 	if d_after_follow > SoldierStats.FOLLOW_STOP + 12.0:
-		printerr("FAIL soldier_train: follow distance %s from %s" % [d_after_follow, start_follow_d])
+		printerr(
+			"FAIL soldier_train: follow distance %s from %s" % [d_after_follow, start_follow_d]
+		)
 		fail += 1
 	for i in 3:
 		if not requests.host_train(peer, anchor):
@@ -138,9 +146,16 @@ func _test_soldier_train() -> int:
 		if loaded["error"] != "":
 			printerr("FAIL soldier_train: load %s" % loaded["error"])
 			fail += 1
-		elif loaded["world"].soldiers.size() != ws.soldiers.size() \
-				or str(loaded["world"].soldiers[0].get("name")) != str(ws.soldiers[0].get("name")):
-			printerr("FAIL soldier_train: soldiers round trip %s vs %s" % [ws.soldiers, loaded["world"].soldiers])
+		elif (
+			loaded["world"].soldiers.size() != ws.soldiers.size()
+			or str(loaded["world"].soldiers[0].get("name")) != str(ws.soldiers[0].get("name"))
+		):
+			printerr(
+				(
+					"FAIL soldier_train: soldiers round trip %s vs %s"
+					% [ws.soldiers, loaded["world"].soldiers]
+				)
+			)
 			fail += 1
 		DirAccess.remove_absolute(saved["path"])
 	for child in requests.get_children():

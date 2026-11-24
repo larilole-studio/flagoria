@@ -69,6 +69,21 @@ export XDG_DATA_HOME="${XDG_DATA_HOME:-${verify_tmp}/data}"
 export XDG_CACHE_HOME="${XDG_CACHE_HOME:-${verify_tmp}/cache}"
 echo "Godot user dirs: XDG_CONFIG_HOME=${XDG_CONFIG_HOME} XDG_DATA_HOME=${XDG_DATA_HOME} XDG_CACHE_HOME=${XDG_CACHE_HOME}"
 
+echo "== GDScript format (gdformat) =="
+gdtoolkit_bin="$("$ROOT/tools/ensure_gdtoolkit.sh")"
+gdscript_list="${verify_tmp}/gdtoolkit-files"
+find . \( -path './addons' -o -path './.git' -o -path './.godot' \) -prune \
+  -o -type f -name '*.gd' -print0 | LC_ALL=C sort -z >"${gdscript_list}"
+mapfile -d '' -t gdscript_files <"${gdscript_list}"
+if [[ ${#gdscript_files[@]} -eq 0 ]]; then
+  echo "error: no GDScript files found for format and lint" >&2
+  exit 1
+fi
+"$gdtoolkit_bin/gdformat" --check "${gdscript_files[@]}"
+
+echo "== GDScript lint (gdlint) =="
+python3 "$ROOT/tools/check_gdlint.py" "$gdtoolkit_bin/gdlint" "${gdscript_files[@]}"
+
 echo "== Drive picks (tools/verify_drive_picks.py) =="
 python3 "$ROOT/tools/verify_drive_picks.py" --self-test
 

@@ -36,7 +36,9 @@ static func save_world(world: WorldSave, save_name: String) -> Dictionary:
 	# Every *_seed value, so a seed added to MapGenParams is checked too.
 	for key in data.keys():
 		if key.ends_with("_seed") and data[key] == 0:
-			return {"path": "", "error": "%s is 0 (unresolved); save the seeds the world used" % key}
+			return {
+				"path": "", "error": "%s is 0 (unresolved); save the seeds the world used" % key
+			}
 	var path := path_for(save_name)
 	# Read an existing file before WRITE truncates it, so a second save of the
 	# same world keeps the created time the first write stored.
@@ -144,7 +146,12 @@ static func read_document(path: String) -> Dictionary:
 		text = bytes.get_string_from_utf8()
 	var json := JSON.new()
 	if json.parse(text) != OK:
-		return failed.call("%s is not a map save (invalid JSON at line %s: %s)" % [path, json.get_error_line(), json.get_error_message()])
+		return failed.call(
+			(
+				"%s is not a map save (invalid JSON at line %s: %s)"
+				% [path, json.get_error_line(), json.get_error_message()]
+			)
+		)
 	return {"data": json.data, "error": ""}
 
 
@@ -158,7 +165,8 @@ static func load_world(path: String) -> Dictionary:
 	## Returns {"world": WorldSave or null, "error": String, "version": int},
 	## where version is the file's own format version (older ones are
 	## migrated in memory; the file changes on its next save).
-	var failed := func(error: String) -> Dictionary: return {"world": null, "error": error, "version": 0}
+	var failed := func(error: String) -> Dictionary:
+		return {"world": null, "error": error, "version": 0}
 	var doc := read_document(path)
 	if doc["error"] != "":
 		return failed.call(doc["error"])
@@ -170,10 +178,15 @@ static func load_world(path: String) -> Dictionary:
 		return failed.call("%s has an unknown map save version %s" % [path, version])
 	if version > FORMAT_VERSION:
 		return failed.call(
-			"%s has map save version %d, from a newer build; this build reads versions 1 to %d" % [path, version, FORMAT_VERSION]
+			(
+				"%s has map save version %d, from a newer build; this build reads versions 1 to %d"
+				% [path, version, FORMAT_VERSION]
+			)
 		)
 	if version >= 2 and parsed.get("format") != FORMAT_ID:
-		return failed.call("%s is not a world save (format %s, want %s)" % [path, parsed.get("format"), FORMAT_ID])
+		return failed.call(
+			"%s is not a world save (format %s, want %s)" % [path, parsed.get("format"), FORMAT_ID]
+		)
 	_migrate(parsed, int(FileAccess.get_modified_time(path)))
 	if not parsed.get("params") is Dictionary:
 		return failed.call("%s has no params section" % path)
@@ -266,8 +279,20 @@ static func list_saves(dir: String = SAVE_DIR) -> Array[Dictionary]:
 			continue
 		if file_name.get_extension() == "json":
 			var path := dir + file_name
-			rows.append({"name": file_name.get_basename(), "path": path, "modified": FileAccess.get_modified_time(path)})
-	rows.sort_custom(func(a, b): return a["modified"] > b["modified"] or (a["modified"] == b["modified"] and a["name"] < b["name"]))
+			rows.append(
+				{
+					"name": file_name.get_basename(),
+					"path": path,
+					"modified": FileAccess.get_modified_time(path)
+				}
+			)
+	rows.sort_custom(
+		func(a, b):
+			return (
+				a["modified"] > b["modified"]
+				or (a["modified"] == b["modified"] and a["name"] < b["name"])
+			)
+	)
 	return rows
 
 
@@ -311,6 +336,12 @@ static func delete_save(save_name: String, dir: String = SAVE_DIR) -> String:
 static func _bad_name_error(save_name: String) -> String:
 	## A save name names one file in the saves folder; anything that could
 	## reach another folder ("../x", "a/b") is refused rather than resolved.
-	if save_name == "" or save_name != save_name.validate_filename() or "/" in save_name or "\\" in save_name or ".." in save_name:
+	if (
+		save_name == ""
+		or save_name != save_name.validate_filename()
+		or "/" in save_name
+		or "\\" in save_name
+		or ".." in save_name
+	):
 		return "not a map save name: %s" % save_name
 	return ""

@@ -37,7 +37,9 @@ func _run_row(structure: String, test_name: String, host_builds := false) -> int
 	params.temperature_seed = row["seed"]
 	params.items_seed = row["seed"]
 	params.biome_seed = row["seed"]
-	var session := saved_probe_session(structure + "_build", PROBE, params, ["--structure=" + structure])
+	var session := saved_probe_session(
+		structure + "_build", PROBE, params, ["--structure=" + structure]
+	)
 	if session.is_empty():
 		return 1
 	var probes: Array[Dictionary] = session["probes"]
@@ -62,21 +64,40 @@ func _run_row(structure: String, test_name: String, host_builds := false) -> int
 		elif host_builds and not publish_probe_command(probes[0]["out"] + ".build", "place"):
 			printerr("FAIL %s: could not publish the host build command" % test_name)
 			fail = 1
-		elif not await wait_until(func() -> bool: return _placed(read, structure, row, builder_index, turns), 15000):
-			printerr("FAIL %s: after place host %s client %s" % [test_name, read.call(0), read.call(1)])
+		elif not await wait_until(
+			func() -> bool: return _placed(read, structure, row, builder_index, turns), 15000
+		):
+			printerr(
+				"FAIL %s: after place host %s client %s" % [test_name, read.call(0), read.call(1)]
+			)
 			fail = 1
 		else:
 			launch.call([])
-			if not await wait_until(func() -> bool:
-				var joiner: Dictionary = read.call(2)
-				return joiner.get("ready", false) and joiner.get("sync") == read.call(0).get("sync"), 30000):
-				printerr("FAIL %s: late joiner host %s joiner %s" % [test_name, read.call(0), read.call(2)])
+			if not await wait_until(
+				func() -> bool:
+					var joiner: Dictionary = read.call(2)
+					return (
+						joiner.get("ready", false)
+						and joiner.get("sync") == read.call(0).get("sync")
+					),
+				30000
+			):
+				printerr(
+					(
+						"FAIL %s: late joiner host %s joiner %s"
+						% [test_name, read.call(0), read.call(2)]
+					)
+				)
 				fail = 1
 	for i in probes.size():
 		var peer: Dictionary = read.call(i)
 		if not peer.get("errors", []).is_empty() or peer.get("place_error", "") != "":
-			printerr("FAIL %s: peer %d errors %s place %s"
-					% [test_name, i, peer.get("errors", []), peer.get("place_error", "")])
+			printerr(
+				(
+					"FAIL %s: peer %d errors %s place %s"
+					% [test_name, i, peer.get("errors", []), peer.get("place_error", "")]
+				)
+			)
 			fail += 1
 	await close_probe_session(session)
 	if fail == 0:
@@ -84,7 +105,9 @@ func _run_row(structure: String, test_name: String, host_builds := false) -> int
 	return fail
 
 
-func _placed(read: Callable, structure: String, row: Dictionary, builder_index: int, turns: int) -> bool:
+func _placed(
+	read: Callable, structure: String, row: Dictionary, builder_index: int, turns: int
+) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
 	var buyer: Dictionary = read.call(builder_index)
@@ -96,7 +119,11 @@ func _placed(read: Callable, structure: String, row: Dictionary, builder_index: 
 	var builder := int(str(buyer.get("id", "0")))
 	var owned := 0
 	for entry in structures:
-		if entry is Array and str(entry[0]) == structure and int(entry[1]) == builder \
-				and (int(entry[3]) if entry.size() > 3 else 0) == turns:
+		if (
+			entry is Array
+			and str(entry[0]) == structure
+			and int(entry[1]) == builder
+			and (int(entry[3]) if entry.size() > 3 else 0) == turns
+		):
 			owned += 1
 	return owned >= row["min_owned"]

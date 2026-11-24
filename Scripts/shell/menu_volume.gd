@@ -10,9 +10,11 @@ static func bind_controls(menu: PanelContainer) -> void:
 static func bind_slider(slider: HSlider, label: Label, bus: String) -> void:
 	var audio = slider.get_node("/root/AudioSettings")
 	refresh_slider(slider, label, bus)
-	slider.value_changed.connect(func(value: float) -> void:
-		audio.set_volume(bus, value)
-		label.text = percent(value))
+	slider.value_changed.connect(
+		func(value: float) -> void:
+			audio.set_volume(bus, value)
+			label.text = percent(value)
+	)
 
 
 static func refresh_slider(slider: HSlider, label: Label, bus: String) -> void:

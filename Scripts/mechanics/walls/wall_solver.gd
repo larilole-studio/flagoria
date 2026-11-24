@@ -14,23 +14,51 @@ const TOWER := "TOWER"
 const STEPS: Array[Vector2i] = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
 const SIDE := ["N", "E", "S", "W"]
 const MASK_TABLE := {
-	0: "POST", 1: "END_S", 2: "END_W", 4: "END_N", 8: "END_E", 5: "V", 10: "H",
-	6: "CORNER_OUT_NW", 12: "CORNER_OUT_NE", 3: "CORNER_OUT_SW", 9: "CORNER_OUT_SE",
-	14: "T_N", 13: "T_E", 11: "T_S", 7: "T_W", 15: "CROSS",
+	0: "POST",
+	1: "END_S",
+	2: "END_W",
+	4: "END_N",
+	8: "END_E",
+	5: "V",
+	10: "H",
+	6: "CORNER_OUT_NW",
+	12: "CORNER_OUT_NE",
+	3: "CORNER_OUT_SW",
+	9: "CORNER_OUT_SE",
+	14: "T_N",
+	13: "T_E",
+	11: "T_S",
+	7: "T_W",
+	15: "CROSS",
 }
 ## Corner quadrant -> the diagonal reached by stepping along both of its arms.
 const BEND_STEP := {
-	"NW": Vector2i(1, 1), "NE": Vector2i(-1, 1), "SW": Vector2i(1, -1), "SE": Vector2i(-1, -1),
+	"NW": Vector2i(1, 1),
+	"NE": Vector2i(-1, 1),
+	"SW": Vector2i(1, -1),
+	"SE": Vector2i(-1, -1),
 }
 ## Offset inside the 3x3 tower -> ring name. The centre (1, 1) is the flag.
 const RING_AT := {
-	Vector2i(0, 0): "NW", Vector2i(1, 0): "N", Vector2i(2, 0): "NE",
-	Vector2i(0, 1): "W", Vector2i(2, 1): "E",
-	Vector2i(0, 2): "SW", Vector2i(1, 2): "S", Vector2i(2, 2): "SE",
+	Vector2i(0, 0): "NW",
+	Vector2i(1, 0): "N",
+	Vector2i(2, 0): "NE",
+	Vector2i(0, 1): "W",
+	Vector2i(2, 1): "E",
+	Vector2i(0, 2): "SW",
+	Vector2i(1, 2): "S",
+	Vector2i(2, 2): "SE",
 }
 ## Outer sides of a ring cell, already in N, E, S, W order (SE is E then S).
 const RING_ARMS := {
-	"NW": "NW", "N": "N", "NE": "NE", "W": "W", "E": "E", "SW": "SW", "S": "S", "SE": "ES",
+	"NW": "NW",
+	"N": "N",
+	"NE": "NE",
+	"W": "W",
+	"E": "E",
+	"SW": "SW",
+	"S": "S",
+	"SE": "ES",
 }
 
 
@@ -67,8 +95,11 @@ static func solve(walls: Dictionary) -> Dictionary:
 				if outside.has(cell + BEND_STEP[q]) and not outside.has(cell - BEND_STEP[q]):
 					piece = "CORNER_IN_" + q
 			var damage: String = w.get("damage", "")
-			if damage != "" and (piece == "H" or piece == "V") \
-					and TileCatalog.TILES.has("%s_%s_DMG_%s" % [family, piece, damage]):
+			if (
+				damage != ""
+				and (piece == "H" or piece == "V")
+				and TileCatalog.TILES.has("%s_%s_DMG_%s" % [family, piece, damage])
+			):
 				piece += "_DMG_" + damage
 		out[cell] = family + "_" + piece
 	return out

@@ -34,7 +34,9 @@ func run() -> void:
 	for y in range(lo.y + 1, lo.y + 6):
 		for x in [lo.x, lo.x + 6]:
 			ring.append(Vector2i(x, y))
-	ring = ring.filter(func(c: Vector2i) -> bool: return map.predicted_clear(c) and not map._structures.has_cell(c))
+	ring = ring.filter(
+		func(c: Vector2i) -> bool: return map.predicted_clear(c) and not map._structures.has_cell(c)
+	)
 	map.place_wall_cells(ring)
 	for i in 8:
 		await process_frame
@@ -45,13 +47,18 @@ func run() -> void:
 	step("save")
 	var saved := []
 	root.get_node("MapGen").map_saved.connect(func(path: String) -> void: saved.append(path))
-	if not await menu_save() or not await wait_until(func() -> bool: return not saved.is_empty(), 5.0):
+	if (
+		not await menu_save()
+		or not await wait_until(func() -> bool: return not saved.is_empty(), 5.0)
+	):
 		printerr("structure_save: Save did not write a file")
 		done(false)
 		return
 	await snapshot("saved")
 	await click(MAIN_MENU_BUTTON)
-	await wait_until(func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0)
+	await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0
+	)
 
 	step("load")
 	var err: String = root.get_node("MapGen").load_map_inputs(saved[0])

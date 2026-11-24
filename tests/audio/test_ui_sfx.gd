@@ -24,7 +24,11 @@ func _test_ui_sfx_clips() -> int:
 			fail += 1
 		for clip in clips:
 			var wav := clip as AudioStreamWAV
-			if wav == null or wav.get_length() <= 0.03 or not ResourceLoader.exists(wav.resource_path):
+			if (
+				wav == null
+				or wav.get_length() <= 0.03
+				or not ResourceLoader.exists(wav.resource_path)
+			):
 				printerr("FAIL ui_sfx_clips: %s clip %s missing or empty" % [event, clip])
 				fail += 1
 				continue
@@ -37,7 +41,11 @@ func _test_ui_sfx_clips() -> int:
 			fail += 1
 			continue
 		var p = ui.players().get(event)
-		if not p is AudioStreamPlayer or p.bus != &"SFX" or not is_equal_approx(p.volume_db, ui.VOLUME_DB[event]):
+		if (
+			not p is AudioStreamPlayer
+			or p.bus != &"SFX"
+			or not is_equal_approx(p.volume_db, ui.VOLUME_DB[event])
+		):
 			printerr("FAIL ui_sfx_clips: %s player %s on %s" % [event, p, p.bus if p else ""])
 			fail += 1
 	for file in DirAccess.get_files_at("res://art/audio/sfx/ui"):
@@ -71,7 +79,11 @@ func _test_ui_sfx_presses() -> int:
 	var names := []
 	for b in buttons:
 		names.append(str(b.name))
-		var first: Callable = b.pressed.get_connections()[0]["callable"] if b.pressed.get_connections().size() > 0 else Callable()
+		var first: Callable = (
+			b.pressed.get_connections()[0]["callable"]
+			if b.pressed.get_connections().size() > 0
+			else Callable()
+		)
 		if first.get_object() != ui:
 			printerr("FAIL ui_sfx_presses: %s press sound is not connected first" % b.name)
 			fail += 1
@@ -79,7 +91,19 @@ func _test_ui_sfx_presses() -> int:
 		if ui.sound_for(b) != want:
 			printerr("FAIL ui_sfx_presses: %s plays %s, want %s" % [b.name, ui.sound_for(b), want])
 			fail += 1
-	for n in ["MapSettingsButton", "HostButton", "JoinButton", "SettingsButton", "BackButton", "RandomSeed", "RandomSpecs", "Reset", "Back", "Start", "NoiseType"]:
+	for n in [
+		"MapSettingsButton",
+		"HostButton",
+		"JoinButton",
+		"SettingsButton",
+		"BackButton",
+		"RandomSeed",
+		"RandomSpecs",
+		"Reset",
+		"Back",
+		"Start",
+		"NoiseType"
+	]:
 		if n not in names:
 			printerr("FAIL ui_sfx_presses: no %s button found" % n)
 			fail += 1
@@ -100,7 +124,12 @@ func _test_ui_sfx_presses() -> int:
 		await process_frame
 		var got := _ui_plays_since(ui, before)
 		if got != {press[1]: 1}:
-			printerr("FAIL ui_sfx_presses: %s press played %s, want {%s: 1}" % [press[0].name, got, press[1]])
+			printerr(
+				(
+					"FAIL ui_sfx_presses: %s press played %s, want {%s: 1}"
+					% [press[0].name, got, press[1]]
+				)
+			)
 			fail += 1
 	if not menu.visible or panel.visible:
 		printerr("FAIL ui_sfx_presses: Back did not return to the main menu")
@@ -113,11 +142,13 @@ func _test_ui_sfx_presses() -> int:
 	var button := Button.new()
 	fake.add_child(button)
 	var seen := {}
-	button.pressed.connect(func() -> void:
-		seen["click"] = ui.plays["click"]
-		seen["playing"] = ui.players()["click"].playing
-		OS.delay_msec(100)
-		fake.queue_free())
+	button.pressed.connect(
+		func() -> void:
+			seen["click"] = ui.plays["click"]
+			seen["playing"] = ui.players()["click"].playing
+			OS.delay_msec(100)
+			fake.queue_free()
+	)
 	root.add_child(fake)
 	ui._last_ms.clear()  # cooldowns are wall-clock; each step is a new press
 	var start: int = ui.plays["click"]
@@ -125,10 +156,21 @@ func _test_ui_sfx_presses() -> int:
 	await process_frame
 	await process_frame
 	if seen.get("click", start) != start + 1 or ui.plays["click"] != start + 1:
-		printerr("FAIL ui_sfx_presses: click %s before the handler, %s after; want %s" % [seen.get("click"), ui.plays["click"], start + 1])
+		printerr(
+			(
+				"FAIL ui_sfx_presses: click %s before the handler, %s after; want %s"
+				% [seen.get("click"), ui.plays["click"], start + 1]
+			)
+		)
 		fail += 1
-	if not seen.get("playing", false) or is_instance_valid(fake) or not ui.players()["click"].is_inside_tree():
-		printerr("FAIL ui_sfx_presses: click not playing before the handler, or gone with the button's scene")
+	if (
+		not seen.get("playing", false)
+		or is_instance_valid(fake)
+		or not ui.players()["click"].is_inside_tree()
+	):
+		printerr(
+			"FAIL ui_sfx_presses: click not playing before the handler, or gone with the button's scene"
+		)
 		fail += 1
 
 	# A button that leaves and re-enters the tree still plays once per press.
@@ -143,7 +185,12 @@ func _test_ui_sfx_presses() -> int:
 		var before: Dictionary = ui.plays.duplicate()
 		again.pressed.emit()
 		if _ui_plays_since(ui, before) != {"click": 1}:
-			printerr("FAIL ui_sfx_presses: re-added button press %d played %s" % [i, _ui_plays_since(ui, before)])
+			printerr(
+				(
+					"FAIL ui_sfx_presses: re-added button press %d played %s"
+					% [i, _ui_plays_since(ui, before)]
+				)
+			)
 			fail += 1
 
 	# Menu open and close follow visibility in the tree, once per change.
@@ -168,7 +215,12 @@ func _test_ui_sfx_presses() -> int:
 		var before: Dictionary = ui.plays.duplicate()
 		step[1].call()
 		if _ui_plays_since(ui, before) != step[2]:
-			printerr("FAIL ui_sfx_presses: menu %s played %s, want %s" % [step[0], _ui_plays_since(ui, before), step[2]])
+			printerr(
+				(
+					"FAIL ui_sfx_presses: menu %s played %s, want %s"
+					% [step[0], _ui_plays_since(ui, before), step[2]]
+				)
+			)
 			fail += 1
 	holder.queue_free()
 
@@ -181,14 +233,24 @@ func _test_ui_sfx_presses() -> int:
 	var err: String = map_gen.save_map_inputs("test_ui_saved")
 	DirAccess.remove_absolute(MapSave.path_for("test_ui_saved"))
 	if err != "" or _ui_plays_since(ui, before_save) != {"saved": 1}:
-		printerr("FAIL ui_sfx_presses: save (%s) played %s, want {saved: 1}" % [err, _ui_plays_since(ui, before_save)])
+		printerr(
+			(
+				"FAIL ui_sfx_presses: save (%s) played %s, want {saved: 1}"
+				% [err, _ui_plays_since(ui, before_save)]
+			)
+		)
 		fail += 1
 	ui._last_ms.clear()
 	map_gen.params.altitude_seed = 0
 	before_save = ui.plays.duplicate()
 	err = map_gen.save_map_inputs("test_ui_saved")
 	if err == "" or _ui_plays_since(ui, before_save) != {}:
-		printerr("FAIL ui_sfx_presses: failed save (%s) played %s" % [err, _ui_plays_since(ui, before_save)])
+		printerr(
+			(
+				"FAIL ui_sfx_presses: failed save (%s) played %s"
+				% [err, _ui_plays_since(ui, before_save)]
+			)
+		)
 		fail += 1
 	map_gen.params = kept
 	await process_frame

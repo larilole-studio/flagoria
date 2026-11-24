@@ -153,11 +153,18 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 	var sz := _top_bar.size
 	var floor_y := view.y * 0.55
 	var status_rect := _status_row_rect(layer)
-	var below_status_y := maxf(BAR_EDGE_INSET, status_rect.end.y + BAR_EDGE_INSET if status_rect.has_area() else BAR_EDGE_INSET)
+	var below_status_y := maxf(
+		BAR_EDGE_INSET,
+		status_rect.end.y + BAR_EDGE_INSET if status_rect.has_area() else BAR_EDGE_INSET
+	)
 	var joy: Rect2 = _hl().control_visual_rect("joystick", layer)
 	var atk: Rect2 = _hl().control_visual_rect("attack", layer)
-	var slot_left: float = joy.end.x + BAR_EDGE_INSET if joy.size != Vector2.ZERO else BAR_EDGE_INSET
-	var slot_right: float = atk.position.x - BAR_EDGE_INSET if atk.size != Vector2.ZERO else view.x - BAR_EDGE_INSET
+	var slot_left: float = (
+		joy.end.x + BAR_EDGE_INSET if joy.size != Vector2.ZERO else BAR_EDGE_INSET
+	)
+	var slot_right: float = (
+		atk.position.x - BAR_EDGE_INSET if atk.size != Vector2.ZERO else view.x - BAR_EDGE_INSET
+	)
 	var slot_w := maxf(0.0, slot_right - slot_left)
 	var bar_w := sz.x
 	if slot_w > 0.0 and slot_w < bar_w:
@@ -177,12 +184,17 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 	var candidates: Array[Vector2] = []
 	if slot_w >= bar_w * 0.85:
 		candidates.append(Vector2(slot_left + (slot_w - bar_w) * 0.5, bottom_y))
-	candidates.append_array([
-		Vector2((view.x - bar_w) * 0.5, bottom_y),
-		Vector2(view.x - bar_w - BAR_EDGE_INSET, bottom_y),
-		Vector2(BAR_EDGE_INSET, maxf(floor_y, bottom_y)),
-		Vector2(BAR_EDGE_INSET, below_status_y),
-	])
+	(
+		candidates
+		. append_array(
+			[
+				Vector2((view.x - bar_w) * 0.5, bottom_y),
+				Vector2(view.x - bar_w - BAR_EDGE_INSET, bottom_y),
+				Vector2(BAR_EDGE_INSET, maxf(floor_y, bottom_y)),
+				Vector2(BAR_EDGE_INSET, below_status_y),
+			]
+		)
+	)
 	if joy.size != Vector2.ZERO:
 		var above_joy := joy.position.y - sz.y - BAR_EDGE_INSET
 		if above_joy >= below_status_y:
@@ -211,15 +223,16 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 		if joy.size != Vector2.ZERO:
 			clear_y = minf(clear_y, joy.position.y - bar_size.y - BAR_EDGE_INSET)
 		var clear_x := BAR_EDGE_INSET
-		if status_rect.size != Vector2.ZERO \
-				and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(status_rect):
+		if (
+			status_rect.size != Vector2.ZERO
+			and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(status_rect)
+		):
 			clear_x = status_rect.end.x + BAR_EDGE_INSET
 		best_pos = _clamp_bar_position(Vector2(clear_x, clear_y), bar_size, view)
 		best_score = _bar_overlap_score(layer, Rect2(best_pos, bar_size))
 	_top_bar.global_position = _clamp_bar_position(best_pos, bar_size, view)
 	await get_tree().process_frame
 	_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
-
 
 
 func _status_row_rect(layer: CanvasLayer) -> Rect2:
@@ -301,7 +314,11 @@ func _input(event: InputEvent) -> void:
 		var touch := event as InputEventScreenTouch
 		if touch.pressed:
 			_touches[touch.index] = touch.position
-			if _touches.size() == 1 and _drag_id == "" and not _top_bar.get_global_rect().has_point(touch.position):
+			if (
+				_touches.size() == 1
+				and _drag_id == ""
+				and not _top_bar.get_global_rect().has_point(touch.position)
+			):
 				_begin_drag(touch.position, layer)
 				if _drag_id != "":
 					get_viewport().set_input_as_handled()
@@ -314,7 +331,11 @@ func _input(event: InputEvent) -> void:
 			var pts: Array = _touches.values()
 			_pinch_distance = (pts[0] as Vector2).distance_to(pts[1] as Vector2)
 			var entry: Dictionary = _hl().get_entry(_selected)
-			_pinch_base_scale = float(entry.get("s", 1.0)) if not entry.is_empty() else _hl().scale_of(_selected, layer)
+			_pinch_base_scale = (
+				float(entry.get("s", 1.0))
+				if not entry.is_empty()
+				else _hl().scale_of(_selected, layer)
+			)
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
 		if _touches.has(drag.index):

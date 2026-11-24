@@ -21,8 +21,15 @@ func _initialize() -> void:
 func _run() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.slice(0, 2) == PackedStringArray(["hud", "layout"]):
-		if args.size() != 2 and (args.size() != 4 or args[2] != "--out"
-				or args[3].is_empty() or args[3].begins_with("--")):
+		if (
+			args.size() != 2
+			and (
+				args.size() != 4
+				or args[2] != "--out"
+				or args[3].is_empty()
+				or args[3].begins_with("--")
+			)
+		):
 			printerr("error: expected hud layout [--out <path>]")
 			quit(2)
 			return

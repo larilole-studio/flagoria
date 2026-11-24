@@ -36,7 +36,9 @@ func place(kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0) -> 
 	return true
 
 
-func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_turns: int = 0) -> bool:
+func host_place(
+	kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_turns: int = 0
+) -> bool:
 	## Host accepts `peer_id`'s request, or places for itself. False charges nothing.
 	if not multiplayer.is_server() or not BuildCosts.is_requestable(kind) or cells.is_empty():
 		return false
@@ -46,7 +48,10 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	if body == null or Interaction.player_dead(body):
 		return false
 	for cell in cells:
-		if body.global_position.distance_to(interaction.cell_center(cell)) > Interaction.REACH + Interaction.REACH_SLACK:
+		if (
+			body.global_position.distance_to(interaction.cell_center(cell))
+			> Interaction.REACH + Interaction.REACH_SLACK
+		):
 			return false
 	var local := peer_id == multiplayer.get_unique_id()
 	if local and inventory == null:
@@ -59,7 +64,9 @@ func host_place(kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_
 	if kind == BuildCosts.WALL_BLOCK:
 		_publish()
 	else:
-		apply_structure.rpc(ConstructionPlacer.named_structure_file(kind), peer_id, cells[0], quarter_turns)
+		apply_structure.rpc(
+			ConstructionPlacer.named_structure_file(kind), peer_id, cells[0], quarter_turns
+		)
 		if cities != null and BuildCosts.CITY_KINDS.has(kind):
 			cities.tick()
 	return true
@@ -148,7 +155,9 @@ func request_place(kind: String, cells: Array, quarter_turns: int = 0) -> void:
 
 
 @rpc("authority", "reliable", "call_remote")
-func apply_structure(structure_name: String, owner: int, anchor: Vector2i, quarter_turns: int = 0) -> void:
+func apply_structure(
+	structure_name: String, owner: int, anchor: Vector2i, quarter_turns: int = 0
+) -> void:
 	## Applied only from peer 1, so ids follow the host's list. The same
 	## placement arriving again (snapshot, then this call) is left as it is.
 	## `quarter_turns` is clockwise; 0 keeps an older three-field row.
@@ -168,6 +177,11 @@ func apply_wall_state(free_cells: Array, autos: Array, hp_rows: Array = []) -> v
 		if entry is Array and entry.size() >= 2 and entry[0] is Vector2i:
 			map.set_wall_hp(entry[0], int(entry[1]))
 	for entry in autos:
-		if entry is Array and entry.size() >= 2 and entry[0] is Vector2i \
-				and entry[1] is String and str(entry[1]) != "":
+		if (
+			entry is Array
+			and entry.size() >= 2
+			and entry[0] is Vector2i
+			and entry[1] is String
+			and str(entry[1]) != ""
+		):
 			map.apply_solved_auto_junction(entry[0], str(entry[1]))

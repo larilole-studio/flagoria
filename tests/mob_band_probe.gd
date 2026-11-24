@@ -4,7 +4,6 @@ extends "res://tests/helpers/probe_base.gd"
 ##   -- --port=N --out=PATH --role=host --seed=11
 ##   -- --port=N --out=PATH --role=join
 
-
 var _ticking := false
 var _ticked := false
 var _pinned := ""
@@ -35,7 +34,12 @@ func _run() -> void:
 		await join_game(main)
 	var deadline := Time.get_ticks_msec() + 45000
 	while game_active(main, deadline):
-		if role == "host" and not _ticked and not _ticking and FileAccess.file_exists(probe_out + ".tick"):
+		if (
+			role == "host"
+			and not _ticked
+			and not _ticking
+			and FileAccess.file_exists(probe_out + ".tick")
+		):
 			_ticking = true
 			_arm(main)
 			await process_frame
@@ -85,7 +89,9 @@ func _arm(main) -> void:
 	var plan: Dictionary = mobs_node.run_ambient_tick()
 	for item in plan["spawn"]:
 		var cell: Vector2i = item["cell"]
-		_spawned.append({"name": str(item["name"]), "type": str(item["type"]), "x": cell.x, "y": cell.y})
+		_spawned.append(
+			{"name": str(item["name"]), "type": str(item["type"]), "x": cell.x, "y": cell.y}
+		)
 	for mob_name in plan["despawn"]:
 		_despawned.append(str(mob_name))
 
@@ -93,8 +99,12 @@ func _arm(main) -> void:
 func _far(players: Array[Vector2i], slot: int) -> Vector2i:
 	var origin := players[0]
 	var offsets: Array[Vector2i] = [
-		Vector2i(80, 0), Vector2i(-80, 0), Vector2i(0, 80), Vector2i(0, -80),
-		Vector2i(80, 80), Vector2i(-80, 80),
+		Vector2i(80, 0),
+		Vector2i(-80, 0),
+		Vector2i(0, 80),
+		Vector2i(0, -80),
+		Vector2i(80, 80),
+		Vector2i(-80, 80),
 	]
 	for i in offsets.size():
 		var cell := origin + offsets[(slot + i) % offsets.size()]

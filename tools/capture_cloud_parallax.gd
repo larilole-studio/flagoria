@@ -41,11 +41,20 @@ func run() -> void:
 	camera.make_current()
 	camera.reset_smoothing()
 	camera.force_update_scroll()
-	if not await wait_until(func() -> bool:
-			return is_equal_approx(root.get_canvas_transform().get_scale().x, ZOOM) \
-				and camera.get_screen_center_position().is_equal_approx(camera.global_position), 2.0):
-		_fail_capture("camera did not reach the preview pose (zoom %s, center %s)" % [
-			root.get_canvas_transform().get_scale(), camera.get_screen_center_position()])
+	if not await wait_until(
+		func() -> bool:
+			return (
+				is_equal_approx(root.get_canvas_transform().get_scale().x, ZOOM)
+				and camera.get_screen_center_position().is_equal_approx(camera.global_position)
+			),
+		2.0
+	):
+		_fail_capture(
+			(
+				"camera did not reach the preview pose (zoom %s, center %s)"
+				% [root.get_canvas_transform().get_scale(), camera.get_screen_center_position()]
+			)
+		)
 		return
 	paused = true
 
@@ -73,9 +82,18 @@ func run() -> void:
 	if root.get_texture().get_image().save_png(output.path_join("cloud-night.png")) != OK:
 		_fail_capture("could not save the night still")
 		return
-	print("CLOUD_CAPTURE_DONE %d frames, at least %d visible clouds per frame" % [FRAMES, minimum_visible])
-	print("World-pixel drift per 10 s before wrap: far %.1f, near %.1f" % [
-		CloudMotion.FAR_SPEED * 10.0, CloudMotion.NEAR_SPEED * 10.0])
+	print(
+		(
+			"CLOUD_CAPTURE_DONE %d frames, at least %d visible clouds per frame"
+			% [FRAMES, minimum_visible]
+		)
+	)
+	print(
+		(
+			"World-pixel drift per 10 s before wrap: far %.1f, near %.1f"
+			% [CloudMotion.FAR_SPEED * 10.0, CloudMotion.NEAR_SPEED * 10.0]
+		)
+	)
 	done(true)
 
 
@@ -84,8 +102,12 @@ func _shore_view(map: TileMap, spawn: Vector2i, motion: CloudMotion) -> Vector2i
 	var near: Array[Vector2i] = []
 	for sprite: Sprite2D in motion.get_children():
 		var cell := map.local_to_map(sprite.position)
-		if map.is_open_sea(cell) and map.is_open_sea(
-				map.local_to_map(sprite.position + sprite.region_rect.size - Vector2.ONE)):
+		if (
+			map.is_open_sea(cell)
+			and map.is_open_sea(
+				map.local_to_map(sprite.position + sprite.region_rect.size - Vector2.ONE)
+			)
+		):
 			if sprite.z_index == -1:
 				near.append(cell)
 			else:

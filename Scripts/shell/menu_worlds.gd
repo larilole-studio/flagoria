@@ -1,7 +1,6 @@
 extends RefCounted
 ## Builds the Worlds picker and handles saved-world actions.
 
-
 const WorldsSaveList = preload("res://Scripts/shell/worlds_save_list.gd")
 const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
 
@@ -121,10 +120,15 @@ func _refresh_worlds() -> void:
 	list.fixed_icon_size = WorldSavePreview.ICON_SIZE
 	for row in MapSave.list_saves():
 		var when: Dictionary = Time.get_datetime_dict_from_unix_time(int(row["modified"]))
-		var stamp := "%04d-%02d-%02d %02d:%02d" % [when["year"], when["month"], when["day"], when["hour"], when["minute"]]
+		var stamp := (
+			"%04d-%02d-%02d %02d:%02d"
+			% [when["year"], when["month"], when["day"], when["hour"], when["minute"]]
+		)
 		list.add_item("%s  %s" % [row["name"], stamp])
 		var i := list.item_count - 1
-		list.set_item_icon(i, WorldSavePreview.icon_for(menu.get_tree(), str(row["path"]), str(row["name"])))
+		list.set_item_icon(
+			i, WorldSavePreview.icon_for(menu.get_tree(), str(row["path"]), str(row["name"]))
+		)
 		list.set_item_metadata(i, row["name"])
 
 
@@ -186,7 +190,9 @@ func _on_rename_yes_pressed(_new_text: String = "") -> void:
 	var rename := _worlds_panel().get_node("Margin/VBox/Rename")
 	var field := rename.get_node("Name") as LineEdit
 	var new_name := field.text
-	var err := str(MapSave.rename_save(save_name, new_name) if save_name != "" else "Select a world")
+	var err := str(
+		MapSave.rename_save(save_name, new_name) if save_name != "" else "Select a world"
+	)
 	if err != "":
 		_world_status(err)
 		return

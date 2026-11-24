@@ -3,7 +3,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## Host: --host --save --port --out. Client: --port --out --mode [--shot].
 ## Modes: play (the first joiner), watch (a late joiner), drive (screenshot).
 
-
 var _shot := false
 
 
@@ -172,24 +171,43 @@ func _write(main, world, me: Node2D) -> void:
 					blocks += 1
 				var drawn: Vector2i = world.get_cell_atlas_coords(1, cell)
 				var predicted: Array = world.predict_cell(cell)
-				cells.append("%d,%d,%d,%d,%d,%d,%d" % [cell.x, cell.y, drawn.x, drawn.y,
-						predicted[1].x, predicted[1].y, 0 if clear else 1])
+				cells.append(
+					(
+						"%d,%d,%d,%d,%d,%d,%d"
+						% [
+							cell.x,
+							cell.y,
+							drawn.x,
+							drawn.y,
+							predicted[1].x,
+							predicted[1].y,
+							0 if clear else 1
+						]
+					)
+				)
 			cells.sort()
 			if flag != Vector2i.ZERO:
 				world.is_clear_ground(flag)
 			var flag_atlas: Vector2i = world.get_cell_atlas_coords(1, flag)
-			castles.append({
-				"owner": int(placed[id]["owner"]),
-				"x": anchor.x,
-				"y": anchor.y,
-				"flag": [flag_atlas.x, flag_atlas.y],
-				"blocks": blocks,
-				"cells": "|".join(cells),
-			})
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"castles": castles,
-		"shot": _shot,
-		"errors": _errors.snapshot(),
-	})
+			(
+				castles
+				. append(
+					{
+						"owner": int(placed[id]["owner"]),
+						"x": anchor.x,
+						"y": anchor.y,
+						"flag": [flag_atlas.x, flag_atlas.y],
+						"blocks": blocks,
+						"cells": "|".join(cells),
+					}
+				)
+			)
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"castles": castles,
+			"shot": _shot,
+			"errors": _errors.snapshot(),
+		}
+	)

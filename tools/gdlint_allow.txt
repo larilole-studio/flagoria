@@ -1,0 +1,429 @@
+# Existing findings under gdtoolkit 4.5.0 after the initial gdformat pass.
+# Columns are repository-relative path, rule, and exact diagnostic message, separated by tabs.
+# Generic order and length messages also include a hash of the stripped source line.
+# Each row covers one occurrence. Delete unused rows when fixing a finding.
+# Add rows only for intentional, reviewed exceptions.
+.cursor/skills/verify-flagoria/bin/capture_build_tower.gd	max-returns	Function "_run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/bridge_joins.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/build_barracks.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/build_castle.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/build_guard_post.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/castle_sync.gd	max-line-length	Max allowed line length (100) exceeded	c3e4376f6546021b
+.cursor/skills/verify-flagoria/drives/chop_trees.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/cities.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/dedicated_play/play_client_a.gd	class-definitions-order	Definition out of order in global scope	4ecc688347efebdc
+.cursor/skills/verify-flagoria/drives/footprint_rotation.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/footprint_rotation.gd	unused-argument	unused function argument 'map'
+.cursor/skills/verify-flagoria/drives/free_form_walls.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/generated_building.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/generated_building.gd	max-returns	Function "_walk_into_wall" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/hud_round_buttons.gd	max-returns	Function "_cluster_ok" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/join_port.gd	max-line-length	Max allowed line length (100) exceeded	c773b2e27519da81
+.cursor/skills/verify-flagoria/drives/join_port.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/mob_raid.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/object_removals_save.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/player_save.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/points_scoreboard.gd	max-line-length	Max allowed line length (100) exceeded	146f823b23ae3694
+.cursor/skills/verify-flagoria/drives/points_scoreboard.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/saved_worlds.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/tool_wheel.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/tower_capture.gd	max-line-length	Max allowed line length (100) exceeded	c3e4376f6546021b
+.cursor/skills/verify-flagoria/drives/tower_capture.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/tower_capture.gd	max-returns	Function "_walk_leg" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/wall_collar_sides.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/wall_junctions.gd	max-returns	Function "run" has more than 6 return statements
+.cursor/skills/verify-flagoria/drives/walls_cities.gd	max-line-length	Max allowed line length (100) exceeded	c3e4376f6546021b
+.cursor/skills/verify-flagoria/drives/walls_cities.gd	max-returns	Function "run" has more than 6 return statements
+Scripts/mechanics/bridges/bridge_builder.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	12c914138fde855a
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	77f60028aec06765
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	8a00565c90c272e6
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	8b1c93e85e317b63
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	94d4086b0c9916a1
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	af790e93697b1216
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	c502fb73d22a5902
+Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	fd3ff41e738a34df
+Scripts/mechanics/building/build_placement.gd	class-definitions-order	Definition out of order in global scope	e00821aa7e83d590
+Scripts/mechanics/building/build_placement.gd	load-constant-name	Constant (load/preload) name "_FootprintOrientation" is not valid
+Scripts/mechanics/building/construction_placer.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/building/construction_placer.gd	max-line-length	Max allowed line length (100) exceeded	cd0f82ba6067ed87
+Scripts/mechanics/building/footprint_orientation.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/building/structure_requests.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/building/structure_requests.gd	max-returns	Function "host_place" has more than 6 return statements
+Scripts/mechanics/building/structure_requests.gd	max-returns	Function "place" has more than 6 return statements
+Scripts/mechanics/building_blocks/wfc_building_constraints.gd	unused-argument	unused function argument 'height'
+Scripts/mechanics/conquest/cities.gd	class-definitions-order	Definition out of order in global scope	0b8ae95b82d6bb19
+Scripts/mechanics/conquest/cities.gd	class-definitions-order	Definition out of order in global scope	44ccdf3e6a1f5f0d
+Scripts/mechanics/conquest/cities.gd	unused-argument	unused function argument 'id'
+Scripts/mechanics/conquest/land_score.gd	class-definitions-order	Definition out of order in global scope	1f12cc2aa2fd90ad
+Scripts/mechanics/conquest/land_score.gd	class-definitions-order	Definition out of order in global scope	79fa04398b7f6c2a
+Scripts/mechanics/day_night/day_night.gd	load-constant-name	Constant (load/preload) name "_NightLights" is not valid
+Scripts/mechanics/interact/cut_rate_limit.gd	max-line-length	Max allowed line length (100) exceeded	29096e6d8e7ec52f
+Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	01fa1476d05ce4c9
+Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	0245da594b7c2d70
+Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	23552e01c03af216
+Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	241ca2740f1da98e
+Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	7429a854b42dbab2
+Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	7edc3e1d3ed4a88c
+Scripts/mechanics/interact/interaction.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
+Scripts/mechanics/mobs/mob.gd	class-definitions-order	Definition out of order in global scope	3319cadaf6fb6216
+Scripts/mechanics/mobs/mob.gd	class-definitions-order	Definition out of order in global scope	fcb1d9dacf5a408c
+Scripts/mechanics/mobs/mob.gd	max-line-length	Max allowed line length (100) exceeded	3b5a5f801a6c289a
+Scripts/mechanics/mobs/mob_catalog.gd	max-line-length	Max allowed line length (100) exceeded	76f2fe790cf13c6e
+Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	6a74160fc87f1a67
+Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	7b7062cb7d666563
+Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	bae653427b5b7e60
+Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	bd2c0b5463b6edb4
+Scripts/mechanics/npcs/soldier.gd	class-definitions-order	Definition out of order in global scope	87b93a096efde368
+Scripts/mechanics/npcs/soldier.gd	unused-argument	unused function argument 'leash'
+Scripts/mechanics/npcs/soldier_requests.gd	max-returns	Function "host_train" has more than 6 return statements
+Scripts/mechanics/npcs/soldier_requests.gd	unused-argument	unused function argument 'map'
+Scripts/mechanics/structures/structure_placer.gd	load-constant-name	Constant (load/preload) name "_FootprintOrientation" is not valid
+Scripts/mechanics/structures/structure_placer.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/structures/structure_saves.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/trees/chop_action.gd	class-definitions-order	Definition out of order in global scope	b915cf9d2f668c97
+Scripts/mechanics/trees/chop_action.gd	class-definitions-order	Definition out of order in global scope	c9fc4c0e3a74d492
+Scripts/mechanics/trees/sprout_scheduler.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/trees/tree_cuts.gd	class-definitions-order	Definition out of order in global scope	75f1605625825810
+Scripts/mechanics/trees/tree_cuts.gd	class-definitions-order	Definition out of order in global scope	b97d45b63a0cba2a
+Scripts/mechanics/trees/tree_cuts.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/trees/tree_cuts.gd	max-line-length	Max allowed line length (100) exceeded	d3ee6d9bd6fdabbc
+Scripts/mechanics/trees/tree_sprouts.gd	class-definitions-order	Definition out of order in global scope	90e1b7013a978c36
+Scripts/mechanics/trees/tree_sprouts.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/walls/wall_builder.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/net/join_address.gd	max-line-length	Max allowed line length (100) exceeded	ff241ecae69cb1d5
+Scripts/net/join_enet_timeout.gd	class-definitions-order	Definition out of order in global scope	9c97a52718ef479c
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	03db2d564f65a33a
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	16a215ea27cd275a
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	193221a0eefd1417
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	33d48092b9d747a0
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	7810c2f855dda151
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	787263994c55c343
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	787c4acf8b984333
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	8303d43fea872805
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	88b77b4315e701f8
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	8efeb3e43831ad50
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	9de27fb3803f206a
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	a076cf6e70e26db6
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	a4ce4620dd688cea
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	b2367da40a8a31b8
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	e10cad94156d5c31
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	e5763f13c8c0f78d
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	e623a92896745de7
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	ebf70b63912bfe88
+Scripts/player/attack_aim.gd	class-definitions-order	Definition out of order in global scope	f223d6cc9cd27fe7
+Scripts/player/map_zoom.gd	max-returns	Function "handle" has more than 6 return statements
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	0113205bd34640ef
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	0e428cc7509367e0
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	33c7fde05879dc89
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	4aa141544c268edc
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	6d8fadadd28894c8
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	6ee298b6e4ada6f4
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	76dc5d4d1833445a
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	77c4c89d5487237a
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	789679773150664d
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	8303d43fea872805
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	8fe3dbdf9d8f78a1
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	926e0600ccaf66ee
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	93d89a30104665a6
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	df518bcf7e2b134a
+Scripts/player/player.gd	class-definitions-order	Definition out of order in global scope	e1e3e71577507248
+Scripts/player/player.gd	class-variable-name	Class-scope variable name "isAttacking" is not valid
+Scripts/player/player.gd	class-variable-name	Class-scope variable name "lastAnimDirection" is not valid
+Scripts/player/player.gd	function-name	Function name "updateAnimation" is not valid
+Scripts/player/player.gd	max-line-length	Max allowed line length (100) exceeded	cb352582155df4cc
+Scripts/player/player.gd	unused-argument	unused function argument 'anim_name'
+Scripts/player/player.gd	unused-argument	unused function argument 'event'
+Scripts/player/player_health.gd	class-definitions-order	Definition out of order in global scope	8baced8ad6c55b7e
+Scripts/saves/map_save.gd	max-line-length	Max allowed line length (100) exceeded	37ce007bf24ee323
+Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	119a99ea93a1f164
+Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	636543a2d5cee751
+Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	7e0ec035ca751a21
+Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	9c60f253e81cd453
+Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	d1ab74b1c5aabbed
+Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	e9fcd6d243d41faa
+Scripts/shell/ingame_menu.gd	expression-not-assigned	expression is not asigned, and hence it can be removed
+Scripts/shell/quit_prompt.gd	expression-not-assigned	expression is not asigned, and hence it can be removed
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	26db0f4b0eae23d1
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	39f8f92fb63ce1ea
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	7605f8b426b54630
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	7cab0638593fc973
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	82f4386fc793839b
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	d7d131b5a788ca74
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	de3014c9185ccfc0
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	e9ea3c4bbb6a33e4
+Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	f32c71338830e65f
+Scripts/ui/hud_layout.gd	class-definitions-order	Definition out of order in global scope	1ad8646697da83c0
+Scripts/ui/hud_layout.gd	class-definitions-order	Definition out of order in global scope	8a0adf5b6af7b064
+Scripts/ui/hud_layout.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
+Scripts/ui/hud_layout.gd	max-returns	Function "_hit_size" has more than 6 return statements
+Scripts/ui/hud_layout.gd	unused-argument	unused function argument 'id'
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	0d85b61bd13a169d
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	1c2b7c1e034d316b
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	4955ab3a235333be
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	5bf9545a2b4a7d68
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	86d674515ec41fa7
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	a8bc5ee62e57d1d1
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	c0fa4b2298dbf485
+Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	d3dc6f31a363eb7d
+Scripts/ui/map_chart.gd	class-definitions-order	Definition out of order in global scope	4315ca7c7146cc78
+Scripts/ui/map_chart.gd	max-line-length	Max allowed line length (100) exceeded	b58b0e95a1313026
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	0b7f0ede3aa1c1b2
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	1349f91688cf1ab3
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	2d9e75ab077cf254
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	2daa5e741a849658
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	44cb681fd36c2d28
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	4c6185f3540b58e8
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	4f9c6a22a5b6a890
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	59d639c2b816858c
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	86e20955e5fac4dd
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	8b924481c19e2e79
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	9325123c11f908da
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	a0998b1016e25fb5
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	b0dfd9017f10ac35
+Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	b32d3b1ac154dee5
+Scripts/ui/tool_wheel.gd	max-returns	Function "_keys" has more than 6 return statements
+Scripts/world/MapGenParams.gd	class-definitions-order	Definition out of order in global scope	96f7a36376e5f1ec
+Scripts/world/MapGenParams.gd	class-definitions-order	Definition out of order in global scope	e8c4a285c2b92887
+Scripts/world/MapGenParams.gd	max-line-length	Max allowed line length (100) exceeded	3662a548698ffbc4
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	0b3bcc26fc119952
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	0da91921c595c8d9
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	20cde9c367fd17a2
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	22f6f13746115cb1
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	23da9e6cb52df28f
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	331305d5c0a877ad
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	356c7ef40488761c
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	368b9a20d1e3f4c2
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	3d53224154a750b4
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	3d5d31b728b91199
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	3da7528a327285a6
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	42d1fa4d7eea9f75
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	487f28e3b2efec64
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	4cc30614850ac6a7
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	4d42f821da1f4717
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	54f1965d3d1ecab3
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	5696b9af8837eb87
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	5da109f1f0bb337b
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	6b94450198b366f9
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	6fefcd325491786d
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	798e10abb0fda4c9
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	82a5efbc00fc98f5
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	83142cbc345f9457
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	85fdd957566c314c
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	89095940b24e88de
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	91a3743234cc3638
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	9dfcad08a5d71c10
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	b138dbecfec496f9
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	bffcbfc7b9255a3e
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	df21c6cf8bc7bf11
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	e3b65d98efeee5b4
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	e75d6f9741c1adba
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	f0da805b4c375e5e
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	f29ace182c0d6e1a
+Scripts/world/TileMap.gd	class-definitions-order	Definition out of order in global scope	f9b5e8f9be752340
+Scripts/world/TileMap.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
+Scripts/world/birch_trees.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/world/birch_trees.gd	unused-argument	unused function argument 'cell'
+Scripts/world/map_gen.gd	class-definitions-order	Definition out of order in global scope	c7fb6f09fa5047cf
+Scripts/world/object_removals.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/world/plant_picker.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/world/spawn_finder.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/world/spawn_finder.gd	max-line-length	Max allowed line length (100) exceeded	fc0b50f82a803683
+Scripts/world/start_castle.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/world/terrain_shape.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/world/tile_catalog.gd	class-variable-name	Class-scope variable name "TILES" is not valid
+Scripts/world/tile_catalog.gd	max-line-length	Max allowed line length (100) exceeded	da745e304fe97f83
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	09998d896a9a0d17
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	1608de4d5ce2ce4e
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	47b857d620cd9e0b
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	5b2be14160780515
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	5f85dc4cd1a5ef41
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	6ccb1025e37e8c3d
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	6e1dcd37fe5701d6
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	76cecd2464c1071f
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	78955633dd17132c
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	9a50a81b9c7d618a
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	a8862b4336dcffae
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	aab5e5797bd16ea5
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	be2c363dea36bde5
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	c08a9dc398751b2e
+flagoria_main.gd	class-definitions-order	Definition out of order in global scope	db9d11c95bab022b
+flagoria_main.gd	max-line-length	Max allowed line length (100) exceeded	5ab03cd018a5d79d
+tests/audio/test_music.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/combat/test_attack_aim.gd	class-definitions-order	Definition out of order in global scope	31116e9d7a516b7c
+tests/combat/test_attack_aim.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/combat/test_attack_aim.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/combat/test_attack_aim.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/combat/test_attack_aim.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/combat/test_attack_aim.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/combat/test_attack_aim.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/combat/test_attack_aim.gd	max-line-length	Max allowed line length (100) exceeded	2a2f745981229903
+tests/combat/test_attack_aim.gd	max-line-length	Max allowed line length (100) exceeded	fc11b7e23f52988b
+tests/combat/test_combat_sfx.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/combat/test_sword.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/combat/test_sword_reach.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/combat/test_sword_reach.gd	max-line-length	Max allowed line length (100) exceeded	9feee045dd9434e0
+tests/construction_sync_probe.gd	max-returns	Function "_do_place" has more than 6 return statements
+tests/helpers/probe_base.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
+tests/helpers/test_helpers.gd	class-definitions-order	Definition out of order in global scope	7c460aeb04340fe2
+tests/helpers/test_helpers.gd	class-definitions-order	Definition out of order in global scope	8b562ccbcde7d3c7
+tests/helpers/test_helpers.gd	class-definitions-order	Definition out of order in global scope	b13d7b0d67da89db
+tests/helpers/test_helpers.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/helpers/test_helpers.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/helpers/test_helpers.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/land_score_probe.gd	unused-argument	unused function argument 'world'
+tests/late_join_probe.gd	max-line-length	Max allowed line length (100) exceeded	ba5d6efafd65b34c
+tests/mechanics/building/test_build_placement.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/building/test_build_placement.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/building/test_build_placement.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_build_placement.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_build_placement.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_build_placement.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_build_tower.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_build_wall.gd	max-line-length	Max allowed line length (100) exceeded	21529ec3cdfb72de
+tests/mechanics/building/test_build_wall.gd	max-line-length	Max allowed line length (100) exceeded	579a3ba73d110721
+tests/mechanics/building/test_building_seam.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+tests/mechanics/building/test_construction_castle.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_construction_placer.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_construction_placer.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/building/test_construction_placer.gd	max-line-length	Max allowed line length (100) exceeded	5f7b57dcefb765c0
+tests/mechanics/building_blocks/test_building_merge.gd	unused-argument	unused function argument 'first'
+tests/mechanics/building_blocks/test_building_merge.gd	unused-argument	unused function argument 'second'
+tests/mechanics/combat/test_ranged_shot.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/day_night/test_night_mobs.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/interactables/test_bushes.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/interactables/test_interactable_catalog.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/interactables/test_interactable_catalog.gd	max-line-length	Max allowed line length (100) exceeded	702bfaf97b6ea012
+tests/mechanics/npcs/test_soldier_fight.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/npcs/test_soldier_fight.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/npcs/test_soldier_fight.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/structures/test_structure_placer.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/structures/test_structure_placer.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/structures/test_structure_placer.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/trees/test_dead_cut.gd	max-line-length	Max allowed line length (100) exceeded	51937dd88a3b0133
+tests/mechanics/trees/test_interact.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/trees/test_interact.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/trees/test_interact.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mechanics/trees/test_tree_sprouts.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/mechanics/trees/test_tree_sprouts.gd	max-line-length	Max allowed line length (100) exceeded	3dc284987c81b1c0
+tests/mechanics/walls/test_wall_junctions.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_chase.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_chase.gd	max-line-length	Max allowed line length (100) exceeded	2d811e6d4375c809
+tests/mobs/test_mob_contact.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_sfx.gd	duplicated-load	duplicated loading of "res://Mobs/mob.tscn"
+tests/mobs/test_mob_sfx.gd	duplicated-load	duplicated loading of "res://Mobs/mob.tscn"
+tests/mobs/test_mob_spawn.gd	duplicated-load	duplicated loading of "res://Mobs/mob.tscn"
+tests/mobs/test_mob_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_spawn.gd	max-line-length	Max allowed line length (100) exceeded	812a5bfd9ec464cf
+tests/mobs/test_mob_sword.gd	class-definitions-order	Definition out of order in global scope	dc2e3db0767882a6
+tests/mobs/test_mob_sword.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/mobs/test_mob_sword.gd	max-line-length	Max allowed line length (100) exceeded	21458ac30a47c995
+tests/mobs/test_mob_sync.gd	duplicated-load	duplicated loading of "res://Mobs/mob.tscn"
+tests/mobs/test_mob_sync.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/net/test_dedicated_play_round.gd	max-line-length	Max allowed line length (100) exceeded	04fc104b6380a401
+tests/net/test_dedicated_server.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/net/test_join_cuts.gd	max-line-length	Max allowed line length (100) exceeded	851601860431657c
+tests/net/test_join_port.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/net/test_mob_band_sync.gd	max-returns	Function "_band_tick_ok" has more than 6 return statements
+tests/net/test_rejoin.gd	max-line-length	Max allowed line length (100) exceeded	b098037d9f14be83
+tests/net/test_rejoin.gd	max-line-length	Max allowed line length (100) exceeded	b7382b7e9c8218b1
+tests/net/test_server_args.gd	class-definitions-order	Definition out of order in global scope	0b61d120ff0a2bb3
+tests/net/test_server_args.gd	duplicated-load	duplicated loading of "res://flagoria_main.gd"
+tests/net/test_server_args.gd	duplicated-load	duplicated loading of "res://flagoria_main.gd"
+tests/net/test_structure_sync.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/net/test_structure_sync.gd	max-line-length	Max allowed line length (100) exceeded	1ff0d2565043967c
+tests/net/test_structure_sync.gd	max-line-length	Max allowed line length (100) exceeded	2cd9e4d00e9e1ff1
+tests/player/test_player_health.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_health.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_health.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_health.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_health.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/player/test_player_health.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/player/test_player_respawn.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_respawn.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_respawn.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/player/test_player_respawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/player/test_player_respawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/player/test_player_respawn.gd	max-line-length	Max allowed line length (100) exceeded	7076074f1cf72d72
+tests/player/test_run_control.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/points/test_points.gd	duplicated-load	duplicated loading of "res://Mobs/mob.tscn"
+tests/points/test_points.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/points/test_points.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/points/test_points_discovery.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/run_tests.gd	max-line-length	Max allowed line length (100) exceeded	31a522babf223836
+tests/saves/test_cut_save.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/saves/test_cut_save.gd	max-line-length	Max allowed line length (100) exceeded	4df6f9797a232e5d
+tests/saves/test_world_save.gd	max-line-length	Max allowed line length (100) exceeded	18781cef1695e33f
+tests/saves/test_world_save.gd	max-line-length	Max allowed line length (100) exceeded	9b84b58d92d75138
+tests/saves/test_world_save.gd	max-line-length	Max allowed line length (100) exceeded	a26dfbc339d191ea
+tests/saves/test_world_save.gd	max-line-length	Max allowed line length (100) exceeded	c26d85e5d70266e5
+tests/soldier_fight_probe.gd	max-returns	Function "_do_place" has more than 6 return statements
+tests/soldier_fight_probe.gd	unused-argument	unused function argument 'world'
+tests/soldier_player_probe.gd	unused-argument	unused function argument 'world'
+tests/soldier_sync_probe.gd	max-returns	Function "_do_place" has more than 6 return statements
+tests/soldier_sync_probe.gd	unused-argument	unused function argument 'world'
+tests/ui/test_ingame_menu.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_ingame_menu.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_letter_keyboard.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_letter_keyboard.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_letter_keyboard.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_map_zoom.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/ui/test_map_zoom.gd	duplicated-load	duplicated loading of "res://tools/hud_layout_dump.gd"
+tests/ui/test_number_pad.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
+tests/ui/test_number_pad.gd	duplicated-load	duplicated loading of "res://Scripts/ui/number_pad.tscn"
+tests/ui/test_saved_worlds.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_saved_worlds.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_saved_worlds.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_saved_worlds.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/ui/test_touch_controls.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
+tests/ui/test_touch_controls.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/wall_sync_probe.gd	max-returns	Function "_place_city" has more than 6 return statements
+tests/wall_sync_probe.gd	max-returns	Function "_place_one_wall" has more than 6 return statements
+tests/world/test_biomes.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_biomes.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_biomes.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_biomes.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_biomes.gd	function-variable-name	Function-scope variable name "T" is not valid
+tests/world/test_biomes.gd	function-variable-name	Function-scope variable name "T" is not valid
+tests/world/test_biomes.gd	function-variable-name	Function-scope variable name "T" is not valid
+tests/world/test_biomes.gd	max-line-length	Max allowed line length (100) exceeded	84ee7f92259c834c
+tests/world/test_decorations.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_decorations.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_decorations.gd	function-variable-name	Function-scope variable name "L" is not valid
+tests/world/test_island_shape.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_island_shape.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_island_shape.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
+tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
+tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
+tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
+tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
+tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_start_castle.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
+tests/world/test_start_castle.gd	max-line-length	Max allowed line length (100) exceeded	fccf4b509291aff2
+tests/world/test_structure_final_tiles.gd	duplicated-load	duplicated loading of "res://art/flagoria/flagoria_tiles_v3.tres"
+tests/world/test_structure_final_tiles.gd	max-line-length	Max allowed line length (100) exceeded	28c1b1eb80810782
+tools/audio_check.gd	max-line-length	Max allowed line length (100) exceeded	41e3ad89e7192035
+tools/audio_check.gd	max-line-length	Max allowed line length (100) exceeded	6e08a7b7418a3405
+tools/bench_frame.gd	max-line-length	Max allowed line length (100) exceeded	567f15168792f2d3
+tools/bench_frame.gd	max-line-length	Max allowed line length (100) exceeded	925651d6220277bd
+tools/capture_cloud_parallax.gd	max-returns	Function "run" has more than 6 return statements
+tools/cli.gd	max-line-length	Max allowed line length (100) exceeded	e4f44fec22d83514
+tools/generator_smoke.gd	max-line-length	Max allowed line length (100) exceeded	fc37debd4f4ff64c
+tools/render_biomes.gd	max-line-length	Max allowed line length (100) exceeded	162cfd2d48729975
+tools/render_biomes.gd	max-line-length	Max allowed line length (100) exceeded	ed11b69d1c3c07fd
+tools/render_biomes.gd	max-line-length	Max allowed line length (100) exceeded	f7e155b46752009f
+tools/render_biomes.gd	max-returns	Function "_plant_color" has more than 6 return statements
+tools/render_biomes.gd	unused-argument	unused function argument 'b'

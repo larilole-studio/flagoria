@@ -2,7 +2,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## A palisade city, then one raid strike that cracks a straight wall (#529).
 
-
 const HERO_GAP := 12
 
 
@@ -51,8 +50,9 @@ func run() -> void:
 	await snapshot("raid-city-intact")
 	step("raid-wall-cracked")
 	mob._raid_cool = 0.0
-	var cracked := await wait_until(func() -> bool:
-		return map._walls.hp(city["wall"]) == WallBuilder.MAX_HP - 1, 5.0)
+	var cracked := await wait_until(
+		func() -> bool: return map._walls.hp(city["wall"]) == WallBuilder.MAX_HP - 1, 5.0
+	)
 	await _look(map, city["wall"])
 	await snapshot("raid-wall-cracked")
 	if not cracked:

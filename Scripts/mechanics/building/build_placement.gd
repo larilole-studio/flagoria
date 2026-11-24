@@ -219,8 +219,15 @@ func draw_preview(ci: CanvasItem) -> void:
 			label = ("%s — %s" % [label, ", ".join(PackedStringArray(reasons))]).strip_edges()
 			if label.begins_with("—"):
 				label = label.substr(2).strip_edges()
-		ci.draw_string(font, anchor, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, COST_COLOR \
-				if reasons.is_empty() else REASON_COLOR)
+		ci.draw_string(
+			font,
+			anchor,
+			label,
+			HORIZONTAL_ALIGNMENT_LEFT,
+			-1,
+			font_size,
+			COST_COLOR if reasons.is_empty() else REASON_COLOR
+		)
 
 
 func on_mode_changed(mode: Interaction.Mode) -> void:
@@ -241,7 +248,9 @@ func on_multiplayer_changed(mp_on: bool) -> void:
 	_refresh_picker_visible()
 
 
-func _update_plank_preview(start_viewport: Vector2, end_viewport: Vector2, inventory: Inventory) -> void:
+func _update_plank_preview(
+	start_viewport: Vector2, end_viewport: Vector2, inventory: Inventory
+) -> void:
 	var from_cell := _cell_at(start_viewport)
 	var to_cell := _cell_at(end_viewport)
 	if _preview_inputs_unchanged(from_cell, to_cell, inventory):
@@ -258,14 +267,19 @@ func _update_plank_preview(start_viewport: Vector2, end_viewport: Vector2, inven
 		cell_ok.append(placeable_set.has(cell))
 	if placeable.is_empty():
 		cost = 0
-		reasons = _placer.can_place(BuildCosts.PLANK, anchored_run, inventory) if not anchored_run.is_empty() \
-				else [ConstructionPlacer.EMPTY_CELLS]
+		reasons = (
+			_placer.can_place(BuildCosts.PLANK, anchored_run, inventory)
+			if not anchored_run.is_empty()
+			else [ConstructionPlacer.EMPTY_CELLS]
+		)
 	else:
 		cost = _placer.cost(BuildCosts.PLANK, placeable)
 		reasons = []
 
 
-func _update_footprint_preview(end_viewport: Vector2, inventory: Inventory, kind: StringName) -> void:
+func _update_footprint_preview(
+	end_viewport: Vector2, inventory: Inventory, kind: StringName
+) -> void:
 	## Footprint of the anchor under the finger. All green and the kind's cost
 	## when commit will place; all red with reasons otherwise.
 	var anchor := _cell_at(end_viewport)
@@ -377,11 +391,15 @@ func _refresh_picker_visible() -> void:
 			row.place_build_picker(hud)
 
 
-func wall_segment(tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
+func wall_segment(
+	tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i
+) -> Array[Vector2i]:
 	return BuildToolRow.wall_segment(tip, has_tip, from_cell, to_cell)
 
 
-func _update_wall_preview(start_viewport: Vector2, end_viewport: Vector2, inventory: Inventory) -> void:
+func _update_wall_preview(
+	start_viewport: Vector2, end_viewport: Vector2, inventory: Inventory
+) -> void:
 	var from_cell := _cell_at(start_viewport)
 	var to_cell := _cell_at(end_viewport)
 	if _preview_inputs_unchanged(from_cell, to_cell, inventory):
@@ -411,7 +429,10 @@ func _update_wall_preview(start_viewport: Vector2, end_viewport: Vector2, invent
 			in_reach.append(cell)
 	# Green == commit: whole in-reach prefix the placer accepts, else all red.
 	var placeable: Array[Vector2i] = []
-	if not in_reach.is_empty() and _placer.can_place(BuildCosts.WALL_BLOCK, in_reach, inventory).is_empty():
+	if (
+		not in_reach.is_empty()
+		and _placer.can_place(BuildCosts.WALL_BLOCK, in_reach, inventory).is_empty()
+	):
 		placeable = in_reach
 	var placeable_set := {}
 	for cell in placeable:
@@ -459,7 +480,9 @@ func _on_ground_changed(_cells: Rect2i) -> void:
 	_map_rev += 1
 
 
-func _preview_inputs_unchanged(from_cell: Vector2i, to_cell: Vector2i, inventory: Inventory) -> bool:
+func _preview_inputs_unchanged(
+	from_cell: Vector2i, to_cell: Vector2i, inventory: Inventory
+) -> bool:
 	if not _snap_valid or from_cell != _snap_from or to_cell != _snap_to:
 		return false
 	if _rotate.quarter_turns != _snap_rotation:
@@ -482,15 +505,21 @@ func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory:
 	_snap_frame = Engine.get_process_frames()
 	_snap_rotation = _rotate.quarter_turns
 	_snap_wood = inventory.count_of(Inventory.WOOD)
-	_snap_player_pos = _interaction.player.global_position if _interaction.player else Vector2(INF, INF)
+	_snap_player_pos = (
+		_interaction.player.global_position if _interaction.player else Vector2(INF, INF)
+	)
 	_snap_map_rev = _map_rev
 
 
 func _refresh_rotate_visible() -> void:
 	if _interaction == null:
 		return
-	var show := not _list_open and _interaction.mode == Interaction.Mode.INTERACT and is_footprint_tool(tool) \
-			and not cells.is_empty()
+	var show := (
+		not _list_open
+		and _interaction.mode == Interaction.Mode.INTERACT
+		and is_footprint_tool(tool)
+		and not cells.is_empty()
+	)
 	_rotate.set_visible(show)
 
 

@@ -23,13 +23,20 @@ func _test_structure_sync_join() -> int:
 	params.ensure_seeds()
 	scene._apply_params_to_world(params)
 	var spawn: Vector2i = world.resolve_player_spawn()
-	var guard: Structure = Structure.parse(FileAccess.get_file_as_string("res://structures/guard_post.txt"))["structure"]
+	var guard: Structure = (
+		Structure
+		. parse(FileAccess.get_file_as_string("res://structures/guard_post.txt"))["structure"]
+	)
 	var anchor = null
 	for r in range(6, 40):  # clear of the players spawning at the spawn
 		for dy in range(-r, r + 1):
 			for dx in range(-r, r + 1):
 				var cell := spawn + Vector2i(dx, dy)
-				if anchor == null and maxi(absi(dx), absi(dy)) == r and world.can_place_structure(guard, cell).is_empty():
+				if (
+					anchor == null
+					and maxi(absi(dx), absi(dy)) == r
+					and world.can_place_structure(guard, cell).is_empty()
+				):
 					anchor = cell
 	scene.queue_free()
 	await process_frame
@@ -51,8 +58,11 @@ func _test_structure_sync_join() -> int:
 		## The host's list also holds its starting castle (#271).
 		var data: Dictionary = read.call(i)
 		var host_list = read.call(0).get("placements")
-		if not data.get("ready", false) or data.get("placements") != host_list \
-				or not (host_list is Array and want[0] in host_list):
+		if (
+			not data.get("ready", false)
+			or data.get("placements") != host_list
+			or not (host_list is Array and want[0] in host_list)
+		):
 			return false
 		var blocked := false
 		for key in keys:
@@ -63,7 +73,9 @@ func _test_structure_sync_join() -> int:
 		return blocked
 
 	var fail := 0
-	var host_args: Array = peers["host_args"] + ["--place=guard_post@%s" % WorldSave.cell_key(anchor)]
+	var host_args: Array = (
+		peers["host_args"] + ["--place=guard_post@%s" % WorldSave.cell_key(anchor)]
+	)
 	launch.call(host_args)
 	if not await wait_until(func() -> bool: return read.call(0).get("ready", false), 30000):
 		printerr("FAIL structure_sync_join: the host did not start: %s" % read.call(0))
@@ -71,34 +83,68 @@ func _test_structure_sync_join() -> int:
 	else:
 		launch.call([])
 		if not await wait_until(func() -> bool: return like_host.call(1), 30000):
-			printerr("FAIL structure_sync_join: the joiner %s, host %s" % [read.call(1), read.call(0)])
+			printerr(
+				"FAIL structure_sync_join: the joiner %s, host %s" % [read.call(1), read.call(0)]
+			)
 			fail += 1
 		elif not "multiplayer on" in read.call(1).get("place_refused", []):
-			printerr("FAIL structure_sync_join: a client could place: %s" % read.call(1).get("place_refused"))
+			printerr(
+				(
+					"FAIL structure_sync_join: a client could place: %s"
+					% read.call(1).get("place_refused")
+				)
+			)
 			fail += 1
 		else:
 			launch.call([])
 			if not await wait_until(func() -> bool: return like_host.call(2), 30000):
-				printerr("FAIL structure_sync_join: the second joiner %s, host %s" % [read.call(2), read.call(0)])
+				printerr(
+					(
+						"FAIL structure_sync_join: the second joiner %s, host %s"
+						% [read.call(2), read.call(0)]
+					)
+				)
 				fail += 1
 			else:
 				FileAccess.open(probes[1]["out"] + ".forge_place", FileAccess.WRITE).close()
-				await wait_until(func() -> bool: return str(read.call(2).get("errors", [])).contains("receive_map_params"), 5000)
-				if not str(read.call(2).get("errors", [])).contains("receive_map_params") or not like_host.call(2):
-					printerr("FAIL structure_sync_join: after a forged placement from a client, second joiner %s" % read.call(2))
+				await wait_until(
+					func() -> bool:
+						return str(read.call(2).get("errors", [])).contains("receive_map_params"),
+					5000
+				)
+				if (
+					not str(read.call(2).get("errors", [])).contains("receive_map_params")
+					or not like_host.call(2)
+				):
+					printerr(
+						(
+							"FAIL structure_sync_join: after a forged placement from a client, second joiner %s"
+							% read.call(2)
+						)
+					)
 					fail += 1
 		for i in probes.size():
 			# The second joiner refuses the forged receive_map_params with an
 			# engine error; any other error fails.
 			for line in read.call(i).get("errors", []):
 				if i != 2 or not "receive_map_params" in str(line):
-					printerr("FAIL structure_sync_join: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
+					printerr(
+						(
+							"FAIL structure_sync_join: peer %d logged errors: %s"
+							% [i, read.call(i)["errors"]]
+						)
+					)
 					fail += 1
 					break
 
 	await close_probe_session(peers)
 	if fail == 0:
-		print("PASS test_structure_sync_join (guard post at %s, %d footprint cells)" % [anchor, keys.size()])
+		print(
+			(
+				"PASS test_structure_sync_join (guard post at %s, %d footprint cells)"
+				% [anchor, keys.size()]
+			)
+		)
 	return fail
 
 
@@ -123,7 +169,9 @@ func _test_castle_sync_join() -> int:
 	scene._apply_params_to_world(params)
 	var placed: bool = world.place_start_castle(1)
 	var castle := StartCastle.structure()
-	var anchor: Vector2i = world.placed_structures().values()[0]["anchor"] if placed else Vector2i.ZERO
+	var anchor: Vector2i = (
+		world.placed_structures().values()[0]["anchor"] if placed else Vector2i.ZERO
+	)
 	var front: Vector2i = world.resolve_player_spawn()
 	var host_at: Array[Vector2] = [world.map_to_local(front)]  # the host's player stands on the gate front
 	var spot: Vector2 = world.free_spawn_position(front, host_at)
@@ -153,7 +201,11 @@ func _test_castle_sync_join() -> int:
 		var joined := func() -> bool:
 			var data: Dictionary = read.call(1)
 			var id := str(data.get("id"))
-			return data.get("ready", false) and data.get("players", {}).has(id) and read.call(0).get("players", {}).has(id)
+			return (
+				data.get("ready", false)
+				and data.get("players", {}).has(id)
+				and read.call(0).get("players", {}).has(id)
+			)
 		await wait_until(joined, 30000)
 		var host: Dictionary = read.call(0)
 		var peer: Dictionary = read.call(1)
@@ -161,11 +213,19 @@ func _test_castle_sync_join() -> int:
 		var joiner_id := int(str(peer.get("id")))
 		var castles := _castle_rows(host.get("placements"))
 		var peer_castles := _castle_rows(peer.get("placements"))
-		if host.get("placements") != peer.get("placements") or castles != peer_castles \
-				or castles.size() != 2 or not _has_castle(castles, 1, anchor) \
-				or not _has_owner(castles, joiner_id):
-			printerr("FAIL castle_sync_join: placements host %s, joiner %s, want host castle %s and joiner %s"
-					% [host.get("placements"), peer.get("placements"), anchor, joiner_id])
+		if (
+			host.get("placements") != peer.get("placements")
+			or castles != peer_castles
+			or castles.size() != 2
+			or not _has_castle(castles, 1, anchor)
+			or not _has_owner(castles, joiner_id)
+		):
+			printerr(
+				(
+					"FAIL castle_sync_join: placements host %s, joiner %s, want host castle %s and joiner %s"
+					% [host.get("placements"), peer.get("placements"), anchor, joiner_id]
+				)
+			)
 			fail += 1
 		var walls := 0
 		var differ: Array = []
@@ -176,8 +236,18 @@ func _test_castle_sync_join() -> int:
 			elif not here["clear"]:
 				walls += 1
 		if not differ.is_empty():
-			printerr("FAIL castle_sync_join: %d of %d cells differ, first %s joiner %s, host %s" % [differ.size(), keys.size(),
-					differ[0], peer.get("cells", {}).get(differ[0]), host.get("cells", {}).get(differ[0])])
+			printerr(
+				(
+					"FAIL castle_sync_join: %d of %d cells differ, first %s joiner %s, host %s"
+					% [
+						differ.size(),
+						keys.size(),
+						differ[0],
+						peer.get("cells", {}).get(differ[0]),
+						host.get("cells", {}).get(differ[0])
+					]
+				)
+			)
 			fail += 1
 		elif walls == 0:
 			printerr("FAIL castle_sync_join: no castle cell blocks on the peers")
@@ -187,23 +257,41 @@ func _test_castle_sync_join() -> int:
 			return Vector2i(at[0], at[1]) if at is Array else null
 		var at_joiner: Variant = cell_on.call(peer, me)
 		var at_host: Variant = cell_on.call(host, me)
-		var clear_both: bool = keys.has(WorldSave.cell_key(spot_cell)) \
-				and peer.get("cells", {}).get(WorldSave.cell_key(spot_cell), {}).get("clear", false) \
-				and host.get("cells", {}).get(WorldSave.cell_key(spot_cell), {}).get("clear", false)
+		var clear_both: bool = (
+			keys.has(WorldSave.cell_key(spot_cell))
+			and peer.get("cells", {}).get(WorldSave.cell_key(spot_cell), {}).get("clear", false)
+			and host.get("cells", {}).get(WorldSave.cell_key(spot_cell), {}).get("clear", false)
+		)
 		if at_joiner != spot_cell or at_host != spot_cell or spot_cell in foot or not clear_both:
-			printerr("FAIL castle_sync_join: joiner at %s (host sees %s), want %s outside the gate front %s, clear on both"
-					% [at_joiner, at_host, spot_cell, front])
+			printerr(
+				(
+					"FAIL castle_sync_join: joiner at %s (host sees %s), want %s outside the gate front %s, clear on both"
+					% [at_joiner, at_host, spot_cell, front]
+				)
+			)
 			fail += 1
 		elif cell_on.call(host, "1") != front:
-			printerr("FAIL castle_sync_join: host player at %s, want the gate front %s" % [cell_on.call(host, "1"), front])
+			printerr(
+				(
+					"FAIL castle_sync_join: host player at %s, want the gate front %s"
+					% [cell_on.call(host, "1"), front]
+				)
+			)
 			fail += 1
 		for i in probes.size():
 			if not read.call(i).get("errors", []).is_empty():
-				printerr("FAIL castle_sync_join: peer %d logged errors: %s" % [i, read.call(i)["errors"]])
+				printerr(
+					"FAIL castle_sync_join: peer %d logged errors: %s" % [i, read.call(i)["errors"]]
+				)
 				fail += 1
 	await close_probe_session(peers)
 	if fail == 0:
-		print("PASS test_castle_sync_join (castle at %s, %d footprint cells, joiner at %s)" % [anchor, foot.size(), spot_cell])
+		print(
+			(
+				"PASS test_castle_sync_join (castle at %s, %d footprint cells, joiner at %s)"
+				% [anchor, foot.size(), spot_cell]
+			)
+		)
 	return fail
 
 

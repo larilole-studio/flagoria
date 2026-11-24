@@ -58,9 +58,17 @@ func _run_row(label: String) -> int:
 	launch.call(session["host_args"])
 	launch.call([])
 	var fail := 0
-	if not await wait_until(func() -> bool:
-		return read.call(0).get("ready", false) and read.call(1).get("ready", false), 30000):
-		printerr("FAIL %s: session did not start: host %s, client %s" % [label, read.call(0), read.call(1)])
+	if not await wait_until(
+		func() -> bool:
+			return read.call(0).get("ready", false) and read.call(1).get("ready", false),
+		30000
+	):
+		printerr(
+			(
+				"FAIL %s: session did not start: host %s, client %s"
+				% [label, read.call(0), read.call(1)]
+			)
+		)
 		fail += 1
 	else:
 		match row["action"]:
@@ -139,7 +147,9 @@ func _same_cuts(read: Callable, index: int, keys: Array) -> bool:
 	return true
 
 
-func _both_cut(read: Callable, launch: Callable, probes: Array[Dictionary], targets: Array, keys: Array) -> int:
+func _both_cut(
+	read: Callable, launch: Callable, probes: Array[Dictionary], targets: Array, keys: Array
+) -> int:
 	for i in 2:
 		if not publish_probe_command(probes[i]["out"] + ".cut", ";".join(targets[i])):
 			printerr("FAIL cut_sync_two_players: could not publish cut command for peer %d" % i)
@@ -147,20 +157,38 @@ func _both_cut(read: Callable, launch: Callable, probes: Array[Dictionary], targ
 	keys.sort()
 	var wood := 4
 	var fail := 0
-	if not await wait_until(func() -> bool: return _same_cuts(read, 1, keys) and read.call(0).get("wood", 0) == wood \
-			and read.call(1).get("wood", 0) == wood, 20000):
-		printerr("FAIL cut_sync_two_players: after both cut %s, host %s, client %s" % [targets, read.call(0), read.call(1)])
+	if not await wait_until(
+		func() -> bool:
+			return (
+				_same_cuts(read, 1, keys)
+				and read.call(0).get("wood", 0) == wood
+				and read.call(1).get("wood", 0) == wood
+			),
+		20000
+	):
+		printerr(
+			(
+				"FAIL cut_sync_two_players: after both cut %s, host %s, client %s"
+				% [targets, read.call(0), read.call(1)]
+			)
+		)
 		fail += 1
 	launch.call([])
-	if not await wait_until(func() -> bool: return read.call(2).get("ready", false) and _same_cuts(read, 2, keys), 30000):
-		printerr("FAIL cut_sync_two_players: late joiner %s, host %s" % [read.call(2), read.call(0)])
+	if not await wait_until(
+		func() -> bool: return read.call(2).get("ready", false) and _same_cuts(read, 2, keys), 30000
+	):
+		printerr(
+			"FAIL cut_sync_two_players: late joiner %s, host %s" % [read.call(2), read.call(0)]
+		)
 		fail += 1
 	return fail
 
 
 func _dead_cut(read: Callable, probes: Array[Dictionary], tree: String) -> int:
-	if not publish_probe_command(probes[1]["out"] + ".dead_cut", tree) \
-			or not publish_probe_command(probes[0]["out"] + ".kill", read.call(1)["id"]):
+	if (
+		not publish_probe_command(probes[1]["out"] + ".dead_cut", tree)
+		or not publish_probe_command(probes[0]["out"] + ".kill", read.call(1)["id"])
+	):
 		printerr("FAIL dead_cut_client: could not publish death or cut command")
 		return 1
 	if not await wait_until(func() -> bool: return read.call(1).get("dead_cut", -1) >= 0, 10000):
@@ -168,8 +196,13 @@ func _dead_cut(read: Callable, probes: Array[Dictionary], tree: String) -> int:
 		return 1
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
-	if client.get("dead_cut", 0) < 1 or not client.get("dead", false) or not host.get("cuts", {}).is_empty() \
-			or not client.get("cuts", {}).is_empty() or client.get("wood", -1) != 0:
+	if (
+		client.get("dead_cut", 0) < 1
+		or not client.get("dead", false)
+		or not host.get("cuts", {}).is_empty()
+		or not client.get("cuts", {}).is_empty()
+		or client.get("wood", -1) != 0
+	):
 		printerr("FAIL dead_cut_client: tree %s, host %s, client %s" % [tree, host, client])
 		return 1
 	return 0
@@ -202,16 +235,34 @@ func _refused_cut(read: Callable, out: String) -> int:
 		await wait_until(func() -> bool: return _cut_keys(read.call(0)).has(near), 5000)
 	var host: Dictionary = read.call(0)
 	var host_keys: Array = _cut_keys(host)
-	if client.get("swing_error", "") != "" or client.get("refused_fells", -1) != 0 \
-			or _count_sounds(refused, "tree_fall") != 0 or _count_sounds(refused, "wood_pickup") != 0 \
-			or far_cell.get("clear", true) or far_cell.get("plant", [-1, -1]) == [-1, -1] \
-			or keys.has(far) or host_keys.has(far) or host.get("wood", -1) != 0:
+	if (
+		client.get("swing_error", "") != ""
+		or client.get("refused_fells", -1) != 0
+		or _count_sounds(refused, "tree_fall") != 0
+		or _count_sounds(refused, "wood_pickup") != 0
+		or far_cell.get("clear", true)
+		or far_cell.get("plant", [-1, -1]) == [-1, -1]
+		or keys.has(far)
+		or host_keys.has(far)
+		or host.get("wood", -1) != 0
+	):
 		printerr("FAIL cut_refused_two_players: refused cut changed the world: %s" % client)
 		fail += 1
-	if client.get("fells", 0) != 1 or _count_sounds(sounds, "tree_fall") != 1 \
-			or _count_sounds(sounds, "wood_pickup") != 1 or client.get("wood", -1) != wood \
-			or not near_cell.get("clear", false) or not keys.has(near) or not host_keys.has(near) \
-			or keys.has(far):
-		printerr("FAIL cut_refused_two_players: accepted cut far %s near %s host %s client %s" % [far, near, host, client])
+	if (
+		client.get("fells", 0) != 1
+		or _count_sounds(sounds, "tree_fall") != 1
+		or _count_sounds(sounds, "wood_pickup") != 1
+		or client.get("wood", -1) != wood
+		or not near_cell.get("clear", false)
+		or not keys.has(near)
+		or not host_keys.has(near)
+		or keys.has(far)
+	):
+		printerr(
+			(
+				"FAIL cut_refused_two_players: accepted cut far %s near %s host %s client %s"
+				% [far, near, host, client]
+			)
+		)
 		fail += 1
 	return fail

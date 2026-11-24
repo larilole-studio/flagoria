@@ -38,29 +38,123 @@ extends SceneTree
 ## by IDLE_GAP seconds of idle whose last part must be silent.
 const TIMELINE := [
 	{"name": "idle", "action": "idle", "duration": 1.0, "expect": {}},
-	{"name": "walk_grass", "action": "walk", "tile": "GRASS_A", "duration": 1.3, "expect": {"footstep_grass": 3}},
-	{"name": "walk_sand", "action": "walk", "tile": "SAND", "duration": 1.3, "expect": {"footstep_sand": 3}},
-	{"name": "walk_swamp", "action": "walk", "tile": "SWAMP", "duration": 1.3, "expect": {"footstep_swamp": 3}},
+	{
+		"name": "walk_grass",
+		"action": "walk",
+		"tile": "GRASS_A",
+		"duration": 1.3,
+		"expect": {"footstep_grass": 3}
+	},
+	{
+		"name": "walk_sand",
+		"action": "walk",
+		"tile": "SAND",
+		"duration": 1.3,
+		"expect": {"footstep_sand": 3}
+	},
+	{
+		"name": "walk_swamp",
+		"action": "walk",
+		"tile": "SWAMP",
+		"duration": 1.3,
+		"expect": {"footstep_swamp": 3}
+	},
 	{"name": "swing", "action": "swing", "duration": 0.6, "expect": {"sword_swing": 1}},
-	{"name": "damage", "action": "damage", "duration": 0.6, "expect": {"hit_land": 1, "player_hurt": 1}},
-	{"name": "kill", "action": "kill", "duration": 0.8, "expect": {"hit_land": 1, "player_hurt": 1, "hit_sting": 1}},
+	{
+		"name": "damage",
+		"action": "damage",
+		"duration": 0.6,
+		"expect": {"hit_land": 1, "player_hurt": 1}
+	},
+	{
+		"name": "kill",
+		"action": "kill",
+		"duration": 0.8,
+		"expect": {"hit_land": 1, "player_hurt": 1, "hit_sting": 1}
+	},
 	# One regen heal on this peer's own player; other players' heals are silent here.
 	{"name": "regen", "action": "regen", "duration": 0.6, "expect": {"regen_tick": 1}},
-	# This peer's own player chops a two-hit tree through Interaction (#265).
-	{"name": "chop_tree", "action": "chop_tree", "duration": 1.0, "expect": {"tree_chop": 2, "leaf_rustle": 2, "tree_crack": 1, "tree_fall": 1, "wood_pickup": 1}},
+	{
+		"name": "chop_tree",
+		"action": "chop_tree",
+		"duration": 1.0,
+		"expect":
+		{"tree_chop": 2, "leaf_rustle": 2, "tree_crack": 1, "tree_fall": 1, "wood_pickup": 1}
+		# This peer's own player chops a two-hit tree through Interaction (#265).
+	},
 	# SFX slider at 0: the swing still starts, but nothing reaches Master.
-	{"name": "swing_sfx_off", "action": "swing", "sfx_volume": 0.0, "audible": false, "duration": 0.6, "expect": {"sword_swing": 1}},
-	{"name": "music", "action": "idle", "music": "GAME_TRACK", "duration": 2.0, "expect": {"22 - Dream": 1}},
+	{
+		"name": "swing_sfx_off",
+		"action": "swing",
+		"sfx_volume": 0.0,
+		"audible": false,
+		"duration": 0.6,
+		"expect": {"sword_swing": 1}
+	},
+	{
+		"name": "music",
+		"action": "idle",
+		"music": "GAME_TRACK",
+		"duration": 2.0,
+		"expect": {"22 - Dream": 1}
+	},
 	# Music slider at 0: the track starts, but nothing reaches Master.
-	{"name": "music_slider_off", "action": "idle", "music": "GAME_TRACK", "music_volume": 0.0, "audible": false, "duration": 1.0, "expect": {"22 - Dream": 1}},
+	{
+		"name": "music_slider_off",
+		"action": "idle",
+		"music": "GAME_TRACK",
+		"music_volume": 0.0,
+		"audible": false,
+		"duration": 1.0,
+		"expect": {"22 - Dream": 1}
+	},
 	# Music and SFX together must not clip.
-	{"name": "music_with_swing", "action": "swing", "music": "GAME_TRACK", "duration": 1.0, "expect": {"22 - Dream": 1, "sword_swing": 1}},
+	{
+		"name": "music_with_swing",
+		"action": "swing",
+		"music": "GAME_TRACK",
+		"duration": 1.0,
+		"expect": {"22 - Dream": 1, "sword_swing": 1}
+	},
 	# One mob of each type next to the walker; each step is one event on all three.
-	{"name": "mob_notice", "action": "mob_notice", "duration": 0.6, "expect": {"slime_notice": 1, "crab_notice": 1, "piglet_notice": 1}},
-	{"name": "mob_attack", "action": "mob_attack", "duration": 0.6, "expect": {"slime_attack": 1, "crab_attack": 1, "piglet_attack": 1}},
-	{"name": "mob_hurt", "action": "mob_hurt", "duration": 0.6, "expect": {"slime_hurt": 1, "crab_hurt": 1, "piglet_hurt": 1}},
-	{"name": "mob_death", "action": "mob_death", "duration": 0.8, "expect": {"slime_hurt": 1, "slime_death": 1, "crab_hurt": 1, "crab_death": 1, "piglet_hurt": 1, "piglet_death": 1}},
-	{"name": "mob_idle", "action": "mob_idle", "duration": 0.6, "expect": {"slime_idle": 1, "crab_idle": 1, "piglet_idle": 1}},
+	{
+		"name": "mob_notice",
+		"action": "mob_notice",
+		"duration": 0.6,
+		"expect": {"slime_notice": 1, "crab_notice": 1, "piglet_notice": 1}
+	},
+	{
+		"name": "mob_attack",
+		"action": "mob_attack",
+		"duration": 0.6,
+		"expect": {"slime_attack": 1, "crab_attack": 1, "piglet_attack": 1}
+	},
+	{
+		"name": "mob_hurt",
+		"action": "mob_hurt",
+		"duration": 0.6,
+		"expect": {"slime_hurt": 1, "crab_hurt": 1, "piglet_hurt": 1}
+	},
+	{
+		"name": "mob_death",
+		"action": "mob_death",
+		"duration": 0.8,
+		"expect":
+		{
+			"slime_hurt": 1,
+			"slime_death": 1,
+			"crab_hurt": 1,
+			"crab_death": 1,
+			"piglet_hurt": 1,
+			"piglet_death": 1
+		}
+	},
+	{
+		"name": "mob_idle",
+		"action": "mob_idle",
+		"duration": 0.6,
+		"expect": {"slime_idle": 1, "crab_idle": 1, "piglet_idle": 1}
+	},
 	# Mobs hidden on uncharted ground make no sound for any event.
 	{"name": "mob_hidden", "action": "mob_hidden", "duration": 0.6, "expect": {}},
 	# UI, through the real buttons: Map settings opens the panel, Back closes it.
@@ -68,7 +162,12 @@ const TIMELINE := [
 	{"name": "ui_back", "action": "ui_back", "duration": 0.6, "expect": {"back": 1}},
 	# A "ui_menu" panel (the group an in-game menu joins) shown, then hidden.
 	{"name": "ui_menu_open", "action": "ui_menu_open", "duration": 0.5, "expect": {"menu_open": 1}},
-	{"name": "ui_menu_close", "action": "ui_menu_close", "duration": 0.5, "expect": {"menu_close": 1}},
+	{
+		"name": "ui_menu_close",
+		"action": "ui_menu_close",
+		"duration": 0.5,
+		"expect": {"menu_close": 1}
+	},
 	{"name": "ui_saved", "action": "ui_saved", "duration": 0.8, "expect": {"saved": 1}},
 ]
 ## Where the check places the mobs, from the walker (all in earshot).
@@ -237,11 +336,20 @@ func _tick() -> void:
 			if step.has("music"):
 				root.get_node("MusicPlayer").stop(0.0)
 			var audible: bool = step.get("audible", true) and not step["expect"].is_empty()
-			_windows.append({"name": step["name"], "start": _step_start, "end": t, "kind": "event" if audible else "silent"})
+			_windows.append(
+				{
+					"name": step["name"],
+					"start": _step_start,
+					"end": t,
+					"kind": "event" if audible else "silent"
+				}
+			)
 			_in_gap = true
 			_step_start = t
 	elif t - _step_start >= IDLE_GAP:
-		_windows.append({"name": step["name"] + "_after", "start": t - SILENT_TAIL, "end": t, "kind": "silent"})
+		_windows.append(
+			{"name": step["name"] + "_after", "start": t - SILENT_TAIL, "end": t, "kind": "silent"}
+		)
 		if _step + 1 >= TIMELINE.size():
 			process_frame.disconnect(_tick)
 			physics_frame.disconnect(_physics_tick)
@@ -291,9 +399,21 @@ func _begin_step(i: int, t: float) -> void:
 		"chop_tree":
 			_chop_tree()
 		"ui_click":
-			_scene.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MapSettingsButton").pressed.emit()
+			(
+				_scene
+				. get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MapSettingsButton")
+				. pressed
+				. emit()
+			)
 		"ui_back":
-			_scene.get_node("CanvasLayer2/MainMenu").admin_panel.get_node("Margin/VBox/ButtonsDefaults/Back").pressed.emit()
+			(
+				_scene
+				. get_node("CanvasLayer2/MainMenu")
+				. admin_panel
+				. get_node("Margin/VBox/ButtonsDefaults/Back")
+				. pressed
+				. emit()
+			)
 		"ui_menu_open":
 			_ui_menu.show()
 		"ui_menu_close":
@@ -303,7 +423,6 @@ func _begin_step(i: int, t: float) -> void:
 	# Log starts in the same frame: Godot can stop a player at once when its
 	# bus is muted, before the next poll would see it playing.
 	_log_starts()
-
 
 
 func _mob_event(mob: Mob, action: String) -> void:
@@ -366,6 +485,7 @@ func _sword_hit() -> void:
 	_walker._on_hurt_box_area_entered(_attacker.get_node("weapon/sword"))
 	_attacker.isAttacking = false
 
+
 func _save_map() -> void:
 	## A real map save with resolved seeds, removed again; the active params
 	## are left as they were.
@@ -386,7 +506,9 @@ func _drain() -> void:
 		# Godot applies a bus's own volume and mute after its effects, so the
 		# capture misses Master's; apply them here to get what reaches the
 		# speakers. Other buses' volume and mute are already in the capture.
-		var gain := 0.0 if AudioServer.is_bus_mute(0) else db_to_linear(AudioServer.get_bus_volume_db(0))
+		var gain := (
+			0.0 if AudioServer.is_bus_mute(0) else db_to_linear(AudioServer.get_bus_volume_db(0))
+		)
 		var buf := _master_cap.get_buffer(n)
 		if gain != 1.0:
 			for i in buf.size():
@@ -409,16 +531,25 @@ func _log_starts() -> void:
 		var node = _probes[key]["node"]
 		var playing: bool = node.playing
 		var pos: float = node.get_playback_position() if playing else 0.0
-		var restarted: bool = playing and _was_playing.get(key, false) and pos < _last_pos.get(key, 0.0)
+		var restarted: bool = (
+			playing and _was_playing.get(key, false) and pos < _last_pos.get(key, 0.0)
+		)
 		if playing and (not _was_playing.get(key, false) or restarted):
-			var file: String = node.stream.resource_path.get_file() if node.stream else "<no stream>"
-			_events.append({
-				"t": snappedf(_now(), 0.001),
-				"sound": _sound_name(file),
-				"file": file,
-				"player": _owner_name(node),
-				"probe": key,
-			})
+			var file: String = (
+				node.stream.resource_path.get_file() if node.stream else "<no stream>"
+			)
+			(
+				_events
+				. append(
+					{
+						"t": snappedf(_now(), 0.001),
+						"sound": _sound_name(file),
+						"file": file,
+						"player": _owner_name(node),
+						"probe": key,
+					}
+				)
+			)
 		_was_playing[key] = playing
 		_last_pos[key] = pos
 
@@ -491,7 +622,10 @@ func _finish() -> void:
 		_fail("Master clips (peak %.2f dBFS)" % _db(whole.x))
 	for w in _windows:
 		var s := _master_stats(w["start"], w["end"])
-		var line := "%-18s %6.2f-%6.2f s  peak %7.1f dBFS  rms %7.1f dBFS" % [w["name"], w["start"], w["end"], _db(s.x), _db(s.y)]
+		var line := (
+			"%-18s %6.2f-%6.2f s  peak %7.1f dBFS  rms %7.1f dBFS"
+			% [w["name"], w["start"], w["end"], _db(s.x), _db(s.y)]
+		)
 		if w["kind"] == "silent":
 			if _db(s.x) > SILENCE_DB:
 				_fail("%s should be silent, peak %.1f dBFS" % [w["name"], _db(s.x)])
@@ -499,7 +633,12 @@ func _finish() -> void:
 			var rms := _db(s.y)
 			var floor_db := RMS_RANGE_DB.x - _step_quiet_db(w["name"])
 			if rms < floor_db or rms > RMS_RANGE_DB.y:
-				_fail("%s rms %.1f dBFS outside (%.1f, %.1f)" % [w["name"], rms, floor_db, RMS_RANGE_DB.y])
+				_fail(
+					(
+						"%s rms %.1f dBFS outside (%.1f, %.1f)"
+						% [w["name"], rms, floor_db, RMS_RANGE_DB.y]
+					)
+				)
 		print(line)
 		report.append(line)
 
@@ -513,7 +652,12 @@ func _finish() -> void:
 				counts[e["sound"]] = counts.get(e["sound"], 0) + 1
 		for sound in step["expect"]:
 			if counts.get(sound, 0) != step["expect"][sound]:
-				_fail("%s: %s started %d times, want %d" % [step["name"], sound, counts.get(sound, 0), step["expect"][sound]])
+				_fail(
+					(
+						"%s: %s started %d times, want %d"
+						% [step["name"], sound, counts.get(sound, 0), step["expect"][sound]]
+					)
+				)
 		for sound in counts:
 			if not step["expect"].has(sound):
 				_fail("%s: unexpected %s x%d" % [step["name"], sound, counts[sound]])
@@ -522,8 +666,18 @@ func _finish() -> void:
 		var rms := _db(_probe_rms(e["probe"], e["t"] - ONSET_SLACK, e["t"] + ONSET_WINDOW))
 		e["onset_rms_db"] = snappedf(rms, 0.1)
 		if rms < ONSET_DB - float(QUIET_DB.get(e["sound"], 0.0)):
-			_fail("%s (%s, player %s) at %.2f s not heard: %.1f dBFS on its own bus" % [e["sound"], e["file"], e["player"], e["t"], rms])
-		print("event %6.2f s  %-14s %-22s player %s  onset rms %6.1f dBFS" % [e["t"], e["sound"], e["file"], e["player"], rms])
+			_fail(
+				(
+					"%s (%s, player %s) at %.2f s not heard: %.1f dBFS on its own bus"
+					% [e["sound"], e["file"], e["player"], e["t"], rms]
+				)
+			)
+		print(
+			(
+				"event %6.2f s  %-14s %-22s player %s  onset rms %6.1f dBFS"
+				% [e["t"], e["sound"], e["file"], e["player"], rms]
+			)
+		)
 
 	_write_outputs()
 	if _failures.is_empty():
@@ -550,7 +704,9 @@ func _write_outputs() -> void:
 	wav.data = bytes
 	wav.save_to_wav(_out + ".wav")
 	var f := FileAccess.open(_out + "_events.json", FileAccess.WRITE)
-	f.store_string(JSON.stringify({"events": _events, "windows": _windows, "failures": _failures}, "  "))
+	f.store_string(
+		JSON.stringify({"events": _events, "windows": _windows, "failures": _failures}, "  ")
+	)
 	f.close()
 	_write_plot()
 	print("saved ", ProjectSettings.globalize_path(_out + ".wav"))
@@ -569,7 +725,10 @@ func _write_plot() -> void:
 	for win in _windows:
 		var x0 := int(win["start"] / total * w)
 		var x1 := maxi(x0 + 1, int(win["end"] / total * w))
-		img.fill_rect(Rect2i(x0, 0, x1 - x0, h), Color("1d4d2b") if win["kind"] == "event" else Color("2a2d33"))
+		img.fill_rect(
+			Rect2i(x0, 0, x1 - x0, h),
+			Color("1d4d2b") if win["kind"] == "event" else Color("2a2d33")
+		)
 	var per := maxi(1, _master.size() / w)
 	for x in range(w):
 		var peak := 0.0

@@ -34,8 +34,9 @@ static func draw_at(ci: CanvasItem, local_center: Vector2, quarter_turns: int) -
 	ci.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 
-static func sync_sprite(map: _WorldMap, markers: Dictionary, id: int, anchor: Vector2i,
-		quarter_turns: int) -> void:
+static func sync_sprite(
+	map: _WorldMap, markers: Dictionary, id: int, anchor: Vector2i, quarter_turns: int
+) -> void:
 	var sprite := markers.get(id) as Sprite2D
 	if sprite == null:
 		sprite = Sprite2D.new()

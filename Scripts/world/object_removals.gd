@@ -5,7 +5,6 @@ extends RefCounted
 
 const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
-
 var _removed: Dictionary = {}
 var _map: _WorldMap
 
@@ -78,7 +77,12 @@ func _mark_removed(cell: Vector2i) -> void:
 func _would_remove(cell: Vector2i) -> bool:
 	## True when the map still grows a removable decor on `cell` (a stale save
 	## entry is dropped when this is false).
-	if _map.has_bridge(cell) or _map.has_wall(cell) or _map.has_cut(cell) or _map.choppable(cell) != null:
+	if (
+		_map.has_bridge(cell)
+		or _map.has_wall(cell)
+		or _map.has_cut(cell)
+		or _map.choppable(cell) != null
+	):
 		return false
 	var top: Vector2i = _map.predict_cell(cell)[1]
 	return top == TileCatalog.FLOWER or top == TileCatalog.STONES
@@ -176,7 +180,9 @@ func replace_with(cuts: TreeCuts, changes: Dictionary) -> int:
 	return cuts.replace(changes) + replace(changes)
 
 
-func cells_in_arc(origin: Vector2, direction: float, reach: float, arc: float, pick_stones: bool) -> Array[Vector2i]:
+func cells_in_arc(
+	origin: Vector2, direction: float, reach: float, arc: float, pick_stones: bool
+) -> Array[Vector2i]:
 	## Walkable cells whose centre lies in the aim arc; stones only when
 	## `pick_stones`, flowers when not.
 	var out: Array[Vector2i] = []

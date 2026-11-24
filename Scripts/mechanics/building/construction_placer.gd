@@ -25,8 +25,15 @@ const GUARD_STRUCTURE := BuildCosts.NAMED_STRUCTURES[BuildCosts.GUARD_POST]
 const BARRACKS_STRUCTURE := BuildCosts.NAMED_STRUCTURES[BuildCosts.BARRACKS]
 
 const _REASON_ORDER := [
-	EMPTY_CELLS, UNKNOWN_KIND, TOO_LONG, WRONG_GROUND, OCCUPIED, NOT_STRAIGHT, NOT_ADJACENT,
-	NOT_ENOUGH_WOOD, MULTIPLAYER_ON,
+	EMPTY_CELLS,
+	UNKNOWN_KIND,
+	TOO_LONG,
+	WRONG_GROUND,
+	OCCUPIED,
+	NOT_STRAIGHT,
+	NOT_ADJACENT,
+	NOT_ENOUGH_WOOD,
+	MULTIPLAYER_ON,
 ]
 
 var _map: _WorldMap
@@ -37,7 +44,9 @@ func _init(map: _WorldMap) -> void:
 	_map = map
 
 
-func can_place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> Array[String]:
+func can_place(
+	kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0
+) -> Array[String]:
 	## Why `kind` cannot go on `cells`; empty when it can. Each reason appears
 	## once, in `_REASON_ORDER`. Wood and multiplayer come from BuildCosts.
 	## A tower takes exactly one cell (its anchor); a plank or wall run takes
@@ -50,7 +59,9 @@ func can_place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, q
 	return reasons
 
 
-func can_place_geometry(kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0) -> Array[String]:
+func can_place_geometry(
+	kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0
+) -> Array[String]:
 	## Why `kind` cannot go on `cells` from the map alone (no wood, no
 	## multiplayer gate). Used for previews and host-authoritative writes.
 	var found := {}
@@ -81,7 +92,9 @@ func cost(kind: StringName, cells: Array) -> int:
 	return BuildCosts.cost(kind, _units(kind, cells))
 
 
-func place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0) -> bool:
+func place(
+	kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0
+) -> bool:
 	## True when the purchase succeeds or a connected client submits a request.
 	## A refused writer refunds the charge (#380).
 	if not can_place(kind, cells, inventory, quarter_turns).is_empty():
@@ -89,35 +102,61 @@ func place(kind: StringName, cells: Array[Vector2i], inventory: Inventory, quart
 	if kind != BuildCosts.PLANK and Interaction.multiplayer_on(_map.multiplayer):
 		var requests := _map.get_node_or_null("../StructureRequests")
 		return requests != null and requests.place(kind, cells, quarter_turns)
-	var owner := 0 if kind == BuildCosts.PLANK or kind == BuildCosts.WALL_BLOCK \
-			else inventory.multiplayer.get_unique_id()
+	var owner := (
+		0
+		if kind == BuildCosts.PLANK or kind == BuildCosts.WALL_BLOCK
+		else inventory.multiplayer.get_unique_id()
+	)
 	return _purchase(kind, cells, inventory, owner, quarter_turns, false)
 
 
-func place_for_peer(kind: StringName, cells: Array[Vector2i], owner: int,
-		inventory: Inventory, quarter_turns: int = 0) -> bool:
+func place_for_peer(
+	kind: StringName,
+	cells: Array[Vector2i],
+	owner: int,
+	inventory: Inventory,
+	quarter_turns: int = 0
+) -> bool:
 	## Host-only write after reach checks. Supply inventory for the host's own
 	## purchase; a remote buyer is charged by the request handler after success.
 	if not _map.multiplayer.is_server() or not _can_build(kind) or cells.is_empty():
 		return false
-	if kind == BuildCosts.PLANK and inventory != null and not can_place(kind, cells, inventory).is_empty():
+	if (
+		kind == BuildCosts.PLANK
+		and inventory != null
+		and not can_place(kind, cells, inventory).is_empty()
+	):
 		return false
-	return _purchase(kind, cells, inventory, owner, quarter_turns, kind != BuildCosts.PLANK or inventory == null)
+	return _purchase(
+		kind, cells, inventory, owner, quarter_turns, kind != BuildCosts.PLANK or inventory == null
+	)
 
 
-func apply_replica(structure_name: String, anchor: Vector2i, owner: int, quarter_turns: int) -> void:
+func apply_replica(
+	structure_name: String, anchor: Vector2i, owner: int, quarter_turns: int
+) -> void:
 	var turns := posmod(quarter_turns, 4)
 	for entry in _map.placed_structures().values():
-		if str(entry["name"]) == structure_name and int(entry["owner"]) == owner \
-				and entry["anchor"] == anchor and int(entry.get("rotation", 0)) == turns:
+		if (
+			str(entry["name"]) == structure_name
+			and int(entry["owner"]) == owner
+			and entry["anchor"] == anchor
+			and int(entry.get("rotation", 0)) == turns
+		):
 			return
 	var structure := StructurePlacer.load_named(structure_name)
 	if structure != null:
 		_map._structures.place_from_host(structure, anchor, owner, quarter_turns)
 
 
-func _purchase(kind: StringName, cells: Array[Vector2i], inventory: Inventory,
-		owner: int, turns: int, from_host: bool) -> bool:
+func _purchase(
+	kind: StringName,
+	cells: Array[Vector2i],
+	inventory: Inventory,
+	owner: int,
+	turns: int,
+	from_host: bool
+) -> bool:
 	var write := func() -> bool:
 		if from_host and not can_place_geometry(kind, cells, turns).is_empty():
 			return false
@@ -154,7 +193,9 @@ func _load_named(kind: StringName) -> Structure:
 	return _named[kind]
 
 
-func footprint_of(kind: StringName, anchor_cell: Vector2i, quarter_turns: int = 0) -> Array[Vector2i]:
+func footprint_of(
+	kind: StringName, anchor_cell: Vector2i, quarter_turns: int = 0
+) -> Array[Vector2i]:
 	## Map cells a named footprint structure would cover with its anchor on `anchor_cell`.
 	var structure := _load_named(kind)
 	if structure == null:
@@ -202,9 +243,14 @@ func _check_wall(cells: Array[Vector2i], found: Dictionary) -> void:
 		if not _map.ground_is_walkable(p[0]) or _map.has_bridge(cell):
 			found[WRONG_GROUND] = true
 			continue
-		if p[1] == TileCatalog.TREE or p[1] == TileCatalog.TREE_BUSHY \
-			or p[1] == TileCatalog.PINE or p[1] == TileCatalog.TREE_BIRCH_BOTTOM \
-			or p[1] == TileCatalog.TREE_BIRCH_TOP or p[1] == TileCatalog.BUSH:
+		if (
+			p[1] == TileCatalog.TREE
+			or p[1] == TileCatalog.TREE_BUSHY
+			or p[1] == TileCatalog.PINE
+			or p[1] == TileCatalog.TREE_BIRCH_BOTTOM
+			or p[1] == TileCatalog.TREE_BIRCH_TOP
+			or p[1] == TileCatalog.BUSH
+		):
 			found[OCCUPIED] = true
 		elif _map.player_on_cell(cell) or _map.mob_on_cell(cell):
 			found[OCCUPIED] = true
@@ -230,7 +276,9 @@ func _check_plank(cells: Array[Vector2i], found: Dictionary) -> void:
 		found[NOT_ADJACENT] = true
 
 
-func _check_named(kind: StringName, cells: Array[Vector2i], found: Dictionary, quarter_turns: int = 0) -> void:
+func _check_named(
+	kind: StringName, cells: Array[Vector2i], found: Dictionary, quarter_turns: int = 0
+) -> void:
 	## Anchor must be exactly one cell; StructurePlacer reasons map onto the
 	## shared vocabulary (land only, no overlap with structures/players/mobs).
 	if cells.size() != 1:
@@ -246,13 +294,10 @@ func _check_named(kind: StringName, cells: Array[Vector2i], found: Dictionary, q
 		match reason:
 			StructurePlacer.WATER, StructurePlacer.OUT_OF_MAP:
 				found[WRONG_GROUND] = true
-			StructurePlacer.TREE, StructurePlacer.BUSH, \
-			StructurePlacer.OVERLAPS_STRUCTURE, StructurePlacer.OVERLAPS_PLAYER, \
-			StructurePlacer.OVERLAPS_MOB:
+			StructurePlacer.TREE, StructurePlacer.BUSH, StructurePlacer.OVERLAPS_STRUCTURE, StructurePlacer.OVERLAPS_PLAYER, StructurePlacer.OVERLAPS_MOB:
 				found[OCCUPIED] = true
 			StructurePlacer.MULTIPLAYER_ON:
 				found[MULTIPLAYER_ON] = true
-
 
 
 func _run_touches_wall_or_structure(cells: Array[Vector2i]) -> bool:
@@ -278,8 +323,7 @@ func _run_touches_support(cells: Array[Vector2i]) -> bool:
 
 func _is_land(cell: Vector2i) -> bool:
 	## Walkable generated ground that is not already a plank.
-	return not _map.has_bridge(cell) \
-			and _map.ground_is_walkable(_map.predict_cell(cell)[0])
+	return not _map.has_bridge(cell) and _map.ground_is_walkable(_map.predict_cell(cell)[0])
 
 
 func _straight_ends(cells: Array[Vector2i]) -> Array[Vector2i]:
@@ -304,8 +348,9 @@ func _straight_ends(cells: Array[Vector2i]) -> Array[Vector2i]:
 	if not horizontal and not vertical:
 		return []
 	var ordered: Array[Vector2i] = cells.duplicate()
-	ordered.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return a.x < b.x if horizontal else a.y < b.y)
+	ordered.sort_custom(
+		func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x if horizontal else a.y < b.y
+	)
 	var step := Vector2i.RIGHT if horizontal else Vector2i.DOWN
 	for i in range(1, ordered.size()):
 		if ordered[i] != ordered[0] + step * i:
@@ -315,8 +360,10 @@ func _straight_ends(cells: Array[Vector2i]) -> Array[Vector2i]:
 
 static func _neighbours(cell: Vector2i) -> Array[Vector2i]:
 	return [
-		cell + Vector2i.LEFT, cell + Vector2i.RIGHT,
-		cell + Vector2i.UP, cell + Vector2i.DOWN,
+		cell + Vector2i.LEFT,
+		cell + Vector2i.RIGHT,
+		cell + Vector2i.UP,
+		cell + Vector2i.DOWN,
 	]
 
 

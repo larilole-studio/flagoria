@@ -11,7 +11,9 @@ func _clear_tower_anchor(world) -> Variant:
 		world.generate_chunk(Vector2(0, 0))
 		for cell: Vector2i in world.get_used_cells(0):
 			var cells: Array = StructurePlacer.footprint(s, cell).keys()
-			if cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				return cell
 	return null
 
@@ -37,8 +39,12 @@ func _boot_tower_scene() -> Dictionary:
 	interaction.bind(player)
 	await process_frame
 	return {
-		"scene": scene, "world": world, "interaction": interaction,
-		"inventory": inventory, "player": player, "anchor": anchor,
+		"scene": scene,
+		"world": world,
+		"interaction": interaction,
+		"inventory": inventory,
+		"player": player,
+		"anchor": anchor,
 	}
 
 
@@ -68,38 +74,60 @@ func _test_build_tower_preview_matches_commit() -> int:
 	interaction.build.update_preview(vp, vp)
 	var s: Structure = StructurePlacer.load_named("tower_wood")
 	var foot: Array = StructurePlacer.footprint(s, anchor).keys()
-	if interaction.build.cells.size() != foot.size() \
-			or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok) \
-			or interaction.build.cost != 10 \
-			or not interaction.build.reasons.is_empty():
-		printerr("FAIL build_tower_preview_matches_commit: cells %s ok %s cost %d reasons %s"
-				% [interaction.build.cells, interaction.build.cell_ok,
-					interaction.build.cost, interaction.build.reasons])
+	if (
+		interaction.build.cells.size() != foot.size()
+		or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+		or interaction.build.cost != 10
+		or not interaction.build.reasons.is_empty()
+	):
+		printerr(
+			(
+				"FAIL build_tower_preview_matches_commit: cells %s ok %s cost %d reasons %s"
+				% [
+					interaction.build.cells,
+					interaction.build.cell_ok,
+					interaction.build.cost,
+					interaction.build.reasons
+				]
+			)
+		)
 		fail += 1
 	if not interaction.build.commit():
 		printerr("FAIL build_tower_preview_matches_commit: commit false")
 		fail += 1
 	if world.placed_structures().is_empty() or inventory.count_of(Inventory.WOOD) != 0:
-		printerr("FAIL build_tower_preview_matches_commit: after commit structs %s wood %d"
-				% [world.placed_structures(), inventory.count_of(Inventory.WOOD)])
+		printerr(
+			(
+				"FAIL build_tower_preview_matches_commit: after commit structs %s wood %d"
+				% [world.placed_structures(), inventory.count_of(Inventory.WOOD)]
+			)
+		)
 		fail += 1
 	# Zero wood: all red, cost 0, refusal.
 	inventory.add(Inventory.WOOD, 0)
 	var clear2: Variant = null
 	for cell: Vector2i in world.get_used_cells(0):
 		var cells: Array = StructurePlacer.footprint(s, cell).keys()
-		if cells.all(func(c): return world.predicted_clear(c) and not world._structures.has_cell(c)):
+		if cells.all(
+			func(c): return world.predicted_clear(c) and not world._structures.has_cell(c)
+		):
 			clear2 = cell
 			break
 	if clear2 != null:
 		var vp2 := _cell_vp(interaction, world, clear2)
 		interaction.build.set_tool(BuildPlacement.Tool.TOWER)
 		interaction.build.update_preview(vp2, vp2)
-		if interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok) \
-				or interaction.build.cost != 0 \
-				or ConstructionPlacer.NOT_ENOUGH_WOOD not in interaction.build.reasons:
-			printerr("FAIL build_tower_preview_matches_commit: zero wood ok=%s cost=%d reasons=%s"
-					% [interaction.build.cell_ok, interaction.build.cost, interaction.build.reasons])
+		if (
+			interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok)
+			or interaction.build.cost != 0
+			or ConstructionPlacer.NOT_ENOUGH_WOOD not in interaction.build.reasons
+		):
+			printerr(
+				(
+					"FAIL build_tower_preview_matches_commit: zero wood ok=%s cost=%d reasons=%s"
+					% [interaction.build.cell_ok, interaction.build.cost, interaction.build.reasons]
+				)
+			)
 			fail += 1
 	ctx["scene"].queue_free()
 	await process_frame
@@ -139,8 +167,12 @@ func _test_build_tower_tap_places() -> int:
 	viewport.push_input(release, true)
 	await process_frame
 	if world.placed_structures().is_empty() or inventory.count_of(Inventory.WOOD) != 0:
-		printerr("FAIL build_tower_tap_places: structs %s wood %d"
-				% [world.placed_structures(), inventory.count_of(Inventory.WOOD)])
+		printerr(
+			(
+				"FAIL build_tower_tap_places: structs %s wood %d"
+				% [world.placed_structures(), inventory.count_of(Inventory.WOOD)]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -173,22 +205,37 @@ func _test_build_tower_out_of_reach() -> int:
 	player.position = world.to_global(world.map_to_local(anchor + Vector2i(0, 10)))
 	var vp := _cell_vp(interaction, world, anchor)
 	interaction.build.update_preview(vp, vp)
-	if interaction.in_reach(anchor) or interaction.build.reasons != ["out of reach"] \
-			or interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok) \
-			or interaction.build.cost != 0:
-		printerr("FAIL build_tower_out_of_reach: reasons %s, ok %s, cost %d"
-				% [interaction.build.reasons, interaction.build.cell_ok, interaction.build.cost])
+	if (
+		interaction.in_reach(anchor)
+		or interaction.build.reasons != ["out of reach"]
+		or interaction.build.cell_ok.any(func(ok: bool) -> bool: return ok)
+		or interaction.build.cost != 0
+	):
+		printerr(
+			(
+				"FAIL build_tower_out_of_reach: reasons %s, ok %s, cost %d"
+				% [interaction.build.reasons, interaction.build.cell_ok, interaction.build.cost]
+			)
+		)
 		fail += 1
-	if interaction.build.commit() or inventory.count_of(Inventory.WOOD) != 10 \
-			or not world.placed_structures().is_empty():
+	if (
+		interaction.build.commit()
+		or inventory.count_of(Inventory.WOOD) != 10
+		or not world.placed_structures().is_empty()
+	):
 		printerr("FAIL build_tower_out_of_reach: refused tower placed or spent wood")
 		fail += 1
 	player.position = near
 	vp = _cell_vp(interaction, world, anchor)
 	interaction.build.update_preview(vp, vp)
-	if not interaction.build.reasons.is_empty() or interaction.build.cost != 10 \
-			or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok):
-		printerr("FAIL build_tower_out_of_reach: moving into reach did not restore the green preview")
+	if (
+		not interaction.build.reasons.is_empty()
+		or interaction.build.cost != 10
+		or not interaction.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+	):
+		printerr(
+			"FAIL build_tower_out_of_reach: moving into reach did not restore the green preview"
+		)
 		fail += 1
 	ctx["scene"].queue_free()
 	await process_frame
@@ -231,12 +278,17 @@ func _test_construction_tower_cached() -> int:
 		var inventory: Inventory = scene.get_node("Inventory")
 		inventory.add(Inventory.WOOD, 10)
 		var one: Array[Vector2i] = [anchor]
-		if not placer.place(BuildCosts.TOWER, one, inventory) or placer.get("_named").get(BuildCosts.TOWER) != cached \
-				or inventory.count_of(Inventory.WOOD) != 0:
+		if (
+			not placer.place(BuildCosts.TOWER, one, inventory)
+			or placer.get("_named").get(BuildCosts.TOWER) != cached
+			or inventory.count_of(Inventory.WOOD) != 0
+		):
 			printerr("FAIL construction_tower_cached: placement did not reuse the cached tower")
 			fail += 1
-		if original != StructurePlacer.footprint(cached, Vector2i.ZERO) \
-				or foot != placer.tower_footprint(anchor):
+		if (
+			original != StructurePlacer.footprint(cached, Vector2i.ZERO)
+			or foot != placer.tower_footprint(anchor)
+		):
 			printerr("FAIL construction_tower_cached: preview or placement mutated the definition")
 			fail += 1
 	scene.queue_free()

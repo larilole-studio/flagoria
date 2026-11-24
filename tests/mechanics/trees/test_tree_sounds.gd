@@ -28,8 +28,13 @@ func _chop_scene() -> Dictionary:
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	interaction.set_process(false)
 	interaction.set_mode(Interaction.Mode.INTERACT)
-	return {"scene": scene, "world": world, "player": player, "interaction": interaction,
-		"inventory": scene.get_node("Inventory")}
+	return {
+		"scene": scene,
+		"world": world,
+		"player": player,
+		"interaction": interaction,
+		"inventory": scene.get_node("Inventory")
+	}
 
 
 static func _names(log: Array[AudioStream]) -> Array[String]:
@@ -62,31 +67,58 @@ func _test_chop_tree_sounds() -> int:
 		fail += 1
 	run_to.call(0.47)
 	got = _names(interaction.sfx_log)
-	if got.size() != 5 or not got[2].begins_with("tree_chop_") or got[2] == got[0] \
-			or got[3] != "leaf_rustle_01" or got[4] != "tree_crack_01":
+	if (
+		got.size() != 5
+		or not got[2].begins_with("tree_chop_")
+		or got[2] == got[0]
+		or got[3] != "leaf_rustle_01"
+		or got[4] != "tree_crack_01"
+	):
 		printerr("FAIL chop_tree_sounds: last hit sounds %s" % [got])
 		fail += 1
 	run_to.call(0.55)
 	if interaction.sfx_log.size() != 5 or inventory.count_of(Inventory.WOOD) != 0:
-		printerr("FAIL chop_tree_sounds: sounds or wood before the fall: %s" % [_names(interaction.sfx_log)])
+		printerr(
+			(
+				"FAIL chop_tree_sounds: sounds or wood before the fall: %s"
+				% [_names(interaction.sfx_log)]
+			)
+		)
 		fail += 1
 	run_to.call(0.57)
 	got = _names(interaction.sfx_log)
-	if got.size() != 7 or got[5] != "tree_fall_01" or not got[6].begins_with("wood_pickup_") \
-			or inventory.count_of(Inventory.WOOD) != InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD):
-		printerr("FAIL chop_tree_sounds: at the fall sounds %s, wood %s" % [got, inventory.count_of(Inventory.WOOD)])
+	if (
+		got.size() != 7
+		or got[5] != "tree_fall_01"
+		or not got[6].begins_with("wood_pickup_")
+		or (
+			inventory.count_of(Inventory.WOOD)
+			!= InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD)
+		)
+	):
+		printerr(
+			(
+				"FAIL chop_tree_sounds: at the fall sounds %s, wood %s"
+				% [got, inventory.count_of(Inventory.WOOD)]
+			)
+		)
 		fail += 1
 	# Both clips stay on separate SFX players so the fall can layer over the hit.
 	var channels := {}
 	for node in interaction.get_children():
 		if node is AudioStreamPlayer2D and node.stream != null:
 			channels[node.stream.resource_path.get_file().get_basename()] = node.bus
-	if got.size() == 7 and (channels.get("tree_fall_01") != &"SFX" or channels.get(got[2]) != &"SFX"):
+	if (
+		got.size() == 7
+		and (channels.get("tree_fall_01") != &"SFX" or channels.get(got[2]) != &"SFX")
+	):
 		printerr("FAIL chop_tree_sounds: the fall replaced the hit or left the SFX bus")
 		fail += 1
 	interaction.step_chop(1.0)
 	if interaction.sfx_log.size() != 7:
-		printerr("FAIL chop_tree_sounds: sounds after the chop ended: %s" % [_names(interaction.sfx_log)])
+		printerr(
+			"FAIL chop_tree_sounds: sounds after the chop ended: %s" % [_names(interaction.sfx_log)]
+		)
 		fail += 1
 	s["player"].queue_free()
 	s["scene"].queue_free()
@@ -118,19 +150,41 @@ func _test_chop_cancel_on_death() -> int:
 	health.set_health_now(0)
 	interaction.step_chop(1.0)
 	var got := _names(interaction.sfx_log)
-	if interaction.chopping() or not world.has_tree(tree) or inventory.count_of(Inventory.WOOD) != 0 \
-			or got.has("tree_fall_01") or got.size() != 5:
-		printerr("FAIL chop_cancel_on_death: chopping %s, tree %s, wood %s, sounds %s"
-				% [interaction.chopping(), world.has_tree(tree), inventory.count_of(Inventory.WOOD), got])
+	if (
+		interaction.chopping()
+		or not world.has_tree(tree)
+		or inventory.count_of(Inventory.WOOD) != 0
+		or got.has("tree_fall_01")
+		or got.size() != 5
+	):
+		printerr(
+			(
+				"FAIL chop_cancel_on_death: chopping %s, tree %s, wood %s, sounds %s"
+				% [
+					interaction.chopping(),
+					world.has_tree(tree),
+					inventory.count_of(Inventory.WOOD),
+					got
+				]
+			)
+		)
 		fail += 1
 	# Revive without resolve_player_spawn / generate_chunk (#359).
 	health.set_health_now(health.max_health)
 	s["player"].position = world.to_global(world.map_to_local(Vector2i(10, 10)))
 	if health.is_dead() or not interaction.start_chop(tree):
-		printerr("FAIL chop_cancel_on_death: no new chop after the respawn (dead %s)" % health.is_dead())
+		printerr(
+			"FAIL chop_cancel_on_death: no new chop after the respawn (dead %s)" % health.is_dead()
+		)
 		fail += 1
 	interaction.step_chop(0.6)
-	if world.has_tree(tree) or inventory.count_of(Inventory.WOOD) != InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD):
+	if (
+		world.has_tree(tree)
+		or (
+			inventory.count_of(Inventory.WOOD)
+			!= InteractableCatalog.by_id("tree").amount_of(Inventory.WOOD)
+		)
+	):
 		printerr("FAIL chop_cancel_on_death: the chop after the respawn did not fell the tree")
 		fail += 1
 	s["player"].queue_free()

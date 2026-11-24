@@ -14,7 +14,12 @@ func _test_hud_layout_golden() -> int:
 		return 0
 	printerr("FAIL hud_layout_golden")
 	_print_layout_diff(expected, actual)
-	printerr("Regenerate with godot --headless --path . --script res://tools/cli.gd -- hud layout --out " + GOLDEN)
+	printerr(
+		(
+			"Regenerate with godot --headless --path . --script res://tools/cli.gd -- hud layout --out "
+			+ GOLDEN
+		)
+	)
 	return 1
 
 

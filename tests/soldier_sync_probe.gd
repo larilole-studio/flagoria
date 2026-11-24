@@ -1,7 +1,6 @@
 extends "res://tests/helpers/probe_base.gd"
 ## One peer of a barracks soldier sync session (#553). Modes place, watch.
 
-
 var _place_error := ""
 var _train_anchor := Vector2i.ZERO
 
@@ -55,7 +54,9 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var structure_requests = main.get_node("World/StructureRequests")
 	var inventory: Inventory = main.get_node("Inventory")
-	var land: Variant = _search(world, func(cell: Vector2i) -> bool: return _barracks_ok(world, cell, 0))
+	var land: Variant = _search(
+		world, func(cell: Vector2i) -> bool: return _barracks_ok(world, cell, 0)
+	)
 	if land == null:
 		return "no clear barracks anchor"
 	var err := await _ready_to_build(main, me, interaction.cell_center(land) + Vector2(0, 48))
@@ -81,9 +82,12 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 		return "soldier did not spawn"
 	if not main.multiplayer.is_server():
 		requests.request_order.rpc_id(1)
-	if not await _until(func() -> bool:
-		var rows := _soldier_rows(requests)
-		return not rows.is_empty() and str(rows[0][2]) == "hold", 8000):
+	if not await _until(
+		func() -> bool:
+			var rows := _soldier_rows(requests)
+			return not rows.is_empty() and str(rows[0][2]) == "hold",
+		8000
+	):
 		return "hold order did not sync"
 	return ""
 
@@ -157,7 +161,9 @@ func _search(world, pred: Callable) -> Variant:
 
 func _barracks_ok(world, cell: Vector2i, turns: int) -> bool:
 	var one: Array[Vector2i] = [cell]
-	if not ConstructionPlacer.new(world).can_place_geometry(BuildCosts.BARRACKS, one, turns).is_empty():
+	if not (
+		ConstructionPlacer.new(world).can_place_geometry(BuildCosts.BARRACKS, one, turns).is_empty()
+	):
 		return false
 	return true
 
@@ -188,12 +194,14 @@ func _write(main, world, me: Node2D, requests: SoldierRequests) -> void:
 		for child in world_root.get_children():
 			if child is CharacterBody2D and str(child.name).is_valid_int():
 				peers[str(child.name)] = [child.global_position.x, child.global_position.y]
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"place_error": _place_error,
-		"peers": peers,
-		"soldiers": _soldier_rows(requests),
-		"pending_jobs": requests.pending_job_count() if requests != null else 0,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"place_error": _place_error,
+			"peers": peers,
+			"soldiers": _soldier_rows(requests),
+			"pending_jobs": requests.pending_job_count() if requests != null else 0,
+			"errors": _errors.snapshot(),
+		}
+	)

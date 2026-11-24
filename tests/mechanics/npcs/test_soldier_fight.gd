@@ -34,13 +34,18 @@ func _test_soldier_fight() -> int:
 	soldier.name = "soldier_test"
 	scene.get_node("World/Soldiers").add_child(soldier)
 	var base := Vector2(256, 256)
-	soldier.setup_soldier({
-		"type": MobCatalog.SOLDIER,
-		"pos": base,
-		"seed": SEED,
-		"owner": peer,
-		"order": "hold",
-	})
+	(
+		soldier
+		. setup_soldier(
+			{
+				"type": MobCatalog.SOLDIER,
+				"pos": base,
+				"seed": SEED,
+				"owner": peer,
+				"order": "hold",
+			}
+		)
+	)
 	soldier.set_physics_process(false)
 	var slime: Mob = load("res://Mobs/mob.tscn").instantiate()
 	slime.setup(MobCatalog.SLIME, base + Vector2(40, 0), SEED)
@@ -69,13 +74,18 @@ func _test_soldier_fight() -> int:
 		printerr("FAIL soldier_fight owner hurt %d" % health.health)
 		fail += 1
 	var probe: Soldier = load(Soldier.SOLDIER_SCENE).instantiate()
-	probe.setup_soldier({
-		"type": MobCatalog.SOLDIER,
-		"pos": Vector2.ZERO,
-		"seed": 1,
-		"owner": peer,
-		"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
-	})
+	(
+		probe
+		. setup_soldier(
+			{
+				"type": MobCatalog.SOLDIER,
+				"pos": Vector2.ZERO,
+				"seed": 1,
+				"owner": peer,
+				"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
+			}
+		)
+	)
 	if probe.take_hit(peer):
 		printerr("FAIL soldier_fight owner take_hit landed")
 		fail += 1
@@ -114,12 +124,17 @@ func _test_soldier_bow() -> int:
 	_paint_pad(world, [mid])
 	var mid_c: Vector2 = world.to_global(world.map_to_local(mid))
 	var soldier: Soldier = load(Soldier.SOLDIER_SCENE).instantiate()
-	soldier.setup_soldier({
-		"type": MobCatalog.SOLDIER,
-		"pos": mid_c + Vector2(40, 0),
-		"seed": SEED,
-		"owner": peer,
-	})
+	(
+		soldier
+		. setup_soldier(
+			{
+				"type": MobCatalog.SOLDIER,
+				"pos": mid_c + Vector2(40, 0),
+				"seed": SEED,
+				"owner": peer,
+			}
+		)
+	)
 	soldier.set_physics_process(false)
 	scene.get_node("World/Soldiers").add_child(soldier)
 	var player = load("res://Scripts/player/character_body_2d.tscn").instantiate()

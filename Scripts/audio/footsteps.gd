@@ -19,17 +19,20 @@ const PITCH_MAX := 1.08
 const WORLD_MAP_PATH := "/root/Flagoria/World/worldMap"
 
 const SOUNDS := {
-	"grass": [
+	"grass":
+	[
 		preload("res://art/audio/sfx/footsteps/footstep_grass_01.wav"),
 		preload("res://art/audio/sfx/footsteps/footstep_grass_02.wav"),
 		preload("res://art/audio/sfx/footsteps/footstep_grass_03.wav"),
 	],
-	"sand": [
+	"sand":
+	[
 		preload("res://art/audio/sfx/footsteps/footstep_sand_01.wav"),
 		preload("res://art/audio/sfx/footsteps/footstep_sand_02.wav"),
 		preload("res://art/audio/sfx/footsteps/footstep_sand_03.wav"),
 	],
-	"swamp": [
+	"swamp":
+	[
 		preload("res://art/audio/sfx/footsteps/footstep_swamp_01.wav"),
 		preload("res://art/audio/sfx/footsteps/footstep_swamp_02.wav"),
 		preload("res://art/audio/sfx/footsteps/footstep_swamp_03.wav"),

@@ -43,10 +43,23 @@ func run() -> void:
 	var wood_before := inventory.count_of(Inventory.WOOD)
 	var vp0 := _cell_vp(it, map, cell0)
 	it.build.update_preview(vp0, vp0)
-	if it.build.cost != 2 or not it.build.commit() or not map.has_wall(cell0) \
-			or inventory.count_of(Inventory.WOOD) != wood_before - 2:
-		printerr("free_form_walls: first block failed cost=%d wall=%s wood %d->%d"
-				% [it.build.cost, map.has_wall(cell0), wood_before, inventory.count_of(Inventory.WOOD)])
+	if (
+		it.build.cost != 2
+		or not it.build.commit()
+		or not map.has_wall(cell0)
+		or inventory.count_of(Inventory.WOOD) != wood_before - 2
+	):
+		printerr(
+			(
+				"free_form_walls: first block failed cost=%d wall=%s wood %d->%d"
+				% [
+					it.build.cost,
+					map.has_wall(cell0),
+					wood_before,
+					inventory.count_of(Inventory.WOOD)
+				]
+			)
+		)
 		done(false)
 		return
 	print("free_form_walls: first block at %s" % [cell0])
@@ -68,7 +81,12 @@ func run() -> void:
 		for step_dir in [Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN, Vector2i.RIGHT]:
 			next = cell0 + step_dir
 			end = cell0 + step_dir * 2
-			if _land_clear(map, next) and _land_clear(map, end) and it.in_reach(next) and it.in_reach(end):
+			if (
+				_land_clear(map, next)
+				and _land_clear(map, end)
+				and it.in_reach(next)
+				and it.in_reach(end)
+			):
 				found = true
 				break
 		if not found:
@@ -82,7 +100,9 @@ func run() -> void:
 	var expect_n := it.build.cells.size()
 	var expect_cost := expect_n * 2
 	if expect_n < 2 or it.build.cost != expect_cost:
-		printerr("free_form_walls: chain preview cells=%s cost=%d" % [it.build.cells, it.build.cost])
+		printerr(
+			"free_form_walls: chain preview cells=%s cost=%d" % [it.build.cells, it.build.cost]
+		)
 		done(false)
 		return
 	if not it.build.commit():
@@ -91,10 +111,20 @@ func run() -> void:
 		return
 	var spent := wood_before - inventory.count_of(Inventory.WOOD)
 	if spent != expect_cost or not map.has_wall(next):
-		printerr("free_form_walls: chain spent %d want %d wall_next=%s" % [spent, expect_cost, map.has_wall(next)])
+		printerr(
+			(
+				"free_form_walls: chain spent %d want %d wall_next=%s"
+				% [spent, expect_cost, map.has_wall(next)]
+			)
+		)
 		done(false)
 		return
-	print("free_form_walls: chain next=%s end=%s spent=%d tip=%s" % [next, end, spent, it.build._wall_tip])
+	print(
+		(
+			"free_form_walls: chain next=%s end=%s spent=%d tip=%s"
+			% [next, end, spent, it.build._wall_tip]
+		)
+	)
 	# Do not re-preview onto the new tip (that paints "not adjacent" over the
 	# just-placed run). Snapshot shows the palisade tiles themselves.
 	it._dragging = false
@@ -120,8 +150,11 @@ func run() -> void:
 	wood_before = inventory.count_of(Inventory.WOOD)
 	var vpf := _cell_vp(it, map, far)
 	it.build.update_preview(vpf, vpf)
-	if it.build.cells != [far] or it.build.cell_ok != [false] \
-			or "not adjacent" not in it.build.reasons:
+	if (
+		it.build.cells != [far]
+		or it.build.cell_ok != [false]
+		or "not adjacent" not in it.build.reasons
+	):
 		printerr("free_form_walls: gap cells=%s reasons=%s" % [it.build.cells, it.build.reasons])
 		done(false)
 		return
@@ -162,14 +195,21 @@ func _cell_vp(it: Interaction, map: TileMap, cell: Vector2i) -> Vector2:
 
 
 func _land_clear(map: TileMap, cell: Vector2i) -> bool:
-	return map.get_cell_source_id(0, cell) != -1 and map.predicted_clear(cell) \
-			and not map.has_wall(cell) and not map._structures.has_cell(cell) \
-			and not map.player_on_cell(cell) and not map.mob_on_cell(cell)
+	return (
+		map.get_cell_source_id(0, cell) != -1
+		and map.predicted_clear(cell)
+		and not map.has_wall(cell)
+		and not map._structures.has_cell(cell)
+		and not map.player_on_cell(cell)
+		and not map.mob_on_cell(cell)
+	)
 
 
 func _touches_support(map: TileMap, cell: Vector2i) -> bool:
 	## First wall block must 4-touch a tower, castle or wall (design decision for #276).
-	for n in [cell + Vector2i.LEFT, cell + Vector2i.RIGHT, cell + Vector2i.UP, cell + Vector2i.DOWN]:
+	for n in [
+		cell + Vector2i.LEFT, cell + Vector2i.RIGHT, cell + Vector2i.UP, cell + Vector2i.DOWN
+	]:
 		if map.has_wall(n) or map._structures.has_cell(n):
 			return true
 	return false
@@ -179,7 +219,12 @@ func _has_two_cell_run(it: Interaction, map: TileMap, cell0: Vector2i) -> bool:
 	for step_dir in [Vector2i.LEFT, Vector2i.UP, Vector2i.DOWN, Vector2i.RIGHT]:
 		var next: Vector2i = cell0 + step_dir
 		var end: Vector2i = cell0 + step_dir * 2
-		if _land_clear(map, next) and _land_clear(map, end) and it.in_reach(next) and it.in_reach(end):
+		if (
+			_land_clear(map, next)
+			and _land_clear(map, end)
+			and it.in_reach(next)
+			and it.in_reach(end)
+		):
 			return true
 	return false
 

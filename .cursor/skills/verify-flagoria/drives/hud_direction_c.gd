@@ -24,9 +24,7 @@ func run() -> void:
 	step("customize")
 	await click(MENU_BUTTON)
 	await click(CUSTOMIZE)
-	var ok := await wait_until(func() -> bool:
-		return root.get_node("HudLayout").editing()
-	, 3.0)
+	var ok := await wait_until(func() -> bool: return root.get_node("HudLayout").editing(), 3.0)
 	await snapshot("hud-disabled-edit")
 	done(ok and armed)
 

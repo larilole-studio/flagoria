@@ -4,7 +4,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## The client places a tower with StructureRequests. The host pins itself
 ## from a phase file (probe_out + ".phase": "in" or "out"). No timed sleep.
 
-
 var _place_error := ""
 var _want := Vector2.INF
 var _anchor := Vector2i.ZERO
@@ -51,7 +50,11 @@ func _run() -> void:
 		if host:
 			_park_mobs(main)
 			_stop_regen(main)
-			var phase := FileAccess.get_file_as_string(probe_out + ".phase").strip_edges() if FileAccess.file_exists(probe_out + ".phase") else ""
+			var phase := (
+				FileAccess.get_file_as_string(probe_out + ".phase").strip_edges()
+				if FileAccess.file_exists(probe_out + ".phase")
+				else ""
+			)
 			var info := _tower_wood(world)
 			if ready and not info.is_empty() and phase in ["in", "out"]:
 				var centre: Vector2 = world.to_global(world.map_to_local(info["flag"]))
@@ -66,7 +69,9 @@ func _run() -> void:
 						outside_health = hp
 					elif hp < outside_health:
 						dropped_outside = true
-					elif not dropped_outside and now - outside_since >= 2000 and hp >= outside_health:
+					elif (
+						not dropped_outside and now - outside_since >= 2000 and hp >= outside_health
+					):
 						held = true
 				else:
 					outside_since = 0
@@ -210,15 +215,23 @@ func _find_anchor(world) -> Variant:
 					continue
 				var anchor := spawn + Vector2i(dx, dy)
 				var one: Array[Vector2i] = [anchor]
-				if not ConstructionPlacer.new(world).can_place_geometry(BuildCosts.TOWER, one).is_empty():
+				if not (
+					ConstructionPlacer
+					. new(world)
+					. can_place_geometry(BuildCosts.TOWER, one)
+					. is_empty()
+				):
 					continue
 				var flag := anchor + Vector2i(0, -1)
 				var centre: Vector2 = world.to_global(world.map_to_local(flag))
 				var others := _other_flags(world, flag)
 				var dir := _away(centre, others)
-				if _corridor(world, flag, dir) and _clear_of(centre + dir * 48.0, others, 96.0) \
-						and _clear_of(centre + dir * 128.0, others, 96.0) \
-						and _clear_of(centre, others, 96.0):
+				if (
+					_corridor(world, flag, dir)
+					and _clear_of(centre + dir * 48.0, others, 96.0)
+					and _clear_of(centre + dir * 128.0, others, 96.0)
+					and _clear_of(centre, others, 96.0)
+				):
 					return anchor
 	return null
 
@@ -255,18 +268,20 @@ func _write(main, world, me: Node2D, held: bool, dropped_outside: bool) -> void:
 			if node is CharacterBody2D and str(node.name).is_valid_int():
 				players[str(node.name)] = [node.global_position.x, node.global_position.y]
 	var info := _tower_wood(world) if world != null else {}
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"self_health": _hp(me) if me != null else -1,
-		"host_health": host_health,
-		"want": [_want.x, _want.y] if _want != Vector2.INF else [],
-		"anchor": [_anchor.x, _anchor.y] if _chose else [],
-		"placed": _placed,
-		"tower_owner": int(info["owner"]) if not info.is_empty() else -1,
-		"held": held,
-		"dropped_outside": dropped_outside,
-		"players": players,
-		"place_error": _place_error,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"self_health": _hp(me) if me != null else -1,
+			"host_health": host_health,
+			"want": [_want.x, _want.y] if _want != Vector2.INF else [],
+			"anchor": [_anchor.x, _anchor.y] if _chose else [],
+			"placed": _placed,
+			"tower_owner": int(info["owner"]) if not info.is_empty() else -1,
+			"held": held,
+			"dropped_outside": dropped_outside,
+			"players": players,
+			"place_error": _place_error,
+			"errors": _errors.snapshot(),
+		}
+	)

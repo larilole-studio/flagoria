@@ -57,7 +57,11 @@ func due() -> Array[Vector2i]:
 	var out: Array[Vector2i] = []
 	if Interaction.multiplayer_on(_map.multiplayer) and not _map.multiplayer.is_server():
 		return out
-	var delay: float = _map.regrow_delay if _map.regrow_delay >= 0.0 else InteractableCatalog.by_id("tree").regrow_delay
+	var delay: float = (
+		_map.regrow_delay
+		if _map.regrow_delay >= 0.0
+		else InteractableCatalog.by_id("tree").regrow_delay
+	)
 	if delay <= 0.0:
 		_todo.clear()
 		return out
@@ -67,7 +71,11 @@ func due() -> Array[Vector2i]:
 		var windows: Array[Rect2i] = []
 		for node in _map.get_parent().get_children():
 			if node is CharacterBody2D and str(node.name).is_valid_int():
-				windows.append(Rect2i(_map.local_to_map(_map.to_local(node.global_position)) - size_v / 2, size_v))
+				windows.append(
+					Rect2i(
+						_map.local_to_map(_map.to_local(node.global_position)) - size_v / 2, size_v
+					)
+				)
 		if not _count_squares(windows, start) or _map.play_time < _next_pass or windows.is_empty():
 			return out
 		_next_pass = _map.play_time + TreeSprouts.PASS_SECONDS

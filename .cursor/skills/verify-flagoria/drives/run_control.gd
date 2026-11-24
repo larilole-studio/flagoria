@@ -59,12 +59,18 @@ func _snapshot_run_zoom(label: String) -> void:
 	var region := _scaled_pixels(run.get_global_rect(), scale, pad)
 	var attack := current_scene.get_node("CanvasLayer1/TouchScreenButton") as TouchScreenButton
 	if attack != null and attack.texture_normal != null:
-		var atk_rect := Rect2(attack.global_position, attack.texture_normal.get_size() * attack.scale)
+		var atk_rect := Rect2(
+			attack.global_position, attack.texture_normal.get_size() * attack.scale
+		)
 		region = region.merge(_scaled_pixels(atk_rect, scale, pad))
 	region = region.intersection(Rect2i(Vector2i.ZERO, img_size))
 	if region.size.x < 1 or region.size.y < 1:
-		printerr("drive: run zoom skipped empty %s (run %s img %s)"
-				% [region, run.get_global_rect(), img_size])
+		printerr(
+			(
+				"drive: run zoom skipped empty %s (run %s img %s)"
+				% [region, run.get_global_rect(), img_size]
+			)
+		)
 		return
 	var img := root.get_texture().get_image()
 	var crop := img.get_region(region)

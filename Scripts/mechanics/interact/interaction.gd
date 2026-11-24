@@ -110,8 +110,11 @@ static func multiplayer_on(api: MultiplayerAPI) -> bool:
 	## True for a client (connecting or connected) and for a host with at
 	## least one peer connected; false offline or when hosting alone.
 	var peer := api.multiplayer_peer
-	if peer == null or peer is OfflineMultiplayerPeer \
-			or peer.get_connection_status() == MultiplayerPeer.CONNECTION_DISCONNECTED:
+	if (
+		peer == null
+		or peer is OfflineMultiplayerPeer
+		or peer.get_connection_status() == MultiplayerPeer.CONNECTION_DISCONNECTED
+	):
 		return false
 	return not api.is_server() or not api.get_peers().is_empty()
 
@@ -232,7 +235,11 @@ func choppables_in_rect(rect: Rect2) -> Array[Vector2i]:
 	for y in range(mini(a.y, b.y), maxi(a.y, b.y) + 1):
 		for x in range(mini(a.x, b.x), maxi(a.x, b.x) + 1):
 			var cell := Vector2i(x, y)
-			if world_map.choppable(cell) and grown.has_point(cell_center(cell)) and chop_in_reach(cell):
+			if (
+				world_map.choppable(cell)
+				and grown.has_point(cell_center(cell))
+				and chop_in_reach(cell)
+			):
 				out.append(cell)
 	return out
 
@@ -259,10 +266,14 @@ func _facing_angle() -> float:
 	if player != null and "lastAnimDirection" in player:
 		facing = str(player.lastAnimDirection)
 	match facing:
-		"Up": return Vector2.UP.angle()
-		"Left": return Vector2.LEFT.angle()
-		"Right": return Vector2.RIGHT.angle()
-		_: return Vector2.DOWN.angle()
+		"Up":
+			return Vector2.UP.angle()
+		"Left":
+			return Vector2.LEFT.angle()
+		"Right":
+			return Vector2.RIGHT.angle()
+		_:
+			return Vector2.DOWN.angle()
 
 
 func _pick_flowers_in_sweep() -> void:
@@ -275,7 +286,9 @@ func _pick_flowers_in_sweep() -> void:
 func _pick_flowers_in_arc(direction: float, reach: float) -> void:
 	if player == null or mode != Mode.INTERACT:
 		return
-	world_map._object_removals.cells_in_arc(player.global_position, direction, reach, CHOP_ARC, false)
+	world_map._object_removals.cells_in_arc(
+		player.global_position, direction, reach, CHOP_ARC, false
+	)
 
 
 func chopping() -> bool:
@@ -308,8 +321,13 @@ func _cut(cell: Vector2i) -> bool:
 		if cut != null:
 			receive_yields(cell, cut.yields)
 		return cut != null
-	if world_map.choppable(cell) == null \
-			or multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+	if (
+		world_map.choppable(cell) == null
+		or (
+			multiplayer.multiplayer_peer.get_connection_status()
+			!= MultiplayerPeer.CONNECTION_CONNECTED
+		)
+	):
 		return false
 	_chop.ask_host(cell)
 	return false
@@ -335,7 +353,11 @@ func request_cut(cell: Vector2i) -> void:
 	if not cut_limit.allow(peer):
 		return
 	var cutter := get_node_or_null("../" + str(peer)) as Node2D
-	var near := cutter != null and not player_dead(cutter) and cutter.global_position.distance_to(cell_center(cell)) <= CHOP_REACH + REACH_SLACK
+	var near := (
+		cutter != null
+		and not player_dead(cutter)
+		and cutter.global_position.distance_to(cell_center(cell)) <= CHOP_REACH + REACH_SLACK
+	)
 	var type: InteractableType = host_cut(cell) if near else null
 	if type == null:
 		refuse_cut.rpc_id(peer, cell)
@@ -413,7 +435,11 @@ func host_place_planks(cells: Array[Vector2i], peer_id: int) -> bool:
 	## Host: write the plank run for `peer_id`, send it to every other peer,
 	## and charge that peer. When the host places for itself, spend and write
 	## stay atomic through ConstructionPlacer.place.
-	if not multiplayer.is_server() or cells.is_empty() or cells.size() > ConstructionPlacer.MAX_PLANK_RUN:
+	if (
+		not multiplayer.is_server()
+		or cells.is_empty()
+		or cells.size() > ConstructionPlacer.MAX_PLANK_RUN
+	):
 		return false
 	var placer_node := get_node_or_null("../" + str(peer_id)) as Node2D
 	if placer_node == null or player_dead(placer_node):
@@ -483,7 +509,9 @@ func _draw() -> void:
 		var sweep := chop_sweep()
 		if not sweep.is_empty():
 			var origin := to_local(player.global_position)
-			var points := ChopAction.cone_points(origin, float(sweep["direction"]), float(sweep["reach"]))
+			var points := ChopAction.cone_points(
+				origin, float(sweep["direction"]), float(sweep["reach"])
+			)
 			draw_colored_polygon(points, FILL_COLOR)
 			points.append(origin)
 			draw_polyline(points, LINE_COLOR, 1.0)

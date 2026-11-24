@@ -38,8 +38,13 @@ func run() -> void:
 	await _touch(0, a, false)
 	await _touch(1, narrow, false)
 	print("map zoom: window %s, factor 1.0 -> %s -> %s" % [root.size, zoom_in, zoom_out])
-	ok = ok and rendered_in and rendered_out \
-			and is_equal_approx(zoom_in, 2.0) and is_equal_approx(zoom_out, 0.75)
+	ok = (
+		ok
+		and rendered_in
+		and rendered_out
+		and is_equal_approx(zoom_in, 2.0)
+		and is_equal_approx(zoom_out, 0.75)
+	)
 	ok = ok and hud.get_node("player_joystick").ongoing_drag == -1
 
 	step("parchment")
@@ -53,17 +58,30 @@ func run() -> void:
 	var sheet_zoomed := parchment.cell_px > default_cell_px
 	await _touch(0, a, false)
 	await _touch(1, wide, false)
-	print("map zoom: parchment open %s, sheet %s -> %s px, camera factor %s"
-			% [opened, default_cell_px, parchment.cell_px, camera.zoom.x / default_zoom.x])
+	print(
+		(
+			"map zoom: parchment open %s, sheet %s -> %s px, camera factor %s"
+			% [opened, default_cell_px, parchment.cell_px, camera.zoom.x / default_zoom.x]
+		)
+	)
 	await click("CanvasLayer1/ParchmentMap/CloseButton")
-	done(ok and opened and sheet_zoomed and not parchment.is_open()
-			and is_equal_approx(camera.zoom.x / default_zoom.x, zoom_out))
+	done(
+		(
+			ok
+			and opened
+			and sheet_zoomed
+			and not parchment.is_open()
+			and is_equal_approx(camera.zoom.x / default_zoom.x, zoom_out)
+		)
+	)
 
 
 func _camera_settled(camera: Camera2D) -> bool:
-	return await wait_until(func() -> bool:
-		return is_equal_approx(camera.get_canvas_transform().get_scale().x, camera.zoom.x)
-	, 2.0)
+	return await wait_until(
+		func() -> bool:
+			return is_equal_approx(camera.get_canvas_transform().get_scale().x, camera.zoom.x),
+		2.0
+	)
 
 
 func _touch(index: int, at: Vector2, pressed: bool) -> void:

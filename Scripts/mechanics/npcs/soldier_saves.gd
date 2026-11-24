@@ -11,15 +11,20 @@ static func capture(game: Node) -> Array:
 	for child in soldiers.get_children():
 		if child is Soldier and child.state != Soldier.State.DYING:
 			var s := child as Soldier
-			out.append({
-				"name": str(s.name),
-				"pos": [s.position.x, s.position.y],
-				"owner": s.owner_peer,
-				"order": s.order,
-				"hp": s.hp,
-				"barracks_anchor": [s.barracks_anchor.x, s.barracks_anchor.y],
-				"seed": s.spawn_seed,
-			})
+			(
+				out
+				. append(
+					{
+						"name": str(s.name),
+						"pos": [s.position.x, s.position.y],
+						"owner": s.owner_peer,
+						"order": s.order,
+						"hp": s.hp,
+						"barracks_anchor": [s.barracks_anchor.x, s.barracks_anchor.y],
+						"seed": s.spawn_seed,
+					}
+				)
+			)
 	return out
 
 
@@ -45,7 +50,10 @@ static func _barracks_exists(world: TileMap, row: Dictionary) -> bool:
 	var anchor := Vector2i(int(anchor_arr[0]), int(anchor_arr[1]))
 	var owner := int(row.get("owner", 0))
 	for entry in world.placed_structures().values():
-		if str(entry.get("name")) == "barracks" and int(entry.get("owner")) == owner \
-				and entry.get("anchor", Vector2i.ZERO) == anchor:
+		if (
+			str(entry.get("name")) == "barracks"
+			and int(entry.get("owner")) == owner
+			and entry.get("anchor", Vector2i.ZERO) == anchor
+		):
 			return true
 	return false

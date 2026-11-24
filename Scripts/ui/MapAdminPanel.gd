@@ -14,7 +14,9 @@ signal start_host_requested
 @onready var noise_type_opt: OptionButton = $Margin/VBox/Scroll/Form/NoiseTypeRow/NoiseType
 
 ## Fields with their own controls in Scripts/ui/map_admin_panel.tscn.
-const HAND_WIRED := ["altitude_seed", "moisture_seed", "temperature_seed", "items_seed", "biome_seed", "noise_type"]
+const HAND_WIRED := [
+	"altitude_seed", "moisture_seed", "temperature_seed", "items_seed", "biome_seed", "noise_type"
+]
 ## Abbreviations in property names, spelled out in row labels.
 const LABEL_WORDS := {"alt": "altitude"}
 
@@ -33,17 +35,21 @@ var _checks: Dictionary = {}
 func _ready() -> void:
 	_island_size = _add_choice("IslandSize", "Island size", MapGenParams.SIZE_LABELS)
 	_biome_size = _add_choice("BiomeSize", "Biome size", MapGenParams.SIZE_LABELS)
-	_spawn_biome = _add_choice("SpawnBiome", "Spawn biome",
-			["Any", "Oceanic", "Temperate", "Continental", "Dense archipelago"])
+	_spawn_biome = _add_choice(
+		"SpawnBiome",
+		"Spawn biome",
+		["Any", "Oceanic", "Temperate", "Continental", "Dense archipelago"]
+	)
 	_island_size.item_selected.connect(_select_island_size)
 	_biome_size.item_selected.connect(_select_biome_size)
 	_spawn_biome.item_selected.connect(func(choice: int): _draft.spawn_biome = choice - 1)
 	advanced.toggled.connect(_toggle_advanced)
-	visibility_changed.connect(func():
-		if not visible:
-			advanced.set_pressed_no_signal(false)
-			scroll.hide()
-			simple.show()
+	visibility_changed.connect(
+		func():
+			if not visible:
+				advanced.set_pressed_no_signal(false)
+				scroll.hide()
+				simple.show()
 	)
 	_build_extra_controls(get_node("/root/MapGen").params)
 	_build_generate_button()
@@ -146,7 +152,14 @@ func _build_extra_controls(params: MapGenParams) -> void:
 			_add_int(key, _label_for(key), bounds[0].to_int(), bounds[1].to_int(), params.get(key))
 		elif prop["type"] == TYPE_FLOAT:
 			var step := bounds[2].to_float() if bounds.size() > 2 else 0.0
-			_add_float(key, _label_for(key), bounds[0].to_float(), bounds[1].to_float(), step, params.get(key))
+			_add_float(
+				key,
+				_label_for(key),
+				bounds[0].to_float(),
+				bounds[1].to_float(),
+				step,
+				params.get(key)
+			)
 
 
 func _label_for(key: String) -> String:
@@ -159,7 +172,9 @@ func _label_for(key: String) -> String:
 	return text[0].to_upper() + text.substr(1)
 
 
-func _add_float(key: String, label_text: String, min_v: float, max_v: float, step: float, default_v: float) -> void:
+func _add_float(
+	key: String, label_text: String, min_v: float, max_v: float, step: float, default_v: float
+) -> void:
 	var spin := SpinBox.new()
 	spin.min_value = min_v
 	spin.max_value = max_v
@@ -289,7 +304,9 @@ func _on_random_specs_pressed() -> void:
 		params.randomize_seeds()
 		params.set_island_size(randi() % MapGenParams.SIZE_LABELS.size())
 		params.set_biome_size(randi() % MapGenParams.SIZE_LABELS.size())
-		params.spawn_biome = randi_range(MapGenParams.ANY_SPAWN_BIOME, BiomeCatalog.ARCHIPELAGO_DENSE)
+		params.spawn_biome = randi_range(
+			MapGenParams.ANY_SPAWN_BIOME, BiomeCatalog.ARCHIPELAGO_DENSE
+		)
 	load_from_params(get_node("/root/MapGen").params)
 
 

@@ -14,14 +14,24 @@ func _test_join_fail_host_quits() -> int:
 		printerr("FAIL join_fail_host_quits found no free UDP port")
 		return 1
 	var output := []
-	var code := OS.execute(
-		OS.get_executable_path(),
-		[
-			"--headless", "--path", ProjectSettings.globalize_path("res://"), "--quit-after", "20000",
-			"--script", "res://tests/join_fail_probe.gd", "--", "--port=%d" % port,
-		],
-		output,
-		true
+	var code := (
+		OS
+		. execute(
+			OS.get_executable_path(),
+			[
+				"--headless",
+				"--path",
+				ProjectSettings.globalize_path("res://"),
+				"--quit-after",
+				"20000",
+				"--script",
+				"res://tests/join_fail_probe.gd",
+				"--",
+				"--port=%d" % port,
+			],
+			output,
+			true
+		)
 	)
 	var log_text: String = "".join(output)
 	if code != 0 or not log_text.contains("JOIN_FAIL_PROBE_OK"):

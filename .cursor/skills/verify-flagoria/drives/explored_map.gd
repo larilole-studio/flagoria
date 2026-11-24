@@ -43,20 +43,34 @@ func run() -> void:
 	ok = ok and parchment.explored_fully_visible()
 	await snapshot("parchment-zoom-min-phone")
 	ok = ok and parchment.cell_px < parchment.DEFAULT_CELL_PX
-	var anchor_before := parchment.map_pixel_at_view(parchment.hero_view_focus()) / float(parchment.cell_px)
+	var anchor_before := (
+		parchment.map_pixel_at_view(parchment.hero_view_focus()) / float(parchment.cell_px)
+	)
 	for _i in parchment.MAX_CELL_PX - parchment.cell_px:
 		await _wheel(parchment, parchment.hero_screen_position(), true)
 	ok = ok and parchment.cell_px == parchment.MAX_CELL_PX
-	var anchor_after := parchment.map_pixel_at_view(parchment.hero_view_focus()) / float(parchment.cell_px)
+	var anchor_after := (
+		parchment.map_pixel_at_view(parchment.hero_view_focus()) / float(parchment.cell_px)
+	)
 	ok = ok and anchor_before.distance_to(anchor_after) < 0.05
 	await snapshot("parchment-zoom-max-phone")
 	await _drag(PARCHMENT, Vector2(40, 30))
 	await click("CanvasLayer1/ParchmentMap/RecentreButton")
 	ok = ok and parchment.pan == Vector2.ZERO and parchment.cell_px == parchment.MAX_CELL_PX
 	await snapshot("parchment-recentred-phone")
-	print("explored_map: zoom default %s min %s max %s px %s visible %s window %s"
-			% [parchment.DEFAULT_CELL_PX, parchment.min_cell_px(), parchment.MAX_CELL_PX,
-			parchment.cell_px, parchment.explored_fully_visible(), DisplayServer.window_get_size()])
+	print(
+		(
+			"explored_map: zoom default %s min %s max %s px %s visible %s window %s"
+			% [
+				parchment.DEFAULT_CELL_PX,
+				parchment.min_cell_px(),
+				parchment.MAX_CELL_PX,
+				parchment.cell_px,
+				parchment.explored_fully_visible(),
+				DisplayServer.window_get_size()
+			]
+		)
+	)
 	await _resize(1280, 720)
 
 	step("input-blocked")
@@ -109,7 +123,12 @@ func run() -> void:
 	await snapshot("parchment-phone-portrait")
 	await click(CLOSE)
 	ok = ok and await wait_until(func() -> bool: return not parchment.is_open(), 2.0)
-	print("explored_map: phone portrait window %s ok so far %s" % [DisplayServer.window_get_size(), ok])
+	print(
+		(
+			"explored_map: phone portrait window %s ok so far %s"
+			% [DisplayServer.window_get_size(), ok]
+		)
+	)
 
 	done(ok)
 

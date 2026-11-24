@@ -66,8 +66,10 @@ func _test_biomes() -> int:
 					dense_active += 1
 	if oceanic_total < 5 or dense_total < 5:
 		printerr(
-			"FAIL biomes: not enough squares to compare density (oceanic=%s dense=%s)"
-			% [oceanic_total, dense_total]
+			(
+				"FAIL biomes: not enough squares to compare density (oceanic=%s dense=%s)"
+				% [oceanic_total, dense_total]
+			)
 		)
 		fail += 1
 	else:
@@ -75,8 +77,10 @@ func _test_biomes() -> int:
 		var dense_rate := float(dense_active) / float(dense_total)
 		if oceanic_rate >= dense_rate:
 			printerr(
-				"FAIL biomes: oceanic keep rate %s should be below dense/temperate %s"
-				% [oceanic_rate, dense_rate]
+				(
+					"FAIL biomes: oceanic keep rate %s should be below dense/temperate %s"
+					% [oceanic_rate, dense_rate]
+				)
 			)
 			fail += 1
 	if not world.archipelago_square_active(Vector2i.ZERO):
@@ -93,7 +97,13 @@ func _test_biomes() -> int:
 	var probe_sq := Vector2i.ZERO
 	for sq in range(1, 6561):
 		var cand := Vector2i(sq % 81 - 40, sq / 81 - 40)
-		if cand != Vector2i.ZERO and world.biome_at(cand * params.archipelago_spacing + Vector2i(32, 32)) == BiomeCatalog.OCEANIC:
+		if (
+			cand != Vector2i.ZERO
+			and (
+				world.biome_at(cand * params.archipelago_spacing + Vector2i(32, 32))
+				== BiomeCatalog.OCEANIC
+			)
+		):
 			probe_sq = cand
 			break
 	if probe_sq == Vector2i.ZERO:
@@ -119,8 +129,10 @@ func _test_biomes() -> int:
 
 	if fail == 0:
 		print(
-			"PASS test_biomes biomes=%s oceanic=%s/%s dense=%s/%s"
-			% [seen.keys(), oceanic_active, oceanic_total, dense_active, dense_total]
+			(
+				"PASS test_biomes biomes=%s oceanic=%s/%s dense=%s/%s"
+				% [seen.keys(), oceanic_active, oceanic_total, dense_active, dense_total]
+			)
 		)
 	scene.queue_free()
 	return 1 if fail > 0 else 0
@@ -141,20 +153,35 @@ func _test_biome_terrain() -> int:
 	# Biomes off: whole chunks (ground, foliage, flowers) match the pinned output.
 	var pinned := [
 		[false, Vector2i(0, 0), "4a7103339044da353bf128a570a6b8506d097f1291be80fbda00ceb437033b3b"],
-		[false, Vector2i(3000, -1500), "6a6838e851abf7d653106c9b7139b4a80e1f1bd535e29cf476c3a89124e8d326"],
+		[
+			false,
+			Vector2i(3000, -1500),
+			"6a6838e851abf7d653106c9b7139b4a80e1f1bd535e29cf476c3a89124e8d326"
+		],
 		[true, Vector2i(0, 0), "9762504699b26ebed58581bc9567a45e9d7f4f983d90f465840154fda30a4acd"],
-		[true, Vector2i(3000, -1500), "271a429d29307df3a81247140b55603b1cd6dc53d6098a6db5d8abdda2a953e8"],
+		[
+			true,
+			Vector2i(3000, -1500),
+			"271a429d29307df3a81247140b55603b1cd6dc53d6098a6db5d8abdda2a953e8"
+		],
 	]
 	for pin in pinned:
 		world.apply_map_params(_biome_terrain_params(pin[0]))
 		world.generate_chunk(world.map_to_local(pin[1]))
 		var got := _chunk_digest(world, pin[1], 96)
 		if got != pin[2]:
-			printerr("FAIL biome_terrain: frequency 0 archipelago=%s at %s changed (digest %s)" % [pin[0], pin[1], got])
+			printerr(
+				(
+					"FAIL biome_terrain: frequency 0 archipelago=%s at %s changed (digest %s)"
+					% [pin[0], pin[1], got]
+				)
+			)
 			fail += 1
 	# Biomes off: the biome id passed in is ignored.
 	for b in BiomeCatalog.TERRAIN:
-		for c in [[0.22, 0.5, 0.5], [0.24, 0.5, 0.5], [0.28, 0.5, 0.5], [0.5, -0.1, 0.5], [0.5, 0.1, -0.5]]:
+		for c in [
+			[0.22, 0.5, 0.5], [0.24, 0.5, 0.5], [0.28, 0.5, 0.5], [0.5, -0.1, 0.5], [0.5, 0.1, -0.5]
+		]:
 			var want: Vector2i = world.ground_tile(c[0], c[1], c[2])
 			if world.ground_tile(c[0], c[1], c[2], b) != want:
 				printerr("FAIL biome_terrain: frequency 0 biome %s changed ground at %s" % [b, c])
@@ -204,7 +231,12 @@ func _test_biome_terrain() -> int:
 		var got1: Vector2i = world.get_cell_atlas_coords(1, d[1])
 		var got2: Vector2i = world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, d[1])
 		if got1 != d[5] or got2 != d[6]:
-			printerr("FAIL biome_terrain decor=%s got l1=%s l2=%s want %s %s" % [d[0], got1, got2, d[5], d[6]])
+			printerr(
+				(
+					"FAIL biome_terrain decor=%s got l1=%s l2=%s want %s %s"
+					% [d[0], got1, got2, d[5], d[6]]
+				)
+			)
 			fail += 1
 
 	# Over a wide area: swamp share of land is highest in ARCHIPELAGO_DENSE and
@@ -220,8 +252,12 @@ func _test_biome_terrain() -> int:
 		for y in range(-2048, 2048, 16):
 			var cell := Vector2i(x, y)
 			var b: int = world.biome_at(cell)
-			var tile: Vector2i = world.ground_tile(world.cell_altitude(cell, b),
-				world.moisture.get_noise_2d(x, y), world.items_chance.get_noise_2d(x, y), b)
+			var tile: Vector2i = world.ground_tile(
+				world.cell_altitude(cell, b),
+				world.moisture.get_noise_2d(x, y),
+				world.items_chance.get_noise_2d(x, y),
+				b
+			)
 			if tile == TileCatalog.WATER:
 				continue
 			land[b] += 1
@@ -229,7 +265,8 @@ func _test_biome_terrain() -> int:
 				sand[b] += 1
 			elif tile == TileCatalog.SWAMP or tile == TileCatalog.SWAMP_SPECIAL:
 				swamp[b] += 1
-	var share := func(d: Dictionary, b: int) -> float: return float(d[b]) / maxf(1.0, float(land[b]))
+	var share := func(d: Dictionary, b: int) -> float:
+		return float(d[b]) / maxf(1.0, float(land[b]))
 	for b in land:
 		if land[b] < 20:
 			printerr("FAIL biome_terrain: biome %s has only %s land samples" % [b, land[b]])
@@ -237,11 +274,27 @@ func _test_biome_terrain() -> int:
 	var ocean := BiomeCatalog.OCEANIC
 	var cont := BiomeCatalog.CONTINENTAL
 	var dense := BiomeCatalog.ARCHIPELAGO_DENSE
-	if not (share.call(swamp, dense) > share.call(swamp, T) and share.call(swamp, T) > share.call(swamp, cont)):
-		printerr("FAIL biome_terrain: swamp shares dense=%s temperate=%s continental=%s" % [share.call(swamp, dense), share.call(swamp, T), share.call(swamp, cont)])
+	if not (
+		share.call(swamp, dense) > share.call(swamp, T)
+		and share.call(swamp, T) > share.call(swamp, cont)
+	):
+		printerr(
+			(
+				"FAIL biome_terrain: swamp shares dense=%s temperate=%s continental=%s"
+				% [share.call(swamp, dense), share.call(swamp, T), share.call(swamp, cont)]
+			)
+		)
 		fail += 1
-	if not (share.call(sand, ocean) > share.call(sand, T) and share.call(sand, T) > share.call(sand, cont)):
-		printerr("FAIL biome_terrain: sand shares oceanic=%s temperate=%s continental=%s" % [share.call(sand, ocean), share.call(sand, T), share.call(sand, cont)])
+	if not (
+		share.call(sand, ocean) > share.call(sand, T)
+		and share.call(sand, T) > share.call(sand, cont)
+	):
+		printerr(
+			(
+				"FAIL biome_terrain: sand shares oceanic=%s temperate=%s continental=%s"
+				% [share.call(sand, ocean), share.call(sand, T), share.call(sand, cont)]
+			)
+		)
 		fail += 1
 
 	if fail == 0:
@@ -298,7 +351,10 @@ func _test_biome_plants() -> int:
 			var alt0: float = world.cell_altitude(cell, cont)
 			var moist0: float = world.moisture.get_noise_2d(x, y)
 			var chance0: float = world.items_chance.get_noise_2d(x, y)
-			if BirchTrees.foliage_tile(world, cell, alt0, moist0, chance0, cont, false) == TileCatalog.TREE_BIRCH_BOTTOM:
+			if (
+				BirchTrees.foliage_tile(world, cell, alt0, moist0, chance0, cont, false)
+				== TileCatalog.TREE_BIRCH_BOTTOM
+			):
 				birch_cell = cell
 				break
 		if birch_cell != Vector2i.ZERO:
@@ -311,7 +367,10 @@ func _test_biome_plants() -> int:
 		var bm: float = world.moisture.get_noise_2d(birch_cell.x, birch_cell.y)
 		var bc: float = world.items_chance.get_noise_2d(birch_cell.x, birch_cell.y)
 		for other in [T, ocean, dense]:
-			if BirchTrees.foliage_tile(world, birch_cell, ba, bm, bc, other, false) == TileCatalog.TREE_BIRCH_BOTTOM:
+			if (
+				BirchTrees.foliage_tile(world, birch_cell, ba, bm, bc, other, false)
+				== TileCatalog.TREE_BIRCH_BOTTOM
+			):
 				printerr("FAIL biome_plants: birch grew outside continental (biome %s)" % other)
 				fail += 1
 		var top_ok := BirchTrees.top_cell(birch_cell)
@@ -320,9 +379,18 @@ func _test_biome_plants() -> int:
 			printerr("FAIL biome_plants: birch top on water allowed")
 			fail += 1
 		world.erase_cell(0, top_ok)
-		if BirchTrees.foliage_tile(world, top_ok, world.cell_altitude(top_ok, cont),
+		if (
+			BirchTrees.foliage_tile(
+				world,
+				top_ok,
+				world.cell_altitude(top_ok, cont),
 				world.moisture.get_noise_2d(top_ok.x, top_ok.y),
-				world.items_chance.get_noise_2d(top_ok.x, top_ok.y), cont, false) != TileCatalog.TREE_BIRCH_TOP:
+				world.items_chance.get_noise_2d(top_ok.x, top_ok.y),
+				cont,
+				false
+			)
+			!= TileCatalog.TREE_BIRCH_TOP
+		):
 			printerr("FAIL biome_plants: birch top missing above bottom")
 			fail += 1
 
@@ -361,7 +429,10 @@ func _test_biome_plants() -> int:
 			var bb: float = world.cell_altitude(birch_cell, cont)
 			var bch: float = world.items_chance.get_noise_2d(birch_cell.x, birch_cell.y)
 			var bmo: float = world.moisture.get_noise_2d(birch_cell.x, birch_cell.y)
-			if BirchTrees.foliage_tile(world, birch_cell, bb, bmo, bch, cont, false) != TileCatalog.TREE:
+			if (
+				BirchTrees.foliage_tile(world, birch_cell, bb, bmo, bch, cont, false)
+				!= TileCatalog.TREE
+			):
 				printerr("FAIL biome_plants: pre-birch save grew birches")
 				fail += 1
 	# A save from after swamp scrub but before swamp trees keeps scrub only.
@@ -374,16 +445,21 @@ func _test_biome_plants() -> int:
 	DirAccess.remove_absolute(path)
 	world.apply_map_params(loaded["params"])
 	if loaded["error"] != "" or world.plant_tile(0.6, -0.1, 0.5, dense) != TileCatalog.BUSH:
-		printerr("FAIL biome_plants: pre-swamp-tree save grew swamp trees (error=%s)" % loaded["error"])
+		printerr(
+			"FAIL biome_plants: pre-swamp-tree save grew swamp trees (error=%s)" % loaded["error"]
+		)
 		fail += 1
 	var saved = MapSave.save_map(older, "test_pine_save")
 	var reloaded = MapSave.load_map(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
-	if reloaded["error"] != "" or reloaded["params"].pine_min_chance != older.pine_min_chance \
-			or reloaded["params"].bushy_tree_min_moist != older.bushy_tree_min_moist \
-			or reloaded["params"].swamp_bush_min_chance != older.swamp_bush_min_chance \
-			or reloaded["params"].birch_min_chance != older.birch_min_chance \
-			or not reloaded["params"].swamp_trees:
+	if (
+		reloaded["error"] != ""
+		or reloaded["params"].pine_min_chance != older.pine_min_chance
+		or reloaded["params"].bushy_tree_min_moist != older.bushy_tree_min_moist
+		or reloaded["params"].swamp_bush_min_chance != older.swamp_bush_min_chance
+		or reloaded["params"].birch_min_chance != older.birch_min_chance
+		or not reloaded["params"].swamp_trees
+	):
 		printerr("FAIL biome_plants: pine save reloaded error=%s" % reloaded["error"])
 		fail += 1
 
@@ -416,7 +492,12 @@ func _test_biome_structures() -> int:
 	for b in BiomeCatalog.STRUCTURES:
 		for chance in [-0.5, 0.0, 0.4, 0.9]:
 			if world.structure_tile(chance, b) != NONE:
-				printerr("FAIL biome_structures: frequency 0 biome %s placed stones at chance=%s" % [b, chance])
+				printerr(
+					(
+						"FAIL biome_structures: frequency 0 biome %s placed stones at chance=%s"
+						% [b, chance]
+					)
+				)
 				fail += 1
 
 	var on := _biome_terrain_params(true)
@@ -461,7 +542,12 @@ func _test_biome_structures() -> int:
 		var got1: Vector2i = world.get_cell_atlas_coords(1, d[1])
 		var got2: Vector2i = world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, d[1])
 		if got1 != d[6] or got2 != d[7]:
-			printerr("FAIL biome_structures decor=%s got l1=%s l2=%s want %s %s" % [d[0], got1, got2, d[6], d[7]])
+			printerr(
+				(
+					"FAIL biome_structures decor=%s got l1=%s l2=%s want %s %s"
+					% [d[0], got1, got2, d[6], d[7]]
+				)
+			)
 			fail += 1
 
 	if fail == 0:
@@ -499,10 +585,20 @@ func _test_new_world_biomes_on() -> int:
 	scene.queue_free()
 	# Every biome is a real share of the world, not a sliver: at the default
 	# biome_edge each one covers at least a tenth of a 4096-tile area.
-	for b in [BiomeCatalog.OCEANIC, BiomeCatalog.TEMPERATE, BiomeCatalog.CONTINENTAL, BiomeCatalog.ARCHIPELAGO_DENSE]:
+	for b in [
+		BiomeCatalog.OCEANIC,
+		BiomeCatalog.TEMPERATE,
+		BiomeCatalog.CONTINENTAL,
+		BiomeCatalog.ARCHIPELAGO_DENSE
+	]:
 		var share := float(seen.get(b, 0)) / float(samples)
 		if share < 0.1:
-			printerr("FAIL new_world_biomes_on: biome %s covers %.1f %% of a 4096-tile area" % [b, share * 100.0])
+			printerr(
+				(
+					"FAIL new_world_biomes_on: biome %s covers %.1f %% of a 4096-tile area"
+					% [b, share * 100.0]
+				)
+			)
 			fail += 1
 
 	# biome_edge sets the outer cut-offs; 0.5 is the cut-off before the field.
@@ -519,7 +615,9 @@ func _test_new_world_biomes_on() -> int:
 	for c in edge_cases:
 		var got := BiomeCatalog.from_noise(c[0], c[1])
 		if got != c[2]:
-			printerr("FAIL new_world_biomes_on: from_noise(%s, %s)=%s want %s" % [c[0], c[1], got, c[2]])
+			printerr(
+				"FAIL new_world_biomes_on: from_noise(%s, %s)=%s want %s" % [c[0], c[1], got, c[2]]
+			)
 			fail += 1
 
 	var legacy := _pre_biome_defaults()
@@ -535,7 +633,12 @@ func _test_new_world_biomes_on() -> int:
 	var loaded = MapSave.load_map(path)
 	DirAccess.remove_absolute(path)
 	if loaded["error"] != "" or loaded["params"].biome_frequency != 0.0:
-		printerr("FAIL new_world_biomes_on: pre-biome save loaded error=%s biome_frequency=%s" % [loaded["error"], loaded["params"].biome_frequency if loaded["params"] else null])
+		printerr(
+			(
+				"FAIL new_world_biomes_on: pre-biome save loaded error=%s biome_frequency=%s"
+				% [loaded["error"], loaded["params"].biome_frequency if loaded["params"] else null]
+			)
+		)
 		fail += 1
 
 	var current := MapGenParams.make_defaults()
@@ -543,8 +646,11 @@ func _test_new_world_biomes_on() -> int:
 	var saved = MapSave.save_map(current, "test_biome_save")
 	var reloaded = MapSave.load_map(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
-	if reloaded["error"] != "" or reloaded["params"].biome_frequency != current.biome_frequency \
-			or reloaded["params"].biome_edge != current.biome_edge:
+	if (
+		reloaded["error"] != ""
+		or reloaded["params"].biome_frequency != current.biome_frequency
+		or reloaded["params"].biome_edge != current.biome_edge
+	):
 		printerr("FAIL new_world_biomes_on: biome save reloaded error=%s" % reloaded["error"])
 		fail += 1
 
@@ -560,8 +666,11 @@ func _test_new_world_biomes_on() -> int:
 	edge_file.close()
 	var edge_loaded = MapSave.load_map(edge_path)
 	DirAccess.remove_absolute(edge_path)
-	if edge_loaded["error"] != "" or edge_loaded["params"].biome_edge != 0.5 \
-			or edge_loaded["params"].biome_frequency != pre_edge.biome_frequency:
+	if (
+		edge_loaded["error"] != ""
+		or edge_loaded["params"].biome_edge != 0.5
+		or edge_loaded["params"].biome_frequency != pre_edge.biome_frequency
+	):
 		printerr("FAIL new_world_biomes_on: pre-edge save loaded error=%s" % edge_loaded["error"])
 		fail += 1
 	if fail == 0:

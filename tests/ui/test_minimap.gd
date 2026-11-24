@@ -64,8 +64,12 @@ func _test_minimap_incremental_render() -> int:
 				ink += int(c == MapChart.INK)
 				water += int(c == MapChart.SKY or c == MapChart.SKY_DEEP)
 	if ink == 0 or water == 0 or chart.explored.chunks().size() < 6:
-		printerr("FAIL minimap_incremental_render: walk too plain (%d ink, %d water px, %d chunks)"
-				% [ink, water, chart.explored.chunks().size()])
+		printerr(
+			(
+				"FAIL minimap_incremental_render: walk too plain (%d ink, %d water px, %d chunks)"
+				% [ink, water, chart.explored.chunks().size()]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -89,20 +93,37 @@ func _test_explored_map() -> int:
 	if map.explored_count() != 317:  # lattice points with x^2 + y^2 <= 100
 		printerr("FAIL explored_map %s cells explored, want 317" % map.explored_count())
 		fail += 1
-	for c in [[Vector2i(10, 0), true], [Vector2i(-10, 0), true], [Vector2i(8, -6), true],
-			[Vector2i(-8, 7), false], [Vector2i(11, 0), false], [Vector2i(0, -11), false]]:
+	for c in [
+		[Vector2i(10, 0), true],
+		[Vector2i(-10, 0), true],
+		[Vector2i(8, -6), true],
+		[Vector2i(-8, 7), false],
+		[Vector2i(11, 0), false],
+		[Vector2i(0, -11), false]
+	]:
 		if map.is_explored(c[0]) != c[1]:
 			printerr("FAIL explored_map is_explored(%s) != %s" % c)
 			fail += 1
-	if ExploredMap.chunk_of(Vector2i(-1, -33)) != Vector2i(-1, -2) or ExploredMap.chunk_of(Vector2i(31, 32)) != Vector2i(0, 1):
+	if (
+		ExploredMap.chunk_of(Vector2i(-1, -33)) != Vector2i(-1, -2)
+		or ExploredMap.chunk_of(Vector2i(31, 32)) != Vector2i(0, 1)
+	):
 		printerr("FAIL explored_map chunk_of")
 		fail += 1
-	if map.chunk_bits(Vector2i.ZERO).size() != ExploredMap.CHUNK_BYTES or not map.chunk_bits(Vector2i(5, 5)).is_empty():
+	if (
+		map.chunk_bits(Vector2i.ZERO).size() != ExploredMap.CHUNK_BYTES
+		or not map.chunk_bits(Vector2i(5, 5)).is_empty()
+	):
 		printerr("FAIL explored_map chunk_bits sizes")
 		fail += 1
 	var again := map.reveal(Vector2i.ZERO)
 	var step := map.reveal(Vector2i(1, 0))  # only the new east edge, all at x >= 0
-	if not again.is_empty() or step.size() != 2 or not Vector2i(0, -1) in step or not Vector2i(0, 0) in step:
+	if (
+		not again.is_empty()
+		or step.size() != 2
+		or not Vector2i(0, -1) in step
+		or not Vector2i(0, 0) in step
+	):
 		printerr("FAIL explored_map repeat reveal changed chunks")
 		fail += 1
 	map.clear()

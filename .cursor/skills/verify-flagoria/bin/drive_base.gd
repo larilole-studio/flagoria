@@ -65,8 +65,10 @@ func run() -> void:
 func start_game() -> bool:
 	if change_scene_to_file(MAIN) != OK:
 		return _fail("cannot load " + MAIN)
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(HOST_BUTTON), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON),
+		START_TIMEOUT_S
+	):
 		return _fail("no " + HOST_BUTTON)
 	await click(HOST_BUTTON)
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
@@ -189,7 +191,12 @@ func wait_until(predicate: Callable, timeout_s: float) -> bool:
 func snapshot(label: String) -> String:
 	var dir := OS.get_environment("VERIFY_EVIDENCE_DIR")
 	if dir == "":
-		printerr("drive: snapshot %s skipped: VERIFY_EVIDENCE_DIR is unset (start drives with bin/launch.sh)" % label)
+		printerr(
+			(
+				"drive: snapshot %s skipped: VERIFY_EVIDENCE_DIR is unset (start drives with bin/launch.sh)"
+				% label
+			)
+		)
 		return ""
 	DirAccess.make_dir_recursive_absolute(dir)
 	_snapshots += 1
@@ -243,7 +250,9 @@ func snapshot_state() -> Dictionary:
 ## bottom, around `center` on `layer`.
 func _layer_names(map: TileMap, layer: int, center: Vector2i) -> Array:
 	var names := {}
-	var catalog: Dictionary = (load("res://Scripts/world/tile_catalog.gd") as Script).get_script_constant_map()
+	var catalog: Dictionary = (
+		(load("res://Scripts/world/tile_catalog.gd") as Script).get_script_constant_map()
+	)
 	for key in catalog:
 		if catalog[key] is Vector2i and not names.has(catalog[key]):
 			names[catalog[key]] = key  # first declared name wins for shared coords

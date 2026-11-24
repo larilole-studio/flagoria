@@ -14,8 +14,10 @@ func _wall_line(world) -> Array[Vector2i]:
 	for r in range(6, 40):
 		var start: Vector2i = front + Vector2i(r, 0)
 		var run: Array[Vector2i] = [start, start + Vector2i.RIGHT, start + Vector2i.RIGHT * 2]
-		if run.all(func(c: Vector2i) -> bool:
-				return world.predicted_clear(c) and not world._structures.has_cell(c)):
+		if run.all(
+			func(c: Vector2i) -> bool:
+				return world.predicted_clear(c) and not world._structures.has_cell(c)
+		):
 			return run
 	return []
 
@@ -68,8 +70,12 @@ func _test_wall_health_damage_and_save() -> int:
 			var snap := StructureSaves.to_changes(world)
 			world._walls.clear()
 			if StructureSaves.restore(snap, world) < line.size():
-				printerr("FAIL wall_health: restore placed %d walls, want %d" % [
-					world._walls._wall_cells.size(), line.size()])
+				printerr(
+					(
+						"FAIL wall_health: restore placed %d walls, want %d"
+						% [world._walls._wall_cells.size(), line.size()]
+					)
+				)
 				fail += 1
 			elif world._walls.hp(target) != 2:
 				printerr("FAIL wall_health: reloaded hp want 2, got %d" % world._walls.hp(target))
@@ -90,9 +96,17 @@ func _test_wall_health_damage_and_save() -> int:
 			var piece_name := WallBuilder._atlas_wall_name(atlas)
 			var src := world.tile_set.get_source(TileCatalog.SOURCE_ID) as TileSetAtlasSource
 			var td := src.get_tile_data(atlas, 0) if src != null and src.has_tile(atlas) else null
-			if world._walls.hp(line[0]) != 1 or td == null or td.get_collision_polygons_count(0) == 0:
-				printerr("FAIL wall_health: damaged piece %s hp %d should block" % [
-					piece_name, world._walls.hp(line[0])])
+			if (
+				world._walls.hp(line[0]) != 1
+				or td == null
+				or td.get_collision_polygons_count(0) == 0
+			):
+				printerr(
+					(
+						"FAIL wall_health: damaged piece %s hp %d should block"
+						% [piece_name, world._walls.hp(line[0])]
+					)
+				)
 				fail += 1
 	s.scene.queue_free()
 	await process_frame

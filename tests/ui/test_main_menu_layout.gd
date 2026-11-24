@@ -44,7 +44,12 @@ func check_menu_bounds(top: VBoxContainer) -> int:
 	var viewport := top.get_viewport_rect()
 	for control: Control in top.get_children():
 		if control.is_visible_in_tree() and not viewport.encloses(control.get_global_rect()):
-			printerr("FAIL main_menu_landscape_layout: %s %s outside %s" % [control.name, control.get_global_rect(), viewport])
+			printerr(
+				(
+					"FAIL main_menu_landscape_layout: %s %s outside %s"
+					% [control.name, control.get_global_rect(), viewport]
+				)
+			)
 			fail += 1
 	return fail
 

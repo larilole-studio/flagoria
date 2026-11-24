@@ -2,7 +2,6 @@ extends "res://tests/helpers/test_helpers.gd"
 ## The Worlds list scrolls when more saves exist than fit; touch drag and wheel
 ## move it without loading a world.
 
-
 const SCROLL := "CanvasLayer2/WorldsPanel/Margin/VBox/Scroll"
 const LIST := SCROLL + "/List"
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(2400, 1080)]
@@ -54,7 +53,9 @@ func _check_scroll_at_size(scene, vp: Viewport, size: Vector2i) -> int:
 	var view_h := scroll.size.y
 	var content_h := list.size.y
 	if content_h <= view_h + 1.0:
-		printerr("FAIL worlds_list_scroll %s: list height %.1f fits box %.1f" % [size, content_h, view_h])
+		printerr(
+			"FAIL worlds_list_scroll %s: list height %.1f fits box %.1f" % [size, content_h, view_h]
+		)
 		fail += 1
 		return fail
 	scroll.scroll_vertical = 0
@@ -64,7 +65,9 @@ func _check_scroll_at_size(scene, vp: Viewport, size: Vector2i) -> int:
 		printerr("FAIL worlds_list_scroll %s: wheel did not scroll down" % size)
 		fail += 1
 	if scroll.scroll_vertical <= before:
-		printerr("FAIL worlds_list_scroll %s: wheel left scroll at %d" % [size, scroll.scroll_vertical])
+		printerr(
+			"FAIL worlds_list_scroll %s: wheel left scroll at %d" % [size, scroll.scroll_vertical]
+		)
 		fail += 1
 	scroll.scroll_vertical = 0
 	await process_frame
@@ -75,7 +78,9 @@ func _check_scroll_at_size(scene, vp: Viewport, size: Vector2i) -> int:
 		printerr("FAIL worlds_list_scroll %s: touch drag did not scroll" % size)
 		fail += 1
 	if scroll.scroll_vertical <= before:
-		printerr("FAIL worlds_list_scroll %s: drag left scroll at %d" % [size, scroll.scroll_vertical])
+		printerr(
+			"FAIL worlds_list_scroll %s: drag left scroll at %d" % [size, scroll.scroll_vertical]
+		)
 		fail += 1
 	var pick := mini(8, list.item_count - 1)
 	scroll.scroll_vertical = int(list.get_item_rect(pick).position.y)
@@ -118,7 +123,9 @@ func _wheel(_vp: Viewport, scroll: ScrollContainer, down: bool) -> bool:
 	return scroll.scroll_vertical != before
 
 
-func _touch_drag_scroll(_vp: Viewport, scroll: ScrollContainer, start: Vector2, end: Vector2) -> bool:
+func _touch_drag_scroll(
+	_vp: Viewport, scroll: ScrollContainer, start: Vector2, end: Vector2
+) -> bool:
 	var before := scroll.scroll_vertical
 	var touch := InputEventScreenTouch.new()
 	touch.index = 0

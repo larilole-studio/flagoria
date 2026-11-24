@@ -2,7 +2,6 @@ extends ItemList
 ## Saved-world rows inside a ScrollContainer. Forwards drags to the scroll box
 ## so touch scroll works; short taps still select a row.
 
-
 var _scroll: ScrollContainer
 var _touch_y := 0.0
 var _dragging := false
@@ -28,7 +27,9 @@ func _gui_input(event: InputEvent) -> void:
 			_dragging = true
 		if _dragging:
 			var max_v := int(_scroll.get_v_scroll_bar().max_value)
-			_scroll.scroll_vertical = clampi(_scroll.scroll_vertical - int(event.relative.y), 0, max_v)
+			_scroll.scroll_vertical = clampi(
+				_scroll.scroll_vertical - int(event.relative.y), 0, max_v
+			)
 			accept_event()
 	elif event is InputEventMouseMotion and event.button_mask == MOUSE_BUTTON_MASK_LEFT:
 		var max_v := int(_scroll.get_v_scroll_bar().max_value)

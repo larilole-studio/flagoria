@@ -5,10 +5,42 @@ extends "res://tests/helpers/test_helpers.gd"
 func _test_spawn_on_land() -> int:
 	print("-- test_spawn_on_land")
 	var cases = [
-		{"name": "default_seeds", "alt": 2, "moist": 7, "temp": 12, "items": 17, "water": 0.2, "sand": 0.25},
-		{"name": "high_water", "alt": 2, "moist": 7, "temp": 12, "items": 17, "water": 0.45, "sand": 0.5},
-		{"name": "seed_set_b", "alt": 99, "moist": 101, "temp": 103, "items": 107, "water": 0.2, "sand": 0.25},
-		{"name": "seed_set_c_high_water", "alt": 4242, "moist": 5252, "temp": 6262, "items": 7272, "water": 0.4, "sand": 0.48},
+		{
+			"name": "default_seeds",
+			"alt": 2,
+			"moist": 7,
+			"temp": 12,
+			"items": 17,
+			"water": 0.2,
+			"sand": 0.25
+		},
+		{
+			"name": "high_water",
+			"alt": 2,
+			"moist": 7,
+			"temp": 12,
+			"items": 17,
+			"water": 0.45,
+			"sand": 0.5
+		},
+		{
+			"name": "seed_set_b",
+			"alt": 99,
+			"moist": 101,
+			"temp": 103,
+			"items": 107,
+			"water": 0.2,
+			"sand": 0.25
+		},
+		{
+			"name": "seed_set_c_high_water",
+			"alt": 4242,
+			"moist": 5252,
+			"temp": 6262,
+			"items": 7272,
+			"water": 0.4,
+			"sand": 0.48
+		},
 	]
 	var fail := 0
 	var scene = load("res://flagoria_main.tscn").instantiate()
@@ -35,8 +67,10 @@ func _test_spawn_on_land() -> int:
 		var neighbors: int = world.count_walkable_neighbors(cell)
 		if neighbors < 1:
 			printerr(
-				"FAIL spawn_on_land case=%s cell=%s has zero walkable neighbors"
-				% [case["name"], cell]
+				(
+					"FAIL spawn_on_land case=%s cell=%s has zero walkable neighbors"
+					% [case["name"], cell]
+				)
 			)
 			fail += 1
 			continue
@@ -44,8 +78,10 @@ func _test_spawn_on_land() -> int:
 		var again: Vector2i = world.resolve_player_spawn()
 		if again != cell:
 			printerr(
-				"FAIL spawn_on_land case=%s nondeterministic first=%s second=%s"
-				% [case["name"], cell, again]
+				(
+					"FAIL spawn_on_land case=%s nondeterministic first=%s second=%s"
+					% [case["name"], cell, again]
+				)
 			)
 			fail += 1
 			continue
@@ -97,13 +133,25 @@ func _test_spawn_reachable() -> int:
 			continue
 		var hw_reach: int = world.reachable_clear_cells(hw_cell, need).size()
 		if hw_reach < need:
-			printerr("FAIL spawn_reachable %s reaches %s cells, need %s" % [hw_label, hw_reach, need])
+			printerr(
+				"FAIL spawn_reachable %s reaches %s cells, need %s" % [hw_label, hw_reach, need]
+			)
 			fail += 1
 		if SpawnFinder.last_fallback_size != -1:
-			printerr("FAIL spawn_reachable %s fell back (size %s)" % [hw_label, SpawnFinder.last_fallback_size])
+			printerr(
+				(
+					"FAIL spawn_reachable %s fell back (size %s)"
+					% [hw_label, SpawnFinder.last_fallback_size]
+				)
+			)
 			fail += 1
 	if fail == 0:
-		print("PASS test_spawn_reachable (%s maps + 3 high-water, %s+ cells each)" % [cases.size(), need])
+		print(
+			(
+				"PASS test_spawn_reachable (%s maps + 3 high-water, %s+ cells each)"
+				% [cases.size(), need]
+			)
+		)
 	scene.queue_free()
 	return fail
 
@@ -120,7 +168,9 @@ func _test_spawn_fallback_warns() -> int:
 	var cell: Vector2i = SpawnFinder.resolve_player_spawn(world, Vector2i(0, 0), 0)
 	var size: int = SpawnFinder.last_fallback_size
 	if size < 0:
-		printerr("FAIL spawn_fallback_warns: last_fallback_size %s, want a recorded fallback" % size)
+		printerr(
+			"FAIL spawn_fallback_warns: last_fallback_size %s, want a recorded fallback" % size
+		)
 		scene.queue_free()
 		return 1
 	if size >= SpawnFinder.SPAWN_MIN_REACHABLE:
@@ -161,12 +211,22 @@ func _test_spawn_radius_no_overlap() -> int:
 					printerr("FAIL spawn_radius %s not on clear walkable ground" % label)
 					bad += 1
 				if p.position.distance_to(origin) > radius:
-					printerr("FAIL spawn_radius %s is %s px from the spawn, radius %s" % [label, p.position.distance_to(origin), radius])
+					printerr(
+						(
+							"FAIL spawn_radius %s is %s px from the spawn, radius %s"
+							% [label, p.position.distance_to(origin), radius]
+						)
+					)
 					bad += 1
 				var box: Rect2 = _body_rect(p)
 				for j in range(i + 1, players.size()):
 					if box.intersects(_body_rect(players[j])):
-						printerr("FAIL spawn_radius %s overlaps player %s at %s" % [label, players[j].name, players[j].position])
+						printerr(
+							(
+								"FAIL spawn_radius %s overlaps player %s at %s"
+								% [label, players[j].name, players[j].position]
+							)
+						)
 						bad += 1
 			return bad
 		fail += check.call("join")
@@ -174,7 +234,12 @@ func _test_spawn_radius_no_overlap() -> int:
 		for p in players:
 			joined.append(p.position)
 		if players[0].position != origin:
-			printerr("FAIL spawn_radius seed=%s first player at %s, not the spawn %s" % [seed_value, players[0].position, origin])
+			printerr(
+				(
+					"FAIL spawn_radius seed=%s first player at %s, not the spawn %s"
+					% [seed_value, players[0].position, origin]
+				)
+			)
 			fail += 1
 		# Everyone dies on the same spot and respawns on the same frame.
 		for p in players:
@@ -187,7 +252,12 @@ func _test_spawn_radius_no_overlap() -> int:
 		for p in players:
 			respawned.append(p.position)
 		if respawned != joined:
-			printerr("FAIL spawn_radius seed=%s respawn spots %s differ from join spots %s" % [seed_value, respawned, joined])
+			printerr(
+				(
+					"FAIL spawn_radius seed=%s respawn spots %s differ from join spots %s"
+					% [seed_value, respawned, joined]
+				)
+			)
 			fail += 1
 		# Half die and respawn while the others still stand on the first spots.
 		for i in range(0, players.size(), 2):
@@ -228,7 +298,12 @@ func _test_spawn_full_area_searches_outward() -> int:
 			outside = spot
 	var full_radius: Vector2 = world.free_spawn_position(cell, inside)
 	if full_radius != outside or full_radius.distance_to(origin) <= world.SPAWN_RADIUS:
-		printerr("FAIL spawn_full_area full radius -> %s, want nearest outside %s" % [full_radius, outside])
+		printerr(
+			(
+				"FAIL spawn_full_area full radius -> %s, want nearest outside %s"
+				% [full_radius, outside]
+			)
+		)
 		fail += 1
 	# Every spot the usual search walks is taken: the search keeps going to a
 	# reachable spot clear of all of them, not back to the spawn point. Which
@@ -237,14 +312,27 @@ func _test_spawn_full_area_searches_outward() -> int:
 	var beyond: Array[Vector2] = world.spawn_spots(cell, spots.size() * 50)
 	var all_taken: Vector2 = world.free_spawn_position(cell, spots)
 	var want := "a reachable clear spot away from all %s taken" % spots.size()
-	if all_taken not in beyond or all_taken == origin or not world.is_clear_ground(world.local_to_map(all_taken)) \
-			or not _clear_of_all(all_taken, spots, world.SPAWN_CLEARANCE):
-		printerr("FAIL spawn_full_area %s spots taken -> %s, want %s (spawn %s)"
-				% [spots.size(), all_taken, want, origin])
+	if (
+		all_taken not in beyond
+		or all_taken == origin
+		or not world.is_clear_ground(world.local_to_map(all_taken))
+		or not _clear_of_all(all_taken, spots, world.SPAWN_CLEARANCE)
+	):
+		printerr(
+			(
+				"FAIL spawn_full_area %s spots taken -> %s, want %s (spawn %s)"
+				% [spots.size(), all_taken, want, origin]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	if fail == 0:
-		print("PASS test_spawn_full_area_searches_outward (%s in radius, next free %s)" % [inside.size(), all_taken])
+		print(
+			(
+				"PASS test_spawn_full_area_searches_outward (%s in radius, next free %s)"
+				% [inside.size(), all_taken]
+			)
+		)
 	return fail
 
 
@@ -312,16 +400,25 @@ func _test_spawn_presets_and_starter_wood() -> int:
 					if plant != null and plant.amount_of(Inventory.WOOD) > 0:
 						found_wood = true
 			var beyond := Vector2i([513, 769, 1025][scenario[1]], 0)
-			if world.biome_at(spawn) != scenario[2] or not found_wood \
-					or world.archipelago_island_radius != [40, 52, 64][scenario[1]] \
-					or world.archipelago_spacing != [80, 112, 144][scenario[1]] \
-					or not world.is_open_sea(beyond):
-				printerr("FAIL spawn_presets_and_starter_wood: case %s spawn=%s biome=%s wood=%s"
-						% [scenario, spawn, world.biome_at(spawn), found_wood])
+			if (
+				world.biome_at(spawn) != scenario[2]
+				or not found_wood
+				or world.archipelago_island_radius != [40, 52, 64][scenario[1]]
+				or world.archipelago_spacing != [80, 112, 144][scenario[1]]
+				or not world.is_open_sea(beyond)
+			):
+				printerr(
+					(
+						"FAIL spawn_presets_and_starter_wood: case %s spawn=%s biome=%s wood=%s"
+						% [scenario, spawn, world.biome_at(spawn), found_wood]
+					)
+				)
 				failures += 1
 			if scenario[2] == 1:
 				var round_trip := MapGenParams.new()
-				round_trip.from_dict(JSON.parse_string(JSON.stringify(scene.world_params.to_dict())))
+				round_trip.from_dict(
+					JSON.parse_string(JSON.stringify(scene.world_params.to_dict()))
+				)
 				world.apply_map_params(round_trip)
 				world.generate_chunk(world.map_to_local(spawn))
 				if round_trip.starter_grove.is_empty():
@@ -329,7 +426,9 @@ func _test_spawn_presets_and_starter_wood() -> int:
 					failures += 1
 				else:
 					var coordinates := round_trip.starter_grove
-					var tree: InteractableType = world.choppable(Vector2i(coordinates[0], coordinates[1]))
+					var tree: InteractableType = world.choppable(
+						Vector2i(coordinates[0], coordinates[1])
+					)
 					if tree == null or tree.amount_of(Inventory.WOOD) == 0:
 						printerr("FAIL spawn_presets_and_starter_wood: grove did not regenerate")
 						failures += 1

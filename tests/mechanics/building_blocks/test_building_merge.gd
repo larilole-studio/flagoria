@@ -1,7 +1,6 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Building neighbour merge and re-seal (#27).
 
-
 const W := 6
 const H := 5
 

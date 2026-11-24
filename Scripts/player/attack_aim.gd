@@ -94,10 +94,14 @@ static func direction_name(v: Vector2) -> String:
 
 static func direction_vector(direction: String) -> Vector2:
 	match direction:
-		"Up": return Vector2.UP
-		"Down": return Vector2.DOWN
-		"Left": return Vector2.LEFT
-		"Right": return Vector2.RIGHT
+		"Up":
+			return Vector2.UP
+		"Down":
+			return Vector2.DOWN
+		"Left":
+			return Vector2.LEFT
+		"Right":
+			return Vector2.RIGHT
 	return Vector2.ZERO
 
 
@@ -193,8 +197,14 @@ func _drop_touch() -> void:
 func _on_move_stick(pos: Vector2) -> bool:
 	## True when a touch here is the move stick's, with the HUD's slack.
 	var stick := get_node_or_null(MOVE_STICK_PATH)
-	return stick != null and stick.has_method("start_reach") \
-			and pos.distance_to(stick.global_position) <= stick.start_reach() + MapZoomScript.HUD_MARGIN_PX
+	return (
+		stick != null
+		and stick.has_method("start_reach")
+		and (
+			pos.distance_to(stick.global_position)
+			<= stick.start_reach() + MapZoomScript.HUD_MARGIN_PX
+		)
+	)
 
 
 func attack_button():
@@ -237,13 +247,22 @@ func _input(event: InputEvent) -> void:
 
 func _on_touch(event: InputEventScreenTouch) -> void:
 	if event.pressed:
-		if aiming and _touch_index != -1 and event.index != _touch_index \
-				and not _on_move_stick(event.position):
+		if (
+			aiming
+			and _touch_index != -1
+			and event.index != _touch_index
+			and not _on_move_stick(event.position)
+		):
 			_drop_touch()  # a second touch cancels the aim
 			return
 		var button = attack_button()
-		if _touch_index == -1 and can_aim() and button != null and button.is_visible_in_tree() \
-				and button.hits(event.position):
+		if (
+			_touch_index == -1
+			and can_aim()
+			and button != null
+			and button.is_visible_in_tree()
+			and button.hits(event.position)
+		):
 			_touch_index = event.index
 			_touch_offset = event.position - button.aim_center()
 			_touch_aimed = false
@@ -276,8 +295,11 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not (event is InputEventMouse) or event.device == InputEvent.DEVICE_ID_EMULATION \
-			or _touch_index != -1:
+	if (
+		not (event is InputEventMouse)
+		or event.device == InputEvent.DEVICE_ID_EMULATION
+		or _touch_index != -1
+	):
 		return
 	if event is InputEventMouseMotion:
 		if aiming:
@@ -338,8 +360,9 @@ func _draw() -> void:
 	# The rim runs just inside the outline: the same cone moved inward by half
 	# of both lines; the apex moves along the aim by that over sin(ARC / 2).
 	var inset := px * (style.outline_width + style.rim_width) / 2.0
-	var inner := cone_points(ORIGIN + Vector2.from_angle(aim_angle()) * inset / sin(ARC / 2.0),
-			style.range - inset)
+	var inner := cone_points(
+		ORIGIN + Vector2.from_angle(aim_angle()) * inset / sin(ARC / 2.0), style.range - inset
+	)
 	inner.append(inner[0])
 	draw_polyline(inner, style.rim_color, style.rim_width * px)
 	outer.append(outer[0])

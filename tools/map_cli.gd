@@ -8,8 +8,17 @@ extends RefCounted
 ## ASCII legend: one character per tile type. A plant or stones is drawn
 ## instead of the ground under it.
 const LEGEND := {
-	"water": "~", "sand": ".", "swamp": "%", "swamp_special": "&", "grass": ",",
-	"tree": "T", "bush": "b", "birch": "B", "flower": "*", "stones": "o", "unknown": "?",
+	"water": "~",
+	"sand": ".",
+	"swamp": "%",
+	"swamp_special": "&",
+	"grass": ",",
+	"tree": "T",
+	"bush": "b",
+	"birch": "B",
+	"flower": "*",
+	"stones": "o",
+	"unknown": "?",
 }
 
 
@@ -17,12 +26,21 @@ static func tile_names() -> Dictionary:
 	## Atlas coords -> tile type name. The four grass variants and every island
 	## edge piece are one type. Empty sea is named by the caller.
 	var out := {
-		TileCatalog.WATER: "water", TileCatalog.SAND: "sand", TileCatalog.SWAMP: "swamp",
-		TileCatalog.SWAMP_SPECIAL: "swamp_special", TileCatalog.GRASS_A: "grass",
-		TileCatalog.GRASS_B: "grass", TileCatalog.GRASS_C: "grass", TileCatalog.GRASS_D: "grass",
-		TileCatalog.TREE: "tree", TileCatalog.BUSH: "bush", TileCatalog.FLOWER: "flower",
-		TileCatalog.STONES: "stones", TileCatalog.PINE: "pine",
-		TileCatalog.TREE_BUSHY: "bushy_tree", TileCatalog.TREE_BIRCH_BOTTOM: "birch",
+		TileCatalog.WATER: "water",
+		TileCatalog.SAND: "sand",
+		TileCatalog.SWAMP: "swamp",
+		TileCatalog.SWAMP_SPECIAL: "swamp_special",
+		TileCatalog.GRASS_A: "grass",
+		TileCatalog.GRASS_B: "grass",
+		TileCatalog.GRASS_C: "grass",
+		TileCatalog.GRASS_D: "grass",
+		TileCatalog.TREE: "tree",
+		TileCatalog.BUSH: "bush",
+		TileCatalog.FLOWER: "flower",
+		TileCatalog.STONES: "stones",
+		TileCatalog.PINE: "pine",
+		TileCatalog.TREE_BUSHY: "bushy_tree",
+		TileCatalog.TREE_BIRCH_BOTTOM: "birch",
 		TileCatalog.TREE_BIRCH_TOP: "birch",
 	}
 	for tile_name in TileCatalog.TILES:
@@ -137,9 +155,12 @@ static func stats(rows: Array) -> String:
 		"tiles": counts,
 		"land_cells": land_cells,
 		"water_cells": water_cells,
-		"water_land_ratio": snappedf(float(water_cells) / land_cells, 0.0001) if land_cells > 0 else null,
+		"water_land_ratio":
+		snappedf(float(water_cells) / land_cells, 0.0001) if land_cells > 0 else null,
 		"islands": islands,
-		"tree_density": snappedf(float(counts.get("tree", 0)) / land_cells, 0.0001) if land_cells > 0 else 0.0,
-		"bush_density": snappedf(float(counts.get("bush", 0)) / land_cells, 0.0001) if land_cells > 0 else 0.0,
+		"tree_density":
+		snappedf(float(counts.get("tree", 0)) / land_cells, 0.0001) if land_cells > 0 else 0.0,
+		"bush_density":
+		snappedf(float(counts.get("bush", 0)) / land_cells, 0.0001) if land_cells > 0 else 0.0,
 	}
 	return JSON.stringify(data, "\t", true) + "\n"

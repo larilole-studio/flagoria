@@ -21,7 +21,11 @@ func _cut_save_scene() -> Array:
 			for dx in range(-r, r + 1):
 				var cell := spawn + Vector2i(dx, dy)
 				var type := InteractableCatalog.type_at(world.predict_cell(cell)[1])
-				if type != null and (type.id == "tree" or type.id == "bush") and not found.has(type.id):
+				if (
+					type != null
+					and (type.id == "tree" or type.id == "bush")
+					and not found.has(type.id)
+				):
 					found[type.id] = cell
 	return [scene, world, params, found]
 
@@ -33,8 +37,14 @@ func _cut_at(world, cell: Vector2i) -> bool:
 func _stump_drawn(world, cell: Vector2i, type_id: String) -> bool:
 	## `cell` shows its type's stump once its chunk is drawn, and no plant.
 	world.generate_chunk(world.map_to_local(cell))
-	return world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell) == InteractableCatalog.by_id(type_id).leaves_atlas() \
-			and world.get_cell_source_id(1, cell) == -1 and world.choppable(cell) == null
+	return (
+		(
+			world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell)
+			== InteractableCatalog.by_id(type_id).leaves_atlas()
+		)
+		and world.get_cell_source_id(1, cell) == -1
+		and world.choppable(cell) == null
+	)
 
 
 func _test_cut_save_round_trip() -> int:
@@ -65,15 +75,24 @@ func _test_cut_save_round_trip() -> int:
 	world.cut_choppable(bush)
 	world.play_time = 50.0
 	# Save chunks are a fixed 32-cell grid, floored on negative cells.
-	for pair in [[Vector2i(-20, 70), "-1,2"], [Vector2i(31, 32), "0,1"], [Vector2i(-1, -32), "-1,-1"]]:
+	for pair in [
+		[Vector2i(-20, 70), "-1,2"], [Vector2i(31, 32), "0,1"], [Vector2i(-1, -32), "-1,-1"]
+	]:
 		if WorldSave.chunk_key(pair[0]) != pair[1]:
-			printerr("FAIL cut_save_round_trip: chunk_key%s = %s, want %s" % [pair[0], WorldSave.chunk_key(pair[0]), pair[1]])
+			printerr(
+				(
+					"FAIL cut_save_round_trip: chunk_key%s = %s, want %s"
+					% [pair[0], WorldSave.chunk_key(pair[0]), pair[1]]
+				)
+			)
 			fail += 1
 	var changes: Dictionary = world.cut_changes()
 	var want := {
 		WorldSave.chunk_key(tree): {WorldSave.cell_key(tree): {"cut": "tree", "age": 40.0}},
 	}
-	want.get_or_add(WorldSave.chunk_key(bush), {})[WorldSave.cell_key(bush)] = {"cut": "bush", "age": 20.0}
+	want.get_or_add(WorldSave.chunk_key(bush), {})[WorldSave.cell_key(bush)] = {
+		"cut": "bush", "age": 20.0
+	}
 	if changes != want:
 		printerr("FAIL cut_save_round_trip: entries %s, want %s" % [changes, want])
 		fail += 1
@@ -103,14 +122,23 @@ func _test_cut_save_round_trip() -> int:
 	world.play_time = 1000.0
 	var restored: int = world.restore_cuts(loaded["world"].object_changes)
 	if restored != 2 or world.cut_changes() != want:
-		printerr("FAIL cut_save_round_trip: restored %d, entries %s, want 2 and %s" % [restored, world.cut_changes(), want])
+		printerr(
+			(
+				"FAIL cut_save_round_trip: restored %d, entries %s, want 2 and %s"
+				% [restored, world.cut_changes(), want]
+			)
+		)
 		fail += 1
 	for pair in [[tree, "tree"], [bush, "bush"]]:
 		if not _stump_drawn(world, pair[0], pair[1]):
-			printerr("FAIL cut_save_round_trip: no %s stump at %s after the load" % [pair[1], pair[0]])
+			printerr(
+				"FAIL cut_save_round_trip: no %s stump at %s after the load" % [pair[1], pair[0]]
+			)
 			fail += 1
 	if _cut_at(world, bare):
-		printerr("FAIL cut_save_round_trip: a cut on %s, where the map grows no tree, came back" % bare)
+		printerr(
+			"FAIL cut_save_round_trip: a cut on %s, where the map grows no tree, came back" % bare
+		)
 		fail += 1
 
 	# The age carried over: the tree (cut 40 s before the save) regrows
@@ -121,7 +149,12 @@ func _test_cut_save_round_trip() -> int:
 	world.play_time = 1000.0 + delay - 40.0 + 1.0
 	world.regrow_due()
 	if early != 0 or _cut_at(world, tree):
-		printerr("FAIL cut_save_round_trip: regrowth after the load: early %d, tree cut %s" % [early, _cut_at(world, tree)])
+		printerr(
+			(
+				"FAIL cut_save_round_trip: regrowth after the load: early %d, tree cut %s"
+				% [early, _cut_at(world, tree)]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -164,9 +197,18 @@ func _test_cut_save_in_game() -> int:
 	scene._apply_params_to_world(scene.world_params)
 	var drawn_before: int = world.get_used_cells(0).size()
 	var restored: int = scene._restore_loaded_world()
-	if drawn_before != 0 or restored != 1 or not _cut_at(world, tree) or not _stump_drawn(world, tree, "tree"):
-		printerr("FAIL cut_save_in_game: restored %d (cells drawn first %d), stump at %s %s"
-				% [restored, drawn_before, tree, _cut_at(world, tree)])
+	if (
+		drawn_before != 0
+		or restored != 1
+		or not _cut_at(world, tree)
+		or not _stump_drawn(world, tree, "tree")
+	):
+		printerr(
+			(
+				"FAIL cut_save_in_game: restored %d (cells drawn first %d), stump at %s %s"
+				% [restored, drawn_before, tree, _cut_at(world, tree)]
+			)
+		)
 		fail += 1
 	if scene._restore_loaded_world() != 0:
 		printerr("FAIL cut_save_in_game: the loaded cuts were applied twice")
@@ -211,24 +253,49 @@ func _test_cut_save_late_join() -> int:
 		return 1
 	var world_save := WorldSave.new(params)
 	for pair in [[found["tree"], "tree", 40.0], [found["bush"], "bush", 20.0]]:
-		world_save.object_changes.get_or_add(WorldSave.chunk_key(pair[0]), {})[WorldSave.cell_key(pair[0])] = {"cut": pair[1], "age": pair[2]}
-	var saved := MapSave.save_world(world_save, "test_cut_save_late_join_%d_%d" % [OS.get_process_id(), port])
+		world_save.object_changes.get_or_add(WorldSave.chunk_key(pair[0]), {})[WorldSave.cell_key(pair[0])] = {
+			"cut": pair[1], "age": pair[2]
+		}
+	var saved := MapSave.save_world(
+		world_save, "test_cut_save_late_join_%d_%d" % [OS.get_process_id(), port]
+	)
 	var save_path := ProjectSettings.globalize_path(saved["path"])
 	var out := OS.get_user_data_dir().path_join("cut_sync_%d_%d.json" % [OS.get_process_id(), port])
 	DirAccess.remove_absolute(out)
 	DirAccess.remove_absolute(out + ".stop")
-	var pid := OS.create_process(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--script", "res://tests/cut_sync_probe.gd", "--", "--host", "--port=%d" % port, "--save=" + save_path, "--out=" + out])
+	var pid := OS.create_process(
+		OS.get_executable_path(),
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--script",
+			"res://tests/cut_sync_probe.gd",
+			"--",
+			"--host",
+			"--port=%d" % port,
+			"--save=" + save_path,
+			"--out=" + out
+		]
+	)
 	if saved["error"] != "" or pid <= 0:
 		printerr("FAIL cut_save_late_join: save %s, host pid %d" % [saved["error"], pid])
 		DirAccess.remove_absolute(saved["path"])
 		return 1
 	var read := func() -> Dictionary:
-		var data = JSON.parse_string(FileAccess.get_file_as_string(out)) if FileAccess.file_exists(out) else null
+		var data = (
+			JSON.parse_string(FileAccess.get_file_as_string(out))
+			if FileAccess.file_exists(out)
+			else null
+		)
 		return data if data is Dictionary else {}
 	var fail := 0
 	var deadline := Time.get_ticks_msec() + 30000
-	while Time.get_ticks_msec() < deadline and OS.is_process_running(pid) and read.call().get("cells", {}).size() < 2:
+	while (
+		Time.get_ticks_msec() < deadline
+		and OS.is_process_running(pid)
+		and read.call().get("cells", {}).size() < 2
+	):
 		await process_frame
 	var host: Dictionary = read.call()
 	var scene = null
@@ -241,7 +308,10 @@ func _test_cut_save_late_join() -> int:
 		scene.get_node("CanvasLayer2/MainMenu").hide()
 		var world = scene.get_node("World/worldMap")
 		scene.add_player_joined(port)
-		while Time.get_ticks_msec() < deadline and (scene.world_params == null or world.cut_changes().is_empty()):
+		while (
+			Time.get_ticks_msec() < deadline
+			and (scene.world_params == null or world.cut_changes().is_empty())
+		):
 			await process_frame
 		for _i in 5:
 			await process_frame  # let the client draw its chunks
@@ -249,13 +319,28 @@ func _test_cut_save_late_join() -> int:
 		for chunk in host["cuts"]:
 			for key in host["cuts"][chunk]:
 				var want: Dictionary = host["cells"][key]
-				var got: Dictionary = JSON.parse_string(JSON.stringify(load("res://tests/cut_sync_probe.gd").cell_state(world, WorldSave.parse_cell(key))))
+				var got: Dictionary = JSON.parse_string(
+					JSON.stringify(
+						load("res://tests/cut_sync_probe.gd").cell_state(
+							world, WorldSave.parse_cell(key)
+						)
+					)
+				)
 				if not client_cuts.get(chunk, {}).has(key) or got != want or want["clear"] != true:
-					printerr("FAIL cut_save_late_join: cell %s on the client %s (cut %s), on the host %s"
-							% [key, got, client_cuts.get(chunk, {}).has(key), want])
+					printerr(
+						(
+							"FAIL cut_save_late_join: cell %s on the client %s (cut %s), on the host %s"
+							% [key, got, client_cuts.get(chunk, {}).has(key), want]
+						)
+					)
 					fail += 1
 		if client_cuts.keys() != host["cuts"].keys():
-			printerr("FAIL cut_save_late_join: client cuts %s, host cuts %s" % [client_cuts, host["cuts"]])
+			printerr(
+				(
+					"FAIL cut_save_late_join: client cuts %s, host cuts %s"
+					% [client_cuts, host["cuts"]]
+				)
+			)
 			fail += 1
 	FileAccess.open(out + ".stop", FileAccess.WRITE).close()
 	deadline = Time.get_ticks_msec() + 5000
@@ -302,10 +387,25 @@ func _test_cut_replace() -> int:
 		changes.erase(WorldSave.chunk_key(tree))
 	for i in 2:
 		var count: int = world.replace_cuts(changes)
-		if count != 1 or _cut_at(world, tree) or not _cut_at(world, bush) or not _stump_drawn(world, bush, "bush") \
-				or world.choppable(tree) == null:
-			printerr("FAIL cut_replace pass %d: %d cuts, tree cut %s (choppable %s), bush stump %s"
-					% [i, count, _cut_at(world, tree), world.choppable(tree), _stump_drawn(world, bush, "bush")])
+		if (
+			count != 1
+			or _cut_at(world, tree)
+			or not _cut_at(world, bush)
+			or not _stump_drawn(world, bush, "bush")
+			or world.choppable(tree) == null
+		):
+			printerr(
+				(
+					"FAIL cut_replace pass %d: %d cuts, tree cut %s (choppable %s), bush stump %s"
+					% [
+						i,
+						count,
+						_cut_at(world, tree),
+						world.choppable(tree),
+						_stump_drawn(world, bush, "bush")
+					]
+				)
+			)
 			fail += 1
 	scene.queue_free()
 	await process_frame

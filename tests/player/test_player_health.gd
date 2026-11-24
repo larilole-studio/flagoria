@@ -20,8 +20,12 @@ func _test_player_regen() -> int:
 	var timer: Timer = me.get_node("regen_timer")
 	# autostart reads false once the timer has started, so check that it runs.
 	if timer.wait_time != 5.0 or timer.one_shot or timer.is_stopped():
-		printerr("FAIL player_regen timer %s s, one_shot %s, running %s"
-				% [timer.wait_time, timer.one_shot, not timer.is_stopped()])
+		printerr(
+			(
+				"FAIL player_regen timer %s s, one_shot %s, running %s"
+				% [timer.wait_time, timer.one_shot, not timer.is_stopped()]
+			)
+		)
 		fail += 1
 	if not timer.timeout.is_connected(me._on_regen_timer_timeout):
 		printerr("FAIL player_regen timer timeout is not connected to the player")
@@ -34,19 +38,34 @@ func _test_player_regen() -> int:
 		fail += 1
 	timer.timeout.emit()
 	if h.health != 4 or c.plays.get("regen", 0) != 1:
-		printerr("FAIL player_regen tick at 3 -> %s, regen plays %s, want 4 and 1" % [h.health, c.plays.get("regen", 0)])
+		printerr(
+			(
+				"FAIL player_regen tick at 3 -> %s, regen plays %s, want 4 and 1"
+				% [h.health, c.plays.get("regen", 0)]
+			)
+		)
 		fail += 1
 	c._last_ms.clear()  # ticks are 5 s apart in play, past the cooldown
 	timer.timeout.emit()
 	if h.health != 5 or c.plays.get("regen", 0) != 2:
-		printerr("FAIL player_regen second tick -> %s, regen plays %s, want 5 and 2" % [h.health, c.plays.get("regen", 0)])
+		printerr(
+			(
+				"FAIL player_regen second tick -> %s, regen plays %s, want 5 and 2"
+				% [h.health, c.plays.get("regen", 0)]
+			)
+		)
 		fail += 1
 	# Full: a tick changes nothing and plays nothing.
 	c._last_ms.clear()
 	h.set_health_now(h.max_health)
 	timer.timeout.emit()
 	if h.health != h.max_health or c.plays.get("regen", 0) != 2:
-		printerr("FAIL player_regen full player -> %s, regen plays %s" % [h.health, c.plays.get("regen", 0)])
+		printerr(
+			(
+				"FAIL player_regen full player -> %s, regen plays %s"
+				% [h.health, c.plays.get("regen", 0)]
+			)
+		)
 		fail += 1
 	# Another peer's player heals on this peer too, but only its owner hears it.
 	var other = load("res://Scripts/player/character_body_2d.tscn").instantiate()
@@ -55,15 +74,24 @@ func _test_player_regen() -> int:
 	other.health.set_health_now(3)
 	other.get_node("regen_timer").timeout.emit()
 	if other.health.health != 4 or other.combat_sfx.plays.get("regen", 0) != 0:
-		printerr("FAIL player_regen other peer's player -> %s, regen plays %s, want 4 and 0"
-				% [other.health.health, other.combat_sfx.plays.get("regen", 0)])
+		printerr(
+			(
+				"FAIL player_regen other peer's player -> %s, regen plays %s, want 4 and 0"
+				% [other.health.health, other.combat_sfx.plays.get("regen", 0)]
+			)
+		)
 		fail += 1
 	# Dead: a tick does not heal (respawn restores health) and plays nothing.
 	h.respawn_delay = 1000.0
 	h.set_health_now(0)
 	timer.timeout.emit()
 	if h.health != 0 or not h.is_dead() or c.plays.get("regen", 0) != 2:
-		printerr("FAIL player_regen dead player -> %s, regen plays %s" % [h.health, c.plays.get("regen", 0)])
+		printerr(
+			(
+				"FAIL player_regen dead player -> %s, regen plays %s"
+				% [h.health, c.plays.get("regen", 0)]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -97,15 +125,29 @@ func _test_player_health() -> int:
 	h.died.connect(func() -> void: deaths[0] += 1)
 
 	if h.max_health != 6 or h.health != 6 or h.heart_count() != 3:
-		printerr("FAIL player_health: start %s/%s, %s hearts" % [h.health, h.max_health, h.heart_count()])
+		printerr(
+			"FAIL player_health: start %s/%s, %s hearts" % [h.health, h.max_health, h.heart_count()]
+		)
 		fail += 1
-	if not hud.visible or hud.current != 6 or hud.maximum != 6 \
-			or hud.size.x <= 0.0 or hud.size.y <= 0.0:
-		printerr("FAIL player_health: HUD visible=%s %s/%s size %s" % [hud.visible, hud.current, hud.maximum, hud.size])
+	if (
+		not hud.visible
+		or hud.current != 6
+		or hud.maximum != 6
+		or hud.size.x <= 0.0
+		or hud.size.y <= 0.0
+	):
+		printerr(
+			(
+				"FAIL player_health: HUD visible=%s %s/%s size %s"
+				% [hud.visible, hud.current, hud.maximum, hud.size]
+			)
+		)
 		fail += 1
 	# Half-heart step, then invulnerability blocks the next hit until it ends.
 	if not h.take_damage(1) or h.health != 5 or not h.is_invulnerable():
-		printerr("FAIL player_health: first hit -> %s, invulnerable=%s" % [h.health, h.is_invulnerable()])
+		printerr(
+			"FAIL player_health: first hit -> %s, invulnerable=%s" % [h.health, h.is_invulnerable()]
+		)
 		fail += 1
 	if h.take_damage(1) or h.health != 5:
 		printerr("FAIL player_health: hit during invulnerability -> %s" % h.health)
@@ -133,13 +175,28 @@ func _test_player_health() -> int:
 		var got := ""
 		for slot in 3:
 			var tex := HeartsHud.icon_for(slot, value)
-			got += "F" if tex == RoundHudStyle.texture("heart_full") else ("H" if tex == RoundHudStyle.texture("heart_half") else "E")
+			got += (
+				"F"
+				if tex == RoundHudStyle.texture("heart_full")
+				else ("H" if tex == RoundHudStyle.texture("heart_half") else "E")
+			)
 		if got != icons[value]:
 			printerr("FAIL player_health: icons at %s = %s, want %s" % [value, got, icons[value]])
 			fail += 1
-	for tex in [RoundHudStyle.texture("heart_full"), RoundHudStyle.texture("heart_half"), RoundHudStyle.texture("heart_empty"), RoundHudStyle.texture("heart_flash_0"), RoundHudStyle.texture("heart_flash_1")]:
+	for tex in [
+		RoundHudStyle.texture("heart_full"),
+		RoundHudStyle.texture("heart_half"),
+		RoundHudStyle.texture("heart_empty"),
+		RoundHudStyle.texture("heart_flash_0"),
+		RoundHudStyle.texture("heart_flash_1")
+	]:
 		if tex.get_size() != Vector2(11, 11):
-			printerr("FAIL player_health: heart icon %s is %s, want 11x11" % [tex.resource_path, tex.get_size()])
+			printerr(
+				(
+					"FAIL player_health: heart icon %s is %s, want 11x11"
+					% [tex.resource_path, tex.get_size()]
+				)
+			)
 			fail += 1
 	# Losing health flashes only the hearts that changed: flash 0, flash 1, then the new state.
 	hud.set_process(false)
@@ -149,7 +206,13 @@ func _test_player_health() -> int:
 		var out := ""
 		for slot in 3:
 			var tex := hud.shown_icon(slot)
-			out += {RoundHudStyle.texture("heart_full"): "F", RoundHudStyle.texture("heart_half"): "H", RoundHudStyle.texture("heart_empty"): "E", RoundHudStyle.texture("heart_flash_0"): "0", RoundHudStyle.texture("heart_flash_1"): "1"}[tex]
+			out += {
+				RoundHudStyle.texture("heart_full"): "F",
+				RoundHudStyle.texture("heart_half"): "H",
+				RoundHudStyle.texture("heart_empty"): "E",
+				RoundHudStyle.texture("heart_flash_0"): "0",
+				RoundHudStyle.texture("heart_flash_1"): "1"
+			}[tex]
 		return out
 	var seen: Array[String] = [flash.call()]
 	hud.advance(HeartsHud.FLASH_FRAME + 0.001)
@@ -165,14 +228,21 @@ func _test_player_health() -> int:
 	var plate := hud.get_parent() as StatusPlateHud
 	if plate != null:
 		plate.reflow()
-		if not is_equal_approx(hud.get_rect().get_center().y, plate.size.y * 0.5) \
-				or hud.scale != Vector2.ONE:
+		if (
+			not is_equal_approx(hud.get_rect().get_center().y, plate.size.y * 0.5)
+			or hud.scale != Vector2.ONE
+		):
 			printerr("FAIL player_health: HUD at %s scale %s" % [hud.position, hud.scale])
 			fail += 1
 	# Death: health stops at 0, the player hides and cannot be hit or healed.
 	h.set_health_now(1)
 	if not h.take_damage(5) or h.health != 0 or not h.is_dead() or deaths[0] != 1:
-		printerr("FAIL player_health: kill -> %s, dead=%s, deaths=%s" % [h.health, h.is_dead(), deaths[0]])
+		printerr(
+			(
+				"FAIL player_health: kill -> %s, dead=%s, deaths=%s"
+				% [h.health, h.is_dead(), deaths[0]]
+			)
+		)
 		fail += 1
 	h.advance(h.respawn_delay * 0.5)  # still before respawn
 	me._process(0.0)
@@ -185,7 +255,9 @@ func _test_player_health() -> int:
 	h.advance(h.respawn_delay * 0.5 + 0.01)
 	me._process(0.0)
 	if h.health != 6 or h.is_dead() or not h.is_invulnerable() or not me.sprite.visible:
-		printerr("FAIL player_health: respawn -> %s, invulnerable=%s" % [h.health, h.is_invulnerable()])
+		printerr(
+			"FAIL player_health: respawn -> %s, invulnerable=%s" % [h.health, h.is_invulnerable()]
+		)
 		fail += 1
 	if me.position != spawn or spawn == Vector2(5000, 5000):
 		printerr("FAIL player_health: respawned at %s, spawn %s" % [me.position, spawn])
@@ -198,8 +270,12 @@ func _test_player_health() -> int:
 	await physics_frame
 	me._process(0.0)
 	if not me.body_shape.disabled or not me.sword_shape.disabled or me.sprite.visible:
-		printerr("FAIL player_health: set_health_now(0) body off %s, sword off %s, sprite %s"
-				% [me.body_shape.disabled, me.sword_shape.disabled, me.sprite.visible])
+		printerr(
+			(
+				"FAIL player_health: set_health_now(0) body off %s, sword off %s, sprite %s"
+				% [me.body_shape.disabled, me.sword_shape.disabled, me.sprite.visible]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -268,13 +344,28 @@ func _test_player_health_sync() -> int:
 		if not await wait.call(func() -> bool: return c_health.health == 4):
 			printerr("FAIL player_health_sync late copy has %s, server 4" % c_health.health)
 			fail += 1
-		if c_health.take_damage(1) or c_health.heal(1) or c_health.health != 4 or s_health.health != 4:
-			printerr("FAIL player_health_sync client changed health (client %s, server %s)" % [c_health.health, s_health.health])
+		if (
+			c_health.take_damage(1)
+			or c_health.heal(1)
+			or c_health.health != 4
+			or s_health.health != 4
+		):
+			printerr(
+				(
+					"FAIL player_health_sync client changed health (client %s, server %s)"
+					% [c_health.health, s_health.health]
+				)
+			)
 			fail += 1
 		s_health.advance(s_health.invulnerable_time)
 		s_health.take_damage(1)
 		if not await wait.call(func() -> bool: return c_health.health == 3 and c_damage[0] == 1):
-			printerr("FAIL player_health_sync hit: client %s, damaged %s" % [c_health.health, c_damage[0]])
+			printerr(
+				(
+					"FAIL player_health_sync hit: client %s, damaged %s"
+					% [c_health.health, c_damage[0]]
+				)
+			)
 			fail += 1
 		if not c_health.is_invulnerable():
 			printerr("FAIL player_health_sync client copy not invulnerable after the hit")
@@ -289,8 +380,12 @@ func _test_player_health_sync() -> int:
 			printerr("FAIL player_health_sync client respawned on its own")
 			fail += 1
 		s_health.advance(s_health.respawn_delay)
-		if not await wait.call(func() -> bool: return c_health.health == 6 and c_respawn[0] == Vector2(32, 48)):
-			printerr("FAIL player_health_sync respawn: client %s at %s" % [c_health.health, c_respawn[0]])
+		if not await wait.call(
+			func() -> bool: return c_health.health == 6 and c_respawn[0] == Vector2(32, 48)
+		):
+			printerr(
+				"FAIL player_health_sync respawn: client %s at %s" % [c_health.health, c_respawn[0]]
+			)
 			fail += 1
 
 	cpeer.close()
@@ -378,19 +473,47 @@ func _test_player_health_join_while_dead() -> int:
 		if dead.health.health != 0 or not dead.health.is_dead():
 			printerr("FAIL health_join_dead joiner sees %s for a dead player" % dead.health.health)
 			fail += 1
-		if not dead.body_shape.disabled or not dead.sword_shape.disabled or dead.sprite.visible or dead.weapon.visible:
-			printerr("FAIL health_join_dead dead copy: body off %s, sword off %s, sprite %s, weapon %s"
-					% [dead.body_shape.disabled, dead.sword_shape.disabled, dead.sprite.visible, dead.weapon.visible])
+		if (
+			not dead.body_shape.disabled
+			or not dead.sword_shape.disabled
+			or dead.sprite.visible
+			or dead.weapon.visible
+		):
+			printerr(
+				(
+					"FAIL health_join_dead dead copy: body off %s, sword off %s, sprite %s, weapon %s"
+					% [
+						dead.body_shape.disabled,
+						dead.sword_shape.disabled,
+						dead.sprite.visible,
+						dead.weapon.visible
+					]
+				)
+			)
 			fail += 1
 		if deaths[0] != 0:
 			printerr("FAIL health_join_dead join replayed the death (%s)" % deaths[0])
 			fail += 1
 		if me.health.health != 4 or hud.current != 4:
-			printerr("FAIL health_join_dead own hearts %s, HUD %s, server 4" % [me.health.health, hud.current])
+			printerr(
+				(
+					"FAIL health_join_dead own hearts %s, HUD %s, server 4"
+					% [me.health.health, hud.current]
+				)
+			)
 			fail += 1
 		var flashing := false
 		for slot in 3:
-			flashing = flashing or hud.shown_icon(slot) in [RoundHudStyle.texture("heart_flash_0"), RoundHudStyle.texture("heart_flash_1")]
+			flashing = (
+				flashing
+				or (
+					hud.shown_icon(slot)
+					in [
+						RoundHudStyle.texture("heart_flash_0"),
+						RoundHudStyle.texture("heart_flash_1")
+					]
+				)
+			)
 		if flashing:
 			printerr("FAIL health_join_dead the join state reply flashed the HUD")
 			fail += 1

@@ -2,7 +2,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## One peer of a tower sync session (#497). Modes place, capture, watch, drive.
 ## Host: --host --save --port --out. Client: --port --out --mode [--shot].
 
-
 const PLACE_REPLICATE_FRAMES := 12
 const PLACE_FRAMES := 480
 const PLACE_RESEND_EVERY := 15
@@ -72,10 +71,22 @@ func _run() -> void:
 			if not capture_done and FileAccess.file_exists(probe_out + ".capture"):
 				capture_done = true
 				_scripted_ticks(main, world, FileAccess.get_file_as_string(probe_out + ".capture"))
-			if capture_done and not capture_more_done and FileAccess.file_exists(probe_out + ".capture_more"):
+			if (
+				capture_done
+				and not capture_more_done
+				and FileAccess.file_exists(probe_out + ".capture_more")
+			):
 				capture_more_done = true
-				_scripted_ticks(main, world, FileAccess.get_file_as_string(probe_out + ".capture_more"))
-		if not host and mode == "drive" and phase == "done" and not _shot and _tower_owner(world) == 1:
+				_scripted_ticks(
+					main, world, FileAccess.get_file_as_string(probe_out + ".capture_more")
+				)
+		if (
+			not host
+			and mode == "drive"
+			and phase == "done"
+			and not _shot
+			and _tower_owner(world) == 1
+		):
 			if shot != "" and DisplayServer.get_name() != "headless":
 				await RenderingServer.frame_post_draw
 				_shot = root.get_texture().get_image().save_png(shot) == OK
@@ -98,14 +109,20 @@ func _do_place(main, world, me: Node2D, mode: String) -> String:
 	var requests = main.get_node("World/StructureRequests")
 	var inventory: Inventory = main.get_node("Inventory")
 	var min_px := 180.0 if mode != "place" else 0.0
-	var land: Variant = _search(world, func(cell: Vector2i) -> bool:
-		return _tower_ok(world, cell, min_px))
+	var land: Variant = _search(
+		world, func(cell: Vector2i) -> bool: return _tower_ok(world, cell, min_px)
+	)
 	if land == null:
 		return "no clear tower anchor"
 	inventory.add(Inventory.WOOD, 10)
 	if mode == "place":
-		var water: Variant = _search(world, func(cell: Vector2i) -> bool:
-			return world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell))
+		var water: Variant = _search(
+			world,
+			func(cell: Vector2i) -> bool:
+				return (
+					world.predict_cell(cell)[0] == TileCatalog.WATER and not world.has_bridge(cell)
+				)
+		)
 		if water == null:
 			return "no water cell"
 		me.global_position = interaction.cell_center(water) + Vector2(0, 48)
@@ -167,10 +184,12 @@ func _scripted_ticks(main, world, text: String) -> void:
 	for _i in ticks:
 		capture.tick(delta)
 
+
 func _wait(ms: int) -> void:
 	var until := Time.get_ticks_msec() + ms
 	while Time.get_ticks_msec() < until:
 		await process_frame
+
 
 func _search(world, pred: Callable) -> Variant:
 	var spawn: Vector2i = world.resolve_player_spawn()
@@ -184,6 +203,7 @@ func _search(world, pred: Callable) -> Variant:
 					return cell
 	return null
 
+
 func _tower_ok(world, cell: Vector2i, min_px: float) -> bool:
 	var one: Array[Vector2i] = [cell]
 	if not ConstructionPlacer.new(world).can_place_geometry(BuildCosts.TOWER, one).is_empty():
@@ -192,8 +212,11 @@ func _tower_ok(world, cell: Vector2i, min_px: float) -> bool:
 		return true
 	var centre: Vector2 = world.to_global(world.map_to_local(cell))
 	for node in world.get_parent().get_children():
-		if node is CharacterBody2D and str(node.name).is_valid_int() \
-				and node.global_position.distance_to(centre) < min_px:
+		if (
+			node is CharacterBody2D
+			and str(node.name).is_valid_int()
+			and node.global_position.distance_to(centre) < min_px
+		):
 			return false
 		if node is Mob and node.global_position.distance_to(centre) < min_px:
 			return false
@@ -234,7 +257,9 @@ func _write(main, world, me: Node2D) -> void:
 		ids.sort()
 		for id in ids:
 			var anchor: Vector2i = placed[id]["anchor"]
-			placements.append([int(id), placed[id]["name"], int(placed[id]["owner"]), anchor.x, anchor.y])
+			placements.append(
+				[int(id), placed[id]["name"], int(placed[id]["owner"]), anchor.x, anchor.y]
+			)
 		for entry in main.get_node("World/TowerCapture").capture_snapshot():
 			capture.append([int(entry[0]), int(entry[1]), int(entry[2]), float(entry[3])])
 		var scores: Points = main.get_node("Points")
@@ -251,16 +276,18 @@ func _write(main, world, me: Node2D) -> void:
 		for peer_id in score_ids:
 			points[str(peer_id)] = scores.total_of(int(peer_id))
 	var inventory: Inventory = main.get_node("Inventory") if main != null else null
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"wood": inventory.count_of(Inventory.WOOD) if inventory != null else -1,
-		"refused_wood": _refused_wood,
-		"aside": _aside,
-		"shot": _shot,
-		"place_error": _place_error,
-		"placements": placements,
-		"capture": capture,
-		"points": points,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"wood": inventory.count_of(Inventory.WOOD) if inventory != null else -1,
+			"refused_wood": _refused_wood,
+			"aside": _aside,
+			"shot": _shot,
+			"place_error": _place_error,
+			"placements": placements,
+			"capture": capture,
+			"points": points,
+			"errors": _errors.snapshot(),
+		}
+	)

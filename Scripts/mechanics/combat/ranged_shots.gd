@@ -73,8 +73,11 @@ func resolve(sender_id: int, origin: Vector2, direction: Vector2) -> bool:
 	if body == null or _is_dead(body):
 		rejected += 1
 		return false
-	if not RangedShot._finite(origin) or not RangedShot._finite(direction) \
-			or direction.length_squared() <= 0.0000001:
+	if (
+		not RangedShot._finite(origin)
+		or not RangedShot._finite(direction)
+		or direction.length_squared() <= 0.0000001
+	):
 		rejected += 1
 		return false
 	# The sent origin can be a lie. The flight starts at the server body.
@@ -86,7 +89,9 @@ func resolve(sender_id: int, origin: Vector2, direction: Vector2) -> bool:
 		rejected += 1
 		return false
 	var from := body.global_position + AttackAim.ORIGIN
-	var hit := RangedShot.fly(get_node_or_null("../worldMap"), from, direction, _mobs(), _players(), body)
+	var hit := RangedShot.fly(
+		get_node_or_null("../worldMap"), from, direction, _mobs(), _players(), body
+	)
 	_until[sender_id] = now + int(RangedShot.COOLDOWN * 1000.0)
 	accepted += 1
 	RangedShot.apply(hit, sender_id)
@@ -97,11 +102,16 @@ func resolve(sender_id: int, origin: Vector2, direction: Vector2) -> bool:
 
 @rpc("authority", "call_local", "reliable")
 func show_shot(origin: Vector2, end: Vector2) -> void:
-	_lines.append({
-		"a": origin,
-		"b": end,
-		"until": Time.get_ticks_msec() + int(LINE_TIME * 1000.0),
-	})
+	(
+		_lines
+		. append(
+			{
+				"a": origin,
+				"b": end,
+				"until": Time.get_ticks_msec() + int(LINE_TIME * 1000.0),
+			}
+		)
+	)
 	_shown += 1
 	queue_redraw()
 

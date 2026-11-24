@@ -32,23 +32,38 @@ func _test_start_castle_fits_default_seeds() -> int:
 		var spawn: Vector2i = SpawnFinder.resolve_player_spawn(world)
 		var anchor: Variant = StartCastle.find_anchor(world, castle, spawn)
 		if anchor == null:
-			printerr("FAIL start_castle_fits_default_seeds: seed %s no fit within SEARCH_RADIUS=%s"
-					% [seed_value, StartCastle.SEARCH_RADIUS])
+			printerr(
+				(
+					"FAIL start_castle_fits_default_seeds: seed %s no fit within SEARCH_RADIUS=%s"
+					% [seed_value, StartCastle.SEARCH_RADIUS]
+				)
+			)
 			fail += 1
 			misses.append(seed_value)
 			continue
 		var front: Vector2i = anchor + StartCastle.GATE_FRONT
 		var foot := StructurePlacer.footprint(castle, anchor)
-		var reach: int = SpawnFinder.reachable_clear_cells(
-				world, front, SpawnFinder.SPAWN_MIN_REACHABLE, foot).size()
+		var reach: int = (
+			SpawnFinder
+			. reachable_clear_cells(world, front, SpawnFinder.SPAWN_MIN_REACHABLE, foot)
+			. size()
+		)
 		if reach < SpawnFinder.SPAWN_MIN_REACHABLE:
-			printerr("FAIL start_castle_fits_default_seeds: seed %s gate reaches %s, want %s"
-					% [seed_value, reach, SpawnFinder.SPAWN_MIN_REACHABLE])
+			printerr(
+				(
+					"FAIL start_castle_fits_default_seeds: seed %s gate reaches %s, want %s"
+					% [seed_value, reach, SpawnFinder.SPAWN_MIN_REACHABLE]
+				)
+			)
 			fail += 1
 			misses.append(seed_value)
 	var ms := Time.get_ticks_msec() - t0
-	print("start_castle_fits_default_seeds: checked %s seeds in %s ms, misses %s"
-			% [seeds.size(), ms, misses])
+	print(
+		(
+			"start_castle_fits_default_seeds: checked %s seeds in %s ms, misses %s"
+			% [seeds.size(), ms, misses]
+		)
+	)
 	scene.queue_free()
 	await process_frame
 	if fail == 0:

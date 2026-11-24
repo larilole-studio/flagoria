@@ -1,7 +1,6 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Building WFC constraint rules and seeded solves (#25).
 
-
 const BUILDING_W := 6
 const BUILDING_H := 5
 
@@ -27,13 +26,9 @@ func _pieces() -> Array:
 func _seed_sweep() -> int:
 	var fail := 0
 	for seed in 1000:
-		var result := WfcBuildingConstraints.solve_building(
-				BUILDING_W, BUILDING_H, seed, _pieces())
+		var result := WfcBuildingConstraints.solve_building(BUILDING_W, BUILDING_H, seed, _pieces())
 		if not result.ok:
-			printerr(
-					"FAIL wfc_building_constraints: seed %s: %s"
-					% [seed, result.get("error", "")]
-			)
+			printerr("FAIL wfc_building_constraints: seed %s: %s" % [seed, result.get("error", "")])
 			fail += 1
 			continue
 		var err := WfcBuildingConstraints.validate_all(result.grid)
@@ -46,18 +41,20 @@ func _seed_sweep() -> int:
 func _rule_negative_tests() -> int:
 	var fail := 0
 	fail += _expect_rule_fail(
-			"outer_ring", _bad_outer_ring(), WfcBuildingConstraints.rule_outer_ring_walls)
-	fail += _expect_rule_fail(
-			"one_door", _bad_one_door(), WfcBuildingConstraints.rule_one_door_on_ring)
-	fail += _expect_rule_fail(
-			"reachability",
-			_bad_reachability(),
-			WfcBuildingConstraints.rule_floor_reachable_from_door,
+		"outer_ring", _bad_outer_ring(), WfcBuildingConstraints.rule_outer_ring_walls
 	)
 	fail += _expect_rule_fail(
-			"roof", _bad_roof(), WfcBuildingConstraints.rule_roof_over_interior)
+		"one_door", _bad_one_door(), WfcBuildingConstraints.rule_one_door_on_ring
+	)
 	fail += _expect_rule_fail(
-			"min_interior", _bad_min_interior(), WfcBuildingConstraints.rule_min_interior_size)
+		"reachability",
+		_bad_reachability(),
+		WfcBuildingConstraints.rule_floor_reachable_from_door,
+	)
+	fail += _expect_rule_fail("roof", _bad_roof(), WfcBuildingConstraints.rule_roof_over_interior)
+	fail += _expect_rule_fail(
+		"min_interior", _bad_min_interior(), WfcBuildingConstraints.rule_min_interior_size
+	)
 	return fail
 
 
@@ -77,8 +74,12 @@ func _layout_6x5() -> Array:
 		["wall_straight", "floor", "floor", "floor", "floor", "wall_straight"],
 		["wall_straight", "floor", "floor", "floor", "floor", "wall_straight"],
 		[
-				"wall_corner", "wall_straight", "door", "wall_straight", "wall_straight",
-				"wall_corner",
+			"wall_corner",
+			"wall_straight",
+			"door",
+			"wall_straight",
+			"wall_straight",
+			"wall_corner",
 		],
 	]
 

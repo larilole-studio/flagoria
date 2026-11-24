@@ -2,7 +2,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## One peer of a wall and city sync session (#498).
 ## Host: --host --save --port --out --mode. Client: --port --out --mode [--shot].
 
-
 const PLACE_REPLICATE_FRAMES := 12
 const PLACE_FRAMES := 480
 const PLACE_RESEND_EVERY := 15
@@ -64,7 +63,13 @@ func _run() -> void:
 					_place_error = "could not erase %s" % cell
 				else:
 					_erased = cell
-		if not host and mode == "drive" and phase == "done" and not _shot and _tower_in_cities(main, world):
+		if (
+			not host
+			and mode == "drive"
+			and phase == "done"
+			and not _shot
+			and _tower_in_cities(main, world)
+		):
 			if shot != "" and DisplayServer.get_name() != "headless":
 				await _frames(20)
 				await RenderingServer.frame_post_draw
@@ -92,7 +97,9 @@ func _do_place(main, world, me: Node2D, mode: String) -> String:
 	return await _place_city(main, world, me, inventory, requests, interaction, mode)
 
 
-func _place_one_wall(main, world, me: Node2D, inventory: Inventory, requests, interaction: Interaction) -> String:
+func _place_one_wall(
+	main, world, me: Node2D, inventory: Inventory, requests, interaction: Interaction
+) -> String:
 	inventory.add(Inventory.WOOD, 4)
 	var water: Vector2i = _find_water(world)
 	if water.x == 1 << 20:
@@ -112,7 +119,9 @@ func _place_one_wall(main, world, me: Node2D, inventory: Inventory, requests, in
 	var spot: Vector2i = castle_touch(world)
 	if spot.x == 1 << 20:
 		return "no clear cell touching the castle"
-	error = await _wait_host_position(main, me, interaction.cell_center(spot) + Vector2(0, 48), 5000)
+	error = await _wait_host_position(
+		main, me, interaction.cell_center(spot) + Vector2(0, 48), 5000
+	)
 	if error != "":
 		return error
 	var one: Array[Vector2i] = [spot]
@@ -126,7 +135,9 @@ func _place_one_wall(main, world, me: Node2D, inventory: Inventory, requests, in
 	return ""
 
 
-func _place_city(main, world, me: Node2D, inventory: Inventory, requests, interaction: Interaction, mode: String) -> String:
+func _place_city(
+	main, world, me: Node2D, inventory: Inventory, requests, interaction: Interaction, mode: String
+) -> String:
 	## Map seed is fixed by the test (seed 11). Each place waits until the host
 	## has this body, then until that place is on the map. No wall-clock sleep:
 	## a short sleep raced the position sync and a rejected place then burned
@@ -137,7 +148,9 @@ func _place_city(main, world, me: Node2D, inventory: Inventory, requests, intera
 		return "no 5x5 clear ring"
 	var anchor: Vector2i = spot["anchor"]
 	_gap = spot["gap"]
-	var err := await _ready_to_build(main, me, interaction.cell_center(anchor) + Vector2(0, 48), mode)
+	var err := await _ready_to_build(
+		main, me, interaction.cell_center(anchor) + Vector2(0, 48), mode
+	)
 	if err != "":
 		return err
 	var tower_cell: Array[Vector2i] = [anchor]
@@ -272,7 +285,8 @@ func _ring_at(world, structure: Structure, cell: Vector2i) -> Dictionary:
 		"anchor": anchor,
 		"gap": cell + Vector2i(2, 0),
 		"ring": ring,
-		"sides": [
+		"sides":
+		[
 			_span(cell, true, 0, 0, 4),
 			_span(cell, false, 4, 1, 3),
 			_span(cell, true, 4, 0, 4),
@@ -358,35 +372,50 @@ func _write(main, world, me: Node2D) -> void:
 	if main != null and main.world_params != null:
 		tower = _tower_id(world)
 		var cells: Array = world._walls._wall_cells.keys()
-		cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-			return a.x < b.x or (a.x == b.x and a.y < b.y))
+		cells.sort_custom(
+			func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y)
+		)
 		for cell: Vector2i in cells:
 			var caps: PackedStringArray = PackedStringArray(world._walls.cap_names(cell))
-			walls.append([cell.x, cell.y, WallBuilder._atlas_wall_name(world._walls.piece(cell)), ",".join(caps)])
+			walls.append(
+				[
+					cell.x,
+					cell.y,
+					WallBuilder._atlas_wall_name(world._walls.piece(cell)),
+					",".join(caps)
+				]
+			)
 		var auto_cells: Array = world._structures.auto_cells().keys()
-		auto_cells.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-			return a.x < b.x or (a.x == b.x and a.y < b.y))
+		auto_cells.sort_custom(
+			func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y)
+		)
 		for cell: Vector2i in auto_cells:
-			autos.append([cell.x, cell.y, WallBuilder._atlas_wall_name(world._structures.object_at(cell))])
+			autos.append(
+				[cell.x, cell.y, WallBuilder._atlas_wall_name(world._structures.object_at(cell))]
+			)
 		var node = main.get_node("World/Cities")
 		var ids: Array = node.cities.keys()
 		ids.sort()
 		for id in ids:
-			cities.append([int(id), node.cities[id]["walls"].size(), node.cities[id]["interior"].size()])
+			cities.append(
+				[int(id), node.cities[id]["walls"].size(), node.cities[id]["interior"].size()]
+			)
 	var inventory: Inventory = main.get_node("Inventory") if main != null else null
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"wood": inventory.count_of(Inventory.WOOD) if inventory != null else -1,
-		"refused_wood": _refused_wood,
-		"place_error": _place_error,
-		"shot": _shot,
-		"tower_id": tower,
-		"gap": [_gap.x, _gap.y],
-		"erased": [_erased.x, _erased.y],
-		"peers": peer_positions(main),
-		"walls": walls,
-		"autos": autos,
-		"cities": cities,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"wood": inventory.count_of(Inventory.WOOD) if inventory != null else -1,
+			"refused_wood": _refused_wood,
+			"place_error": _place_error,
+			"shot": _shot,
+			"tower_id": tower,
+			"gap": [_gap.x, _gap.y],
+			"erased": [_erased.x, _erased.y],
+			"peers": peer_positions(main),
+			"walls": walls,
+			"autos": autos,
+			"cities": cities,
+			"errors": _errors.snapshot(),
+		}
+	)

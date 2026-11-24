@@ -50,12 +50,18 @@ func archipelago_altitude(cell: Vector2i, alt: float) -> float:
 	## dropped squares are all sea.
 	if _map.archipelago_spacing <= 0:
 		return alt
-	var square := Vector2i(floori(float(cell.x) / _map.archipelago_spacing), floori(float(cell.y) / _map.archipelago_spacing))
+	var square := Vector2i(
+		floori(float(cell.x) / _map.archipelago_spacing),
+		floori(float(cell.y) / _map.archipelago_spacing)
+	)
 	if _archipelago_count_limited:
 		var local := cell - square * _map.archipelago_spacing
 		if not _archipelago_active_squares.has(square) or local.x == 0 or local.y == 0:
 			return _map.water_max_alt - 1.0
-		var own := Vector2(cell).distance_to(archipelago_centre(square)) / float(_map.archipelago_island_radius)
+		var own := (
+			Vector2(cell).distance_to(archipelago_centre(square))
+			/ float(_map.archipelago_island_radius)
+		)
 		return alt + _map.island_falloff * (1.0 - own * own)
 	var nearest := INF
 	for dx in range(-1, 2):
@@ -75,9 +81,15 @@ func archipelago_centre(square: Vector2i) -> Vector2:
 	## Centre of the island in grid square `square`: the square's middle, moved
 	## by a per-square offset that depends only on the square and the altitude seed.
 	var h: int = hash(Vector3i(square.x, square.y, _map.archipelago_seed))
-	var offset := Vector2(float(h & 0xFFFF) / 65535.0, float((h >> 16) & 0xFFFF) / 65535.0) * 2.0 - Vector2.ONE
+	var offset := (
+		Vector2(float(h & 0xFFFF) / 65535.0, float((h >> 16) & 0xFFFF) / 65535.0) * 2.0
+		- Vector2.ONE
+	)
 	var half := _map.archipelago_spacing * 0.5
-	return (Vector2(square) + Vector2(0.5, 0.5)) * _map.archipelago_spacing + offset * _map.archipelago_jitter * half
+	return (
+		(Vector2(square) + Vector2(0.5, 0.5)) * _map.archipelago_spacing
+		+ offset * _map.archipelago_jitter * half
+	)
 
 
 func archipelago_square_active(square: Vector2i) -> bool:

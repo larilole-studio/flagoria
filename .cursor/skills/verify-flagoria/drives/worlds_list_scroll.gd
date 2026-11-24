@@ -16,11 +16,15 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		done(false)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(WORLDS), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(WORLDS),
+		START_TIMEOUT_S
+	):
 		done(false)
 		return
-	for spec in [{"name": "720", "size": Vector2i(1280, 720)}, {"name": "1080", "size": Vector2i(2400, 1080)}]:
+	for spec in [
+		{"name": "720", "size": Vector2i(1280, 720)}, {"name": "1080", "size": Vector2i(2400, 1080)}
+	]:
 		step("scroll-%s" % spec["name"])
 		if not await _capture_scroll(spec["name"], spec["size"]):
 			done(false)

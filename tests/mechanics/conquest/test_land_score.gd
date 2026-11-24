@@ -25,8 +25,13 @@ func _setup_city() -> Dictionary:
 		printerr("FAIL land_score: could not build the fixture (tower id %d)" % id)
 		scene.queue_free()
 		return {}
-	return {"scene": scene, "world": world, "id": id,
-		"land": scene.get_node("World/LandScore"), "points": scene.get_node("Points")}
+	return {
+		"scene": scene,
+		"world": world,
+		"id": id,
+		"land": scene.get_node("World/LandScore"),
+		"points": scene.get_node("Points")
+	}
 
 
 func _test_land_score_range() -> int:
@@ -50,7 +55,15 @@ func _test_land_score_range() -> int:
 		printerr("FAIL land_score_range: could not select the flag's 32 px ring")
 		fail += 1
 	for expected: int in [10, 18, 0]:
-		if expected == 18 and t["world"].place_structure(StructurePlacer.load_named("tower_wood"), SECOND_TOWER, 1) <= 0:
+		if (
+			expected == 18
+			and (
+				t["world"].place_structure(
+					StructurePlacer.load_named("tower_wood"), SECOND_TOWER, 1
+				)
+				<= 0
+			)
+		):
 			printerr("FAIL land_score_range: could not place the second tower")
 			fail += 1
 		if expected == 0 and not requests.host_erase_wall(ORIGIN + Vector2i.RIGHT):
@@ -58,9 +71,16 @@ func _test_land_score_range() -> int:
 			fail += 1
 		land.tick()
 		var rows := board.sorted_rows()
-		if points.total_of(1) != expected or not rows.any(func(row): return row[0] == 1 and row[1] == expected):
-			printerr("FAIL land_score_range: expected %d points, got %d and scoreboard %s"
-					% [expected, points.total_of(1), rows])
+		if (
+			points.total_of(1) != expected
+			or not rows.any(func(row): return row[0] == 1 and row[1] == expected)
+		):
+			printerr(
+				(
+					"FAIL land_score_range: expected %d points, got %d and scoreboard %s"
+					% [expected, points.total_of(1), rows]
+				)
+			)
 			fail += 1
 		if expected == 0 and t["scene"].get_node("World/Cities").cities.has(t["id"]):
 			printerr("FAIL land_score_range: city survived an open ring")
@@ -98,6 +118,11 @@ func _test_land_score_client_skips() -> int:
 	LandScore.range_cells = old_range
 	LandScore.enabled = old_enabled
 	if client_total != 0 or offline_total != 10:
-		printerr("FAIL land_score_client_skips: client scored %d and offline scored %d" % [client_total, offline_total])
+		printerr(
+			(
+				"FAIL land_score_client_skips: client scored %d and offline scored %d"
+				% [client_total, offline_total]
+			)
+		)
 		return 1
 	return 0

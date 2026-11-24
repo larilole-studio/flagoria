@@ -34,9 +34,22 @@ func run() -> void:
 	var earned := points.earned_of(1)
 	var covered := land.covered_of(1)
 	var score := current_scene.find_child("ScoreHud", true, false) as Label
-	var shown := score != null and score.is_visible_in_tree() and score.text == str(covered + earned)
-	print("land_score: score %s earned %s covered %s shown %s selected %s radius %s" % [
-		total, earned, covered, score.text if score != null else "missing", land.selected_tower, radius])
+	var shown := (
+		score != null and score.is_visible_in_tree() and score.text == str(covered + earned)
+	)
+	print(
+		(
+			"land_score: score %s earned %s covered %s shown %s selected %s radius %s"
+			% [
+				total,
+				earned,
+				covered,
+				score.text if score != null else "missing",
+				land.selected_tower,
+				radius
+			]
+		)
+	)
 	done(selected and is_equal_approx(radius, want) and total - earned == covered and shown)
 
 

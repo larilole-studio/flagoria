@@ -2,7 +2,6 @@ class_name BuildingMerge
 extends RefCounted
 ## Re-solve adjacent building footprints so they share a wall (#27).
 
-
 const MERGE_SOLVE_ATTEMPTS := 8
 
 
@@ -75,16 +74,18 @@ static func touches_without_full_edge(records: Array, record: Dictionary) -> boo
 
 
 static func merge_seed(earlier: Dictionary, later: Dictionary) -> int:
-	return GeneratedBuildings.mix_seed(int(earlier.get("seed", 0)), int(earlier.get("style", 0))) \
-			^ GeneratedBuildings.mix_seed(int(later.get("seed", 0)), int(later.get("style", 0)))
+	return (
+		GeneratedBuildings.mix_seed(int(earlier.get("seed", 0)), int(earlier.get("style", 0)))
+		^ GeneratedBuildings.mix_seed(int(later.get("seed", 0)), int(later.get("style", 0)))
+	)
 
 
 static func merge_grids(
-		earlier: Dictionary,
-		earlier_grid: Array,
-		later: Dictionary,
-		later_grid: Array,
-		pieces: Array = [],
+	earlier: Dictionary,
+	earlier_grid: Array,
+	later: Dictionary,
+	later_grid: Array,
+	pieces: Array = [],
 ) -> Dictionary:
 	if earlier_grid.is_empty() or later_grid.is_empty():
 		return {"ok": false}
@@ -95,14 +96,20 @@ static func merge_grids(
 			pieces.append(piece)
 	var cx := mini(int(earlier.get("x", 0)), int(later.get("x", 0)))
 	var cy := mini(int(earlier.get("y", 0)), int(later.get("y", 0)))
-	var cw := maxi(
+	var cw := (
+		maxi(
 			int(earlier.get("x", 0)) + int(earlier.get("width", 0)),
 			int(later.get("x", 0)) + int(later.get("width", 0)),
-	) - cx
-	var ch := maxi(
+		)
+		- cx
+	)
+	var ch := (
+		maxi(
 			int(earlier.get("y", 0)) + int(earlier.get("height", 0)),
 			int(later.get("y", 0)) + int(later.get("height", 0)),
-	) - cy
+		)
+		- cy
+	)
 	var ex := int(earlier.get("x", 0)) - cx
 	var ey := int(earlier.get("y", 0)) - cy
 	var lx := int(later.get("x", 0)) - cx
@@ -116,7 +123,8 @@ static func merge_grids(
 	seam.merge(_seam_cells_earlier(ex, ey, ew, eh, lx, ly, lw, lh))
 	var allowed := _cell_allowed(combined, seam, cw, ch)
 	var solve := WfcSolver.solve(
-			cw, ch, pieces, merge_seed(earlier, later), MERGE_SOLVE_ATTEMPTS, allowed)
+		cw, ch, pieces, merge_seed(earlier, later), MERGE_SOLVE_ATTEMPTS, allowed
+	)
 	if solve.get("ok", false):
 		var err := WfcBuildingConstraints.validate_all(solve.grid)
 		if err == "":
@@ -137,18 +145,18 @@ static func merge_grids(
 
 
 static func _stitch(
-		earlier_grid: Array,
-		later_grid: Array,
-		ex: int,
-		ey: int,
-		lx: int,
-		ly: int,
-		cw: int,
-		ch: int,
-		ew: int,
-		eh: int,
-		lw: int,
-		lh: int,
+	earlier_grid: Array,
+	later_grid: Array,
+	ex: int,
+	ey: int,
+	lx: int,
+	ly: int,
+	cw: int,
+	ch: int,
+	ew: int,
+	eh: int,
+	lw: int,
+	lh: int,
 ) -> Array:
 	var combined: Array = []
 	for y in ch:
@@ -165,7 +173,9 @@ static func _stitch(
 	return combined
 
 
-static func _seam_cells(lx: int, ly: int, lw: int, lh: int, ex: int, ey: int, ew: int, eh: int) -> Dictionary:
+static func _seam_cells(
+	lx: int, ly: int, lw: int, lh: int, ex: int, ey: int, ew: int, eh: int
+) -> Dictionary:
 	var seam := {}
 	for y in lh:
 		for x in lw:
@@ -182,7 +192,9 @@ static func _seam_cells(lx: int, ly: int, lw: int, lh: int, ex: int, ey: int, ew
 	return seam
 
 
-static func _seam_cells_earlier(ex: int, ey: int, ew: int, eh: int, lx: int, ly: int, lw: int, lh: int) -> Dictionary:
+static func _seam_cells_earlier(
+	ex: int, ey: int, ew: int, eh: int, lx: int, ly: int, lw: int, lh: int
+) -> Dictionary:
 	var seam := {}
 	for y in eh:
 		for x in ew:
@@ -230,7 +242,9 @@ static func _is_combined_corner(x: int, y: int, cw: int, ch: int) -> bool:
 	return (x == 0 or x == cw - 1) and (y == 0 or y == ch - 1)
 
 
-static func _stitch_fallback(combined: Array, seam: Dictionary, cw: int, ch: int, seed: int) -> Array:
+static func _stitch_fallback(
+	combined: Array, seam: Dictionary, cw: int, ch: int, seed: int
+) -> Array:
 	var out: Array = []
 	for y in ch:
 		var row: Array = combined[y].duplicate()

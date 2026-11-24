@@ -29,7 +29,9 @@ func _build() -> void:
 			sprite.texture = atlas_tex
 			sprite.centered = false
 			sprite.region_enabled = true
-			sprite.region_rect = Rect2(atlas.x * TILE_SIZE, atlas.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+			sprite.region_rect = Rect2(
+				atlas.x * TILE_SIZE, atlas.y * TILE_SIZE, TILE_SIZE, TILE_SIZE
+			)
 			sprite.position = Vector2(CELL * 0.5 - TILE_SIZE * 0.5, CELL * 0.5 - TILE_SIZE * 0.5)
 			block.add_child(sprite)
 		else:

@@ -1,7 +1,6 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Ambient caps follow the day/night clock (#559).
 
-
 const DRIVE_RATE := 0.5
 const DRIVE_SEED := 5
 
@@ -15,7 +14,9 @@ func _test_night_mob_caps() -> int:
 	if not is_equal_approx(DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD["day"]), true), 1.0):
 		printerr("FAIL night_mob_caps day scale")
 		fail += 1
-	if not is_equal_approx(DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD["night"]), true), 2.0):
+	if not is_equal_approx(
+		DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD["night"]), true), 2.0
+	):
 		printerr("FAIL night_mob_caps night scale")
 		fail += 1
 	if not is_equal_approx(DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD["dusk"]), true), 1.5):
@@ -31,7 +32,11 @@ func _test_night_mob_caps() -> int:
 		printerr("FAIL night_mob_caps dusk ramp %s %s %s" % [early, mid, late])
 		fail += 1
 	var dawn_late := DayNight.night_weight(592.5)
-	if not (is_equal_approx(DayNight.night_weight(540.0), 1.0) and dawn_late < DayNight.night_weight(570.0) and dawn_late > 0.0):
+	if not (
+		is_equal_approx(DayNight.night_weight(540.0), 1.0)
+		and dawn_late < DayNight.night_weight(570.0)
+		and dawn_late > 0.0
+	):
 		printerr("FAIL night_mob_caps dawn ramp")
 		fail += 1
 	if not is_equal_approx(DayNight.spawn_scale_for(480.0, false), 1.0):
@@ -49,7 +54,10 @@ func _test_night_mob_caps() -> int:
 	if night_caps != {"per_player": 20, "total": 60}:
 		printerr("FAIL night_mob_caps night caps %s" % night_caps)
 		fail += 1
-	if MobSpawner.ambient_caps(1.0) != day_caps or MobSpawner.ambient_caps(2.0) != {"per_player": 20, "total": 60}:
+	if (
+		MobSpawner.ambient_caps(1.0) != day_caps
+		or MobSpawner.ambient_caps(2.0) != {"per_player": 20, "total": 60}
+	):
 		printerr("FAIL night_mob_caps omitted scale changed the day caps")
 		fail += 1
 	if MobSpawner.ambient_caps(2.0, 2.0) != {"per_player": 40, "total": 120}:
@@ -58,24 +66,48 @@ func _test_night_mob_caps() -> int:
 	for phase in ["day", "dusk", "night", "dawn"]:
 		var scale := DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD[phase]), true)
 		var want: Dictionary = MobSpawner.ambient_caps(1.0, scale)
-		var got: Dictionary = MobSpawner.ambient_caps(1.0, DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD[phase]), true))
-		if got != want or (phase == "day" and got != day_caps) or (phase == "night" and got != night_caps):
+		var got: Dictionary = MobSpawner.ambient_caps(
+			1.0, DayNight.spawn_scale_for(float(DayNight.PHASE_HOLD[phase]), true)
+		)
+		if (
+			got != want
+			or (phase == "day" and got != day_caps)
+			or (phase == "night" and got != night_caps)
+		):
 			printerr("FAIL night_mob_caps %s caps %s" % [phase, got])
 			fail += 1
 		if phase == "dusk" or phase == "dawn":
-			if int(got["per_player"]) <= int(day_caps["per_player"]) or int(got["per_player"]) >= int(night_caps["per_player"]):
-				printerr("FAIL night_mob_caps %s per-player %s is not between day and night" % [phase, got])
+			if (
+				int(got["per_player"]) <= int(day_caps["per_player"])
+				or int(got["per_player"]) >= int(night_caps["per_player"])
+			):
+				printerr(
+					(
+						"FAIL night_mob_caps %s per-player %s is not between day and night"
+						% [phase, got]
+					)
+				)
 				fail += 1
 	var off := MapGenParams.make_defaults()
 	off.day_night_cycle = false
 	DayNight.begin(off, float(DayNight.PHASE_HOLD["night"]))
 	if DayNight.phase() != "day" or not is_equal_approx(MobSpawner.ambient_scale(), 1.0):
-		printerr("FAIL night_mob_caps spawner scale with the cycle off %s %s" % [DayNight.phase(), MobSpawner.ambient_scale()])
+		printerr(
+			(
+				"FAIL night_mob_caps spawner scale with the cycle off %s %s"
+				% [DayNight.phase(), MobSpawner.ambient_scale()]
+			)
+		)
 		fail += 1
 	off.day_night_cycle = true
 	DayNight.begin(off, float(DayNight.PHASE_HOLD["night"]))
 	if DayNight.phase() != "night" or not is_equal_approx(MobSpawner.ambient_scale(), 2.0):
-		printerr("FAIL night_mob_caps spawner night scale %s %s" % [DayNight.phase(), MobSpawner.ambient_scale()])
+		printerr(
+			(
+				"FAIL night_mob_caps spawner night scale %s %s"
+				% [DayNight.phase(), MobSpawner.ambient_scale()]
+			)
+		)
 		fail += 1
 	DayNight.stop()
 	fail += _drive_map_gap()
@@ -100,9 +132,13 @@ func _test_night_mob_dawn() -> int:
 	var night_cap := int(MobSpawner.ambient_caps(1.0, night_scale)["per_player"])
 	var day_cap := int(MobSpawner.ambient_caps(1.0, day_scale)["per_player"])
 	var in_view := _roster(player, night_cap, 10, "near")
-	var at_night: Dictionary = MobSpawner.plan_tick(world, [player], in_view, 11, 0, 1.0, night_scale)
+	var at_night: Dictionary = MobSpawner.plan_tick(
+		world, [player], in_view, 11, 0, 1.0, night_scale
+	)
 	if not at_night["spawn"].is_empty() or not at_night["despawn"].is_empty():
-		printerr("FAIL night_mob_dawn night changed an in-view roster at the night cap: %s" % at_night)
+		printerr(
+			"FAIL night_mob_dawn night changed an in-view roster at the night cap: %s" % at_night
+		)
 		fail += 1
 	var still: Dictionary = MobSpawner.plan_tick(world, [player], in_view, 11, 1, 1.0, day_scale)
 	if not still["despawn"].is_empty() or still["despawn"].has("near"):
@@ -124,9 +160,16 @@ func _test_night_mob_dawn() -> int:
 		if maxi(absi(cell.x - player.x), absi(cell.y - player.y)) <= MobSpawner.DESPAWN_RADIUS:
 			printerr("FAIL night_mob_dawn despawned %s inside the radius" % mob_name)
 			fail += 1
-	var left := wandered.size() - (at_day["despawn"] as Array).size() + (at_day["spawn"] as Array).size()
+	var left := (
+		wandered.size() - (at_day["despawn"] as Array).size() + (at_day["spawn"] as Array).size()
+	)
 	if left != day_cap or at_day["despawn"].size() != night_cap - day_cap:
-		printerr("FAIL night_mob_dawn count %s want day cap %s despawn %s" % [left, day_cap, at_day["despawn"]])
+		printerr(
+			(
+				"FAIL night_mob_dawn count %s want day cap %s despawn %s"
+				% [left, day_cap, at_day["despawn"]]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	if fail == 0:
@@ -151,15 +194,29 @@ func _drive_map_gap() -> int:
 	var opening: Array = MobSpawner.plan(world, player, DRIVE_SEED, DRIVE_RATE)
 	for i in opening.size():
 		existing.append({"name": "mob_%d" % i, "cell": opening[i]["cell"], "pinned": false})
-	var day: Dictionary = MobSpawner.plan_tick(world, [player], existing, DRIVE_SEED, 0, DRIVE_RATE, 1.0)
+	var day: Dictionary = MobSpawner.plan_tick(
+		world, [player], existing, DRIVE_SEED, 0, DRIVE_RATE, 1.0
+	)
 	var mid := _apply_plan(existing, day)
-	var night: Dictionary = MobSpawner.plan_tick(world, [player], mid, DRIVE_SEED, 1, DRIVE_RATE, 2.0)
+	var night: Dictionary = MobSpawner.plan_tick(
+		world, [player], mid, DRIVE_SEED, 1, DRIVE_RATE, 2.0
+	)
 	var after := _apply_plan(mid, night)
 	scene.queue_free()
 	if after.size() <= mid.size():
-		printerr("FAIL night_mob_caps seed %s rate %s day %s night %s (no extra mobs)" % [DRIVE_SEED, DRIVE_RATE, mid.size(), after.size()])
+		printerr(
+			(
+				"FAIL night_mob_caps seed %s rate %s day %s night %s (no extra mobs)"
+				% [DRIVE_SEED, DRIVE_RATE, mid.size(), after.size()]
+			)
+		)
 		return 1
-	print("night_mob_caps: seed %s rate %s day %s night %s" % [DRIVE_SEED, DRIVE_RATE, mid.size(), after.size()])
+	print(
+		(
+			"night_mob_caps: seed %s rate %s day %s night %s"
+			% [DRIVE_SEED, DRIVE_RATE, mid.size(), after.size()]
+		)
+	)
 	return 0
 
 
@@ -179,11 +236,16 @@ func _apply_plan(existing: Array, plan: Dictionary) -> Array:
 func _roster(player: Vector2i, count: int, distance: int, first_name: String) -> Array:
 	var out: Array = []
 	for i in count:
-		out.append({
-			"name": first_name if i == 0 else "mob_%d" % i,
-			"cell": player + Vector2i(distance, 0),
-			"pinned": false,
-		})
+		(
+			out
+			. append(
+				{
+					"name": first_name if i == 0 else "mob_%d" % i,
+					"cell": player + Vector2i(distance, 0),
+					"pinned": false,
+				}
+			)
+		)
 	return out
 
 

@@ -1,7 +1,6 @@
 extends "res://tests/soldier_sync_probe.gd"
 ## Host-owned soldier on Hold pins a client in range until player health drops (#555).
 
-
 var _fight_started := false
 var _fight_spawn_at := -1
 var _victim_id := ""
@@ -12,12 +11,16 @@ func _run() -> void:
 	var host := has_option("--host")
 	var mode := option("--mode", "watch")
 	if host and save == "":
-		printerr("soldier_player_probe: needs --port, --out, --save with --host, and the main scene")
+		printerr(
+			"soldier_player_probe: needs --port, --out, --save with --host, and the main scene"
+		)
 		quit(1)
 		return
 	var main = await open_game(host)
 	if main == null:
-		printerr("soldier_player_probe: needs --port, --out, --save with --host, and the main scene")
+		printerr(
+			"soldier_player_probe: needs --port, --out, --save with --host, and the main scene"
+		)
 		quit(1)
 		return
 	main.get_node("CanvasLayer2/MainMenu").hide()
@@ -65,7 +68,9 @@ func _do_host_place(main, world, me: Node2D, requests: SoldierRequests) -> Strin
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var structure_requests = main.get_node("World/StructureRequests")
 	var inventory: Inventory = main.get_node("Inventory")
-	var land: Variant = _search(world, func(cell: Vector2i) -> bool: return _barracks_ok(world, cell, 0))
+	var land: Variant = _search(
+		world, func(cell: Vector2i) -> bool: return _barracks_ok(world, cell, 0)
+	)
 	if land == null:
 		return "no clear barracks anchor"
 	_pin(me, interaction.cell_center(land) + Vector2(0, 48))
@@ -85,9 +90,12 @@ func _do_host_place(main, world, me: Node2D, requests: SoldierRequests) -> Strin
 	if not await _until(func() -> bool: return _soldier_rows(requests).size() >= 1, 15000):
 		return "soldier did not spawn"
 	requests.host_set_order(builder)
-	if not await _until(func() -> bool:
-		var rows := _soldier_rows(requests)
-		return not rows.is_empty() and str(rows[0][2]) == "hold", 8000):
+	if not await _until(
+		func() -> bool:
+			var rows := _soldier_rows(requests)
+			return not rows.is_empty() and str(rows[0][2]) == "hold",
+		8000
+	):
 		return "hold order did not apply"
 	return ""
 
@@ -154,14 +162,16 @@ func _write_peer_fight(main, world, me: Node2D, requests: SoldierRequests) -> vo
 			if child is CharacterBody2D and str(child.name).is_valid_int():
 				peers[str(child.name)] = [child.global_position.x, child.global_position.y]
 	var victim := _peer_health(main)
-	write_result({
-		"id": _peer_id(main),
-		"ready": main != null and main.world_params != null and me != null,
-		"place_error": _place_error,
-		"peers": peers,
-		"soldiers": _soldier_rows(requests),
-		"pending_jobs": requests.pending_job_count() if requests != null else 0,
-		"fight_peer_hp": victim["hp"],
-		"fight_peer_start_hp": victim["start"],
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": _peer_id(main),
+			"ready": main != null and main.world_params != null and me != null,
+			"place_error": _place_error,
+			"peers": peers,
+			"soldiers": _soldier_rows(requests),
+			"pending_jobs": requests.pending_job_count() if requests != null else 0,
+			"fight_peer_hp": victim["hp"],
+			"fight_peer_start_hp": victim["start"],
+			"errors": _errors.snapshot(),
+		}
+	)

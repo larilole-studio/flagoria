@@ -26,21 +26,42 @@ func _test_tower_place_two_players() -> int:
 			printerr("FAIL tower_place_two_players: the client did not join: %s" % read.call(1))
 			fail = 1
 		elif not await wait_for.call(func() -> bool: return _placed(read), 20000):
-			printerr("FAIL tower_place_two_players: after place host %s client %s"
-					% [read.call(0), read.call(1)])
+			printerr(
+				(
+					"FAIL tower_place_two_players: after place host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail = 1
 		else:
 			launch.call(false, "watch")
-			if not await wait_for.call(func() -> bool:
-				return read.call(2).get("ready", false) and _same_place(read.call(2), read.call(0)) \
-						and _same_points(read.call(2), read.call(0)), 30000):
-				printerr("FAIL tower_place_two_players: the late joiner %s host %s"
-						% [read.call(2), read.call(0)])
+			if not await wait_for.call(
+				func() -> bool:
+					return (
+						read.call(2).get("ready", false)
+						and _same_place(read.call(2), read.call(0))
+						and _same_points(read.call(2), read.call(0))
+					),
+				30000
+			):
+				printerr(
+					(
+						"FAIL tower_place_two_players: the late joiner %s host %s"
+						% [read.call(2), read.call(0)]
+					)
+				)
 				fail = 1
 		for i in session["outs"].size():
-			if not read.call(i).get("errors", []).is_empty() or str(read.call(i).get("place_error", "")) != "":
-				printerr("FAIL tower_place_two_players: peer %d errors %s place %s"
-						% [i, read.call(i).get("errors", []), read.call(i).get("place_error", "")])
+			if (
+				not read.call(i).get("errors", []).is_empty()
+				or str(read.call(i).get("place_error", "")) != ""
+			):
+				printerr(
+					(
+						"FAIL tower_place_two_players: peer %d errors %s place %s"
+						% [i, read.call(i).get("errors", []), read.call(i).get("place_error", "")]
+					)
+				)
 				fail = 1
 	await _close(session)
 	if fail == 0:
@@ -58,8 +79,14 @@ func _placed(read: Callable) -> bool:
 	if not _same_place(client, host):
 		return false
 	var builder := _peer_id(client)
-	return builder > 1 and _tower_count(host) == 1 and _owner_named(host, "tower_wood") == builder \
-			and _owner_named(host, "castle") == 1 and _flag_points(host, builder) and _flag_points(client, builder)
+	return (
+		builder > 1
+		and _tower_count(host) == 1
+		and _owner_named(host, "tower_wood") == builder
+		and _owner_named(host, "castle") == 1
+		and _flag_points(host, builder)
+		and _flag_points(client, builder)
+	)
 
 
 func _test_tower_capture_two_players() -> int:
@@ -79,48 +106,91 @@ func _test_tower_capture_two_players() -> int:
 		fail = 1
 	else:
 		launch.call(false, "capture")
-		if not await wait_for.call(func() -> bool:
-			var builder := _peer_id(read.call(1))
-			return read.call(1).get("aside", false) and builder > 1 \
-					and _owner_named(read.call(0), "tower_wood") == builder \
-					and _same_place(read.call(1), read.call(0)), 30000):
-			printerr("FAIL tower_capture_two_players: tower was not built: host %s client %s"
-					% [read.call(0), read.call(1)])
+		if not await wait_for.call(
+			func() -> bool:
+				var builder := _peer_id(read.call(1))
+				return (
+					read.call(1).get("aside", false)
+					and builder > 1
+					and _owner_named(read.call(0), "tower_wood") == builder
+					and _same_place(read.call(1), read.call(0))
+				),
+			30000
+		):
+			printerr(
+				(
+					"FAIL tower_capture_two_players: tower was not built: host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail = 1
 		else:
 			var cap := FileAccess.open(session["outs"][0] + ".capture", FileAccess.WRITE)
 			cap.store_string("8,0.5")
 			cap.close()
-			if not await wait_for.call(func() -> bool:
-				var builder := _peer_id(read.call(1))
-				return _progress_is(read.call(0), 4.0) and _progress_is(read.call(1), 4.0) \
-						and _owner_named(read.call(0), "tower_wood") == builder \
-						and _owner_named(read.call(1), "tower_wood") == builder, 15000):
-				printerr("FAIL tower_capture_two_players: after 8 ticks host %s client %s"
-						% [read.call(0), read.call(1)])
+			if not await wait_for.call(
+				func() -> bool:
+					var builder := _peer_id(read.call(1))
+					return (
+						_progress_is(read.call(0), 4.0)
+						and _progress_is(read.call(1), 4.0)
+						and _owner_named(read.call(0), "tower_wood") == builder
+						and _owner_named(read.call(1), "tower_wood") == builder
+					),
+				15000
+			):
+				printerr(
+					(
+						"FAIL tower_capture_two_players: after 8 ticks host %s client %s"
+						% [read.call(0), read.call(1)]
+					)
+				)
 				fail = 1
 			else:
 				launch.call(false, "watch")
-				if not await wait_for.call(func() -> bool:
-					var builder := _peer_id(read.call(1))
-					return read.call(2).get("ready", false) and _progress_is(read.call(2), 4.0) \
-							and _owner_named(read.call(2), "tower_wood") == builder \
-							and _same_place(read.call(2), read.call(0)), 30000):
-					printerr("FAIL tower_capture_two_players: late joiner progress %s host %s"
-							% [read.call(2), read.call(0)])
+				if not await wait_for.call(
+					func() -> bool:
+						var builder := _peer_id(read.call(1))
+						return (
+							read.call(2).get("ready", false)
+							and _progress_is(read.call(2), 4.0)
+							and _owner_named(read.call(2), "tower_wood") == builder
+							and _same_place(read.call(2), read.call(0))
+						),
+					30000
+				):
+					printerr(
+						(
+							"FAIL tower_capture_two_players: late joiner progress %s host %s"
+							% [read.call(2), read.call(0)]
+						)
+					)
 					fail = 1
 				else:
-					var more := FileAccess.open(session["outs"][0] + ".capture_more", FileAccess.WRITE)
+					var more := FileAccess.open(
+						session["outs"][0] + ".capture_more", FileAccess.WRITE
+					)
 					more.store_string("2,0.5")
 					more.close()
 					if not await wait_for.call(func() -> bool: return _captured(read), 15000):
-						printerr("FAIL tower_capture_two_players: after capture host %s client %s joiner %s"
-								% [read.call(0), read.call(1), read.call(2)])
+						printerr(
+							(
+								"FAIL tower_capture_two_players: after capture host %s client %s joiner %s"
+								% [read.call(0), read.call(1), read.call(2)]
+							)
+						)
 						fail = 1
 		for i in session["outs"].size():
-			if not read.call(i).get("errors", []).is_empty() or str(read.call(i).get("place_error", "")) != "":
-				printerr("FAIL tower_capture_two_players: peer %d errors %s place %s"
-						% [i, read.call(i).get("errors", []), read.call(i).get("place_error", "")])
+			if (
+				not read.call(i).get("errors", []).is_empty()
+				or str(read.call(i).get("place_error", "")) != ""
+			):
+				printerr(
+					(
+						"FAIL tower_capture_two_players: peer %d errors %s place %s"
+						% [i, read.call(i).get("errors", []), read.call(i).get("place_error", "")]
+					)
+				)
 				fail = 1
 	await _close(session)
 	if fail == 0:
@@ -144,21 +214,29 @@ func _progress_is(data: Dictionary, want: float) -> bool:
 		return false
 	for row in data.get("capture", []):
 		if int(row[0]) == id:
-			return is_equal_approx(float(row[3]), want) and int(row[1]) == _owner_named(data, "tower_wood")
+			return (
+				is_equal_approx(float(row[3]), want)
+				and int(row[1]) == _owner_named(data, "tower_wood")
+			)
 	return false
 
 
 func _same_place(a: Dictionary, b: Dictionary) -> bool:
 	return _keys(a) == _keys(b) and not _keys(a).is_empty()
 
+
 func _peer_id(data: Dictionary) -> int:
 	return int(str(data.get("id", "0")))
+
 
 func _flag_points(data: Dictionary, builder: int) -> bool:
 	## The host owns its castle. The builder owns a castle and the new tower.
 	var scores: Dictionary = data.get("points", {})
-	return int(scores.get("1", -1)) == Points.FLAGS_HELD_POINTS \
-			and int(scores.get(str(builder), -1)) == Points.FLAGS_HELD_POINTS * 2
+	return (
+		int(scores.get("1", -1)) == Points.FLAGS_HELD_POINTS
+		and int(scores.get(str(builder), -1)) == Points.FLAGS_HELD_POINTS * 2
+	)
+
 
 func _same_points(a: Dictionary, b: Dictionary) -> bool:
 	var left: Dictionary = a.get("points", {})
@@ -170,6 +248,7 @@ func _same_points(a: Dictionary, b: Dictionary) -> bool:
 			return false
 	return true
 
+
 func _keys(data: Dictionary) -> Array:
 	var rows := []
 	for entry in data.get("placements", []):
@@ -177,17 +256,20 @@ func _keys(data: Dictionary) -> Array:
 	rows.sort()
 	return rows
 
+
 func _id_named(data: Dictionary, structure_name: String) -> int:
 	for entry in data.get("placements", []):
 		if str(entry[1]) == structure_name:
 			return int(entry[0])
 	return -1
 
+
 func _owner_named(data: Dictionary, structure_name: String) -> int:
 	for entry in data.get("placements", []):
 		if str(entry[1]) == structure_name:
 			return int(entry[2])
 	return -1
+
 
 func _tower_count(data: Dictionary) -> int:
 	var n := 0
@@ -196,6 +278,7 @@ func _tower_count(data: Dictionary) -> int:
 			n += 1
 	return n
 
+
 func _open(mode: String) -> Dictionary:
 	var port := _free_udp_port()
 	if port == 0:
@@ -203,7 +286,9 @@ func _open(mode: String) -> Dictionary:
 		return {}
 	var dir := make_probe_dir("tower_sync_%s_%d_%d" % [mode, OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_tower_%s_%d_%d" % [mode, OS.get_process_id(), port])
+	var saved := MapSave.save_world(
+		WorldSave.new(params), "test_tower_%s_%d_%d" % [mode, OS.get_process_id(), port]
+	)
 	if saved["error"] != "":
 		printerr("FAIL tower sync could not save the map: %s" % saved["error"])
 		return {}
@@ -220,8 +305,13 @@ func _open(mode: String) -> Dictionary:
 	var wait_for := wait_until
 	launch.call(true, mode)
 	return {
-		"dir": dir, "outs": outs, "probes": probes, "saved": saved["path"],
-		"launch": launch, "read": read, "wait_for": wait_for,
+		"dir": dir,
+		"outs": outs,
+		"probes": probes,
+		"saved": saved["path"],
+		"launch": launch,
+		"read": read,
+		"wait_for": wait_for,
 	}
 
 

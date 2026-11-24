@@ -159,8 +159,7 @@ func _test_archipelago_count() -> int:
 		fail += 1
 	for sq in active:
 		var centre_cell := Vector2i(
-			int(floor((float(sq.x) + 0.5) * float(s))),
-			int(floor((float(sq.y) + 0.5) * float(s)))
+			int(floor((float(sq.x) + 0.5) * float(s))), int(floor((float(sq.y) + 0.5) * float(s)))
 		)
 		if not is_equal_approx(world.archipelago_altitude(centre_cell, 0.1), 2.1):
 			printerr("FAIL archipelago_count: active centre %s not raised" % sq)
@@ -248,7 +247,12 @@ func _test_archipelago_count_land_masses() -> int:
 					for y in range(sy * 40, sy * 40 + 40, 3):
 						var cell := Vector2i(x, y)
 						if world.archipelago_altitude(cell, 1.0) > world.water_max_alt:
-							printerr("FAIL archipelago_count_land_masses count=%s dropped square %s has land" % [count, sq])
+							printerr(
+								(
+									"FAIL archipelago_count_land_masses count=%s dropped square %s has land"
+									% [count, sq]
+								)
+							)
 							fail += 1
 							break
 					if fail > 0:
@@ -265,7 +269,12 @@ func _test_archipelago_count_land_masses() -> int:
 			fail += 1
 		var masses := _archipelago_land_masses(world, half)
 		if masses < previous:
-			printerr("FAIL archipelago_count_land_masses count=%s gave %s land masses, fewer than %s" % [count, masses, previous])
+			printerr(
+				(
+					"FAIL archipelago_count_land_masses count=%s gave %s land masses, fewer than %s"
+					% [count, masses, previous]
+				)
+			)
 			fail += 1
 		print("archipelago_count_land_masses count=%s masses=%s" % [count, masses])
 		previous = masses

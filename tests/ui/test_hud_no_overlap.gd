@@ -16,8 +16,14 @@ func _test_hud_no_overlap() -> int:
 	var fail := 0
 	var sizes := HudLayoutDump.SIZES.duplicate()
 	var orientation: int = ProjectSettings.get_setting("display/window/handheld/orientation")
-	if orientation not in [DisplayServer.SCREEN_LANDSCAPE, DisplayServer.SCREEN_REVERSE_LANDSCAPE,
-			DisplayServer.SCREEN_SENSOR_LANDSCAPE]:
+	if (
+		orientation
+		not in [
+			DisplayServer.SCREEN_LANDSCAPE,
+			DisplayServer.SCREEN_REVERSE_LANDSCAPE,
+			DisplayServer.SCREEN_SENSOR_LANDSCAPE
+		]
+	):
 		sizes.append(Vector2i(390, 844))
 	for size in sizes:
 		await HudLayoutDump.resize(tree, size)
@@ -79,14 +85,22 @@ func _check_rects(hud: CanvasLayer, label: String, state_open := true) -> int:
 		var first: Node = nodes[i]
 		var rect: Rect2 = targets[first]
 		if not rect.has_area() or not view.encloses(rect):
-			printerr("FAIL hud_no_overlap %s: %s rect %s outside viewport %s"
-					% [label, first.name, rect, view])
+			printerr(
+				(
+					"FAIL hud_no_overlap %s: %s rect %s outside viewport %s"
+					% [label, first.name, rect, view]
+				)
+			)
 			fail += 1
 		for j in range(i + 1, nodes.size()):
 			var second: Node = nodes[j]
 			var other: Rect2 = targets[second]
 			if rect.intersection(other).has_area():
-				printerr("FAIL hud_no_overlap %s: %s %s overlaps %s %s"
-						% [label, first.name, rect, second.name, other])
+				printerr(
+					(
+						"FAIL hud_no_overlap %s: %s %s overlaps %s %s"
+						% [label, first.name, rect, second.name, other]
+					)
+				)
 				fail += 1
 	return fail

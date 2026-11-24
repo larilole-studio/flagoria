@@ -61,15 +61,20 @@ func run() -> void:
 	await _stand_between(map, flower, stone)
 	var score_after := int(points.total_of(1)) if points else 0
 	print("object removals: loaded castle %s score %d" % [_castle_line(map), score_after])
-	var ok: bool = map.get_cell_source_id(DECOR, flower) == -1 \
-			and map.get_cell_source_id(DECOR, stone) == -1
+	var ok: bool = (
+		map.get_cell_source_id(DECOR, flower) == -1 and map.get_cell_source_id(DECOR, stone) == -1
+	)
 	await snapshot("03-loaded")
 	await _snapshot_zoom("03-loaded-zoom", flower, stone)
 	await _phone_landscape()
 	await snapshot("04-loaded-phone")
 	if ok:
-		print("object removals: flower %s stone %s stayed gone (score %d -> %d)"
-				% [flower, stone, score_before, score_after])
+		print(
+			(
+				"object removals: flower %s stone %s stayed gone (score %d -> %d)"
+				% [flower, stone, score_before, score_after]
+			)
+		)
 	done(ok)
 
 
@@ -119,7 +124,9 @@ func _pick_flower(map: TileMap, flower: Vector2i) -> bool:
 		printerr("object removals: no chop drag toward flower %s" % flower)
 		return false
 	await _drag_from_button(delta, "")
-	var ok := await wait_until(func() -> bool: return map.get_cell_source_id(DECOR, flower) == -1, 3.0)
+	var ok := await wait_until(
+		func() -> bool: return map.get_cell_source_id(DECOR, flower) == -1, 3.0
+	)
 	if not ok:
 		printerr("object removals: flower at %s not picked" % flower)
 	return ok
@@ -157,8 +164,9 @@ func _leave_and_load() -> bool:
 	if not await wait_until(func() -> bool: return panel.is_visible_in_tree(), 5.0):
 		return false
 	await click(MAIN_MENU_BUTTON)
-	if not await wait_until(func() -> bool:
-			return current_scene.has_node(WORLDS) and hero() == null, 15.0):
+	if not await wait_until(
+		func() -> bool: return current_scene.has_node(WORLDS) and hero() == null, 15.0
+	):
 		return false
 	await click(WORLDS)
 	var list: ItemList = current_scene.get_node(LIST)
@@ -200,8 +208,7 @@ func _snapshot_zoom(label: String, flower: Vector2i, stone: Vector2i) -> void:
 	var screen := root.get_final_transform() * canvas
 	var tile := float(map.tile_set.tile_size.x) * map.global_scale.x * vp_scale.x
 	var half := int(tile * 4.0)
-	var region := Rect2i(
-			int(screen.x) - half, int(screen.y) - half, half * 2, half * 2)
+	var region := Rect2i(int(screen.x) - half, int(screen.y) - half, half * 2, half * 2)
 	region = region.intersection(Rect2i(Vector2i.ZERO, img_size))
 	if region.size.x < 8 or region.size.y < 8:
 		printerr("object removals: zoom region empty %s" % region)
@@ -231,7 +238,9 @@ func _button_drag_toward(it: Node, cell: Vector2i, min_px: float) -> Vector2:
 	if to_cell.length() < 4.0:
 		printerr("object removals: cell %s too close" % cell)
 		return Vector2.ZERO
-	var end_world: Vector2 = origin + to_cell.normalized() * minf(to_cell.length() + 20.0, Interaction.CHOP_REACH - 4.0)
+	var end_world: Vector2 = (
+		origin + to_cell.normalized() * minf(to_cell.length() + 20.0, Interaction.CHOP_REACH - 4.0)
+	)
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var start := _button_window()
 	var end := to_window(map, map.to_local(end_world))

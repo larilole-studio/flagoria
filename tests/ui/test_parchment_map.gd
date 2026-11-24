@@ -97,7 +97,9 @@ func _test_parchment_map() -> int:
 		fail += 1
 	parchment._zoom_at(focus2, parchment.min_cell_px() - 2)
 	if parchment.cell_px < parchment.min_cell_px():
-		printerr("FAIL parchment_map min clamp %s min %s" % [parchment.cell_px, parchment.min_cell_px()])
+		printerr(
+			"FAIL parchment_map min clamp %s min %s" % [parchment.cell_px, parchment.min_cell_px()]
+		)
 		fail += 1
 	while parchment.cell_px > parchment.min_cell_px():
 		var down := InputEventMouseButton.new()
@@ -110,8 +112,12 @@ func _test_parchment_map() -> int:
 		printerr("FAIL parchment_map min zoom %s" % parchment.cell_px)
 		fail += 1
 	if not parchment.explored_fully_visible():
-		printerr("FAIL parchment_map min zoom chart outside view %s explored %s"
-				% [parchment.view_cells_rect(), chart.explored.explored_rect()])
+		printerr(
+			(
+				"FAIL parchment_map min zoom chart outside view %s explored %s"
+				% [parchment.view_cells_rect(), chart.explored.explored_rect()]
+			)
+		)
 		fail += 1
 	scene.get_node("CanvasLayer1").show()
 	var pinch_px := parchment.cell_px
@@ -164,8 +170,7 @@ func _test_parchment_map() -> int:
 	map_button.pressed.emit()
 	_tap(parchment.get_node("CloseButton"))
 	if parchment.is_open() or not is_equal_approx(zoom.factor, factor):
-		printerr("FAIL parchment_map close open %s zoom %s"
-				% [parchment.is_open(), zoom.factor])
+		printerr("FAIL parchment_map close open %s zoom %s" % [parchment.is_open(), zoom.factor])
 		fail += 1
 	_tap(parchment.get_node("RecentreButton"))
 	# Recentre is on the sheet; the sheet is closed, so the tap must not open it.

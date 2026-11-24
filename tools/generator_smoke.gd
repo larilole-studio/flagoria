@@ -83,7 +83,12 @@ func _compare_sheet(fresh_path: String) -> void:
 	fresh.convert(Image.FORMAT_RGBA8)
 	committed.convert(Image.FORMAT_RGBA8)
 	if fresh.get_size() != committed.get_size() or fresh.get_data() != committed.get_data():
-		_fail("regenerated hero sheet differs from %s; re-run tools/hero/make_hero.py and commit, or fix the generator" % HERO_SHEET)
+		_fail(
+			(
+				"regenerated hero sheet differs from %s; re-run tools/hero/make_hero.py and commit, or fix the generator"
+				% HERO_SHEET
+			)
+		)
 	else:
 		print("PASS hero sheet regenerates identically")
 

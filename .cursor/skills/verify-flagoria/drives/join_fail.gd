@@ -3,7 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Failed Join returns to the main menu with "Could not join …" (#348).
 ## Joins a free UDP port with nothing listening, then snapshots the menu.
 
-
 const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
 
 
@@ -12,8 +11,11 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		_fail("cannot load " + MAIN)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node("CanvasLayer2/MainMenu"), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool:
+			return current_scene != null and current_scene.has_node("CanvasLayer2/MainMenu"),
+		START_TIMEOUT_S
+	):
 		_fail("no main menu")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
@@ -43,8 +45,12 @@ func run() -> void:
 	elif hud.visible:
 		_fail("HUD is still visible after failed join")
 	elif not status.is_visible_in_tree() or status.text != expected:
-		_fail("join status visible=%s text='%s', expected '%s'"
-				% [status.is_visible_in_tree(), status.text, expected])
+		_fail(
+			(
+				"join status visible=%s text='%s', expected '%s'"
+				% [status.is_visible_in_tree(), status.text, expected]
+			)
+		)
 	else:
 		print("join_fail: menu returned, HUD hidden, status='%s'" % status.text)
 		done(true)

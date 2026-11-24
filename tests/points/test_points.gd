@@ -15,23 +15,42 @@ func _test_points_award() -> int:
 	root.add_child(hud)
 	hud.bind(points, 7)
 	var seen: Array = []
-	points.total_changed.connect(func(peer_id: int, total: int, amount: int, reason: String) -> void:
-		seen.append([peer_id, total, amount, reason]))
-	if not points.award(7, 3, "test") or not points.award(7, 2, "test") or not points.award(9, 4, "other"):
+	points.total_changed.connect(
+		func(peer_id: int, total: int, amount: int, reason: String) -> void:
+			seen.append([peer_id, total, amount, reason])
+	)
+	if (
+		not points.award(7, 3, "test")
+		or not points.award(7, 2, "test")
+		or not points.award(9, 4, "other")
+	):
 		printerr("FAIL points_award a valid award was refused")
 		fail += 1
-	if points.award(7, 0, "zero") or points.award(7, -5, "negative") or points.award(0, 5, "no player"):
+	if (
+		points.award(7, 0, "zero")
+		or points.award(7, -5, "negative")
+		or points.award(0, 5, "no player")
+	):
 		printerr("FAIL points_award accepted a zero, negative or id-0 award")
 		fail += 1
 	if points.total_of(7) != 5 or points.total_of(9) != 4 or points.total_of(11) != 0:
-		printerr("FAIL points_award totals 7=%s 9=%s 11=%s, want 5, 4, 0"
-				% [points.total_of(7), points.total_of(9), points.total_of(11)])
+		printerr(
+			(
+				"FAIL points_award totals 7=%s 9=%s 11=%s, want 5, 4, 0"
+				% [points.total_of(7), points.total_of(9), points.total_of(11)]
+			)
+		)
 		fail += 1
 	if seen != [[7, 3, 3, "test"], [7, 5, 2, "test"], [9, 4, 4, "other"]]:
 		printerr("FAIL points_award signals %s" % [seen])
 		fail += 1
 	if hud.text != "5" or not hud.visible:
-		printerr("FAIL points_award HUD shows '%s' (visible %s), want own total '5'" % [hud.text, hud.visible])
+		printerr(
+			(
+				"FAIL points_award HUD shows '%s' (visible %s), want own total '5'"
+				% [hud.text, hud.visible]
+			)
+		)
 		fail += 1
 	hud.queue_free()
 	points.queue_free()
@@ -60,8 +79,12 @@ func _test_points_hud_in_scene() -> int:
 		printerr("FAIL points_hud_in_scene counter visible %s, text '%s'" % [hud.visible, hud.text])
 		fail += 1
 	if hud.position.x < hearts.position.x + hearts.size.x - 1.0 or hud.scale != hearts.scale:
-		printerr("FAIL points_hud_in_scene counter at %s x%s, hearts at %s size %s x%s"
-				% [hud.position, hud.scale, hearts.position, hearts.size, hearts.scale])
+		printerr(
+			(
+				"FAIL points_hud_in_scene counter at %s x%s, hearts at %s size %s x%s"
+				% [hud.position, hud.scale, hearts.position, hearts.size, hearts.scale]
+			)
+		)
 		fail += 1
 	scene.get_node("Points").award(me, 4, "test")
 	if hud.text != "4":
@@ -105,8 +128,10 @@ func _test_points_sync() -> int:
 	smp.multiplayer_peer = speer
 	s_points.award(1, 6, "before join")
 	var c_seen: Array = []
-	c_points.total_changed.connect(func(peer_id: int, total: int, _amount: int, reason: String) -> void:
-		c_seen.append([peer_id, total, reason]))
+	c_points.total_changed.connect(
+		func(peer_id: int, total: int, _amount: int, reason: String) -> void:
+			c_seen.append([peer_id, total, reason])
+	)
 
 	var cpeer := ENetMultiplayerPeer.new()
 	cpeer.create_client("127.0.0.1", port)
@@ -122,20 +147,32 @@ func _test_points_sync() -> int:
 		fail += 1
 	else:
 		if not await wait.call(func() -> bool: return c_points.total_of(1) == 6):
-			printerr("FAIL points_sync late joiner sees %s for the host, server 6" % c_points.total_of(1))
+			printerr(
+				"FAIL points_sync late joiner sees %s for the host, server 6" % c_points.total_of(1)
+			)
 			fail += 1
 		if c_points.award(me, 50, "cheat") or c_points.total_of(me) != 0:
 			printerr("FAIL points_sync client awarded itself (%s)" % c_points.total_of(me))
 			fail += 1
 		s_points.award(me, 3, "discovery")
 		if not await wait.call(func() -> bool: return c_points.total_of(me) == 3):
-			printerr("FAIL points_sync client total %s, server %s" % [c_points.total_of(me), s_points.total_of(me)])
+			printerr(
+				(
+					"FAIL points_sync client total %s, server %s"
+					% [c_points.total_of(me), s_points.total_of(me)]
+				)
+			)
 			fail += 1
 		if c_seen != [[me, 3, "discovery"]]:
 			printerr("FAIL points_sync client signals %s" % [c_seen])
 			fail += 1
 		if s_points.total_of(me) != 3 or s_points.total_of(1) != 6:
-			printerr("FAIL points_sync server totals %s / %s" % [s_points.total_of(me), s_points.total_of(1)])
+			printerr(
+				(
+					"FAIL points_sync server totals %s / %s"
+					% [s_points.total_of(me), s_points.total_of(1)]
+				)
+			)
 			fail += 1
 
 	cpeer.close()
@@ -201,23 +238,37 @@ func _test_points_scoreboard_two_players() -> int:
 			printerr("FAIL points_scoreboard_two_players host refused an award")
 			fail += 1
 		elif not await wait.call(func() -> bool: return c_points.total_of(me) == 4):
-			printerr("FAIL points_scoreboard_two_players client total %s, want 4" % c_points.total_of(me))
+			printerr(
+				"FAIL points_scoreboard_two_players client total %s, want 4" % c_points.total_of(me)
+			)
 			fail += 1
 		else:
 			var want := [[Points.SERVER_ID, 10], [me, 4]]
 			if s_panel.sorted_rows() != want or c_panel.sorted_rows() != want:
-				printerr("FAIL points_scoreboard_two_players host %s client %s, want %s"
-						% [s_panel.sorted_rows(), c_panel.sorted_rows(), want])
+				printerr(
+					(
+						"FAIL points_scoreboard_two_players host %s client %s, want %s"
+						% [s_panel.sorted_rows(), c_panel.sorted_rows(), want]
+					)
+				)
 				fail += 1
 			s_points.award(me, 12, "test")
 			if not await wait.call(func() -> bool: return c_points.total_of(me) == 16):
-				printerr("FAIL points_scoreboard_two_players client total %s after bump, want 16"
-						% c_points.total_of(me))
+				printerr(
+					(
+						"FAIL points_scoreboard_two_players client total %s after bump, want 16"
+						% c_points.total_of(me)
+					)
+				)
 				fail += 1
 			want = [[me, 16], [Points.SERVER_ID, 10]]
 			if s_panel.sorted_rows() != want or c_panel.sorted_rows() != want:
-				printerr("FAIL points_scoreboard_two_players after bump host %s client %s, want %s"
-						% [s_panel.sorted_rows(), c_panel.sorted_rows(), want])
+				printerr(
+					(
+						"FAIL points_scoreboard_two_players after bump host %s client %s, want %s"
+						% [s_panel.sorted_rows(), c_panel.sorted_rows(), want]
+					)
+				)
 				fail += 1
 	cpeer.close()
 	speer.close()
@@ -274,7 +325,12 @@ func _test_points_scoreboard_late_join() -> int:
 		printerr("FAIL points_scoreboard_late_join client did not connect")
 		fail += 1
 	elif not await wait.call(func() -> bool: return c_points.total_of(Points.SERVER_ID) == 7):
-		printerr("FAIL points_scoreboard_late_join client host total %s, want 7" % c_points.total_of(Points.SERVER_ID))
+		printerr(
+			(
+				"FAIL points_scoreboard_late_join client host total %s, want 7"
+				% c_points.total_of(Points.SERVER_ID)
+			)
+		)
 		fail += 1
 	else:
 		var c_panel := ScoreboardPanel.new()
@@ -283,11 +339,18 @@ func _test_points_scoreboard_late_join() -> int:
 		await process_frame
 		var want := [[Points.SERVER_ID, 7], [me, 0]]
 		if c_panel.sorted_rows() != want:
-			printerr("FAIL points_scoreboard_late_join joiner rows %s, want %s" % [c_panel.sorted_rows(), want])
+			printerr(
+				(
+					"FAIL points_scoreboard_late_join joiner rows %s, want %s"
+					% [c_panel.sorted_rows(), want]
+				)
+			)
 			fail += 1
 		s_points.award(me, 2, "after join")
 		if not await wait.call(func() -> bool: return c_points.total_of(me) == 2):
-			printerr("FAIL points_scoreboard_late_join client total %s, want 2" % c_points.total_of(me))
+			printerr(
+				"FAIL points_scoreboard_late_join client total %s, want 2" % c_points.total_of(me)
+			)
 			fail += 1
 		want = [[Points.SERVER_ID, 7], [me, 2]]
 		var s_panel := ScoreboardPanel.new()
@@ -295,8 +358,12 @@ func _test_points_scoreboard_late_join() -> int:
 		s_panel.bind(s_points, Points.SERVER_ID)
 		await process_frame
 		if s_panel.sorted_rows() != want or c_panel.sorted_rows() != want:
-			printerr("FAIL points_scoreboard_late_join after award host %s client %s, want %s"
-					% [s_panel.sorted_rows(), c_panel.sorted_rows(), want])
+			printerr(
+				(
+					"FAIL points_scoreboard_late_join after award host %s client %s, want %s"
+					% [s_panel.sorted_rows(), c_panel.sorted_rows(), want]
+				)
+			)
 			fail += 1
 	cpeer.close()
 	speer.close()
@@ -380,8 +447,12 @@ func _test_points_scoreboard_four_players() -> int:
 					printerr("FAIL points_scoreboard_four_players label used a raw id: %s" % t)
 					fail += 1
 		if fail == 0 and s_panel.custom_minimum_size.y > 58.0:
-			printerr("FAIL points_scoreboard_four_players panel art height %s, want <= 58"
-					% s_panel.custom_minimum_size.y)
+			printerr(
+				(
+					"FAIL points_scoreboard_four_players panel art height %s, want <= 58"
+					% s_panel.custom_minimum_size.y
+				)
+			)
 			fail += 1
 	for entry in clients:
 		entry["peer"].close()
@@ -402,9 +473,19 @@ func _test_points_mob_kill() -> int:
 	## on a dying mob pay nothing, and a hit with no known player pays no one.
 	print("-- test_points_mob_kill")
 	var fail := 0
-	var want_values := {MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10, MobCatalog.SOLDIER: 10}
-	if Points.MOB_KILL_POINTS != want_values or Points.MOB_KILL_POINTS.size() != MobCatalog.names().size():
-		printerr("FAIL points_mob_kill values %s for types %s" % [Points.MOB_KILL_POINTS, MobCatalog.names()])
+	var want_values := {
+		MobCatalog.SLIME: 5, MobCatalog.CRAB: 8, MobCatalog.PIGLET: 10, MobCatalog.SOLDIER: 10
+	}
+	if (
+		Points.MOB_KILL_POINTS != want_values
+		or Points.MOB_KILL_POINTS.size() != MobCatalog.names().size()
+	):
+		printerr(
+			(
+				"FAIL points_mob_kill values %s for types %s"
+				% [Points.MOB_KILL_POINTS, MobCatalog.names()]
+			)
+		)
 		fail += 1
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
@@ -412,8 +493,10 @@ func _test_points_mob_kill() -> int:
 	var points: Points = scene.get_node("Points")
 	var mobs_root: Node = scene.get_node("World/Mobs")
 	var paid: Array = []
-	points.total_changed.connect(func(peer_id: int, _total: int, amount: int, reason: String) -> void:
-		paid.append([peer_id, amount, reason]))
+	points.total_changed.connect(
+		func(peer_id: int, _total: int, amount: int, reason: String) -> void:
+			paid.append([peer_id, amount, reason])
+	)
 	var want_paid: Array = []
 	for t in MobCatalog.names():
 		var mob: Mob = load("res://Mobs/mob.tscn").instantiate()
@@ -489,10 +572,14 @@ func _test_points_mob_kill_once() -> int:
 	var me := cpeer.get_unique_id()
 	var s_seen: Array = []
 	var c_seen: Array = []
-	s_points.total_changed.connect(func(peer_id: int, total: int, amount: int, reason: String) -> void:
-		s_seen.append([peer_id, total, amount, reason]))
-	c_points.total_changed.connect(func(peer_id: int, total: int, amount: int, reason: String) -> void:
-		c_seen.append([peer_id, total, amount, reason]))
+	s_points.total_changed.connect(
+		func(peer_id: int, total: int, amount: int, reason: String) -> void:
+			s_seen.append([peer_id, total, amount, reason])
+	)
+	c_points.total_changed.connect(
+		func(peer_id: int, total: int, amount: int, reason: String) -> void:
+			c_seen.append([peer_id, total, amount, reason])
+	)
 	var wait := func(cond: Callable) -> bool:
 		var until := Time.get_ticks_msec() + 5000
 		while Time.get_ticks_msec() < until and not cond.call():
@@ -512,44 +599,83 @@ func _test_points_mob_kill_once() -> int:
 			printerr("FAIL points_mob_kill_once host accepted a second mob_0 award")
 			fail += 1
 		if s_points.total_of(me) != 8 or s_seen != [[me, 8, 8, "mob_kill"]]:
-			printerr("FAIL points_mob_kill_once host total %s, signals %s"
-					% [s_points.total_of(me), s_seen])
+			printerr(
+				(
+					"FAIL points_mob_kill_once host total %s, signals %s"
+					% [s_points.total_of(me), s_seen]
+				)
+			)
 			fail += 1
 		if not await wait.call(func() -> bool: return c_points.total_of(me) == 8):
-			printerr("FAIL points_mob_kill_once client total %s after two mob_0 messages, want 8"
-					% c_points.total_of(me))
+			printerr(
+				(
+					"FAIL points_mob_kill_once client total %s after two mob_0 messages, want 8"
+					% c_points.total_of(me)
+				)
+			)
 			fail += 1
 		for i in 30:  # a second delivery would land in these frames
 			await process_frame
 		if c_points.total_of(me) != 8 or c_seen != [[me, 8, 8, "mob_kill"]]:
-			printerr("FAIL points_mob_kill_once client total %s, signals %s after the repeat"
-					% [c_points.total_of(me), c_seen])
+			printerr(
+				(
+					"FAIL points_mob_kill_once client total %s, signals %s after the repeat"
+					% [c_points.total_of(me), c_seen]
+				)
+			)
 			fail += 1
 		if not s_points.award_kill(me, "mob_1", 5) or s_points.total_of(me) != 13:
-			printerr("FAIL points_mob_kill_once a second mob paid %s, want 13" % s_points.total_of(me))
+			printerr(
+				"FAIL points_mob_kill_once a second mob paid %s, want 13" % s_points.total_of(me)
+			)
 			fail += 1
-		if not await wait.call(func() -> bool: return c_points.total_of(me) == 13 and c_seen.size() == 2):
-			printerr("FAIL points_mob_kill_once client after mob_1: total %s, signals %s"
-					% [c_points.total_of(me), c_seen])
+		if not await wait.call(
+			func() -> bool: return c_points.total_of(me) == 13 and c_seen.size() == 2
+		):
+			printerr(
+				(
+					"FAIL points_mob_kill_once client after mob_1: total %s, signals %s"
+					% [c_points.total_of(me), c_seen]
+				)
+			)
 			fail += 1
 		s_points.clear_kill_credits()
 		if not s_points.award_kill(me, "mob_0", 8) or s_points.award_kill(me, "mob_0", 8):
-			printerr("FAIL points_mob_kill_once after a clear, mob_0 did not pay exactly once (total %s)"
-					% s_points.total_of(me))
+			printerr(
+				(
+					"FAIL points_mob_kill_once after a clear, mob_0 did not pay exactly once (total %s)"
+					% s_points.total_of(me)
+				)
+			)
 			fail += 1
 		if s_points.total_of(me) != 21:
-			printerr("FAIL points_mob_kill_once host total %s after the cleared mob_0, want 21"
-					% s_points.total_of(me))
+			printerr(
+				(
+					"FAIL points_mob_kill_once host total %s after the cleared mob_0, want 21"
+					% s_points.total_of(me)
+				)
+			)
 			fail += 1
 		if not await wait.call(func() -> bool: return c_points.total_of(me) == 21):
-			printerr("FAIL points_mob_kill_once client total %s after the cleared mob_0, want 21"
-					% c_points.total_of(me))
+			printerr(
+				(
+					"FAIL points_mob_kill_once client total %s after the cleared mob_0, want 21"
+					% c_points.total_of(me)
+				)
+			)
 			fail += 1
 		for i in 30:
 			await process_frame
-		if c_points.total_of(me) != 21 or c_seen != [[me, 8, 8, "mob_kill"], [me, 13, 5, "mob_kill"], [me, 21, 8, "mob_kill"]]:
-			printerr("FAIL points_mob_kill_once client ended at %s, signals %s"
-					% [c_points.total_of(me), c_seen])
+		if (
+			c_points.total_of(me) != 21
+			or c_seen != [[me, 8, 8, "mob_kill"], [me, 13, 5, "mob_kill"], [me, 21, 8, "mob_kill"]]
+		):
+			printerr(
+				(
+					"FAIL points_mob_kill_once client ended at %s, signals %s"
+					% [c_points.total_of(me), c_seen]
+				)
+			)
 			fail += 1
 
 	cpeer.close()
@@ -620,15 +746,30 @@ func _test_points_kill_late_join() -> int:
 		return s.get("origin") != null and s.get("players", {}).has(s.get("id"))
 	if fail == 0:
 		var first: String = start_joiner.call(1)
-		if not await wait.call(func() -> bool:
-			var s: Dictionary = read.call(first)
-			return joined.call(first) and s.get("host_points") == paid \
-					and s.get("mobs") == server_mobs, 8000):
-			printerr("FAIL points_kill_late_join first joiner did not get the map, the kill total and the mobs: %s"
-					% read.call(first))
+		if not await wait.call(
+			func() -> bool:
+				var s: Dictionary = read.call(first)
+				return (
+					joined.call(first)
+					and s.get("host_points") == paid
+					and s.get("mobs") == server_mobs
+				),
+			8000
+		):
+			printerr(
+				(
+					"FAIL points_kill_late_join first joiner did not get the map, the kill total and the mobs: %s"
+					% read.call(first)
+				)
+			)
 			fail += 1
 		elif read.call(first).get("points_before_map"):
-			printerr("FAIL points_kill_late_join kill snapshot arrived before the map: %s" % read.call(first))
+			printerr(
+				(
+					"FAIL points_kill_late_join kill snapshot arrived before the map: %s"
+					% read.call(first)
+				)
+			)
 			fail += 1
 		else:
 			scene.spawn_mobs()
@@ -636,44 +777,93 @@ func _test_points_kill_late_join() -> int:
 			await process_frame
 			server_mobs = _mob_names(scene)
 			if server_mobs.is_empty() or not points.total_of(1) == paid:
-				printerr("FAIL points_kill_late_join after respawn mobs %s host total %s"
-						% [server_mobs, points.total_of(1)])
+				printerr(
+					(
+						"FAIL points_kill_late_join after respawn mobs %s host total %s"
+						% [server_mobs, points.total_of(1)]
+					)
+				)
 				fail += 1
-			elif not await wait.call(func() -> bool:
-				var s: Dictionary = read.call(first)
-				return joined.call(first) and s.get("mobs") == server_mobs \
-						and s.get("host_points") == paid, 8000):
-				printerr("FAIL points_kill_late_join joiner lost the match or the new mobs after respawn: %s server %s"
-						% [read.call(first), server_mobs])
+			elif not await wait.call(
+				func() -> bool:
+					var s: Dictionary = read.call(first)
+					return (
+						joined.call(first)
+						and s.get("mobs") == server_mobs
+						and s.get("host_points") == paid
+					),
+				8000
+			):
+				printerr(
+					(
+						"FAIL points_kill_late_join joiner lost the match or the new mobs after respawn: %s server %s"
+						% [read.call(first), server_mobs]
+					)
+				)
 				fail += 1
 			elif read.call(first).get("points_before_map"):
-				printerr("FAIL points_kill_late_join kill snapshot arrived before the map: %s" % read.call(first))
+				printerr(
+					(
+						"FAIL points_kill_late_join kill snapshot arrived before the map: %s"
+						% read.call(first)
+					)
+				)
 				fail += 1
 			else:
 				var second: String = start_joiner.call(2)
-				if not await wait.call(func() -> bool:
-					var s: Dictionary = read.call(second)
-					return joined.call(second) and s.get("mobs") == server_mobs \
-							and s.get("host_points") == paid, 8000):
-					printerr("FAIL points_kill_late_join late joiner after the respawn did not get the map and mobs: %s"
-							% read.call(second))
+				if not await wait.call(
+					func() -> bool:
+						var s: Dictionary = read.call(second)
+						return (
+							joined.call(second)
+							and s.get("mobs") == server_mobs
+							and s.get("host_points") == paid
+						),
+					8000
+				):
+					printerr(
+						(
+							"FAIL points_kill_late_join late joiner after the respawn did not get the map and mobs: %s"
+							% read.call(second)
+						)
+					)
 					fail += 1
 				elif read.call(second).get("points_before_map"):
-					printerr("FAIL points_kill_late_join late joiner kill snapshot arrived before the map: %s"
-							% read.call(second))
+					printerr(
+						(
+							"FAIL points_kill_late_join late joiner kill snapshot arrived before the map: %s"
+							% read.call(second)
+						)
+					)
 					fail += 1
 				elif points.award_kill(1, "mob_0", 8) and points.award_kill(1, "mob_0", 8):
 					printerr("FAIL points_kill_late_join respawned mob_0 paid twice")
 					fail += 1
 				elif points.total_of(1) != paid + 8:
-					printerr("FAIL points_kill_late_join host total %s after the new mob_0, want %s"
-							% [points.total_of(1), paid + 8])
+					printerr(
+						(
+							"FAIL points_kill_late_join host total %s after the new mob_0, want %s"
+							% [points.total_of(1), paid + 8]
+						)
+					)
 					fail += 1
-				elif not await wait.call(func() -> bool:
-					return read.call(second).get("host_points") == paid + 8 \
-							and read.call(first).get("host_points") == paid + 8, 8000):
-					printerr("FAIL points_kill_late_join peers did not see the new mob_0 once: first %s second %s"
-							% [read.call(first).get("host_points"), read.call(second).get("host_points")])
+				elif not await wait.call(
+					func() -> bool:
+						return (
+							read.call(second).get("host_points") == paid + 8
+							and read.call(first).get("host_points") == paid + 8
+						),
+					8000
+				):
+					printerr(
+						(
+							"FAIL points_kill_late_join peers did not see the new mob_0 once: first %s second %s"
+							% [
+								read.call(first).get("host_points"),
+								read.call(second).get("host_points")
+							]
+						)
+					)
 					fail += 1
 	await stop_probes(probes, 5000)
 	_close_scene(scene)

@@ -34,8 +34,14 @@ func _test_ingame_menu_open_resume() -> int:
 	scene.get_node("CanvasLayer1").show()  # as Host and Join do
 	var centre: Vector2 = scene.get_viewport().get_visible_rect().get_center()
 	var corner: Vector2 = menu.menu_button.get_global_rect().get_center()
-	if not menu.menu_button.is_visible_in_tree() or not zoom.starts_on_hud(corner) or zoom.starts_on_hud(centre):
-		printerr("FAIL ingame_menu_open_resume: Menu button not shown, or the closed menu covers the map")
+	if (
+		not menu.menu_button.is_visible_in_tree()
+		or not zoom.starts_on_hud(corner)
+		or zoom.starts_on_hud(centre)
+	):
+		printerr(
+			"FAIL ingame_menu_open_resume: Menu button not shown, or the closed menu covers the map"
+		)
 		fail += 1
 	# A compact three-bar icon button, still a phone-sized tap target at
 	# 1280x720, clear of the hearts and points in the other corner.
@@ -44,14 +50,27 @@ func _test_ingame_menu_open_resume() -> int:
 	var hearts_rect: Rect2 = (_hud_on_canvas(scene, "HeartsHud") as Control).get_global_rect()
 	var score_rect: Rect2 = (_hud_on_canvas(scene, "ScoreHud") as Control).get_global_rect()
 	var menu_box := menu.menu_button.get_theme_stylebox("normal") as StyleBoxTexture
-	if menu.menu_button.text != "" or menu_box == null or menu_box.texture == null \
-			or menu_box.texture.get_size() != Vector2(24, 24) \
-			or menu.menu_button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS \
-			or button_rect.size.x != button_rect.size.y or tap_px < 40.0 \
-			or button_rect.intersects(hearts_rect) or button_rect.intersects(score_rect):
+	if (
+		menu.menu_button.text != ""
+		or menu_box == null
+		or menu_box.texture == null
+		or menu_box.texture.get_size() != Vector2(24, 24)
+		or menu.menu_button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		or button_rect.size.x != button_rect.size.y
+		or tap_px < 40.0
+		or button_rect.intersects(hearts_rect)
+		or button_rect.intersects(score_rect)
+	):
 		printerr(
-			"FAIL ingame_menu_open_resume: menu button text=%s tex=%s rect=%s (%s px at 1280x720)"
-			% [menu.menu_button.text, menu_box.texture if menu_box != null else null, button_rect, tap_px]
+			(
+				"FAIL ingame_menu_open_resume: menu button text=%s tex=%s rect=%s (%s px at 1280x720)"
+				% [
+					menu.menu_button.text,
+					menu_box.texture if menu_box != null else null,
+					button_rect,
+					tap_px
+				]
+			)
 		)
 		fail += 1
 	menu.menu_button.pressed.emit()
@@ -66,7 +85,12 @@ func _test_ingame_menu_open_resume() -> int:
 	var opened_by_esc: bool = menu.is_open()
 	menu._unhandled_input(esc)
 	if not opened_by_esc or menu.is_open():
-		printerr("FAIL ingame_menu_open_resume: Esc open=%s, second Esc open=%s" % [opened_by_esc, menu.is_open()])
+		printerr(
+			(
+				"FAIL ingame_menu_open_resume: Esc open=%s, second Esc open=%s"
+				% [opened_by_esc, menu.is_open()]
+			)
+		)
 		fail += 1
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
 	var board: ScoreboardPanel = hud.get_node("ScoreboardPanel")
@@ -77,8 +101,14 @@ func _test_ingame_menu_open_resume() -> int:
 	var scores := menu.get_node_or_null("Pause/Panel/Margin/VBox/Scores") as Button
 	if scores != null and scores.is_visible_in_tree() and scores.text == "Scores":
 		scores.pressed.emit()
-	if menu.is_open() or not board.is_open() or board.display_lines() != PackedStringArray(["You  7"]):
-		printerr("FAIL ingame_menu_open_resume: Scores did not replace the menu with the scoreboard")
+	if (
+		menu.is_open()
+		or not board.is_open()
+		or board.display_lines() != PackedStringArray(["You  7"])
+	):
+		printerr(
+			"FAIL ingame_menu_open_resume: Scores did not replace the menu with the scoreboard"
+		)
 		fail += 1
 	if hud.has_node("ScoreboardToggle"):
 		printerr("FAIL ingame_menu_open_resume: scoreboard toggle is still on the HUD")
@@ -102,14 +132,24 @@ func _test_ingame_menu_leave() -> int:
 		printerr("FAIL ingame_menu_leave found no free UDP port")
 		return 1
 	var output := []
-	var code := OS.execute(
-		OS.get_executable_path(),
-		[
-			"--headless", "--path", ProjectSettings.globalize_path("res://"), "--quit-after", "3000",
-			"--script", "res://tests/ingame_menu_probe.gd", "--", "--port=%d" % port,
-		],
-		output,
-		true
+	var code := (
+		OS
+		. execute(
+			OS.get_executable_path(),
+			[
+				"--headless",
+				"--path",
+				ProjectSettings.globalize_path("res://"),
+				"--quit-after",
+				"3000",
+				"--script",
+				"res://tests/ingame_menu_probe.gd",
+				"--",
+				"--port=%d" % port,
+			],
+			output,
+			true
+		)
 	)
 	var log_text: String = "".join(output)
 	if code != 0 or not log_text.contains("INGAME_MENU_PROBE_OK"):
@@ -156,45 +196,95 @@ func _test_ingame_menu_save() -> int:
 	for row in saves:
 		paths.append(row["path"])
 	if saves.size() != before_saves + 1:
-		printerr("FAIL ingame_menu_save: Save wrote %d files, want 1" % (saves.size() - before_saves))
+		printerr(
+			"FAIL ingame_menu_save: Save wrote %d files, want 1" % (saves.size() - before_saves)
+		)
 		fail += 1
 	else:
 		var loaded := MapSave.load_world(saves[0]["path"])
-		if loaded["error"] != "" or loaded["version"] != MapSave.FORMAT_VERSION \
-				or loaded["world"].params.to_dict() != params.to_dict():
-			printerr("FAIL ingame_menu_save: load_world error=%s version=%s same inputs=%s"
-					% [loaded["error"], loaded["version"], loaded["world"] != null and loaded["world"].params.to_dict() == params.to_dict()])
+		if (
+			loaded["error"] != ""
+			or loaded["version"] != MapSave.FORMAT_VERSION
+			or loaded["world"].params.to_dict() != params.to_dict()
+		):
+			printerr(
+				(
+					"FAIL ingame_menu_save: load_world error=%s version=%s same inputs=%s"
+					% [
+						loaded["error"],
+						loaded["version"],
+						(
+							loaded["world"] != null
+							and loaded["world"].params.to_dict() == params.to_dict()
+						)
+					]
+				)
+			)
 			fail += 1
 		var save_name: String = saves[0]["name"]
-		var want := "Saved: %s %s" % [save_name.substr(5, 5), save_name.substr(11, 5).replace("-", ":")]
+		var want := (
+			"Saved: %s %s" % [save_name.substr(5, 5), save_name.substr(11, 5).replace("-", ":")]
+		)
 		if menu.status_label.text != want or not menu.status_label.is_visible_in_tree():
-			printerr("FAIL ingame_menu_save: status '%s' for save %s, want '%s'" % [menu.status_label.text, save_name, want])
+			printerr(
+				(
+					"FAIL ingame_menu_save: status '%s' for save %s, want '%s'"
+					% [menu.status_label.text, save_name, want]
+				)
+			)
 			fail += 1
 		# One line, and the panel keeps the height it had before the save.
 		var height: float = panel.get_combined_minimum_size().y
 		if menu.status_label.get_line_count() != 1 or height != empty_height:
-			printerr("FAIL ingame_menu_save: status on %d lines, panel %s tall, %s before the save"
-					% [menu.status_label.get_line_count(), height, empty_height])
+			printerr(
+				(
+					"FAIL ingame_menu_save: status on %d lines, panel %s tall, %s before the save"
+					% [menu.status_label.get_line_count(), height, empty_height]
+				)
+			)
 			fail += 1
 	if not menu.is_open() or _ui_plays_since(ui, before_sfx).get("saved", 0) != 1:
-		printerr("FAIL ingame_menu_save: menu open=%s, sounds %s" % [menu.is_open(), _ui_plays_since(ui, before_sfx)])
+		printerr(
+			(
+				"FAIL ingame_menu_save: menu open=%s, sounds %s"
+				% [menu.is_open(), _ui_plays_since(ui, before_sfx)]
+			)
+		)
 		fail += 1
 
 	# A second save of this match replaces the same file.
 	var again: Dictionary = menu.save_world()
-	if again["error"] != "" or again["path"] != paths[0] or MapSave.list_saves().size() != before_saves + 1:
-		printerr("FAIL ingame_menu_save: second save error=%s path=%s, %d files"
-				% [again["error"], again["path"], MapSave.list_saves().size() - before_saves])
+	if (
+		again["error"] != ""
+		or again["path"] != paths[0]
+		or MapSave.list_saves().size() != before_saves + 1
+	):
+		printerr(
+			(
+				"FAIL ingame_menu_save: second save error=%s path=%s, %d files"
+				% [again["error"], again["path"], MapSave.list_saves().size() - before_saves]
+			)
+		)
 		fail += 1
 	# A new match gets its own file and does not replace the first.
 	scene.save_name = ""
 	var fresh: Dictionary = menu.save_world()
 	paths.append(fresh["path"])
-	if fresh["error"] != "" or fresh["path"] == paths[0] or MapSave.list_saves().size() != before_saves + 2:
-		printerr("FAIL ingame_menu_save: new match error=%s path=%s, %d files"
-				% [fresh["error"], fresh["path"], MapSave.list_saves().size() - before_saves])
+	if (
+		fresh["error"] != ""
+		or fresh["path"] == paths[0]
+		or MapSave.list_saves().size() != before_saves + 2
+	):
+		printerr(
+			(
+				"FAIL ingame_menu_save: new match error=%s path=%s, %d files"
+				% [fresh["error"], fresh["path"], MapSave.list_saves().size() - before_saves]
+			)
+		)
 		fail += 1
-	var stamp: String = menu.auto_save_name({"year": 2026, "month": 3, "day": 4, "hour": 5, "minute": 6, "second": 7})
+	var stamp: String = menu.auto_save_name(
+		{"year": 2026, "month": 3, "day": 4, "hour": 5, "minute": 6, "second": 7}
+	)
 	if stamp != "2026-03-04 05-06-07" or stamp.validate_filename() != stamp:
 		printerr("FAIL ingame_menu_save: auto name %s" % stamp)
 		fail += 1
@@ -202,8 +292,17 @@ func _test_ingame_menu_save() -> int:
 	# Before the world has loaded nothing is written.
 	scene.world_params = null
 	var early: Dictionary = menu.save_world()
-	if early["error"] == "" or MapSave.list_saves().size() != before_saves + 2 or not menu.status_label.text.begins_with("Not saved"):
-		printerr("FAIL ingame_menu_save: save before the world loaded error=%s status=%s" % [early["error"], menu.status_label.text])
+	if (
+		early["error"] == ""
+		or MapSave.list_saves().size() != before_saves + 2
+		or not menu.status_label.text.begins_with("Not saved")
+	):
+		printerr(
+			(
+				"FAIL ingame_menu_save: save before the world loaded error=%s status=%s"
+				% [early["error"], menu.status_label.text]
+			)
+		)
 		fail += 1
 
 	menu.resume_button.pressed.emit()
@@ -241,18 +340,33 @@ func _test_quit_prompt_on_back() -> int:
 	# Main menu: back opens the prompt, a second back closes it.
 	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	if not prompt.is_open() or not quits.is_empty():
-		printerr("FAIL quit_prompt_on_back: back on the main menu open=%s quits=%d" % [prompt.is_open(), quits.size()])
+		printerr(
+			(
+				"FAIL quit_prompt_on_back: back on the main menu open=%s quits=%d"
+				% [prompt.is_open(), quits.size()]
+			)
+		)
 		fail += 1
 	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	if prompt.is_open() or not quits.is_empty():
-		printerr("FAIL quit_prompt_on_back: second back did not just close the prompt (open=%s quits=%d)" % [prompt.is_open(), quits.size()])
+		printerr(
+			(
+				"FAIL quit_prompt_on_back: second back did not just close the prompt (open=%s quits=%d)"
+				% [prompt.is_open(), quits.size()]
+			)
+		)
 		fail += 1
 	# Window close opens it too; Cancel closes it.
 	root.propagate_notification(Node.NOTIFICATION_WM_CLOSE_REQUEST)
 	var opened_by_close: bool = prompt.is_open()
 	prompt.cancel_button.pressed.emit()
 	if not opened_by_close or prompt.is_open() or not quits.is_empty():
-		printerr("FAIL quit_prompt_on_back: window close open=%s, after Cancel open=%s quits=%d" % [opened_by_close, prompt.is_open(), quits.size()])
+		printerr(
+			(
+				"FAIL quit_prompt_on_back: window close open=%s, after Cancel open=%s quits=%d"
+				% [opened_by_close, prompt.is_open(), quits.size()]
+			)
+		)
 		fail += 1
 
 	# In a match (a hosted session): Esc closes the prompt without opening the
@@ -269,16 +383,34 @@ func _test_quit_prompt_on_back() -> int:
 	esc.pressed = true
 	root.push_input(esc)
 	if prompt.is_open() or menu.is_open():
-		printerr("FAIL quit_prompt_on_back: Esc in a match left prompt open=%s, in-game menu open=%s" % [prompt.is_open(), menu.is_open()])
+		printerr(
+			(
+				"FAIL quit_prompt_on_back: Esc in a match left prompt open=%s, in-game menu open=%s"
+				% [prompt.is_open(), menu.is_open()]
+			)
+		)
 		fail += 1
 	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	if not prompt.is_open() or paused or not quits.is_empty():
-		printerr("FAIL quit_prompt_on_back: back in a match open=%s paused=%s quits=%d" % [prompt.is_open(), paused, quits.size()])
+		printerr(
+			(
+				"FAIL quit_prompt_on_back: back in a match open=%s paused=%s quits=%d"
+				% [prompt.is_open(), paused, quits.size()]
+			)
+		)
 		fail += 1
 	prompt.quit_button.pressed.emit()
-	if quits.size() != 1 or not scene.multiplayer.multiplayer_peer is OfflineMultiplayerPeer \
-			or scene.enet_peer.get_connection_status() != MultiplayerPeer.CONNECTION_DISCONNECTED:
-		printerr("FAIL quit_prompt_on_back: Quit quits=%d peer=%s" % [quits.size(), scene.multiplayer.multiplayer_peer])
+	if (
+		quits.size() != 1
+		or not scene.multiplayer.multiplayer_peer is OfflineMultiplayerPeer
+		or scene.enet_peer.get_connection_status() != MultiplayerPeer.CONNECTION_DISCONNECTED
+	):
+		printerr(
+			(
+				"FAIL quit_prompt_on_back: Quit quits=%d peer=%s"
+				% [quits.size(), scene.multiplayer.multiplayer_peer]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame

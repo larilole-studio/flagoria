@@ -22,13 +22,34 @@ const TINT_DAWN := "#e8b4c8"
 
 ## Segment lengths, in order, from docs/day_night.json "timing".
 const SEGMENT_SECONDS: Array[float] = [
-	360.0, 15.0, 30.0, 15.0, 120.0, 15.0, 30.0, 15.0,
+	360.0,
+	15.0,
+	30.0,
+	15.0,
+	120.0,
+	15.0,
+	30.0,
+	15.0,
 ]
 const SEGMENT_FROM: Array[String] = [
-	"day", "day", "dusk", "dusk", "night", "night", "dawn", "dawn",
+	"day",
+	"day",
+	"dusk",
+	"dusk",
+	"night",
+	"night",
+	"dawn",
+	"dawn",
 ]
 const SEGMENT_TO: Array[String] = [
-	"day", "dusk", "dusk", "night", "night", "dawn", "dawn", "day",
+	"day",
+	"dusk",
+	"dusk",
+	"night",
+	"night",
+	"dawn",
+	"dawn",
+	"day",
 ]
 ## Named windows: day 6 min, dusk 1, night 2, dawn 1.
 const PHASE_END: Array[float] = [360.0, 420.0, 540.0, 600.0]

@@ -26,36 +26,78 @@ func _test_world_save_round_trip() -> int:
 	var bytes := FileAccess.get_file_as_bytes(saved["path"])
 	var doc := MapSave.read_document(saved["path"])
 	if saved["error"] != "" or loaded["error"] != "" or doc["error"] != "":
-		printerr("FAIL world_save_round_trip save=%s load=%s read=%s" % [saved["error"], loaded["error"], doc["error"]])
+		printerr(
+			(
+				"FAIL world_save_round_trip save=%s load=%s read=%s"
+				% [saved["error"], loaded["error"], doc["error"]]
+			)
+		)
 		DirAccess.remove_absolute(saved["path"])
 		return 1
 	var got: WorldSave = loaded["world"]
 	var header: Dictionary = doc["data"]
 	var gzip := bytes.size() >= 2 and bytes[0] == 0x1f and bytes[1] == 0x8b
-	if not gzip or header["format"] != MapSave.FORMAT_ID or header["format_version"] != MapSave.FORMAT_VERSION \
-			or loaded["version"] != MapSave.FORMAT_VERSION or header["game_version"] != MapSave.GAME_VERSION:
-		printerr("FAIL world_save_round_trip header format=%s version=%s gzip=%s" % [header.get("format"), header.get("format_version"), gzip])
+	if (
+		not gzip
+		or header["format"] != MapSave.FORMAT_ID
+		or header["format_version"] != MapSave.FORMAT_VERSION
+		or loaded["version"] != MapSave.FORMAT_VERSION
+		or header["game_version"] != MapSave.GAME_VERSION
+	):
+		printerr(
+			(
+				"FAIL world_save_round_trip header format=%s version=%s gzip=%s"
+				% [header.get("format"), header.get("format_version"), gzip]
+			)
+		)
 		fail += 1
-	if got.game_version != MapSave.GAME_VERSION or got.created <= 0 or got.updated < got.created \
-			or got.created != int(header["created"]) or got.updated != int(header["updated"]):
-		printerr("FAIL world_save_round_trip stamps game=%s created=%s updated=%s" % [got.game_version, got.created, got.updated])
+	if (
+		got.game_version != MapSave.GAME_VERSION
+		or got.created <= 0
+		or got.updated < got.created
+		or got.created != int(header["created"])
+		or got.updated != int(header["updated"])
+	):
+		printerr(
+			(
+				"FAIL world_save_round_trip stamps game=%s created=%s updated=%s"
+				% [got.game_version, got.created, got.updated]
+			)
+		)
 		fail += 1
 	if got.params.to_dict() != params.to_dict():
 		printerr("FAIL world_save_round_trip params changed")
 		fail += 1
 	for section in ["tile_edits", "object_changes", "structures", "player"]:
 		if got.get(section) != world.get(section):
-			printerr("FAIL world_save_round_trip %s saved=%s loaded=%s" % [section, world.get(section), got.get(section)])
+			printerr(
+				(
+					"FAIL world_save_round_trip %s saved=%s loaded=%s"
+					% [section, world.get(section), got.get(section)]
+				)
+			)
 			fail += 1
 	# A later save of the same file, from a fresh in-memory world, keeps created.
 	var again := MapSave.save_world(WorldSave.new(params), "test_world_round_trip")
 	var again_loaded := MapSave.load_world(again["path"])
 	DirAccess.remove_absolute(saved["path"])
-	if again["error"] != "" or again_loaded["error"] != "" or again_loaded["world"].created != got.created \
-			or again_loaded["world"].updated < got.updated or again_loaded["world"].game_version != MapSave.GAME_VERSION:
-		printerr("FAIL world_save_round_trip second save created=%s want %s updated=%s"
-				% [again_loaded["world"].created if again_loaded["world"] else 0, got.created,
-				again_loaded["world"].updated if again_loaded["world"] else 0])
+	if (
+		again["error"] != ""
+		or again_loaded["error"] != ""
+		or again_loaded["world"].created != got.created
+		or again_loaded["world"].updated < got.updated
+		or again_loaded["world"].game_version != MapSave.GAME_VERSION
+	):
+		printerr(
+			(
+				"FAIL world_save_round_trip second save created=%s want %s updated=%s"
+				% [
+					again_loaded["world"].created if again_loaded["world"] else 0,
+					got.created,
+					again_loaded["world"].updated if again_loaded["world"] else 0
+				]
+			)
+		)
 		fail += 1
 	if fail == 0:
 		print("PASS test_world_save_round_trip")
@@ -86,7 +128,12 @@ func _test_world_save_section_round_trips() -> int:
 		DirAccess.remove_absolute(saved["path"])
 		var got = loaded["world"].get(section) if loaded["world"] else null
 		if saved["error"] != "" or loaded["error"] != "" or got != samples[section]:
-			printerr("FAIL world_save_section_round_trips %s save=%s load=%s got=%s" % [section, saved["error"], loaded["error"], got])
+			printerr(
+				(
+					"FAIL world_save_section_round_trips %s save=%s load=%s got=%s"
+					% [section, saved["error"], loaded["error"], got]
+				)
+			)
 			fail += 1
 		else:
 			print("  %s round-trip ok" % section)
@@ -104,16 +151,22 @@ func _test_world_save_size_budget() -> int:
 	params.ensure_seeds()
 	var fresh := MapSave.save_world(WorldSave.new(params), "test_ws_size_fresh")
 	var fresh_bytes := FileAccess.get_file_as_bytes(fresh["path"])
-	var fresh_json := fresh_bytes.decompress_dynamic(MapSave.MAX_SAVE_BYTES, FileAccess.COMPRESSION_GZIP).size()
+	var fresh_json := (
+		fresh_bytes.decompress_dynamic(MapSave.MAX_SAVE_BYTES, FileAccess.COMPRESSION_GZIP).size()
+	)
 	DirAccess.remove_absolute(fresh["path"])
 	var edited := WorldSave.new(params)
 	for i in EDIT_COUNT:
 		var cell := Vector2i(i, 0)
 		var chunk := WorldSave.chunk_key(cell)
-		edited.tile_edits.get_or_add(chunk, {})[WorldSave.cell_key(cell)] = {"tile": "BRIDGE_PLANK_H_START_WATER"}
+		edited.tile_edits.get_or_add(chunk, {})[WorldSave.cell_key(cell)] = {
+			"tile": "BRIDGE_PLANK_H_START_WATER"
+		}
 	var saved := MapSave.save_world(edited, "test_ws_size_edits")
 	var edit_bytes := FileAccess.get_file_as_bytes(saved["path"])
-	var edit_json := edit_bytes.decompress_dynamic(MapSave.MAX_SAVE_BYTES, FileAccess.COMPRESSION_GZIP).size()
+	var edit_json := (
+		edit_bytes.decompress_dynamic(MapSave.MAX_SAVE_BYTES, FileAccess.COMPRESSION_GZIP).size()
+	)
 	var loaded := MapSave.load_world(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
 	var edit_count := 0
@@ -121,15 +174,47 @@ func _test_world_save_size_budget() -> int:
 		for chunk in loaded["world"].tile_edits:
 			edit_count += loaded["world"].tile_edits[chunk].size()
 	if fresh["error"] != "" or fresh_bytes.size() > FRESH_BUDGET or fresh_bytes.size() < 2:
-		printerr("FAIL world_save_size_budget fresh %d bytes (budget %d) error=%s" % [fresh_bytes.size(), FRESH_BUDGET, fresh["error"]])
+		printerr(
+			(
+				"FAIL world_save_size_budget fresh %d bytes (budget %d) error=%s"
+				% [fresh_bytes.size(), FRESH_BUDGET, fresh["error"]]
+			)
+		)
 		fail += 1
-	if saved["error"] != "" or loaded["error"] != "" or edit_bytes.size() > EDITED_BUDGET or edit_count != EDIT_COUNT:
-		printerr("FAIL world_save_size_budget %d edits %d bytes (budget %d) count=%d error=%s"
-				% [EDIT_COUNT, edit_bytes.size(), EDITED_BUDGET, edit_count, saved["error"] if saved["error"] != "" else loaded["error"]])
+	if (
+		saved["error"] != ""
+		or loaded["error"] != ""
+		or edit_bytes.size() > EDITED_BUDGET
+		or edit_count != EDIT_COUNT
+	):
+		printerr(
+			(
+				"FAIL world_save_size_budget %d edits %d bytes (budget %d) count=%d error=%s"
+				% [
+					EDIT_COUNT,
+					edit_bytes.size(),
+					EDITED_BUDGET,
+					edit_count,
+					saved["error"] if saved["error"] != "" else loaded["error"]
+				]
+			)
+		)
 		fail += 1
 	if fail == 0:
-		print("PASS test_world_save_size_budget (fresh %d gzip bytes, %d json, budget %d; %d edits %d gzip bytes, %d json, budget %d)"
-				% [fresh_bytes.size(), fresh_json, FRESH_BUDGET, EDIT_COUNT, edit_bytes.size(), edit_json, EDITED_BUDGET])
+		print(
+			(
+				"PASS test_world_save_size_budget (fresh %d gzip bytes, %d json, budget %d; %d edits %d gzip bytes, %d json, budget %d)"
+				% [
+					fresh_bytes.size(),
+					fresh_json,
+					FRESH_BUDGET,
+					EDIT_COUNT,
+					edit_bytes.size(),
+					edit_json,
+					EDITED_BUDGET
+				]
+			)
+		)
 	return fail
 
 
@@ -143,19 +228,43 @@ func _test_world_save_version_check() -> int:
 	var header := '"format":"flagoria-world","format_version":3,"game_version":"0","created":10,"updated":20'
 	var cases := {
 		"test_ws_current": ['{%s, %s, "world": {}, "player": {}}' % [header, params], ""],
-		"test_ws_no_sections": ['{%s, %s}' % [header, params], ""],
+		"test_ws_no_sections": ["{%s, %s}" % [header, params], ""],
 		"test_ws_v2": ['{"format": "flagoria-world", "format_version": 2, %s}' % params, ""],
-		"test_ws_future": ['{"format": "flagoria-world", "format_version": 4, %s}' % params, "version 4, from a newer build"],
-		"test_ws_fraction": ['{"format": "flagoria-world", "format_version": 1.5, %s}' % params, "unknown map save version"],
-		"test_ws_other_format": ['{"format": "other", "format_version": 3, %s}' % params, "not a world save"],
+		"test_ws_future":
+		[
+			'{"format": "flagoria-world", "format_version": 4, %s}' % params,
+			"version 4, from a newer build"
+		],
+		"test_ws_fraction":
+		[
+			'{"format": "flagoria-world", "format_version": 1.5, %s}' % params,
+			"unknown map save version"
+		],
+		"test_ws_other_format":
+		['{"format": "other", "format_version": 3, %s}' % params, "not a world save"],
 		"test_ws_no_format": ['{"format_version": 3, %s}' % params, "not a world save"],
-		"test_ws_bad_section": [
+		"test_ws_bad_section":
+		[
 			'{%s, %s, "world": {"tile_edits": {"0,0": 5}}}' % [header, params],
 			"world.tile_edits[0,0] is not an object",
 		],
 		"test_ws_bad_player": ['{%s, %s, "player": []}' % [header, params], "not an object"],
-		"test_ws_bad_game": ['{"format":"flagoria-world","format_version":3,"game_version":1,"created":10,"updated":20, %s}' % params, "game_version"],
-		"test_ws_bad_time": ['{"format":"flagoria-world","format_version":3,"game_version":"0","created":1.5,"updated":20, %s}' % params, "created"],
+		"test_ws_bad_game":
+		[
+			(
+				'{"format":"flagoria-world","format_version":3,"game_version":1,"created":10,"updated":20, %s}'
+				% params
+			),
+			"game_version"
+		],
+		"test_ws_bad_time":
+		[
+			(
+				'{"format":"flagoria-world","format_version":3,"game_version":"0","created":1.5,"updated":20, %s}'
+				% params
+			),
+			"created"
+		],
 		# Truncated gzip. The engine prints "Decompression failed" for this case.
 		"test_ws_bad_gzip": [PackedByteArray([0x1f, 0x8b, 0x00]), "could not decompress"],
 	}
@@ -173,16 +282,36 @@ func _test_world_save_version_check() -> int:
 		var mtime := int(FileAccess.get_modified_time(path))
 		DirAccess.remove_absolute(path)
 		var want: String = cases[save_name][1]
-		var ok: bool = (result["error"] == "" and result["world"] != null and result["world"].params.altitude_seed == 7) if want == "" \
-				else (result["world"] == null and want in result["error"])
+		var ok: bool = (
+			(
+				result["error"] == ""
+				and result["world"] != null
+				and result["world"].params.altitude_seed == 7
+			)
+			if want == ""
+			else (result["world"] == null and want in result["error"])
+		)
 		if save_name == "test_ws_current" and ok:
-			ok = result["version"] == 3 and result["world"].created == 10 and result["world"].updated == 20 \
-					and result["world"].game_version == "0"
+			ok = (
+				result["version"] == 3
+				and result["world"].created == 10
+				and result["world"].updated == 20
+				and result["world"].game_version == "0"
+			)
 		if save_name == "test_ws_v2" and ok:
-			ok = result["version"] == 2 and result["world"].game_version == "" \
-					and result["world"].created == mtime and result["world"].updated == mtime
+			ok = (
+				result["version"] == 2
+				and result["world"].game_version == ""
+				and result["world"].created == mtime
+				and result["world"].updated == mtime
+			)
 		if not ok:
-			printerr("FAIL world_save_version_check %s error=%s want %s" % [save_name, result["error"], want if want != "" else "a load"])
+			printerr(
+				(
+					"FAIL world_save_version_check %s error=%s want %s"
+					% [save_name, result["error"], want if want != "" else "a load"]
+				)
+			)
 			fail += 1
 	if fail == 0:
 		print("PASS test_world_save_version_check")
@@ -206,7 +335,12 @@ func _test_world_save_migrates_v1() -> int:
 			fail += 1
 		var loaded := MapSave.load_world(fixture)
 		if loaded["error"] != "" or loaded["version"] != version:
-			printerr("FAIL world_save_migrates_v1 %s error=%s version=%s" % [fixture, loaded["error"], loaded["version"]])
+			printerr(
+				(
+					"FAIL world_save_migrates_v1 %s error=%s version=%s"
+					% [fixture, loaded["error"], loaded["version"]]
+				)
+			)
 			fail += 1
 			continue
 		var world: WorldSave = loaded["world"]
@@ -214,27 +348,51 @@ func _test_world_save_migrates_v1() -> int:
 		var raw: Dictionary = doc["data"]["params"] if doc["error"] == "" else {}
 		for key in raw:
 			if world.params.get(key) != raw[key]:
-				printerr("FAIL world_save_migrates_v1 %s %s=%s want %s" % [fixture, key, world.params.get(key), raw[key]])
+				printerr(
+					(
+						"FAIL world_save_migrates_v1 %s %s=%s want %s"
+						% [fixture, key, world.params.get(key), raw[key]]
+					)
+				)
 				fail += 1
-		if not world.world_to_dict().values().all(func(s): return s.is_empty()) or not world.player.is_empty():
+		if (
+			not world.world_to_dict().values().all(func(s): return s.is_empty())
+			or not world.player.is_empty()
+		):
 			printerr("FAIL world_save_migrates_v1 %s change sections not empty" % fixture)
 			fail += 1
 		if version < 3:
 			var mtime := int(FileAccess.get_modified_time(fixture))
 			if world.game_version != "" or world.created != mtime or world.updated != mtime:
-				printerr("FAIL world_save_migrates_v1 %s stamps game=%s created=%s updated=%s mtime=%s"
-						% [fixture, world.game_version, world.created, world.updated, mtime])
+				printerr(
+					(
+						"FAIL world_save_migrates_v1 %s stamps game=%s created=%s updated=%s mtime=%s"
+						% [fixture, world.game_version, world.created, world.updated, mtime]
+					)
+				)
 				fail += 1
 		var saved := MapSave.save_world(world, "test_ws_migrated_v%d" % version)
 		var again := MapSave.load_world(saved["path"])
 		DirAccess.remove_absolute(saved["path"])
-		var kept: bool = again["error"] == "" and again["version"] == MapSave.FORMAT_VERSION \
-				and again["world"].params.to_dict() == world.params.to_dict() \
-				and again["world"].game_version == MapSave.GAME_VERSION \
-				and (world.created <= 0 or again["world"].created == world.created)
+		var kept: bool = (
+			again["error"] == ""
+			and again["version"] == MapSave.FORMAT_VERSION
+			and again["world"].params.to_dict() == world.params.to_dict()
+			and again["world"].game_version == MapSave.GAME_VERSION
+			and (world.created <= 0 or again["world"].created == world.created)
+		)
 		if not kept:
-			printerr("FAIL world_save_migrates_v1 %s re-save error=%s version=%s created=%s"
-					% [fixture, again["error"], again["version"], again["world"].created if again["world"] else 0])
+			printerr(
+				(
+					"FAIL world_save_migrates_v1 %s re-save error=%s version=%s created=%s"
+					% [
+						fixture,
+						again["error"],
+						again["version"],
+						again["world"].created if again["world"] else 0
+					]
+				)
+			)
 			fail += 1
 	if fail == 0:
 		print("PASS test_world_save_migrates_v1 (fixtures v1 to v%d)" % MapSave.FORMAT_VERSION)
@@ -273,18 +431,36 @@ func _test_world_save_keeps_previous_on_failed_write() -> int:
 			listed_tmp = true
 		if row_path == path:
 			listed_save = true
-	if still["error"] != "" or still["world"].params.altitude_seed != 4242 \
-			or FileAccess.get_file_as_bytes(path) != before or listed_tmp or not listed_save \
-			or not FileAccess.file_exists(tmp):
-		printerr("FAIL world_save_keeps_previous interrupted load=%s listed_tmp=%s listed_save=%s"
-				% [still["error"], listed_tmp, listed_save])
+	if (
+		still["error"] != ""
+		or still["world"].params.altitude_seed != 4242
+		or FileAccess.get_file_as_bytes(path) != before
+		or listed_tmp
+		or not listed_save
+		or not FileAccess.file_exists(tmp)
+	):
+		printerr(
+			(
+				"FAIL world_save_keeps_previous interrupted load=%s listed_tmp=%s listed_save=%s"
+				% [still["error"], listed_tmp, listed_save]
+			)
+		)
 		fail += 1
 	var bad := MapSave._replace_save(path, PackedByteArray([0x00, 0x01, 0x02]))
 	var after_bad := MapSave.load_world(path)
-	if bad == "" or FileAccess.file_exists(tmp) or FileAccess.get_file_as_bytes(path) != before \
-			or after_bad["error"] != "" or after_bad["world"].params.altitude_seed != 4242:
-		printerr("FAIL world_save_keeps_previous failed write error=%s tmp_left=%s load=%s"
-				% [bad, FileAccess.file_exists(tmp), after_bad["error"]])
+	if (
+		bad == ""
+		or FileAccess.file_exists(tmp)
+		or FileAccess.get_file_as_bytes(path) != before
+		or after_bad["error"] != ""
+		or after_bad["world"].params.altitude_seed != 4242
+	):
+		printerr(
+			(
+				"FAIL world_save_keeps_previous failed write error=%s tmp_left=%s load=%s"
+				% [bad, FileAccess.file_exists(tmp), after_bad["error"]]
+			)
+		)
 		fail += 1
 	# The next save removes a leftover temp, then replaces the file.
 	var stale := FileAccess.open(tmp, FileAccess.WRITE)
@@ -293,11 +469,22 @@ func _test_world_save_keeps_previous_on_failed_write() -> int:
 	params.altitude_seed = 4343
 	var again := MapSave.save_world(WorldSave.new(params), "test_ws_durable")
 	var loaded := MapSave.load_world(path)
-	if again["error"] != "" or FileAccess.file_exists(tmp) or loaded["error"] != "" \
-			or loaded["world"].params.altitude_seed != 4343:
-		printerr("FAIL world_save_keeps_previous next save error=%s tmp_left=%s seed=%s"
-				% [again["error"], FileAccess.file_exists(tmp),
-				loaded["world"].params.altitude_seed if loaded["world"] else 0])
+	if (
+		again["error"] != ""
+		or FileAccess.file_exists(tmp)
+		or loaded["error"] != ""
+		or loaded["world"].params.altitude_seed != 4343
+	):
+		printerr(
+			(
+				"FAIL world_save_keeps_previous next save error=%s tmp_left=%s seed=%s"
+				% [
+					again["error"],
+					FileAccess.file_exists(tmp),
+					loaded["world"].params.altitude_seed if loaded["world"] else 0
+				]
+			)
+		)
 		fail += 1
 	DirAccess.remove_absolute(path)
 	DirAccess.remove_absolute(tmp)

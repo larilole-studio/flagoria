@@ -1,7 +1,6 @@
 extends "res://tests/helpers/test_helpers.gd"
 ## Day/night clock (#558): phase and tint, save/reload, and the cycle switch.
 
-
 const SPEC_HEX := {
 	"day": "#ffffff",
 	"dusk": "#eba684",
@@ -24,13 +23,18 @@ func _test_day_night_phases() -> int:
 		printerr("FAIL day_night_phases cycle_seconds %s" % spec.get("cycle_seconds"))
 		fail += 1
 	var timing: Array = spec["timing"]
-	if timing.size() != SPEC_SECONDS.size() or DayNight.SEGMENT_SECONDS.size() != SPEC_SECONDS.size():
+	if (
+		timing.size() != SPEC_SECONDS.size()
+		or DayNight.SEGMENT_SECONDS.size() != SPEC_SECONDS.size()
+	):
 		printerr("FAIL day_night_phases timing length %s" % timing.size())
 		fail += 1
 	else:
 		for i in SPEC_SECONDS.size():
-			if not is_equal_approx(float(timing[i]["seconds"]), SPEC_SECONDS[i]) \
-					or not is_equal_approx(DayNight.SEGMENT_SECONDS[i], SPEC_SECONDS[i]):
+			if (
+				not is_equal_approx(float(timing[i]["seconds"]), SPEC_SECONDS[i])
+				or not is_equal_approx(DayNight.SEGMENT_SECONDS[i], SPEC_SECONDS[i])
+			):
 				printerr("FAIL day_night_phases segment %s seconds %s" % [i, timing[i]])
 				fail += 1
 	for phase in SPEC_HEX.keys():
@@ -93,20 +97,34 @@ func _wraps() -> bool:
 	DayNight.begin(params, 599.0)
 	DayNight.tick(2.0)
 	if not is_equal_approx(DayNight.elapsed, 1.0) or DayNight.phase() != "day":
-		printerr("FAIL day_night_phases tick wrap elapsed=%s phase=%s" % [DayNight.elapsed, DayNight.phase()])
+		printerr(
+			(
+				"FAIL day_night_phases tick wrap elapsed=%s phase=%s"
+				% [DayNight.elapsed, DayNight.phase()]
+			)
+		)
 		return false
 	return true
 
 
 func _at(seconds: float, phase: String, tint_phase: String) -> bool:
 	if DayNight.phase_at(seconds) != phase:
-		printerr("FAIL day_night_phases t=%s phase %s want %s" % [seconds, DayNight.phase_at(seconds), phase])
+		printerr(
+			(
+				"FAIL day_night_phases t=%s phase %s want %s"
+				% [seconds, DayNight.phase_at(seconds), phase]
+			)
+		)
 		return false
 	return _color(DayNight.tint_at(seconds), DayNight.color_of(tint_phase), "t=%s" % seconds)
 
 
 func _color(got: Color, want: Color, label: String) -> bool:
-	if is_equal_approx(got.r, want.r) and is_equal_approx(got.g, want.g) and is_equal_approx(got.b, want.b):
+	if (
+		is_equal_approx(got.r, want.r)
+		and is_equal_approx(got.g, want.g)
+		and is_equal_approx(got.b, want.b)
+	):
 		return true
 	printerr("FAIL day_night_phases %s got %s want %s" % [label, got, want])
 	return false
@@ -128,9 +146,17 @@ func _test_day_night_save() -> int:
 		printerr("FAIL day_night_save: seek night failed")
 		fail += 1
 	var saved: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
-	var doc := MapSave.read_document(saved["path"]) if saved["error"] == "" else {"error": saved["error"], "data": null}
+	var doc := (
+		MapSave.read_document(saved["path"])
+		if saved["error"] == ""
+		else {"error": saved["error"], "data": null}
+	)
 	var clock = doc["data"]["clock"] if doc.get("data") is Dictionary else null
-	if saved["error"] != "" or not clock is Dictionary or not is_equal_approx(float(clock.get("elapsed", -1)), 480.0):
+	if (
+		saved["error"] != ""
+		or not clock is Dictionary
+		or not is_equal_approx(float(clock.get("elapsed", -1)), 480.0)
+	):
 		printerr("FAIL day_night_save: save %s clock %s" % [saved["error"], clock])
 		fail += 1
 	var path: String = saved["path"]
@@ -143,10 +169,17 @@ func _test_day_night_save() -> int:
 		var again := _quiet_scene()
 		again.world_params = map_gen.params.duplicate_params()
 		again._restore_loaded_world()
-		if not is_equal_approx(DayNight.elapsed, 480.0) or DayNight.phase() != "night" \
-				or not again.world_params.day_night_cycle:
-			printerr("FAIL day_night_save: reloaded elapsed=%s phase=%s cycle=%s"
-					% [DayNight.elapsed, DayNight.phase(), again.world_params.day_night_cycle])
+		if (
+			not is_equal_approx(DayNight.elapsed, 480.0)
+			or DayNight.phase() != "night"
+			or not again.world_params.day_night_cycle
+		):
+			printerr(
+				(
+					"FAIL day_night_save: reloaded elapsed=%s phase=%s cycle=%s"
+					% [DayNight.elapsed, DayNight.phase(), again.world_params.day_night_cycle]
+				)
+			)
 			fail += 1
 		again.queue_free()
 		await process_frame
@@ -169,7 +202,12 @@ func _legacy_clock() -> bool:
 		return false
 	var world: WorldSave = loaded["world"]
 	if world.clock_elapsed != 0.0 or not world.params.day_night_cycle:
-		printerr("FAIL day_night_save: old save elapsed=%s cycle=%s" % [world.clock_elapsed, world.params.day_night_cycle])
+		printerr(
+			(
+				"FAIL day_night_save: old save elapsed=%s cycle=%s"
+				% [world.clock_elapsed, world.params.day_night_cycle]
+			)
+		)
 		return false
 	var bad := MapSave.path_for("test_day_night_bad_clock")
 	DirAccess.make_dir_recursive_absolute(MapSave.SAVE_DIR)
@@ -177,9 +215,14 @@ func _legacy_clock() -> bool:
 	if file == null:
 		printerr("FAIL day_night_save: could not write a bad clock file")
 		return false
-	file.store_string(
-		'{"format":"flagoria-world","format_version":3,"game_version":"0","created":10,"updated":20,'
-		+ '"params":{"altitude_seed":11},"world":{},"player":{},"clock":[]}'
+	(
+		file
+		. store_string(
+			(
+				'{"format":"flagoria-world","format_version":3,"game_version":"0","created":10,"updated":20,'
+				+ '"params":{"altitude_seed":11},"world":{},"player":{},"clock":[]}'
+			)
+		)
 	)
 	file.close()
 	var refused := MapSave.load_world(bad)
@@ -233,17 +276,32 @@ func _test_day_night_cycle_off() -> int:
 	DayNight.tick(30.0)
 	await process_frame
 	var mod := DayNight.get_node_or_null("WorldTint") as CanvasModulate
-	if mod == null or _under_canvas_layer(mod) or _layer_has_modulate(scene.get_node("CanvasLayer1")):
+	if (
+		mod == null
+		or _under_canvas_layer(mod)
+		or _layer_has_modulate(scene.get_node("CanvasLayer1"))
+	):
 		printerr("FAIL day_night_cycle_off: tint node is missing or on the HUD")
 		fail += 1
-	elif DayNight.phase() != "day" or not _white(mod.color) or not is_equal_approx(DayNight.elapsed, 480.0):
-		printerr("FAIL day_night_cycle_off: off phase=%s elapsed=%s tint=%s"
-				% [DayNight.phase(), DayNight.elapsed, mod.color])
+	elif (
+		DayNight.phase() != "day"
+		or not _white(mod.color)
+		or not is_equal_approx(DayNight.elapsed, 480.0)
+	):
+		printerr(
+			(
+				"FAIL day_night_cycle_off: off phase=%s elapsed=%s tint=%s"
+				% [DayNight.phase(), DayNight.elapsed, mod.color]
+			)
+		)
 		fail += 1
 	defaults.day_night_cycle = true
 	DayNight.begin(defaults, 480.0)
 	await process_frame
-	if DayNight.phase() != "night" or not _color(mod.color, DayNight.color_of("night"), "night tint"):
+	if (
+		DayNight.phase() != "night"
+		or not _color(mod.color, DayNight.color_of("night"), "night tint")
+	):
 		printerr("FAIL day_night_cycle_off: on phase=%s tint=%s" % [DayNight.phase(), mod.color])
 		fail += 1
 	scene.queue_free()

@@ -29,15 +29,17 @@ func setup_soldier(data: Dictionary) -> void:
 func setup_from_save(row: Dictionary) -> void:
 	var pos_arr: Array = row.get("pos", [0.0, 0.0])
 	var anchor_arr: Array = row.get("barracks_anchor", [0, 0])
-	setup_soldier({
-		"type": MobCatalog.SOLDIER,
-		"pos": Vector2(float(pos_arr[0]), float(pos_arr[1])),
-		"seed": int(row.get("seed", 0)),
-		"owner": int(row.get("owner", 0)),
-		"order": str(row.get("order", "follow")),
-		"barracks_anchor": Vector2i(int(anchor_arr[0]), int(anchor_arr[1])),
-		"hp": int(row.get("hp", MobCatalog.stat(MobCatalog.SOLDIER, "hp"))),
-	})
+	setup_soldier(
+		{
+			"type": MobCatalog.SOLDIER,
+			"pos": Vector2(float(pos_arr[0]), float(pos_arr[1])),
+			"seed": int(row.get("seed", 0)),
+			"owner": int(row.get("owner", 0)),
+			"order": str(row.get("order", "follow")),
+			"barracks_anchor": Vector2i(int(anchor_arr[0]), int(anchor_arr[1])),
+			"hp": int(row.get("hp", MobCatalog.stat(MobCatalog.SOLDIER, "hp"))),
+		}
+	)
 
 
 func think(delta: float) -> void:

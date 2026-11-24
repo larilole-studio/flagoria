@@ -26,17 +26,31 @@ func _test_player_save_round_trip() -> int:
 	chart_now.reveal_cells(far, 0)
 	chart_now.reveal_cells(west, 0)
 	var saved: Dictionary = scene.get_node("CanvasLayer1/InGameMenu").save_world()
-	var doc := MapSave.read_document(saved["path"]) if saved["error"] == "" else {"error": saved["error"], "data": null}
+	var doc := (
+		MapSave.read_document(saved["path"])
+		if saved["error"] == ""
+		else {"error": saved["error"], "data": null}
+	)
 	var section = doc["data"]["player"] if doc["data"] is Dictionary else null
-	if saved["error"] != "" or doc.get("error", "") != "" or not section is Dictionary \
-			or int(section.get("health", -1)) != 4 or int(section.get("wood", -1)) != 3 \
-			or int(section.get("score", -1)) != 8 or section.get("discovered", {}).get("3,-1", 0) != 1 \
-			or not section.get("charted", {}) is Dictionary or section["charted"].is_empty() \
-			or doc["data"]["format_version"] != MapSave.FORMAT_VERSION:
+	if (
+		saved["error"] != ""
+		or doc.get("error", "") != ""
+		or not section is Dictionary
+		or int(section.get("health", -1)) != 4
+		or int(section.get("wood", -1)) != 3
+		or int(section.get("score", -1)) != 8
+		or section.get("discovered", {}).get("3,-1", 0) != 1
+		or not section.get("charted", {}) is Dictionary
+		or section["charted"].is_empty()
+		or doc["data"]["format_version"] != MapSave.FORMAT_VERSION
+	):
 		printerr("FAIL player_save_round_trip: save %s player %s" % [saved["error"], section])
 		fail += 1
-	elif not section["position"] is Array or not is_equal_approx(float(section["position"][0]), spot.x) \
-			or not is_equal_approx(float(section["position"][1]), spot.y):
+	elif (
+		not section["position"] is Array
+		or not is_equal_approx(float(section["position"][0]), spot.x)
+		or not is_equal_approx(float(section["position"][1]), spot.y)
+	):
 		printerr("FAIL player_save_round_trip: position %s want %s" % [section["position"], spot])
 		fail += 1
 	var path: String = saved["path"]
@@ -54,17 +68,32 @@ func _test_player_save_round_trip() -> int:
 		again.add_player(1)
 		var loaded: Node2D = again.get_node("World/1")
 		var chart: ExploredMap = again.get_node("CanvasLayer1/MapChart").explored
-		if not is_equal_approx(loaded.position.x, spot.x) or not is_equal_approx(loaded.position.y, spot.y):
+		if (
+			not is_equal_approx(loaded.position.x, spot.x)
+			or not is_equal_approx(loaded.position.y, spot.y)
+		):
 			printerr("FAIL player_save_round_trip: loaded at %s, want %s" % [loaded.position, spot])
 			fail += 1
-		if loaded.health.health != 4 or again.get_node("Inventory").count_of(Inventory.WOOD) != 3 \
-				or again.get_node("Points").total_of(1) != 8 \
-				or again.get_node("Discovery").discoverer_of(Vector2i(3, -1)) != 1 \
-				or not chart.is_explored(far) or not chart.is_explored(west):
-			printerr("FAIL player_save_round_trip: health %s wood %s score %s found %s chart %s"
-					% [loaded.health.health, again.get_node("Inventory").count_of(Inventory.WOOD),
-					again.get_node("Points").total_of(1),
-					again.get_node("Discovery").discoverer_of(Vector2i(3, -1)), chart.is_explored(far)])
+		if (
+			loaded.health.health != 4
+			or again.get_node("Inventory").count_of(Inventory.WOOD) != 3
+			or again.get_node("Points").total_of(1) != 8
+			or again.get_node("Discovery").discoverer_of(Vector2i(3, -1)) != 1
+			or not chart.is_explored(far)
+			or not chart.is_explored(west)
+		):
+			printerr(
+				(
+					"FAIL player_save_round_trip: health %s wood %s score %s found %s chart %s"
+					% [
+						loaded.health.health,
+						again.get_node("Inventory").count_of(Inventory.WOOD),
+						again.get_node("Points").total_of(1),
+						again.get_node("Discovery").discoverer_of(Vector2i(3, -1)),
+						chart.is_explored(far)
+					]
+				)
+			)
 			fail += 1
 		again.queue_free()
 		await process_frame
@@ -95,21 +124,47 @@ func _test_player_save_legacy_defaults() -> int:
 	body.health.set_health_now(2)
 	scene.get_node("Inventory").add(Inventory.WOOD, 5)
 	scene.get_node("Points").restore_total(1, 3)
-	PlayerSave.apply(scene, body, {
-		"health": "nope", "position": [1], "wood": -3, "score": 1.5,
-		"charted": {"nope": "!!"}, "discovered": {"z": "a"},
-	})
-	if body.health.health != body.health.max_health or body.position != Vector2(10, 20) \
-			or scene.get_node("Inventory").count_of(Inventory.WOOD) != 0 \
-			or scene.get_node("Points").total_of(1) != 0:
-		printerr("FAIL player_save_legacy_defaults: bad section health %s at %s wood %s score %s"
-				% [body.health.health, body.position, scene.get_node("Inventory").count_of(Inventory.WOOD),
-				scene.get_node("Points").total_of(1)])
+	(
+		PlayerSave
+		. apply(
+			scene,
+			body,
+			{
+				"health": "nope",
+				"position": [1],
+				"wood": -3,
+				"score": 1.5,
+				"charted": {"nope": "!!"},
+				"discovered": {"z": "a"},
+			}
+		)
+	)
+	if (
+		body.health.health != body.health.max_health
+		or body.position != Vector2(10, 20)
+		or scene.get_node("Inventory").count_of(Inventory.WOOD) != 0
+		or scene.get_node("Points").total_of(1) != 0
+	):
+		printerr(
+			(
+				"FAIL player_save_legacy_defaults: bad section health %s at %s wood %s score %s"
+				% [
+					body.health.health,
+					body.position,
+					scene.get_node("Inventory").count_of(Inventory.WOOD),
+					scene.get_node("Points").total_of(1)
+				]
+			)
+		)
 		fail += 1
 	body.queue_free()
 	await process_frame
 
-	for fixture in ["res://tests/fixtures/world_save_v1.json", "res://tests/fixtures/world_save_v2.json", "res://tests/fixtures/world_save_v3.json"]:
+	for fixture in [
+		"res://tests/fixtures/world_save_v1.json",
+		"res://tests/fixtures/world_save_v2.json",
+		"res://tests/fixtures/world_save_v3.json"
+	]:
 		_dirt(scene, null)
 		var err: String = map_gen.load_map_inputs(fixture)
 		scene.world_params = map_gen.params.duplicate_params()
@@ -118,8 +173,17 @@ func _test_player_save_legacy_defaults() -> int:
 		scene.add_player(1)
 		var host: Node2D = scene.get_node("World/1")
 		var spawn: Vector2 = scene._land_spawn_position(host)
-		if err != "" or host.position.distance_to(spawn) > 1.0 or not _is_default(scene, host, fixture):
-			printerr("FAIL player_save_legacy_defaults: %s error %s at %s spawn %s" % [fixture, err, host.position, spawn])
+		if (
+			err != ""
+			or host.position.distance_to(spawn) > 1.0
+			or not _is_default(scene, host, fixture)
+		):
+			printerr(
+				(
+					"FAIL player_save_legacy_defaults: %s error %s at %s spawn %s"
+					% [fixture, err, host.position, spawn]
+				)
+			)
 			fail += 1
 		host.queue_free()
 		await process_frame
@@ -165,13 +229,24 @@ func _dirt(scene: Node, body: Node) -> void:
 
 func _is_default(scene: Node, body: Node, label: String) -> bool:
 	var chart: ExploredMap = scene.get_node("CanvasLayer1/MapChart").explored
-	var ok: bool = body.health.health == body.health.max_health \
-			and scene.get_node("Inventory").count_of(Inventory.WOOD) == 0 \
-			and scene.get_node("Points").total_of(1) == 0 \
-			and scene.get_node("Discovery").discoverer_of(Vector2i(1, 1)) == 0 \
-			and chart.explored_count() == 0
+	var ok: bool = (
+		body.health.health == body.health.max_health
+		and scene.get_node("Inventory").count_of(Inventory.WOOD) == 0
+		and scene.get_node("Points").total_of(1) == 0
+		and scene.get_node("Discovery").discoverer_of(Vector2i(1, 1)) == 0
+		and chart.explored_count() == 0
+	)
 	if not ok:
-		printerr("FAIL player_save_legacy_defaults: %s health %s wood %s score %s chart %s"
-				% [label, body.health.health, scene.get_node("Inventory").count_of(Inventory.WOOD),
-				scene.get_node("Points").total_of(1), chart.explored_count()])
+		printerr(
+			(
+				"FAIL player_save_legacy_defaults: %s health %s wood %s score %s chart %s"
+				% [
+					label,
+					body.health.health,
+					scene.get_node("Inventory").count_of(Inventory.WOOD),
+					scene.get_node("Points").total_of(1),
+					chart.explored_count()
+				]
+			)
+		)
 	return ok

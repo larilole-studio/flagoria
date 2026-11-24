@@ -14,7 +14,9 @@ func _clear_barracks_anchor(world, quarter_turns := 0) -> Variant:
 			var cells: Array = StructurePlacer.footprint(s, cell).keys()
 			if cells.is_empty():
 				continue
-			if cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				return cell
 	return null
 
@@ -44,7 +46,12 @@ func _test_barracks_not_a_tower() -> int:
 				place_id = int(id)
 				break
 		if place_id < 0 or world._structures.towers().has(place_id):
-			printerr("FAIL barracks_not_a_tower: id %d towers %s" % [place_id, world._structures.towers()])
+			printerr(
+				(
+					"FAIL barracks_not_a_tower: id %d towers %s"
+					% [place_id, world._structures.towers()]
+				)
+			)
 			fail += 1
 	scene.queue_free()
 	await process_frame

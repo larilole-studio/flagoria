@@ -49,19 +49,34 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 			var cell = WorldSave.parse_cell(str(key))
 			if cell == null or not entry is Dictionary:
 				continue
-			if entry.get("structure") is String and StructurePlacer.load_named(entry["structure"]) != null:
+			if (
+				entry.get("structure") is String
+				and StructurePlacer.load_named(entry["structure"]) != null
+			):
 				var turns := int(entry.get("rotation", 0))
-				placed.append([int(entry.get("order", 0)), entry["structure"], int(entry.get("owner", 0)), cell, turns])
-			elif entry.get("wall") == PALISADE and map.ground_is_walkable(map.predict_cell(cell)[0]):
+				placed.append(
+					[
+						int(entry.get("order", 0)),
+						entry["structure"],
+						int(entry.get("owner", 0)),
+						cell,
+						turns
+					]
+				)
+			elif (
+				entry.get("wall") == PALISADE and map.ground_is_walkable(map.predict_cell(cell)[0])
+			):
 				walls.append(cell)
 				if entry.has("hp"):
 					hp_by_cell[cell] = int(entry["hp"])
 	placed.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-	var list := placed.map(func(p: Array) -> Array:
-		var row: Array = [p[1], p[2], p[3]]
-		if p.size() >= 5 and int(p[4]) != 0:
-			row.append(int(p[4]))
-		return row)
+	var list := placed.map(
+		func(p: Array) -> Array:
+			var row: Array = [p[1], p[2], p[3]]
+			if p.size() >= 5 and int(p[4]) != 0:
+				row.append(int(p[4]))
+			return row
+	)
 	var count: int = map.replace_structures(list) if not list.is_empty() else 0
 	if not walls.is_empty() and map.place_wall_cells(walls):
 		for cell: Vector2i in walls:

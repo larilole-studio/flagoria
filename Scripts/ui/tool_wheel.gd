@@ -376,8 +376,9 @@ func _clamp_center(center: Vector2) -> Vector2:
 	var half := RoundHudStyle.HIT * 0.5
 	var edge := 1.0
 	return Vector2(
-			clampf(center.x, edge + half, maxf(edge + half, view.x - edge - half)),
-			clampf(center.y, edge + half, maxf(edge + half, view.y - edge - half)))
+		clampf(center.x, edge + half, maxf(edge + half, view.x - edge - half)),
+		clampf(center.y, edge + half, maxf(edge + half, view.y - edge - half))
+	)
 
 
 func _button_center() -> Vector2:

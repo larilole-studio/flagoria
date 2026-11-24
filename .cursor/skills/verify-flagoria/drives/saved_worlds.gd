@@ -70,14 +70,22 @@ func _leave() -> bool:
 		printerr("saved worlds: the menu did not open")
 		return false
 	await click(MAIN_MENU_BUTTON)
-	return await wait_until(func() -> bool:
-		return current_scene != null and current_scene.has_node(WORLDS) and hero() == null, 15.0)
+	return await wait_until(
+		func() -> bool:
+			return current_scene != null and current_scene.has_node(WORLDS) and hero() == null,
+		15.0
+	)
 
 
 func _open_worlds() -> bool:
 	await click(WORLDS)
-	return await wait_until(func() -> bool:
-		return current_scene.has_node(LIST) and current_scene.get_node(LIST).is_visible_in_tree(), 5.0)
+	return await wait_until(
+		func() -> bool:
+			return (
+				current_scene.has_node(LIST) and current_scene.get_node(LIST).is_visible_in_tree()
+			),
+		5.0
+	)
 
 
 func _load_row(index: int, shot: String, plant_stands: bool) -> bool:
@@ -92,7 +100,12 @@ func _load_row(index: int, shot: String, plant_stands: bool) -> bool:
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var standing: bool = map.choppable(_cut) != null
 	if standing != plant_stands:
-		printerr("saved worlds: %s plant at %s standing=%s, want %s" % [shot, _cut, standing, plant_stands])
+		printerr(
+			(
+				"saved worlds: %s plant at %s standing=%s, want %s"
+				% [shot, _cut, standing, plant_stands]
+			)
+		)
 		return false
 	print("saved worlds: %s plant standing=%s" % [shot, standing])
 	return true

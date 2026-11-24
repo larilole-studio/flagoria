@@ -1,6 +1,7 @@
 extends RefCounted
 ## Reads movement controls and applies the walk, run and joystick speed rules.
 
+
 static func keyboard_axis() -> Vector2:
 	var x := int(Input.is_action_pressed("ui_right")) - int(Input.is_action_pressed("ui_left"))
 	var y := int(Input.is_action_pressed("ui_down")) - int(Input.is_action_pressed("ui_up"))
@@ -50,7 +51,10 @@ static func move_player(player, delta) -> void:
 
 static func walk_direction(velocity: Vector2) -> String:
 	## The walk animation's facing for the owner's current velocity.
-	if velocity.x < 0: return "Left"
-	if velocity.x > 0: return "Right"
-	if velocity.y < 0: return "Up"
+	if velocity.x < 0:
+		return "Left"
+	if velocity.x > 0:
+		return "Right"
+	if velocity.y < 0:
+		return "Up"
 	return "Down"

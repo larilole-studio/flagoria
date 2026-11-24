@@ -27,8 +27,9 @@ var paused: bool:
 		tree.paused = value
 
 
-func create_timer(time_sec: float, process_always := true, process_in_physics := false,
-		ignore_time_scale := false) -> SceneTreeTimer:
+func create_timer(
+	time_sec: float, process_always := true, process_in_physics := false, ignore_time_scale := false
+) -> SceneTreeTimer:
 	return tree.create_timer(time_sec, process_always, process_in_physics, ignore_time_scale)
 
 
@@ -59,7 +60,9 @@ func free_ui_scene(scene: Node) -> void:
 
 func add_combat_actor(scene: Node, position: Vector2) -> CharacterBody2D:
 	## Attach the local player after the caller has prepared the arena.
-	var player := load("res://Scripts/player/character_body_2d.tscn").instantiate() as CharacterBody2D
+	var player := (
+		load("res://Scripts/player/character_body_2d.tscn").instantiate() as CharacterBody2D
+	)
 	player.name = str(scene.multiplayer.get_unique_id())
 	player.position = position
 	scene.get_node("World").add_child(player)
@@ -144,19 +147,42 @@ func _spawn_session(mode: String, joiners: int) -> int:
 			at[s["id"]] = pos
 			var want = want_of.call(s, server)
 			if want == null or pos.distance_to(Vector2(want[0], want[1])) > settle:
-				printerr("FAIL spawn_late_join %s %s: peer %s stands at %s, the server's spot is %s" % [mode, stage, s["id"], pos, want])
+				printerr(
+					(
+						"FAIL spawn_late_join %s %s: peer %s stands at %s, the server's spot is %s"
+						% [mode, stage, s["id"], pos, want]
+					)
+				)
 				bad += 1
 			if pos.distance_to(origin) > tile_map.SPAWN_RADIUS + settle:
-				printerr("FAIL spawn_late_join %s %s: peer %s at %s is %s px from the spawn %s" % [mode, stage, s["id"], pos, pos.distance_to(origin), origin])
+				printerr(
+					(
+						"FAIL spawn_late_join %s %s: peer %s at %s is %s px from the spawn %s"
+						% [mode, stage, s["id"], pos, pos.distance_to(origin), origin]
+					)
+				)
 				bad += 1
 		var ids := at.keys()
 		if ids.size() != joiners + (1 if mode == "host" else 0):
-			printerr("FAIL spawn_late_join %s %s: %s players, want %s" % [mode, stage, ids.size(), joiners])
+			printerr(
+				(
+					"FAIL spawn_late_join %s %s: %s players, want %s"
+					% [mode, stage, ids.size(), joiners]
+				)
+			)
 			bad += 1
 		for i in ids.size():
 			for j in range(i + 1, ids.size()):
-				if (at[ids[i]] as Vector2).distance_to(at[ids[j]]) < tile_map.SPAWN_CLEARANCE - settle:
-					printerr("FAIL spawn_late_join %s %s: peers %s at %s and %s at %s overlap" % [mode, stage, ids[i], at[ids[i]], ids[j], at[ids[j]]])
+				if (
+					(at[ids[i]] as Vector2).distance_to(at[ids[j]])
+					< tile_map.SPAWN_CLEARANCE - settle
+				):
+					printerr(
+						(
+							"FAIL spawn_late_join %s %s: peers %s at %s and %s at %s overlap"
+							% [mode, stage, ids[i], at[ids[i]], ids[j], at[ids[j]]]
+						)
+					)
 					bad += 1
 		for i in outs.size():
 			var s: Dictionary = read.call(i)
@@ -165,11 +191,25 @@ func _spawn_session(mode: String, joiners: int) -> int:
 				var seen_pos = Vector2(seen["pos"][0], seen["pos"][1]) if seen != null else null
 				# A copy at the world origin means the server spot never landed
 				# (#352): name that before the generic mismatch line.
-				if seen_pos != null and seen_pos.is_equal_approx(Vector2.ZERO) and not (at[id] as Vector2).is_equal_approx(Vector2.ZERO):
-					printerr("FAIL spawn_late_join %s %s: peer %s still sees %s at (0, 0), its owner has %s" % [mode, stage, s.get("id"), id, at[id]])
+				if (
+					seen_pos != null
+					and seen_pos.is_equal_approx(Vector2.ZERO)
+					and not (at[id] as Vector2).is_equal_approx(Vector2.ZERO)
+				):
+					printerr(
+						(
+							"FAIL spawn_late_join %s %s: peer %s still sees %s at (0, 0), its owner has %s"
+							% [mode, stage, s.get("id"), id, at[id]]
+						)
+					)
 					bad += 1
 				elif seen == null or (seen_pos as Vector2).distance_to(at[id]) > settle:
-					printerr("FAIL spawn_late_join %s %s: peer %s sees %s at %s, its owner has %s" % [mode, stage, s.get("id"), id, seen, at[id]])
+					printerr(
+						(
+							"FAIL spawn_late_join %s %s: peer %s sees %s at %s, its owner has %s"
+							% [mode, stage, s.get("id"), id, seen, at[id]]
+						)
+					)
 					bad += 1
 		if bad == 0:
 			print("PASS spawn_late_join %s %s %s" % [mode, stage, at])
@@ -194,7 +234,10 @@ func _spawn_session(mode: String, joiners: int) -> int:
 				# The owner's body can sit about 2 px off the cell centre when a
 				# wall is above it. Copies catch up a frame later, so the match
 				# is the same settle as the spot check, not an exact vector.
-				if seen == null or Vector2(seen["pos"][0], seen["pos"][1]).distance_to(owned[id]) > settle:
+				if (
+					seen == null
+					or Vector2(seen["pos"][0], seen["pos"][1]).distance_to(owned[id]) > settle
+				):
 					return false
 		return true
 	# synced for 300 ms in a row: a copy that matched once, while its owner
@@ -221,11 +264,18 @@ func _spawn_session(mode: String, joiners: int) -> int:
 		var n := outs.size() - 1
 		var joined := func() -> bool:
 			var s: Dictionary = read.call(n)
-			return s.get("origin") != null and s.get("players", {}).has(s.get("id")) \
-					and read.call(0).get("picked", {}).has(s.get("id"))
+			return (
+				s.get("origin") != null
+				and s.get("players", {}).has(s.get("id"))
+				and read.call(0).get("picked", {}).has(s.get("id"))
+			)
 		if not await wait_for.call(joined, 30000):
-			printerr("FAIL spawn_late_join %s joiner %s did not get its player and the map: %s, server %s"
-					% [mode, n, read.call(n), read.call(0)])
+			printerr(
+				(
+					"FAIL spawn_late_join %s joiner %s did not get its player and the map: %s, server %s"
+					% [mode, n, read.call(n), read.call(0)]
+				)
+			)
 			fail += 1
 	if fail == 0:
 		# Every peer must already hold every player (server spots, #352), not
@@ -233,8 +283,10 @@ func _spawn_session(mode: String, joiners: int) -> int:
 		# covers physics settling onto the spot (~2 px).
 		held_since[0] = 0
 		await wait_for.call(stays_synced, 2000)
-		fail += check.call("join", func(s: Dictionary, server: Dictionary) -> Variant:
-			return server["picked"].get(s["id"]))
+		fail += check.call(
+			"join",
+			func(s: Dictionary, server: Dictionary) -> Variant: return server["picked"].get(s["id"])
+		)
 	if fail == 0:
 		FileAccess.open(outs[0] + ".kill", FileAccess.WRITE).close()
 		var all_respawned := func() -> bool:
@@ -263,23 +315,43 @@ func _spawn_session(mode: String, joiners: int) -> int:
 			var ids := spots.keys()
 			var bad := 0
 			if ids.size() != joiners + (1 if mode == "host" else 0):
-				printerr("FAIL spawn_late_join %s respawn: %s players respawned, want %s" % [mode, ids.size(), joiners])
+				printerr(
+					(
+						"FAIL spawn_late_join %s respawn: %s players respawned, want %s"
+						% [mode, ids.size(), joiners]
+					)
+				)
 				bad += 1
 			for i in ids.size():
 				if (spots[ids[i]] as Vector2).distance_to(origin) > tile_map.SPAWN_RADIUS:
-					printerr("FAIL spawn_late_join %s respawn: %s sent to %s, past the radius" % [mode, ids[i], spots[ids[i]]])
+					printerr(
+						(
+							"FAIL spawn_late_join %s respawn: %s sent to %s, past the radius"
+							% [mode, ids[i], spots[ids[i]]]
+						)
+					)
 					bad += 1
 				for j in range(i + 1, ids.size()):
-					if (spots[ids[i]] as Vector2).distance_to(spots[ids[j]]) < tile_map.SPAWN_CLEARANCE:
-						printerr("FAIL spawn_late_join %s respawn: %s and %s sent to %s and %s" % [mode, ids[i], ids[j], spots[ids[i]], spots[ids[j]]])
+					if (
+						(spots[ids[i]] as Vector2).distance_to(spots[ids[j]])
+						< tile_map.SPAWN_CLEARANCE
+					):
+						printerr(
+							(
+								"FAIL spawn_late_join %s respawn: %s and %s sent to %s and %s"
+								% [mode, ids[i], ids[j], spots[ids[i]], spots[ids[j]]]
+							)
+						)
 						bad += 1
 			if bad == 0:
 				print("PASS spawn_late_join %s respawn %s" % [mode, spots])
 			fail += bad
 			held_since[0] = 0
 			await wait_for.call(stays_synced, SYNC_WAIT_MS)
-			fail += check.call("respawn landing", func(s: Dictionary, _server: Dictionary) -> Variant:
-				return s.get("respawned_at"))
+			fail += check.call(
+				"respawn landing",
+				func(s: Dictionary, _server: Dictionary) -> Variant: return s.get("respawned_at")
+			)
 
 	await stop_probes(probes, 10000)
 	_remove_dir(dir)
@@ -302,8 +374,9 @@ func _body_rect(player: Node) -> Rect2:
 	return Rect2(player.position + shape_node.position - size / 2.0, size)
 
 
-func _respawn_follow_case(label: String, death: Vector2, spawn: Vector2, walk: Vector2,
-		drop_ms: int, prior: int = 0) -> int:
+func _respawn_follow_case(
+	label: String, death: Vector2, spawn: Vector2, walk: Vector2, drop_ms: int, prior: int = 0
+) -> int:
 	## One respawn of a client-owned player over a UDP proxy (60 ms each way).
 	## After the owner respawns it walks `walk` per physics frame; packets from
 	## the owner are dropped for `drop_ms` from that moment. The server's copy
@@ -385,7 +458,11 @@ func _respawn_follow_case(label: String, death: Vector2, spawn: Vector2, walk: V
 		var shown_death := []
 		var watch := func() -> void:
 			var at: Vector2 = s_copy.position
-			if prior > 0 and shown_death.is_empty() and at.distance_to(death) < at.distance_to(spawn):
+			if (
+				prior > 0
+				and shown_death.is_empty()
+				and at.distance_to(death) < at.distance_to(spawn)
+			):
 				shown_death.append(at)
 		s_copy.health.respawn_delay = 1000.0
 		for i in 20:
@@ -409,13 +486,21 @@ func _respawn_follow_case(label: String, death: Vector2, spawn: Vector2, walk: V
 			owner_copy.position += walk
 			await physics_frame
 		if not shown_death.is_empty():
-			printerr("FAIL respawn_hold %s: server copy showed the death spot after the respawn (%s)"
-					% [label, shown_death[0]])
+			printerr(
+				(
+					"FAIL respawn_hold %s: server copy showed the death spot after the respawn (%s)"
+					% [label, shown_death[0]]
+				)
+			)
 			fail += 1
 		var gap: float = s_copy.position.distance_to(owner_copy.position)
 		if gap > 40.0:
-			printerr("FAIL respawn_hold %s: server copy at %s, %d px behind the owner at %s"
-					% [label, s_copy.position, gap, owner_copy.position])
+			printerr(
+				(
+					"FAIL respawn_hold %s: server copy at %s, %d px behind the owner at %s"
+					% [label, s_copy.position, gap, owner_copy.position]
+				)
+			)
 			fail += 1
 		cpeer.close()
 		for i in 3:
@@ -461,7 +546,9 @@ func _archipelago_land_masses(world, half: int) -> int:
 	for x in range(-half, half):
 		for y in range(-half, half):
 			var cell := Vector2i(x, y)
-			var alt: float = world.archipelago_altitude(cell, world.island_altitude(cell, world.altitude.get_noise_2d(x, y)))
+			var alt: float = world.archipelago_altitude(
+				cell, world.island_altitude(cell, world.altitude.get_noise_2d(x, y))
+			)
 			if alt > world.water_max_alt:
 				land[cell] = true
 	var masses := 0
@@ -505,7 +592,16 @@ func _chunk_digest(world, centre: Vector2i, w: int) -> String:
 	for x in range(centre.x - w / 2, centre.x + w / 2):
 		for y in range(centre.y - w / 2, centre.y + w / 2):
 			var c := Vector2i(x, y)
-			parts.append("%s%s%s" % [world.get_cell_atlas_coords(0, c), world.get_cell_atlas_coords(1, c), world.get_cell_atlas_coords(2, c)])
+			parts.append(
+				(
+					"%s%s%s"
+					% [
+						world.get_cell_atlas_coords(0, c),
+						world.get_cell_atlas_coords(1, c),
+						world.get_cell_atlas_coords(2, c)
+					]
+				)
+			)
 	return ";".join(parts).sha256_text()
 
 
@@ -558,13 +654,22 @@ func _chop_from_button(vp: Viewport, button: Node, delta: Vector2) -> void:
 	vp.push_input(lift, true)
 
 
-func _chop_toward(vp: Viewport, interaction: Interaction, player: Node2D, button: Node, world_point: Vector2, reach: float = -1.0) -> void:
+func _chop_toward(
+	vp: Viewport,
+	interaction: Interaction,
+	player: Node2D,
+	button: Node,
+	world_point: Vector2,
+	reach: float = -1.0
+) -> void:
 	## Aim the attack button from the player toward `world_point`.
 	var delta_world: Vector2 = world_point - player.global_position
 	if delta_world.length() < 1.0:
 		delta_world = Vector2.UP
 	var length := Interaction.CHOP_REACH if reach < 0.0 else reach
-	var screen: Vector2 = interaction.get_canvas_transform().basis_xform(delta_world.normalized() * length)
+	var screen: Vector2 = interaction.get_canvas_transform().basis_xform(
+		delta_world.normalized() * length
+	)
 	_chop_from_button(vp, button, screen)
 
 
@@ -598,8 +703,10 @@ func _client_connected(smp: SceneMultiplayer, cpeer: ENetMultiplayerPeer) -> boo
 	## mid-handshake.
 	var waited := 0
 	var last := Time.get_ticks_msec()
-	while (smp.get_peers().is_empty()
-			or cpeer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED):
+	while (
+		smp.get_peers().is_empty()
+		or cpeer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED
+	):
 		if waited >= 10000:
 			return false
 		await process_frame
@@ -760,8 +867,15 @@ func make_probe_dir(label: String) -> String:
 
 func spawn_probe(script: String, out: String, args: Array) -> Dictionary:
 	# The child inherits FLAGORIA_VERIFY_RUN and the runner's isolated user dirs.
-	var command := ["--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--script", script, "--", "--out=" + out]
+	var command := [
+		"--headless",
+		"--path",
+		ProjectSettings.globalize_path("res://"),
+		"--script",
+		script,
+		"--",
+		"--out=" + out
+	]
 	command.append_array(args)
 	return {"pid": OS.create_process(OS.get_executable_path(), command), "out": out}
 
@@ -775,9 +889,15 @@ static func read_probe_result(out: String) -> Dictionary:
 
 func wait_result(probe: Dictionary, timeout_ms: int) -> Dictionary:
 	var out: String = probe["out"]
-	await wait_until(func() -> bool:
-		return FileAccess.file_exists(out) or probe["pid"] <= 0 or not OS.is_process_running(probe["pid"]),
-		timeout_ms)
+	await wait_until(
+		func() -> bool:
+			return (
+				FileAccess.file_exists(out)
+				or probe["pid"] <= 0
+				or not OS.is_process_running(probe["pid"])
+			),
+		timeout_ms
+	)
 	return read_probe_result(out)
 
 
@@ -801,17 +921,22 @@ func stop_probes(probes: Array[Dictionary], timeout_ms: int) -> void:
 		var marker := FileAccess.open(probe["out"] + ".stop", FileAccess.WRITE)
 		if marker != null:
 			marker.close()
-	await wait_until(func() -> bool:
-		for probe in probes:
-			if probe["pid"] > 0 and OS.is_process_running(probe["pid"]):
-				return false
-		return true, timeout_ms)
+	await wait_until(
+		func() -> bool:
+			for probe in probes:
+				if probe["pid"] > 0 and OS.is_process_running(probe["pid"]):
+					return false
+			return true,
+		timeout_ms
+	)
 	for probe in probes:
 		if probe["pid"] > 0 and OS.is_process_running(probe["pid"]):
 			OS.kill(probe["pid"])
 
 
-func saved_probe_session(label: String, script: String, params: MapGenParams, args: Array) -> Dictionary:
+func saved_probe_session(
+	label: String, script: String, params: MapGenParams, args: Array
+) -> Dictionary:
 	var port := _free_udp_port()
 	if port == 0:
 		printerr("FAIL %s: no free UDP port" % label)
@@ -829,8 +954,11 @@ func saved_probe_session(label: String, script: String, params: MapGenParams, ar
 		peer_args.append_array(extra)
 		probes.append(spawn_probe(script, dir.path_join("p%d.json" % probes.size()), peer_args))
 	return {
-		"dir": dir, "saved": saved["path"], "probes": probes,
-		"launch": launch, "read": read_probe_at.bind(probes),
+		"dir": dir,
+		"saved": saved["path"],
+		"probes": probes,
+		"launch": launch,
+		"read": read_probe_at.bind(probes),
 		"host_args": ["--host", "--save=" + ProjectSettings.globalize_path(saved["path"])],
 	}
 

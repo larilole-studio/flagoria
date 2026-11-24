@@ -16,13 +16,22 @@ func _initialize() -> void:
 	call_deferred("_run")
 
 
-class _ScriptErrorCount extends Logger:
+class _ScriptErrorCount:
+	extends Logger
 	## Godot may log from any thread.
 	var _count := 0
 	var _lock := Mutex.new()
 
-	func _log_error(_function: String, _file: String, _line: int, _code: String, _rationale: String,
-			_editor_notify: bool, error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+	func _log_error(
+		_function: String,
+		_file: String,
+		_line: int,
+		_code: String,
+		_rationale: String,
+		_editor_notify: bool,
+		error_type: int,
+		_script_backtraces: Array[ScriptBacktrace]
+	) -> void:
 		if error_type == ERROR_TYPE_SCRIPT:
 			_lock.lock()
 			_count += 1
@@ -56,7 +65,12 @@ func _run() -> void:
 			target.tree = self
 		for test_name in found:
 			if test_name in owners:
-				duplicates.append("%s is defined in %s and in %s" % [test_name.trim_prefix("_"), files[test_name], path])
+				duplicates.append(
+					(
+						"%s is defined in %s and in %s"
+						% [test_name.trim_prefix("_"), files[test_name], path]
+					)
+				)
 				continue
 			names.append(test_name)
 			owners[test_name] = target
@@ -79,7 +93,9 @@ func _run() -> void:
 		if arg.begins_with("--only="):
 			var wanted := arg.trim_prefix("--only=").split(",", false)
 			if wanted.is_empty():
-				printerr("--only= needs at least one test name, e.g. --only=map_zoom (use --list to see the names)")
+				printerr(
+					"--only= needs at least one test name, e.g. --only=map_zoom (use --list to see the names)"
+				)
 				quit(1)
 				return
 			picked = _filter_tests(names, wanted, skipped)
@@ -137,7 +153,9 @@ func _registered_tests(source: String, skipped: Dictionary, file := "") -> Array
 	var pattern := RegEx.create_from_string("(?m)^func (_test_[a-z0-9_]+)\\(\\)")
 	for m in pattern.search_all(source):
 		found.append(m.get_string(1))
-	var loose := RegEx.create_from_string("(?mi)^([ \\t]*)(static[ \\t]+)?func[ \\t]+(_?test_\\w*)[ \\t]*\\(([^)]*)\\)")
+	var loose := RegEx.create_from_string(
+		"(?mi)^([ \\t]*)(static[ \\t]+)?func[ \\t]+(_?test_\\w*)[ \\t]*\\(([^)]*)\\)"
+	)
 	var exact := RegEx.create_from_string("^func _test_[a-z0-9_]+\\(\\)$")
 	for m in loose.search_all(source):
 		if exact.search(m.get_string(0)) != null:
@@ -183,7 +201,9 @@ func _only_key(raw: String) -> String:
 	return "_test_" + raw.trim_prefix("_").trim_prefix("test_")
 
 
-func _filter_tests(names: Array[String], wanted: PackedStringArray, skipped: Dictionary) -> Array[String]:
+func _filter_tests(
+	names: Array[String], wanted: PackedStringArray, skipped: Dictionary
+) -> Array[String]:
 	## The tests named in wanted (with or without the `test_` prefix), in run
 	## order. Empty, after printing why, if one does not match.
 	var keys: Array[String] = []
@@ -210,12 +230,17 @@ func _test_discovery_messages() -> int:
 	## of saying there is no such test (or that a test that runs is skipped).
 	print("-- test_discovery_messages")
 	var fail := 0
-	var source := "\n".join([
-		"func _test_ok() -> int:",
-		"func test_qa_x() -> int:",
-		"class Inner:",
-		"\tfunc _test_ok() -> int:",
-	])
+	var source := (
+		"\n"
+		. join(
+			[
+				"func _test_ok() -> int:",
+				"func test_qa_x() -> int:",
+				"class Inner:",
+				"\tfunc _test_ok() -> int:",
+			]
+		)
+	)
 	var skipped := {}
 	var names := _registered_tests(source, skipped)
 	if names.size() != 1 or names[0] != "_test_ok":
@@ -223,7 +248,8 @@ func _test_discovery_messages() -> int:
 		fail += 1
 	var want := {
 		"test_qa_x (line 2)": "the name must start with `_test_`",
-		"_test_ok (line 4)": "it is indented; tests must be top-level; the top-level _test_ok is the one that runs",
+		"_test_ok (line 4)":
+		"it is indented; tests must be top-level; the top-level _test_ok is the one that runs",
 	}
 	if skipped != want:
 		printerr("FAIL discovery_messages: skipped %s, want %s" % [skipped, want])
@@ -236,9 +262,10 @@ func _test_discovery_messages() -> int:
 	]:
 		var got := _only_problem(names, case[0], skipped)
 		if got != case[1]:
-			printerr("FAIL discovery_messages: --only=%s says %s, want %s" % [case[0], got, case[1]])
+			printerr(
+				"FAIL discovery_messages: --only=%s says %s, want %s" % [case[0], got, case[1]]
+			)
 			fail += 1
 	if fail == 0:
 		print("PASS test_discovery_messages")
 	return fail
-

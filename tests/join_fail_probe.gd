@@ -53,9 +53,16 @@ func _run() -> void:
 	var log_path := log_dir.path_join("server.log")
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"),
-			"--log-file", log_path,
-			"--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--log-file",
+			log_path,
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if pid <= 0:
 		printerr("join_fail_probe: could not start server")
@@ -110,9 +117,10 @@ func _run() -> void:
 	main = current_scene
 	var menu2 = main.get_node_or_null("CanvasLayer2/MainMenu") if main else null
 	_check(menu2 != null and menu2.visible, "main menu not visible after host quit")
-	_check(main.get_node_or_null("CanvasLayer1") == null
-			or not main.get_node("CanvasLayer1").visible,
-			"HUD still visible after host quit")
+	_check(
+		main.get_node_or_null("CanvasLayer1") == null or not main.get_node("CanvasLayer1").visible,
+		"HUD still visible after host quit"
+	)
 	if _fail == 0:
 		print("JOIN_FAIL_PROBE_OK")
 	_remove_log(log_dir)

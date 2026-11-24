@@ -29,7 +29,10 @@ func _save_and_read_world(scene: Node) -> WorldSave:
 
 func _castle_city_snapshot(world, cities: Cities) -> Dictionary:
 	for id in world.placed_structures():
-		if world.placed_structures()[id]["name"] == StartCastle.structure().name and cities.cities.has(id):
+		if (
+			world.placed_structures()[id]["name"] == StartCastle.structure().name
+			and cities.cities.has(id)
+		):
 			return {"owner": cities.owner_of(id), "walls": cities.cities[id]["walls"].duplicate()}
 	return {}
 
@@ -73,12 +76,17 @@ func _test_structure_save_round_trip() -> int:
 	var front: Vector2i = world.spawn_point
 	var tower := StructurePlacer.load_named("tower_wood")
 	var anchor: Variant = StartCastle.find_anchor(world, tower, front + Vector2i(12, 0))
-	var tower_id: int = world.place_structure(tower, anchor, StructurePlacer.OWNER_MOBS) if anchor != null else -1
+	var tower_id: int = (
+		world.place_structure(tower, anchor, StructurePlacer.OWNER_MOBS) if anchor != null else -1
+	)
 	var walls: Array[Vector2i] = []
 	for r in range(6, 40):
 		var start: Vector2i = front + Vector2i(-r, r)
 		var run: Array[Vector2i] = [start, start + Vector2i.RIGHT, start + Vector2i.RIGHT * 2]
-		if run.all(func(c: Vector2i) -> bool: return world.predicted_clear(c)) and world.place_wall_cells(run):
+		if (
+			run.all(func(c: Vector2i) -> bool: return world.predicted_clear(c))
+			and world.place_wall_cells(run)
+		):
 			walls = run
 			break
 	if tower_id <= 0 or walls.is_empty():
@@ -92,19 +100,39 @@ func _test_structure_save_round_trip() -> int:
 		fail += 1
 	else:
 		world.apply_map_params(saved.params)
-		if StructureSaves.restore(saved.structures, world) != want.size() + walls.size() \
-				or world.get_used_cells(0).size() != 0 or world.structures_for_sync() != want \
-				or not StructureSaves.adopt_start_castle(world, 1) or world.spawn_point != front:
-			printerr("FAIL structure_save_round_trip: placements or castle spawn did not survive reload")
+		if (
+			StructureSaves.restore(saved.structures, world) != want.size() + walls.size()
+			or world.get_used_cells(0).size() != 0
+			or world.structures_for_sync() != want
+			or not StructureSaves.adopt_start_castle(world, 1)
+			or world.spawn_point != front
+		):
+			printerr(
+				"FAIL structure_save_round_trip: placements or castle spawn did not survive reload"
+			)
 			fail += 1
-		if not walls.all(func(c: Vector2i) -> bool: return world.has_wall(c)) \
-				or not _shows_flag(world, tower, anchor, TileCatalog.PROP_FLAG_MOBS) \
-				or not _shows_flag(world, StartCastle.structure(), front - StartCastle.GATE_FRONT, TileCatalog.PROP_FLAG_BLUE):
+		if (
+			not walls.all(func(c: Vector2i) -> bool: return world.has_wall(c))
+			or not _shows_flag(world, tower, anchor, TileCatalog.PROP_FLAG_MOBS)
+			or not _shows_flag(
+				world,
+				StartCastle.structure(),
+				front - StartCastle.GATE_FRONT,
+				TileCatalog.PROP_FLAG_BLUE
+			)
+		):
 			printerr("FAIL structure_save_round_trip: walls or owner flags did not survive reload")
 			fail += 1
 
 	world.apply_map_params(scene.world_params)
-	var bad := {"0,0": {"1,1": {"structure": "no_such_thing", "owner": 1}, "x": {"structure": "castle"}, "2,2": {"cut": "tree"}}}
+	var bad := {
+		"0,0":
+		{
+			"1,1": {"structure": "no_such_thing", "owner": 1},
+			"x": {"structure": "castle"},
+			"2,2": {"cut": "tree"}
+		}
+	}
 	if StructureSaves.restore(bad, world) != 0 or not world.placed_structures().is_empty():
 		printerr("FAIL structure_save_round_trip: bad entries created placements")
 		fail += 1
@@ -116,9 +144,17 @@ func _test_structure_save_round_trip() -> int:
 			fail += 1
 			continue
 		world.apply_map_params(legacy.params)
-		if StructureSaves.restore(legacy.structures, world) != 0 \
-				or not world.placed_structures().is_empty() or not world.place_start_castle(1):
-			printerr("FAIL structure_save_round_trip: version %d did not start with a new castle" % version)
+		if (
+			StructureSaves.restore(legacy.structures, world) != 0
+			or not world.placed_structures().is_empty()
+			or not world.place_start_castle(1)
+		):
+			printerr(
+				(
+					"FAIL structure_save_round_trip: version %d did not start with a new castle"
+					% version
+				)
+			)
 			fail += 1
 	scene.queue_free()
 	await process_frame
@@ -129,11 +165,14 @@ func _test_structure_save_round_trip() -> int:
 
 func _shows_flag(world, structure: Structure, anchor: Vector2i, flag: Vector2i) -> bool:
 	return StructurePlacer.footprint(structure, anchor).keys().any(
-		func(cell: Vector2i) -> bool: return world.predict_cell(cell)[1] == flag)
+		func(cell: Vector2i) -> bool: return world.predict_cell(cell)[1] == flag
+	)
 
 
 func _test_guard_post_save_round_trip() -> int:
-	return await _rotated_structure_round_trip("guard_post", {1: TileCatalog.PROP_FLAG_BLUE, 2: TileCatalog.PROP_FLAG_RED})
+	return await _rotated_structure_round_trip(
+		"guard_post", {1: TileCatalog.PROP_FLAG_BLUE, 2: TileCatalog.PROP_FLAG_RED}
+	)
 
 
 func _test_barracks_save_round_trip() -> int:
@@ -162,7 +201,10 @@ func _rotated_structure_round_trip(kind: String, owners: Dictionary) -> int:
 		fail += 1
 	else:
 		world.apply_map_params(saved.params)
-		if StructureSaves.restore(saved.structures, world) != owners.size() or world.structures_for_sync() != want:
+		if (
+			StructureSaves.restore(saved.structures, world) != owners.size()
+			or world.structures_for_sync() != want
+		):
 			printerr("FAIL %s: owner, rotation or placement changed" % test_name)
 			fail += 1
 		for anchor in flags:

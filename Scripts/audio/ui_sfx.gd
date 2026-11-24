@@ -27,7 +27,9 @@ const SOUNDS := {
 ## The clips sit at about -22 dBFS RMS, 2 dB under the gameplay clips, so UI
 ## stays a little under combat (-8..-10 dB on -20 dBFS clips). The click is
 ## 65 ms, the shortest, so it gets 1 dB more.
-const VOLUME_DB := {"click": -9.0, "back": -10.0, "menu_open": -10.0, "menu_close": -10.0, "saved": -10.0}
+const VOLUME_DB := {
+	"click": -9.0, "back": -10.0, "menu_open": -10.0, "menu_close": -10.0, "saved": -10.0
+}
 ## Minimum seconds between two plays of the same event (stops a double fire
 ## in one frame, not a fast second press).
 const COOLDOWN := {"click": 0.04, "back": 0.04, "menu_open": 0.1, "menu_close": 0.1, "saved": 0.3}

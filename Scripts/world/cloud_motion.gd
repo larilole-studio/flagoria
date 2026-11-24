@@ -10,12 +10,14 @@ const NEAR_LAYER_FRACTION := 0.25
 const TRAVEL_PIXELS := 704.0
 const TILE_SIZE := 16
 
+
 class Stamp:
 	var sprite: Sprite2D
 	var origin: Vector2
 	var size: Vector2
 	var phase: float
 	var near: bool
+
 
 var _map  # TileMap script, with the world's sea and bridge queries.
 var _layer: int
@@ -41,7 +43,9 @@ func refresh(window: Rect2i) -> void:
 	_stamps = {}
 	# Old chunks stay painted. Retain nearby stamps outside the current chunk
 	# too, including the overhang of the landscape camera at gameplay zoom.
-	var nearby := window.grow(16 + ceili(TRAVEL_PIXELS / (2.0 * TILE_SIZE))) if window.has_area() else window
+	var nearby := (
+		window.grow(16 + ceili(TRAVEL_PIXELS / (2.0 * TILE_SIZE))) if window.has_area() else window
+	)
 	for y in range(nearby.position.y, nearby.end.y):
 		for x in range(nearby.position.x, nearby.end.x):
 			var cell := Vector2i(x, y)
@@ -91,7 +95,9 @@ func _make_stamp(cell: Vector2i, atlas_cell: Vector2i, size: Vector2i) -> Stamp:
 	stamp.sprite.texture = _atlas.texture
 	stamp.sprite.region_enabled = true
 	stamp.sprite.region_filter_clip_enabled = true
-	stamp.sprite.region_rect = Rect2(_atlas.get_tile_texture_region(atlas_cell).position, stamp.size)
+	stamp.sprite.region_rect = Rect2(
+		_atlas.get_tile_texture_region(atlas_cell).position, stamp.size
+	)
 	stamp.sprite.centered = false
 	stamp.sprite.z_index = -1 if stamp.near else -2
 	add_child(stamp.sprite)
@@ -139,7 +145,9 @@ func visible_cloud_count() -> int:
 	for cell in _stamps:
 		var stamp := _stamps[cell]
 		if stamp.sprite.visible and stamp.sprite.modulate.a >= 0.2:
-			var bounds := stamp.sprite.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, stamp.size)
+			var bounds := (
+				stamp.sprite.get_global_transform_with_canvas() * Rect2(Vector2.ZERO, stamp.size)
+			)
 			if view.encloses(bounds):
 				count += 1
 	return count

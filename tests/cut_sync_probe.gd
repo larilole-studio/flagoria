@@ -131,12 +131,19 @@ func _run() -> void:
 		if FileAccess.file_exists(probe_out + ".regrow"):
 			world.regrow_delay = FileAccess.get_file_as_string(probe_out + ".regrow").to_float()
 		if not killed and host and FileAccess.file_exists(probe_out + ".kill"):
-			var victim: Node2D = main.get_node_or_null("World/" + FileAccess.get_file_as_string(probe_out + ".kill").strip_edges())
+			var victim: Node2D = main.get_node_or_null(
+				"World/" + FileAccess.get_file_as_string(probe_out + ".kill").strip_edges()
+			)
 			if victim:
 				killed = true
 				victim.health.respawn_delay = 600.0
 				victim.health.set_health_now(0)
-		if dead_cut < 0 and me and me.health.is_dead() and FileAccess.file_exists(probe_out + ".dead_cut"):
+		if (
+			dead_cut < 0
+			and me
+			and me.health.is_dead()
+			and FileAccess.file_exists(probe_out + ".dead_cut")
+		):
 			dead_cut = 0
 			interaction.set_mode(Interaction.Mode.INTERACT)
 			for cell in parse_cells(FileAccess.get_file_as_string(probe_out + ".dead_cut")):
@@ -144,7 +151,11 @@ func _run() -> void:
 				if not await _stand_next_to(main, world, me, centre):
 					dead_cut = 0
 					break
-				dead_cut += interaction.choppables_in_rect(Rect2(centre - Vector2(10, 10), Vector2(20, 20))).size()
+				dead_cut += (
+					interaction
+					. choppables_in_rect(Rect2(centre - Vector2(10, 10), Vector2(20, 20)))
+					. size()
+				)
 				var to_view := interaction.get_canvas_transform()
 				var button: Node = main.get_node("CanvasLayer1/TouchScreenButton")
 				var origin: Vector2 = button.aim_center()
@@ -162,8 +173,13 @@ func _run() -> void:
 				interaction.request_cut.rpc_id(1, cell)
 			if not await wait_for_round_trip(main):
 				dead_cut = 0
-		if not host and not _swing_started and me and main.world_params != null \
-				and FileAccess.file_exists(probe_out + ".swing"):
+		if (
+			not host
+			and not _swing_started
+			and me
+			and main.world_params != null
+			and FileAccess.file_exists(probe_out + ".swing")
+		):
 			_swing_started = true
 			await _swing(main, me, world, interaction)
 		if not forged and not host and FileAccess.file_exists(probe_out + ".forge"):
@@ -173,8 +189,15 @@ func _run() -> void:
 			forged_place = true
 			for peer in main.multiplayer.get_peers():
 				if peer != 1:
-					main.rpc_id(peer, "receive_map_params", main.world_params.to_dict(), Vector2.INF,
-							world.cut_changes(), [["guard_post", main.multiplayer.get_unique_id(), Vector2i(3, 3)]], [])
+					main.rpc_id(
+						peer,
+						"receive_map_params",
+						main.world_params.to_dict(),
+						Vector2.INF,
+						world.cut_changes(),
+						[["guard_post", main.multiplayer.get_unique_id(), Vector2i(3, 3)]],
+						[]
+					)
 		var now_cut: Dictionary = world.cut_changes()
 		var keys := {}
 		for chunk in now_cut:
@@ -193,7 +216,11 @@ func _run() -> void:
 func _place_structure(main, place: String) -> String:
 	var cell = WorldSave.parse_cell(place.get_slice("@", 1))
 	var structure := StructurePlacer.load_named(place.get_slice("@", 0))
-	if cell == null or structure == null or main.get_node("World/worldMap").place_structure(structure, cell, 1) < 0:
+	if (
+		cell == null
+		or structure == null
+		or main.get_node("World/worldMap").place_structure(structure, cell, 1) < 0
+	):
 		return "could not place %s" % place
 	return ""
 
@@ -204,9 +231,12 @@ func _stand_next_to(main, world, me: Node2D, centre: Vector2, offset: float = 12
 		return true
 	var id := str(main.multiplayer.get_unique_id())
 	var cell: Vector2i = world.local_to_map(world.to_local(me.global_position))
-	return await wait_for_state(func() -> bool:
-		var at: Array = host_snapshot().get("players", {}).get(id, [])
-		return at.size() == 2 and Vector2i(int(at[0]), int(at[1])) == cell, 5000)
+	return await wait_for_state(
+		func() -> bool:
+			var at: Array = host_snapshot().get("players", {}).get(id, [])
+			return at.size() == 2 and Vector2i(int(at[0]), int(at[1])) == cell,
+		5000
+	)
 
 
 func _swing(main, me: Node2D, world, interaction: Interaction) -> void:
@@ -230,11 +260,16 @@ func _swing(main, me: Node2D, world, interaction: Interaction) -> void:
 	sync.replication_interval = 0.0
 	var near_ok: bool = await _swing_at(main, me, world, interaction, _near_cell, true)
 	if not far_ok or not near_ok:
-		_swing_error = "chop did not start (far %s, near %s, cells %s %s)" % [far_ok, near_ok, _far_cell, _near_cell]
+		_swing_error = (
+			"chop did not start (far %s, near %s, cells %s %s)"
+			% [far_ok, near_ok, _far_cell, _near_cell]
+		)
 	_swing_done = true
 
 
-func _swing_at(main, me: Node2D, world, interaction: Interaction, cell: Vector2i, settle: bool) -> bool:
+func _swing_at(
+	main, me: Node2D, world, interaction: Interaction, cell: Vector2i, settle: bool
+) -> bool:
 	if settle:
 		if not await _stand_next_to(main, world, me, interaction.cell_center(cell)):
 			return false
@@ -293,12 +328,18 @@ static func cell_state(world, cell: Vector2i) -> Dictionary:
 	var decor: Vector2i = world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, cell)
 	var plant: Vector2i = world.get_cell_atlas_coords(1, cell)
 	var predicted: Array = world.predict_cell(cell)
-	return {"plant": [plant.x, plant.y], "decor": [decor.x, decor.y], "clear": clear,
+	return {
+		"plant": [plant.x, plant.y],
+		"decor": [decor.x, decor.y],
+		"clear": clear,
 		"bridge": world.has_bridge(cell),
-		"predict": [predicted[0].x, predicted[0].y, predicted[1].x, predicted[1].y]}
+		"predict": [predicted[0].x, predicted[0].y, predicted[1].x, predicted[1].y]
+	}
 
 
-func _write(main, world, listed: Array[Vector2i], me: Node2D, regrown: Dictionary, dead_cut: int) -> void:
+func _write(
+	main, world, listed: Array[Vector2i], me: Node2D, regrown: Dictionary, dead_cut: int
+) -> void:
 	var cuts: Dictionary = world.cut_changes()
 	var cells := {}
 	if main.world_params != null:
@@ -334,26 +375,28 @@ func _write(main, world, listed: Array[Vector2i], me: Node2D, regrown: Dictionar
 	for entry in world.bridges_for_sync():
 		bridges.append("%d,%d" % [entry[0], entry[1]])
 	bridges.sort()
-	write_result({
-		"id": str(main.multiplayer.get_unique_id()) if main.multiplayer != null else "",
-		"ready": main.world_params != null and me != null,
-		"dead": me != null and me.health.is_dead(),
-		"dead_cut": dead_cut,
-		"cuts": cuts,
-		"cells": cells,
-		"wood": inventory.count_of(Inventory.WOOD),
-		"regrown": regrown,
-		"placements": placements,
-		"bridges": bridges,
-		"players": players,
-		"place_refused": refused,
-		"errors": _errors.snapshot(),
-		"sounds": sounds,
-		"fells": interaction._chop.fell_count,
-		"refused_fells": _refused_fells,
-		"refused_sounds": _refused_sounds,
-		"swing_done": _swing_done,
-		"swing_error": _swing_error,
-		"far": WorldSave.cell_key(_far_cell) if _far_cell.x > -100000 else "",
-		"near": WorldSave.cell_key(_near_cell) if _near_cell.x > -100000 else "",
-	})
+	write_result(
+		{
+			"id": str(main.multiplayer.get_unique_id()) if main.multiplayer != null else "",
+			"ready": main.world_params != null and me != null,
+			"dead": me != null and me.health.is_dead(),
+			"dead_cut": dead_cut,
+			"cuts": cuts,
+			"cells": cells,
+			"wood": inventory.count_of(Inventory.WOOD),
+			"regrown": regrown,
+			"placements": placements,
+			"bridges": bridges,
+			"players": players,
+			"place_refused": refused,
+			"errors": _errors.snapshot(),
+			"sounds": sounds,
+			"fells": interaction._chop.fell_count,
+			"refused_fells": _refused_fells,
+			"refused_sounds": _refused_sounds,
+			"swing_done": _swing_done,
+			"swing_error": _swing_error,
+			"far": WorldSave.cell_key(_far_cell) if _far_cell.x > -100000 else "",
+			"near": WorldSave.cell_key(_near_cell) if _near_cell.x > -100000 else "",
+		}
+	)

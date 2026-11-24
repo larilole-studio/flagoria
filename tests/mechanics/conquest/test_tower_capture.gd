@@ -20,11 +20,19 @@ func _tower(label: String) -> Dictionary:
 		world.generate_chunk(Vector2(0, 0))
 		for cell: Vector2i in world.get_used_cells(0):
 			var cells: Array = StructurePlacer.footprint(s, cell).keys()
-			if cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+			if cells.all(
+				func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+			):
 				var id: int = world.place_structure(s, cell, 1)
 				var flag: Vector2i = world._structures.towers()[id][0]
-				return {"scene": scene, "world": world, "capture": scene.get_node("World/TowerCapture"),
-					"id": id, "flag": flag, "centre": world.to_global(world.map_to_local(flag))}
+				return {
+					"scene": scene,
+					"world": world,
+					"capture": scene.get_node("World/TowerCapture"),
+					"id": id,
+					"flag": flag,
+					"centre": world.to_global(world.map_to_local(flag))
+				}
 	printerr("FAIL %s: no clear guard_post spot near the origin on seeds 11, 42, 99" % label)
 	scene.queue_free()
 	return {}
@@ -80,11 +88,25 @@ func _test_tower_capture_completes() -> int:
 	p.global_position = t["centre"] + Vector2(0, TowerCapture.CAPTURE_RADIUS - 1)
 	_ticks(t, TICKS - 1)
 	if _owner(t) != 1 or _progress(t) != TowerCapture.CAPTURE_TIME - DT:
-		printerr("FAIL tower_capture_completes: after %s s owner %s progress %s" % [(TICKS - 1) * DT, _owner(t), _progress(t)])
+		printerr(
+			(
+				"FAIL tower_capture_completes: after %s s owner %s progress %s"
+				% [(TICKS - 1) * DT, _owner(t), _progress(t)]
+			)
+		)
 		fail += 1
 	_ticks(t, 1)
-	if _owner(t) != 2 or _flag_drawn(t) != TileCatalog.PROP_FLAG_RED or t["capture"].progress.has(t["id"]):
-		printerr("FAIL tower_capture_completes: after 5 s owner %s flag %s progress %s" % [_owner(t), _flag_drawn(t), t["capture"].progress])
+	if (
+		_owner(t) != 2
+		or _flag_drawn(t) != TileCatalog.PROP_FLAG_RED
+		or t["capture"].progress.has(t["id"])
+	):
+		printerr(
+			(
+				"FAIL tower_capture_completes: after 5 s owner %s flag %s progress %s"
+				% [_owner(t), _flag_drawn(t), t["capture"].progress]
+			)
+		)
 		fail += 1
 	t["scene"].queue_free()
 	return fail
@@ -103,7 +125,12 @@ func _test_tower_capture_defender_pauses() -> int:
 	_player(t, 1, Vector2(-8, 0))
 	_ticks(t, TICKS)
 	if _owner(t) != 1 or _progress(t) != 16 * DT:
-		printerr("FAIL tower_capture_defender_pauses: owner %s progress %s, want 1 and %s" % [_owner(t), _progress(t), 16 * DT])
+		printerr(
+			(
+				"FAIL tower_capture_defender_pauses: owner %s progress %s, want 1 and %s"
+				% [_owner(t), _progress(t), 16 * DT]
+			)
+		)
 		fail += 1
 	t["scene"].queue_free()
 	return fail
@@ -123,7 +150,12 @@ func _test_tower_capture_drains_when_empty() -> int:
 	p.global_position = t["centre"] + Vector2(200, 0)
 	_ticks(t, 8)
 	if _progress(t) != 8 * DT:
-		printerr("FAIL tower_capture_drains_when_empty: progress %s after 1 s empty, want %s" % [_progress(t), 8 * DT])
+		printerr(
+			(
+				"FAIL tower_capture_drains_when_empty: progress %s after 1 s empty, want %s"
+				% [_progress(t), 8 * DT]
+			)
+		)
 		fail += 1
 	_ticks(t, 9)
 	if t["capture"].progress.has(t["id"]):
@@ -135,12 +167,21 @@ func _test_tower_capture_drains_when_empty() -> int:
 	var q := _player(t, 3, Vector2(0, 8))
 	_ticks(t, 4)
 	if t["capture"].progress[t["id"]]["side"] != 2 or _progress(t) != 4 * DT:
-		printerr("FAIL tower_capture_drains_when_empty: other side %s at %s, want 2's progress drained to %s" % [
-			t["capture"].progress[t["id"]]["side"], _progress(t), 4 * DT])
+		printerr(
+			(
+				"FAIL tower_capture_drains_when_empty: other side %s at %s, want 2's progress drained to %s"
+				% [t["capture"].progress[t["id"]]["side"], _progress(t), 4 * DT]
+			)
+		)
 		fail += 1
 	_ticks(t, 6)
 	if t["capture"].progress[t["id"]]["side"] != 3 or _progress(t) != 2 * DT:
-		printerr("FAIL tower_capture_drains_when_empty: side 3 at %s, want its own %s" % [_progress(t), 2 * DT])
+		printerr(
+			(
+				"FAIL tower_capture_drains_when_empty: side 3 at %s, want its own %s"
+				% [_progress(t), 2 * DT]
+			)
+		)
 		fail += 1
 	q.queue_free()
 	t["scene"].queue_free()
@@ -160,13 +201,23 @@ func _test_tower_capture_contested() -> int:
 	var q := _player(t, 3, Vector2(-8, 0))
 	_ticks(t, TICKS)
 	if _progress(t) != 8 * DT or _owner(t) != 1:
-		printerr("FAIL tower_capture_contested: two peers left progress %s owner %s" % [_progress(t), _owner(t)])
+		printerr(
+			(
+				"FAIL tower_capture_contested: two peers left progress %s owner %s"
+				% [_progress(t), _owner(t)]
+			)
+		)
 		fail += 1
 	q.free()
 	_mob(t, Vector2(0, -8))
 	_ticks(t, TICKS)
 	if _progress(t) != 8 * DT or _owner(t) != 1:
-		printerr("FAIL tower_capture_contested: peer and mob left progress %s owner %s" % [_progress(t), _owner(t)])
+		printerr(
+			(
+				"FAIL tower_capture_contested: peer and mob left progress %s owner %s"
+				% [_progress(t), _owner(t)]
+			)
+		)
 		fail += 1
 	t["scene"].queue_free()
 	return fail
@@ -184,7 +235,12 @@ func _test_tower_capture_dead_players() -> int:
 	p.get_node("Health").health = 0
 	_ticks(t, TICKS)
 	if _progress(t) != 0.0 or _owner(t) != 1:
-		printerr("FAIL tower_capture_dead_players: dead attacker made progress %s owner %s" % [_progress(t), _owner(t)])
+		printerr(
+			(
+				"FAIL tower_capture_dead_players: dead attacker made progress %s owner %s"
+				% [_progress(t), _owner(t)]
+			)
+		)
 		fail += 1
 	p.get_node("Health").health = p.get_node("Health").max_health
 	var d := _player(t, 1, Vector2(-8, 0))
@@ -237,32 +293,61 @@ func _test_tower_capture_changes_owner_and_flag_only() -> int:
 	var anchor: Vector2i = before["anchor"]
 	var cells := {}
 	for c: Vector2i in StructurePlacer.footprint(StructurePlacer.load_named("guard_post"), anchor):
-		cells[c] = [world.get_cell_atlas_coords(0, c), world.get_cell_atlas_coords(1, c),
-			world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, c)]
+		cells[c] = [
+			world.get_cell_atlas_coords(0, c),
+			world.get_cell_atlas_coords(1, c),
+			world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, c)
+		]
 	_mob(t, Vector2(0, 8))
 	_ticks(t, TICKS)
 	var after: Dictionary = world.placed_structures()[t["id"]]
-	if after["owner"] != StructurePlacer.OWNER_MOBS or after["name"] != before["name"] or after["anchor"] != anchor:
-		printerr("FAIL tower_capture_changes_owner_and_flag_only: placement %s, was %s" % [after, before])
+	if (
+		after["owner"] != StructurePlacer.OWNER_MOBS
+		or after["name"] != before["name"]
+		or after["anchor"] != anchor
+	):
+		printerr(
+			"FAIL tower_capture_changes_owner_and_flag_only: placement %s, was %s" % [after, before]
+		)
 		fail += 1
 	for c: Vector2i in cells:
-		var now := [world.get_cell_atlas_coords(0, c), world.get_cell_atlas_coords(1, c),
-			world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, c)]
+		var now := [
+			world.get_cell_atlas_coords(0, c),
+			world.get_cell_atlas_coords(1, c),
+			world.get_cell_atlas_coords(world.GROUND_DECOR_LAYER, c)
+		]
 		var want: Array = cells[c].duplicate()
 		if c == t["flag"]:
 			want[1] = TileCatalog.PROP_FLAG_MOBS
 		if now != want:
-			printerr("FAIL tower_capture_changes_owner_and_flag_only: %s now %s, want %s" % [c, now, want])
+			printerr(
+				(
+					"FAIL tower_capture_changes_owner_and_flag_only: %s now %s, want %s"
+					% [c, now, want]
+				)
+			)
 			fail += 1
 	if world.predict_cell(t["flag"])[1] != TileCatalog.PROP_FLAG_MOBS:
-		printerr("FAIL tower_capture_changes_owner_and_flag_only: predict_cell gives %s" % [world.predict_cell(t["flag"])])
+		printerr(
+			(
+				"FAIL tower_capture_changes_owner_and_flag_only: predict_cell gives %s"
+				% [world.predict_cell(t["flag"])]
+			)
+		)
 		fail += 1
 	var list: Array = world.structures_for_sync()
 	world.replace_structures(list)
 	var flag_after: Vector2i = world._structures.towers()[t["id"]][0]
-	if world.placed_structures()[t["id"]]["owner"] != StructurePlacer.OWNER_MOBS \
-			or world._structures.object_at(flag_after) != TileCatalog.PROP_FLAG_MOBS:
-		printerr("FAIL tower_capture_changes_owner_and_flag_only: after replace_structures %s" % [world.placed_structures()])
+	if (
+		world.placed_structures()[t["id"]]["owner"] != StructurePlacer.OWNER_MOBS
+		or world._structures.object_at(flag_after) != TileCatalog.PROP_FLAG_MOBS
+	):
+		printerr(
+			(
+				"FAIL tower_capture_changes_owner_and_flag_only: after replace_structures %s"
+				% [world.placed_structures()]
+			)
+		)
 		fail += 1
 	t["scene"].queue_free()
 	return fail
@@ -286,7 +371,12 @@ func _test_tower_capture_off_in_multiplayer() -> int:
 	api.multiplayer_peer = peer
 	_ticks(t, TICKS)
 	if _progress(t) != 0.0 or _owner(t) != 1:
-		printerr("FAIL tower_capture_off_in_multiplayer: progress %s owner %s" % [_progress(t), _owner(t)])
+		printerr(
+			(
+				"FAIL tower_capture_off_in_multiplayer: progress %s owner %s"
+				% [_progress(t), _owner(t)]
+			)
+		)
 		fail += 1
 	peer.close()
 	set_multiplayer(null, path)

@@ -173,7 +173,7 @@ func _gesture_cancelled() -> bool:
 
 
 func plants_in_sweep() -> Array[Vector2i]:
-	return _plants_in( _i.chop_sweep())
+	return _plants_in(_i.chop_sweep())
 
 
 func plants_toward(direction: float, reach: float) -> Array[Vector2i]:
@@ -194,14 +194,16 @@ func _plants_in(sweep: Dictionary) -> Array[Vector2i]:
 			if map.choppable(cell) and _i.cell_in_chop_sweep(cell, sweep):
 				found.append(cell)
 	var origin := _i.player.global_position
-	found.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		var da := origin.distance_squared_to(_i.cell_center(a))
-		var db := origin.distance_squared_to(_i.cell_center(b))
-		if da != db:
-			return da < db
-		if a.y != b.y:
-			return a.y < b.y
-		return a.x < b.x)
+	found.sort_custom(
+		func(a: Vector2i, b: Vector2i) -> bool:
+			var da := origin.distance_squared_to(_i.cell_center(a))
+			var db := origin.distance_squared_to(_i.cell_center(b))
+			if da != db:
+				return da < db
+			if a.y != b.y:
+				return a.y < b.y
+			return a.x < b.x
+	)
 	return found
 
 
@@ -294,12 +296,19 @@ func refuse_cut(cell: Vector2i) -> void:
 	_awaiting.erase(cell)
 
 
-func _play(streams: Array[AudioStream], player: AudioStreamPlayer2D = null, avoid: AudioStream = null) -> void:
+func _play(
+	streams: Array[AudioStream], player: AudioStreamPlayer2D = null, avoid: AudioStream = null
+) -> void:
 	## One of `streams` at random on `player` (default _sfx), not `avoid`.
 	_play_at(chop_cell, streams, player, avoid)
 
 
-func _play_at(cell: Vector2i, streams: Array[AudioStream], player: AudioStreamPlayer2D = null, avoid: AudioStream = null) -> void:
+func _play_at(
+	cell: Vector2i,
+	streams: Array[AudioStream],
+	player: AudioStreamPlayer2D = null,
+	avoid: AudioStream = null
+) -> void:
 	if streams.is_empty():
 		return
 	if player == null:
@@ -321,11 +330,19 @@ func _on_hit() -> void:
 	_play(chop_type.hit_layer_sounds, _sfx_layer)
 	if chop_hits == chop_type.hits:
 		_play(chop_type.last_hit_sounds, _sfx_last)
-	var corner := _i.to_local(_i.cell_center(chop_cell)) - Vector2(_i.world_map.tile_set.tile_size) / 2.0
+	var corner := (
+		_i.to_local(_i.cell_center(chop_cell)) - Vector2(_i.world_map.tile_set.tile_size) / 2.0
+	)
 	if chop_type.hit_sheet:
 		_end_hit()
 		_hidden_cell = chop_cell
-		_i.world_map.set_cell(1, chop_cell, TileCatalog.SOURCE_ID, _i.world_map.get_cell_atlas_coords(1, chop_cell), HIDDEN_ALT)
+		_i.world_map.set_cell(
+			1,
+			chop_cell,
+			TileCatalog.SOURCE_ID,
+			_i.world_map.get_cell_atlas_coords(1, chop_cell),
+			HIDDEN_ALT
+		)
 		var size := _i.world_map.tile_set.tile_size
 		_hit.texture = chop_type.hit_sheet
 		_hit.hframes = chop_type.hit_sheet.get_width() / size.x
@@ -385,7 +402,12 @@ func _end_hit() -> void:
 	_hit_time = -1.0
 	_hit.visible = false
 	if _i.world_map.get_cell_alternative_tile(1, _hidden_cell) == HIDDEN_ALT:
-		_i.world_map.set_cell(1, _hidden_cell, TileCatalog.SOURCE_ID, _i.world_map.get_cell_atlas_coords(1, _hidden_cell))
+		_i.world_map.set_cell(
+			1,
+			_hidden_cell,
+			TileCatalog.SOURCE_ID,
+			_i.world_map.get_cell_atlas_coords(1, _hidden_cell)
+		)
 
 
 func _step_fx(delta: float) -> void:

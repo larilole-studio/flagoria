@@ -38,8 +38,16 @@ const _SHORE := 0x80
 const _KIND_BITS := 0x0f
 const _SIDES := [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]
 
-const _NEIGHBOURS := [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0),
-		Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)]
+const _NEIGHBOURS := [
+	Vector2i(-1, -1),
+	Vector2i(0, -1),
+	Vector2i(1, -1),
+	Vector2i(-1, 0),
+	Vector2i(1, 0),
+	Vector2i(-1, 1),
+	Vector2i(0, 1),
+	Vector2i(1, 1)
+]
 
 var explored := ExploredMap.new()
 var hero_cell := Vector2i.ZERO
@@ -79,8 +87,13 @@ func tick() -> void:
 	facing = player.lastAnimDirection
 	# Reveal only when two ticks in a row agree, so the spot a joining hero
 	# passes through before it is placed (or a respawn jump) is not revealed.
-	var steady := _last_sample != Vector2i.MAX \
-			and (hero_cell - _last_sample).length_squared() <= ExploredMap.REVEAL_RADIUS * ExploredMap.REVEAL_RADIUS
+	var steady := (
+		_last_sample != Vector2i.MAX
+		and (
+			(hero_cell - _last_sample).length_squared()
+			<= ExploredMap.REVEAL_RADIUS * ExploredMap.REVEAL_RADIUS
+		)
+	)
 	_last_sample = hero_cell
 	if not steady:
 		return
@@ -168,10 +181,14 @@ func _paint_cell(img: Image, cell: Vector2i) -> void:
 	var info := _cell_info(cell, true)
 	var kind := (info & _KIND_BITS) - 1
 	var shore := info & _SHORE != 0
-	var local := Vector2i(posmod(cell.x, ExploredMap.CHUNK), posmod(cell.y, ExploredMap.CHUNK)) * CELL_PX
+	var local := (
+		Vector2i(posmod(cell.x, ExploredMap.CHUNK), posmod(cell.y, ExploredMap.CHUNK)) * CELL_PX
+	)
 	for sy in CELL_PX:
 		for sx in CELL_PX:
-			var colour := kind_colour(kind, shore, cell, cell.x * CELL_PX + sx, cell.y * CELL_PX + sy)
+			var colour := kind_colour(
+				kind, shore, cell, cell.x * CELL_PX + sx, cell.y * CELL_PX + sy
+			)
 			if kind != Kind.WATER and _coast(cell, sx, sy):
 				colour = INK
 			img.set_pixel(local.x + sx, local.y + sy, colour)
@@ -184,7 +201,9 @@ func _cell_info(cell: Vector2i, need_shore: bool = false) -> int:
 	var bytes: PackedByteArray = _terrain.get(chunk, PackedByteArray())
 	if bytes.is_empty():
 		bytes.resize(ExploredMap.CHUNK * ExploredMap.CHUNK)
-	var i := posmod(cell.y, ExploredMap.CHUNK) * ExploredMap.CHUNK + posmod(cell.x, ExploredMap.CHUNK)
+	var i := (
+		posmod(cell.y, ExploredMap.CHUNK) * ExploredMap.CHUNK + posmod(cell.x, ExploredMap.CHUNK)
+	)
 	var info := bytes[i]
 	var changed := false
 	if info == 0:
@@ -255,7 +274,9 @@ static func kind_colour(kind: int, shore: bool, cell: Vector2i, px: int, py: int
 	return GRASS_HI if _hash01(cell) < 0.12 else GRASS
 
 
-func paint_city_walls(target: CanvasItem, top_left: Vector2i, window_size: Vector2i, cell_px: int = CELL_PX) -> void:
+func paint_city_walls(
+	target: CanvasItem, top_left: Vector2i, window_size: Vector2i, cell_px: int = CELL_PX
+) -> void:
 	## Owner-coloured city wall cells over an explored window (#277).
 	var cities: Cities = get_node_or_null(WORLD_PATH + "/Cities")
 	if cities == null or cities.cities.is_empty():
@@ -266,15 +287,25 @@ func paint_city_walls(target: CanvasItem, top_left: Vector2i, window_size: Vecto
 	var placed: Dictionary = map.placed_structures()
 	for id: int in cities.cities:
 		var owner: int = placed.get(id, {}).get("owner", 0)
-		var colour: Color = CITY_HOST if owner == 1 else (
-			CITY_MOBS if owner == StructurePlacer.OWNER_MOBS else (
-			CITY_NEUTRAL if owner == StructurePlacer.OWNER_NEUTRAL else CITY_OTHER))
+		var colour: Color = (
+			CITY_HOST
+			if owner == 1
+			else (
+				CITY_MOBS
+				if owner == StructurePlacer.OWNER_MOBS
+				else (CITY_NEUTRAL if owner == StructurePlacer.OWNER_NEUTRAL else CITY_OTHER)
+			)
+		)
 		for cell: Vector2i in cities.cities[id]["walls"]:
 			if not explored.is_explored(cell):
 				continue
 			var local := (cell - top_left) * cell_px
-			if local.x < -cell_px or local.y < -cell_px \
-					or local.x >= window_size.x or local.y >= window_size.y:
+			if (
+				local.x < -cell_px
+				or local.y < -cell_px
+				or local.x >= window_size.x
+				or local.y >= window_size.y
+			):
 				continue
 			target.draw_rect(Rect2(Vector2(local), Vector2(cell_px, cell_px)), colour)
 
@@ -318,7 +349,9 @@ func _coast(cell: Vector2i, sx: int, sy: int) -> bool:
 
 
 func _blank_image() -> Image:
-	return Image.create(ExploredMap.CHUNK * CELL_PX, ExploredMap.CHUNK * CELL_PX, false, Image.FORMAT_RGBA8)
+	return Image.create(
+		ExploredMap.CHUNK * CELL_PX, ExploredMap.CHUNK * CELL_PX, false, Image.FORMAT_RGBA8
+	)
 
 
 static func _hash01(cell: Vector2i) -> float:

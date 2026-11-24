@@ -106,15 +106,22 @@ func explored_fully_visible() -> bool:
 	var hi := Vector2((bounds.position + cells) * cell_px)
 	var view_lo := _origin()
 	var view_hi := view_lo + _view.size
-	return view_lo.x <= lo.x + 0.5 and view_lo.y <= lo.y + 0.5 \
-			and view_hi.x >= hi.x - 0.5 and view_hi.y >= hi.y - 0.5
+	return (
+		view_lo.x <= lo.x + 0.5
+		and view_lo.y <= lo.y + 0.5
+		and view_hi.x >= hi.x - 0.5
+		and view_hi.y >= hi.y - 0.5
+	)
 
 
 func hero_view_focus() -> Vector2:
 	## MapView-local point on the hero marker for wheel or pinch zoom.
 	var marker_scale := float(cell_px) / float(MapChart.CELL_PX)
-	var hero := Vector2(chart.hero_cell * cell_px) + Vector2.ONE * marker_scale \
-			- Vector2(MapChart.HERO_ANCHOR) * marker_scale
+	var hero := (
+		Vector2(chart.hero_cell * cell_px)
+		+ Vector2.ONE * marker_scale
+		- Vector2(MapChart.HERO_ANCHOR) * marker_scale
+	)
 	return hero - _origin()
 
 
@@ -207,7 +214,9 @@ func _gui_input(event: InputEvent) -> void:
 		if _touches.size() == 2 and _pinch_span > 0.0:
 			var span := _touch_span()
 			if span > 0.0:
-				var stepped := clampi(roundi(_pinch_cell_px * span / _pinch_span), min_cell_px(), MAX_CELL_PX)
+				var stepped := clampi(
+					roundi(_pinch_cell_px * span / _pinch_span), min_cell_px(), MAX_CELL_PX
+				)
 				_zoom_at(_view_focus(_pinch_mid()), stepped)
 				_pinch_span = span
 				_pinch_cell_px = cell_px
@@ -265,8 +274,12 @@ func _draw_map() -> void:
 	var marker: Texture2D = MapChart.HERO.get(chart.facing, MapChart.HERO["Down"])
 	var marker_scale := float(cell_px) / float(MapChart.CELL_PX)
 	var marker_size := marker.get_size() * marker_scale
-	var hero_at := Vector2(chart.hero_cell * cell_px) - origin \
-			+ Vector2.ONE * marker_scale - Vector2(MapChart.HERO_ANCHOR) * marker_scale
+	var hero_at := (
+		Vector2(chart.hero_cell * cell_px)
+		- origin
+		+ Vector2.ONE * marker_scale
+		- Vector2(MapChart.HERO_ANCHOR) * marker_scale
+	)
 	_view.draw_texture_rect(marker, Rect2(hero_at, marker_size), false)
 	chart.paint_city_walls(_view, top_left, Vector2i(window), cell_px)
 

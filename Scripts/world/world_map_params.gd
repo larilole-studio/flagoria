@@ -9,7 +9,9 @@ static func apply_map_params(map, p: MapGenParams) -> void:
 
 	_configure_noise(map.altitude, working.altitude_seed, working.altitude_frequency, working)
 	_configure_noise(map.moisture, working.moisture_seed, working.moisture_frequency, working)
-	_configure_noise(map.temperature, working.temperature_seed, working.temperature_frequency, working)
+	_configure_noise(
+		map.temperature, working.temperature_seed, working.temperature_frequency, working
+	)
 	_configure_noise(map.items_chance, working.items_seed, working.items_frequency, working)
 
 	map.spawn_biome = working.spawn_biome
@@ -56,11 +58,14 @@ static func apply_map_params(map, p: MapGenParams) -> void:
 	map._walls.clear()
 	map._castle_front = null
 	map.spawn_point = Vector2i(0, 0)
-	if map.has_meta(&"resolved_spawn"): map.remove_meta(&"resolved_spawn")
+	if map.has_meta(&"resolved_spawn"):
+		map.remove_meta(&"resolved_spawn")
 	map.ground_changed.emit(Rect2i())
 
 
-static func _configure_noise(noise: FastNoiseLite, seed_value: int, frequency: float, p: MapGenParams) -> void:
+static func _configure_noise(
+	noise: FastNoiseLite, seed_value: int, frequency: float, p: MapGenParams
+) -> void:
 	noise.seed = seed_value
 	noise.noise_type = p.noise_type
 	noise.frequency = frequency

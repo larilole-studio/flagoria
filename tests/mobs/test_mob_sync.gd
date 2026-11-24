@@ -18,12 +18,21 @@ func _test_mobs_sync_to_peer() -> int:
 		return 1
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if pid <= 0:
 		printerr("FAIL mobs_sync_to_peer could not start the server process")
 		return 1
-	game.set_mob_rate(game.MOB_RATE_MIN if host_rate == game.MOB_RATE_MAX else game.MOB_RATE_MAX, false)
+	game.set_mob_rate(
+		game.MOB_RATE_MIN if host_rate == game.MOB_RATE_MAX else game.MOB_RATE_MAX, false
+	)
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var fail := 0
@@ -35,7 +44,9 @@ func _test_mobs_sync_to_peer() -> int:
 	while Time.get_ticks_msec() < deadline and OS.is_process_running(pid):
 		var params: MapGenParams = scene.world_params
 		if plan.is_empty() and params != null and params.altitude_seed != 0:
-			plan = MobSpawner.plan(world, world.resolve_player_spawn(), params.altitude_seed, host_rate)
+			plan = MobSpawner.plan(
+				world, world.resolve_player_spawn(), params.altitude_seed, host_rate
+			)
 		# The host may still be replacing the opening set after the castle
 		# clears trees. Wait until this peer's mobs are that plan, not the
 		# first packet of the previous set.
@@ -47,7 +58,9 @@ func _test_mobs_sync_to_peer() -> int:
 		printerr("FAIL mobs_sync_to_peer no map params or an empty mob plan")
 		fail += 1
 	elif mobs.size() != plan.size():
-		printerr("FAIL mobs_sync_to_peer client has %s mobs, plan has %s" % [mobs.size(), plan.size()])
+		printerr(
+			"FAIL mobs_sync_to_peer client has %s mobs, plan has %s" % [mobs.size(), plan.size()]
+		)
 		fail += 1
 	else:
 		var start := {}
@@ -163,7 +176,9 @@ func _test_mob_shown_when_ground_drawn() -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	if scene.get_path() != NodePath("/root/Flagoria"):
-		printerr("FAIL mob_shown_when_ground_drawn scene at %s, not /root/Flagoria" % scene.get_path())
+		printerr(
+			"FAIL mob_shown_when_ground_drawn scene at %s, not /root/Flagoria" % scene.get_path()
+		)
 		scene.queue_free()
 		return 1
 	var world: TileMap = scene.get_node("World/worldMap")
@@ -181,8 +196,12 @@ func _test_mob_shown_when_ground_drawn() -> int:
 	for i in 3:
 		await process_frame
 	if mob.visible or world.is_drawn(mob_cell):
-		printerr("FAIL mob_shown_when_ground_drawn setup: mob visible %s, its tile loaded %s"
-				% [mob.visible, world.is_drawn(mob_cell)])
+		printerr(
+			(
+				"FAIL mob_shown_when_ground_drawn setup: mob visible %s, its tile loaded %s"
+				% [mob.visible, world.is_drawn(mob_cell)]
+			)
+		)
 		fail += 1
 	else:
 		player.position = world.map_to_local(mob_cell + Vector2i(1, 0))  # respawned beside it
@@ -196,7 +215,12 @@ func _test_mob_shown_when_ground_drawn() -> int:
 			printerr("FAIL mob_shown_when_ground_drawn the chunk under the mob was never drawn")
 			fail += 1
 		elif not mob.visible:
-			printerr("FAIL mob_shown_when_ground_drawn ground drawn on frame %d but the mob is still hidden" % drawn_at)
+			printerr(
+				(
+					"FAIL mob_shown_when_ground_drawn ground drawn on frame %d but the mob is still hidden"
+					% drawn_at
+				)
+			)
 			fail += 1
 	scene.queue_free()
 	await process_frame

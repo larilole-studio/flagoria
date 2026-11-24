@@ -4,8 +4,10 @@ extends "res://tests/helpers/test_helpers.gd"
 const BUILDING_PROBE := "res://tests/generated_building_probe.gd"
 const NIGHT_PROBE := "res://tests/day_night_probe.gd"
 const ROWS := {
-	"test_generated_building_sync": {"probe": BUILDING_PROBE, "mode": "single", "joiners": 2, "seed": 11},
-	"test_building_merge_two_players": {"probe": BUILDING_PROBE, "mode": "merge", "joiners": 2, "seed": 49},
+	"test_generated_building_sync":
+	{"probe": BUILDING_PROBE, "mode": "single", "joiners": 2, "seed": 11},
+	"test_building_merge_two_players":
+	{"probe": BUILDING_PROBE, "mode": "merge", "joiners": 2, "seed": 49},
 	"test_day_night_sync": {"probe": NIGHT_PROBE, "mode": "clock", "joiners": 2},
 	"test_night_mob_sync": {"probe": NIGHT_PROBE, "mode": "mobs", "joiners": 1},
 }
@@ -49,29 +51,43 @@ func _run_world_state_row(test_name: String) -> int:
 	var dir := make_probe_dir(label)
 	var mode: String = row["mode"]
 	var args := ["--port=%d" % port, "--mode=" + mode]
-	var probes: Array[Dictionary] = [spawn_probe(row["probe"], dir.path_join("host.json"), args + host_args)]
+	var probes: Array[Dictionary] = [
+		spawn_probe(row["probe"], dir.path_join("host.json"), args + host_args)
+	]
 	var read := read_probe_at.bind(probes)
 	var deadline := Time.get_ticks_msec() + TIMEOUT_MS
 	var initial := await wait_result(probes[0], TIMEOUT_MS)
-	var passed := not initial.is_empty() and await wait_until(func() -> bool:
-		return _host_ready(read.call(0), mode), maxi(0, deadline - Time.get_ticks_msec()))
+	var passed := (
+		not initial.is_empty()
+		and await wait_until(
+			func() -> bool: return _host_ready(read.call(0), mode),
+			maxi(0, deadline - Time.get_ticks_msec())
+		)
+	)
 	if passed:
 		for i in range(1, row["joiners"] + 1):
 			probes.append(spawn_probe(row["probe"], dir.path_join("peer%d.json" % i), args))
-			if not await wait_until(func() -> bool:
-				var host: Dictionary = read.call(0)
-				for peer in range(1, i + 1):
-					if not _matches(read.call(peer), host, mode):
-						return false
-				return true, TIMEOUT_MS):
+			if not await wait_until(
+				func() -> bool:
+					var host: Dictionary = read.call(0)
+					for peer in range(1, i + 1):
+						if not _matches(read.call(peer), host, mode):
+							return false
+					return true,
+				TIMEOUT_MS
+			):
 				printerr("FAIL %s: peer %d %s host %s" % [test_name, i, read.call(i), read.call(0)])
 				passed = false
 				break
 		if passed and mode == "merge":
 			passed = await _check_removal(probes[0]["out"], read)
 			if not passed:
-				printerr("FAIL %s: resealed host %s client %s joiner %s"
-						% [test_name, read.call(0), read.call(1), read.call(2)])
+				printerr(
+					(
+						"FAIL %s: resealed host %s client %s joiner %s"
+						% [test_name, read.call(0), read.call(1), read.call(2)]
+					)
+				)
 	else:
 		printerr("FAIL %s: host %s" % [test_name, read.call(0)])
 	await stop_probes(probes, 10000)
@@ -102,8 +118,12 @@ func _host_ready(data: Dictionary, mode: String) -> bool:
 		"mobs":
 			return bool(data.get("ticked", false))
 		_:
-			return data.get("ready", false) and data.get("door_clear", false) \
-					and data.get("wall_blocked", false) and not data.get("cells", {}).is_empty()
+			return (
+				data.get("ready", false)
+				and data.get("door_clear", false)
+				and data.get("wall_blocked", false)
+				and not data.get("cells", {}).is_empty()
+			)
 
 
 func _matches(data: Dictionary, host: Dictionary, mode: String) -> bool:
@@ -115,9 +135,12 @@ func _matches(data: Dictionary, host: Dictionary, mode: String) -> bool:
 		"merge":
 			return _host_ready(data, mode) and data.get("seam", {}) == host.get("seam", {})
 		_:
-			return _host_ready(data, mode) and data.get("refused", false) \
-					and data.get("cells", {}) == host.get("cells", {}) \
-					and data.get("records", 0) == host.get("records", -1)
+			return (
+				_host_ready(data, mode)
+				and data.get("refused", false)
+				and data.get("cells", {}) == host.get("cells", {})
+				and data.get("records", 0) == host.get("records", -1)
+			)
 
 
 func _check_removal(host_out: String, read: Callable) -> bool:
@@ -126,19 +149,28 @@ func _check_removal(host_out: String, read: Callable) -> bool:
 	if marker == null:
 		return false
 	marker.close()
-	return await wait_until(func() -> bool:
-		var host: Dictionary = read.call(0)
-		for i in 3:
-			var data: Dictionary = read.call(i)
-			if not data.get("resealed", false) or data.get("records", 0) != 1 \
-					or data.get("cells", {}) != host.get("cells", {}):
-				return false
-		return true, TIMEOUT_MS)
+	return await wait_until(
+		func() -> bool:
+			var host: Dictionary = read.call(0)
+			for i in 3:
+				var data: Dictionary = read.call(i)
+				if (
+					not data.get("resealed", false)
+					or data.get("records", 0) != 1
+					or data.get("cells", {}) != host.get("cells", {})
+				):
+					return false
+			return true,
+		TIMEOUT_MS
+	)
 
 
 func _night(data: Dictionary) -> bool:
-	return bool(data.get("synced", false)) and str(data.get("phase", "")) == "night" \
-			and bool(data.get("enabled", false))
+	return (
+		bool(data.get("synced", false))
+		and str(data.get("phase", "")) == "night"
+		and bool(data.get("enabled", false))
+	)
 
 
 func _clock_matches(data: Dictionary, host: Dictionary) -> bool:

@@ -16,8 +16,10 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		done(false)
 		return
-	if not await wait_until(func() -> bool:
-			return current_scene != null and current_scene.has_node(WORLDS), START_TIMEOUT_S):
+	if not await wait_until(
+		func() -> bool: return current_scene != null and current_scene.has_node(WORLDS),
+		START_TIMEOUT_S
+	):
 		done(false)
 		return
 	step("list")
@@ -65,8 +67,13 @@ func _seed_saves() -> bool:
 
 func _open_worlds() -> bool:
 	await click(WORLDS)
-	return await wait_until(func() -> bool:
-		return current_scene.has_node(LIST) and current_scene.get_node(LIST).is_visible_in_tree(), 5.0)
+	return await wait_until(
+		func() -> bool:
+			return (
+				current_scene.has_node(LIST) and current_scene.get_node(LIST).is_visible_in_tree()
+			),
+		5.0
+	)
 
 
 func _resize(width: int, height: int) -> bool:

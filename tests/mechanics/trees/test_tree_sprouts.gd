@@ -6,15 +6,21 @@ extends "res://tests/helpers/test_helpers.gd"
 ## there, and never on a blocked cell.
 
 const SPARSE_TARGET := 82
-const TREES: Array[Vector2i] = [TileCatalog.TREE, TileCatalog.TREE_BUSHY,
-	TileCatalog.PINE, TileCatalog.TREE_BIRCH_BOTTOM]
+const TREES: Array[Vector2i] = [
+	TileCatalog.TREE, TileCatalog.TREE_BUSHY, TileCatalog.PINE, TileCatalog.TREE_BIRCH_BOTTOM
+]
 ## guard_post cells (from its top-left) with sand ground and no object: only
 ## the structure guard keeps a sprout off them.
-const OPEN_CELLS: Array[Vector2i] = [Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(1, 2), Vector2i(3, 2)]
+const OPEN_CELLS: Array[Vector2i] = [
+	Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1), Vector2i(1, 2), Vector2i(3, 2)
+]
 
 
 static func guard_post() -> Structure:
-	return Structure.parse(FileAccess.get_file_as_string("res://structures/guard_post.txt"))["structure"]
+	return (
+		Structure
+		. parse(FileAccess.get_file_as_string("res://structures/guard_post.txt"))["structure"]
+	)
 
 
 static func window_at(world, cell: Vector2i) -> Rect2i:
@@ -40,15 +46,23 @@ static func deficit_world(world, s: Structure, dense := false) -> Dictionary:
 	var params := _static_params(42 if dense else 11)
 	world.apply_map_params(params)
 	var anchor := Vector2i(0, 18) if dense else Vector2i(-9, -24)
-	var lost := [Vector2i(0, 15), Vector2i(1, 16)] if dense else [
-		Vector2i(-10, -27), Vector2i(-10, -25), Vector2i(-8, -24)]
+	var lost := (
+		[Vector2i(0, 15), Vector2i(1, 16)]
+		if dense
+		else [Vector2i(-10, -27), Vector2i(-10, -25), Vector2i(-8, -24)]
+	)
 	for cell in lost:
 		if world.predict_cell(cell)[1] not in TREES or world.cut_grown(cell) == null:
 			return {}
 	if world.place_structure(s, anchor, 1) <= 0:
 		return {}
-	var fixture := {"anchor": anchor, "window": window_at(world, anchor), "lost": lost,
-		"top_left": anchor - s.anchor, "params": params}
+	var fixture := {
+		"anchor": anchor,
+		"window": window_at(world, anchor),
+		"lost": lost,
+		"top_left": anchor - s.anchor,
+		"params": params
+	}
 	if not dense:
 		fixture["target"] = SPARSE_TARGET
 		fixture["before"] = 82
@@ -62,7 +76,11 @@ static func share_target(world, window: Rect2i) -> int:
 		for x in range(window.position.x, window.end.x):
 			if world.predict_cell(Vector2i(x, y))[0] != TileCatalog.WATER:
 				land += 1
-	var shares: Dictionary = (load("res://Scripts/world/BiomeCatalog.gd") as GDScript).get_script_constant_map().get("TREE_SHARE", {})
+	var shares: Dictionary = (
+		(load("res://Scripts/world/BiomeCatalog.gd") as GDScript)
+		. get_script_constant_map()
+		. get("TREE_SHARE", {})
+	)
 	return floori(shares.get(BiomeCatalog.TEMPERATE, 0.0) * land)
 
 
@@ -72,7 +90,9 @@ static func target_in(world, window: Rect2i) -> int:
 	return mini(share_target(world, window), trees_in(world, window))
 
 
-static func _try_anchor(world, s: Structure, anchor: Vector2i, dense := false, centre: Variant = null) -> Dictionary:
+static func _try_anchor(
+	world, s: Structure, anchor: Vector2i, dense := false, centre: Variant = null
+) -> Dictionary:
 	## `centre`: count the area around that cell instead of around `anchor`.
 	var top_left: Vector2i = anchor - s.anchor
 	var trees: Array[Vector2i] = []
@@ -97,8 +117,14 @@ static func _try_anchor(world, s: Structure, anchor: Vector2i, dense := false, c
 		world.cut_grown(cell)
 	if world.place_structure(s, anchor, 1) <= 0:
 		return {}
-	return {"anchor": anchor, "window": window, "target": target, "lost": trees, "before": before,
-			"top_left": top_left}
+	return {
+		"anchor": anchor,
+		"window": window,
+		"target": target,
+		"lost": trees,
+		"before": before,
+		"top_left": top_left
+	}
 
 
 static func _static_params(sv: int) -> MapGenParams:
@@ -141,7 +167,9 @@ func _test_sprouts_stop_at_target() -> int:
 	var d := deficit_world(world, guard_post()) if sprouts != null else {}
 	if sprouts == null or d.is_empty():
 		if sprouts != null:
-			printerr("FAIL sprouts_stop_at_target: no guard post spot that leaves an area short of trees")
+			printerr(
+				"FAIL sprouts_stop_at_target: no guard post spot that leaves an area short of trees"
+			)
 		s["scene"].queue_free()
 		await process_frame
 		return 1
@@ -149,15 +177,23 @@ func _test_sprouts_stop_at_target() -> int:
 	const MISSING := 3
 	var first: Array = sprouts.sprout_pass(window, 1.0)
 	if first.size() != MISSING or trees_in(world, window) != SPARSE_TARGET:
-		printerr("FAIL sprouts_stop_at_target: %d trees missing, %d sprouted, the area holds %d trees, target %d"
-				% [MISSING, first.size(), trees_in(world, window), SPARSE_TARGET])
+		printerr(
+			(
+				"FAIL sprouts_stop_at_target: %d trees missing, %d sprouted, the area holds %d trees, target %d"
+				% [MISSING, first.size(), trees_in(world, window), SPARSE_TARGET]
+			)
+		)
 		fail += 1
 	var more := 0
 	for i in 2:
 		more += sprouts.sprout_pass(window, 1.0).size()
 	if more != 0 or trees_in(world, window) != SPARSE_TARGET:
-		printerr("FAIL sprouts_stop_at_target: two more passes added %d trees, leaving %d of %d"
-				% [more, trees_in(world, window), SPARSE_TARGET])
+		printerr(
+			(
+				"FAIL sprouts_stop_at_target: two more passes added %d trees, leaving %d of %d"
+				% [more, trees_in(world, window), SPARSE_TARGET]
+			)
+		)
 		fail += 1
 	if not first.is_empty():
 		var cell: Vector2i = first[0]
@@ -165,12 +201,21 @@ func _test_sprouts_stop_at_target() -> int:
 		world.play_time = 100.0
 		world.regrow_delay = 30.0
 		if world.cut_grown(cell) == null or not sprouts.sprout_pass(window, 1.0).is_empty():
-			printerr("FAIL sprouts_stop_at_target: a chopped sprout at %s was made up for while its stump stands" % cell)
+			printerr(
+				(
+					"FAIL sprouts_stop_at_target: a chopped sprout at %s was made up for while its stump stands"
+					% cell
+				)
+			)
 			fail += 1
 		world.play_time = 200.0
 		if world.regrow_due() != 1 or world.predict_cell(cell)[1] != tree:
-			printerr("FAIL sprouts_stop_at_target: the chopped sprout at %s regrew as %s, want %s"
-					% [cell, world.predict_cell(cell)[1], tree])
+			printerr(
+				(
+					"FAIL sprouts_stop_at_target: the chopped sprout at %s regrew as %s, want %s"
+					% [cell, world.predict_cell(cell)[1], tree]
+				)
+			)
 			fail += 1
 	# A save round trip keeps every sprout.
 	var saved = JSON.parse_string(JSON.stringify(world.cut_changes()))
@@ -181,16 +226,24 @@ func _test_sprouts_stop_at_target() -> int:
 	world.restore_cuts(saved)
 	for cell in held:
 		if world.predict_cell(cell)[1] != held[cell]:
-			printerr("FAIL sprouts_stop_at_target: after a save round trip %s is %s, want %s (save %s)"
-					% [cell, world.predict_cell(cell)[1], held[cell], saved])
+			printerr(
+				(
+					"FAIL sprouts_stop_at_target: after a save round trip %s is %s, want %s (save %s)"
+					% [cell, world.predict_cell(cell)[1], held[cell], saved]
+				)
+			)
 			fail += 1
 			break
 	# An area that lost trees but still holds its share sprouts none.
 	var dense := deficit_world(world, guard_post(), true)
 	var extra: Array = [] if dense.is_empty() else sprouts.sprout_pass(dense["window"], 1.0)
 	if dense.is_empty() or not extra.is_empty():
-		printerr("FAIL sprouts_stop_at_target: an area above its share after a loss: found %s, sprouted %d"
-				% [not dense.is_empty(), extra.size()])
+		printerr(
+			(
+				"FAIL sprouts_stop_at_target: an area above its share after a loss: found %s, sprouted %d"
+				% [not dense.is_empty(), extra.size()]
+			)
+		)
 		fail += 1
 	s["scene"].queue_free()
 	await process_frame
@@ -219,10 +272,18 @@ func _test_sprouts_skip_blocked_cells() -> int:
 		return 1
 	var window: Rect2i = d["window"]
 	var free: Array = sprouts.candidates(window).get(BiomeCatalog.TEMPERATE, [])
-	var open: Array = OPEN_CELLS.map(func(c: Vector2i) -> Vector2i: return d["top_left"] + c) \
-			.filter(func(c: Vector2i) -> bool: return sprouts.sprout_tile(c) != world.NO_PLANT)
+	var open: Array = (
+		OPEN_CELLS
+		. map(func(c: Vector2i) -> Vector2i: return d["top_left"] + c)
+		. filter(func(c: Vector2i) -> bool: return sprouts.sprout_tile(c) != world.NO_PLANT)
+	)
 	if open.is_empty() or open.any(func(c: Vector2i) -> bool: return c in free):
-		printerr("FAIL sprouts_skip_blocked_cells: guard post cells %s (trees there before) are candidates" % [open])
+		printerr(
+			(
+				"FAIL sprouts_skip_blocked_cells: guard post cells %s (trees there before) are candidates"
+				% [open]
+			)
+		)
 		fail += 1
 	var plants: Array = []
 	for y in range(window.position.y, window.end.y):
@@ -237,7 +298,9 @@ func _test_sprouts_skip_blocked_cells() -> int:
 		printerr("FAIL sprouts_skip_blocked_cells: a tree or the stump %s is a candidate" % outside)
 		fail += 1
 	if free.size() < 2:
-		printerr("FAIL sprouts_skip_blocked_cells: only %d free cells in %s" % [free.size(), window])
+		printerr(
+			"FAIL sprouts_skip_blocked_cells: only %d free cells in %s" % [free.size(), window]
+		)
 		scene.queue_free()
 		await process_frame
 		return fail + 1
@@ -254,8 +317,12 @@ func _test_sprouts_skip_blocked_cells() -> int:
 	mob.set_physics_process(false)
 	free = sprouts.candidates(window).get(BiomeCatalog.TEMPERATE, [])
 	if at_player in free or at_mob in free:
-		printerr("FAIL sprouts_skip_blocked_cells: a cell under the player (%s) or a mob (%s) is a candidate"
-				% [at_player in free, at_mob in free])
+		printerr(
+			(
+				"FAIL sprouts_skip_blocked_cells: a cell under the player (%s) or a mob (%s) is a candidate"
+				% [at_player in free, at_mob in free]
+			)
+		)
 		fail += 1
 	player.queue_free()
 	mob.queue_free()
@@ -306,11 +373,17 @@ func _water_bridge_beach(world, sprouts) -> int:
 			if free.has(c):
 				bad.append([c, world.predict_cell(c)])
 		if free.is_empty() or not bad.is_empty():
-			printerr("FAIL sprouts_skip_blocked_cells: %d candidates; water, bridge or beach cells among them: %s"
-					% [free.size(), bad])
+			printerr(
+				(
+					"FAIL sprouts_skip_blocked_cells: %d candidates; water, bridge or beach cells among them: %s"
+					% [free.size(), bad]
+				)
+			)
 			return 1
 		return 0
-	printerr("FAIL sprouts_skip_blocked_cells: no area on seed 42 with water, a bridge and beach sand")
+	printerr(
+		"FAIL sprouts_skip_blocked_cells: no area on seed 42 with water, a bridge and beach sand"
+	)
 	return 1
 
 
@@ -356,7 +429,12 @@ func _test_sprout_pass_time() -> int:
 		var label := stage
 		if stage == "posts":
 			label = "%d posts" % _crowd(world, d["window"])
-			label += ", %d trees missing" % sprouts.deficits(d["window"]).values().reduce(func(a: int, b: int) -> int: return a + b, 0)
+			label += (
+				", %d trees missing"
+				% sprouts.deficits(d["window"]).values().reduce(
+					func(a: int, b: int) -> int: return a + b, 0
+				)
+			)
 		elif stage == "cuts":
 			label += " %d cut" % _cut_around(world, d["anchor"], 12000)
 		var run := []
@@ -366,12 +444,20 @@ func _test_sprout_pass_time() -> int:
 			if run[1] >= 0 and run[0][-1] < SPIKE_MS and run[0][-2] < PASS_MS:
 				break
 		if run[1] < 0 or run[0][-1] >= SPIKE_MS or run[0][-2] >= PASS_MS:
-			printerr("FAIL sprout_pass_time: %s: first sprouts on call %d; slowest calls %s ms (limit %.1f, one up to %.1f), twice"
-					% [label, run[1], run[0].slice(-5), PASS_MS, SPIKE_MS])
+			printerr(
+				(
+					"FAIL sprout_pass_time: %s: first sprouts on call %d; slowest calls %s ms (limit %.1f, one up to %.1f), twice"
+					% [label, run[1], run[0].slice(-5), PASS_MS, SPIKE_MS]
+				)
+			)
 			fail += 1
 		else:
-			print("   %s: %d calls, first sprouts on call %d, slowest %s ms, %d sprouted"
-					% [label, run[0].size(), run[1], run[0].slice(-3), run[2]])
+			print(
+				(
+					"   %s: %d calls, first sprouts on call %d, slowest %s ms, %d sprouted"
+					% [label, run[0].size(), run[1], run[0].slice(-3), run[2]]
+				)
+			)
 	s["scene"].queue_free()
 	await process_frame
 	if fail == 0:

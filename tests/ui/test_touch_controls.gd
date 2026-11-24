@@ -25,10 +25,13 @@ func _test_touch_controls_look() -> int:
 	var aim: AttackAim = player.get_node("AttackAim")
 	var button = aim.attack_button()
 	var stick = scene.get_node("CanvasLayer1/player_joystick")
-	if button.texture_normal.get_size() != Vector2(40, 40) or stick.border.get_size() != Vector2(56, 56) \
-			or stick.stick.get_size() != Vector2(24, 24) \
-			or button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS \
-			or stick.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS:
+	if (
+		button.texture_normal.get_size() != Vector2(40, 40)
+		or stick.border.get_size() != Vector2(56, 56)
+		or stick.stick.get_size() != Vector2(24, 24)
+		or button.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		or stick.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	):
 		printerr("FAIL touch_controls_look: touch art size or filtering")
 		fail += 1
 	var c: Vector2 = button.aim_center()
@@ -55,12 +58,22 @@ func _test_touch_controls_look() -> int:
 	for step in steps:
 		step[1].call()
 		if step[2] == null or button.texture_normal != step[2]:
-			printerr("FAIL touch_controls_look attack button %s shows %s" % [step[0], button.texture_normal])
+			printerr(
+				(
+					"FAIL touch_controls_look attack button %s shows %s"
+					% [step[0], button.texture_normal]
+				)
+			)
 			fail += 1
 	var knob: TouchScreenButton = stick.touch
 	touch.call(0, stick.global_position + Vector2(25, 0), true)  # on the base's rim: starts a drag
 	if stick.ongoing_drag != 0 or knob.texture_normal != stick.stick_active:
-		printerr("FAIL touch_controls_look stick dragged: finger %s, knob %s" % [stick.ongoing_drag, knob.texture_normal])
+		printerr(
+			(
+				"FAIL touch_controls_look stick dragged: finger %s, knob %s"
+				% [stick.ongoing_drag, knob.texture_normal]
+			)
+		)
 		fail += 1
 	touch.call(0, stick.global_position, false)
 	if knob.texture_normal != stick.stick:
@@ -71,15 +84,26 @@ func _test_touch_controls_look() -> int:
 	for t in [[0.0, 0.40], [0.2, 0.475], [0.4, 0.55], [0.8, 0.40]]:
 		var fill: Color = style.fill_at(t[0])
 		if not is_equal_approx(fill.a, t[1]) or fill.to_html(false) != "3d3a5c":
-			printerr("FAIL touch_controls_look fill at %.1f s is %s, want 3d3a5c at %.3f" % [t[0], fill, t[1]])
+			printerr(
+				(
+					"FAIL touch_controls_look fill at %.1f s is %s, want 3d3a5c at %.3f"
+					% [t[0], fill, t[1]]
+				)
+			)
 			fail += 1
 	var camera: Camera2D = player.get_node("Camera2D")
 	for z in [0.7, 1.4]:
 		camera.zoom = Vector2(z, z)
-		for i in 3: await physics_frame  # the interpolated camera eases zoom over a tick
+		for i in 3:
+			await physics_frame  # the interpolated camera eases zoom over a tick
 		await process_frame
 		if not is_equal_approx(aim.screen_px() * z, 1.0):
-			printerr("FAIL touch_controls_look at zoom %s a screen px is %s world px" % [z, aim.screen_px()])
+			printerr(
+				(
+					"FAIL touch_controls_look at zoom %s a screen px is %s world px"
+					% [z, aim.screen_px()]
+				)
+			)
 			fail += 1
 	scene.queue_free()
 	await process_frame
@@ -122,7 +146,12 @@ func _test_joystick_hold_keeps_moving() -> int:
 		await physics_frame
 	var held: Vector2 = local.velocity
 	if not (held.x > top * 0.9 and held.length() <= top + 0.01 and absf(held.y) < 0.01):
-		printerr("FAIL joystick_hold velocity after 60 frames held still: %s (want ~%s, +x)" % [held, top])
+		printerr(
+			(
+				"FAIL joystick_hold velocity after 60 frames held still: %s (want ~%s, +x)"
+				% [held, top]
+			)
+		)
 		fail += 1
 	if local.lastAnimDirection != "Right":
 		printerr("FAIL joystick_hold facing %s, want Right" % local.lastAnimDirection)

@@ -26,8 +26,9 @@ func run() -> void:
 	var hearts := current_scene.find_child("HeartsHud", true, false)
 	var score: Label = current_scene.find_child("ScoreHud", true, false) as Label
 	var points: Points = current_scene.get_node("Points")
-	var shown := await wait_until(func() -> bool:
-		return score.text == "%d" % points.total_of(1), 2.0)
+	var shown := await wait_until(
+		func() -> bool: return score.text == "%d" % points.total_of(1), 2.0
+	)
 	print("combat_hud: hearts %d/%d, score '%s'" % [hearts.current, hearts.maximum, score.text])
 	ok = ok and hearts.current == FULL_HEALTH and hearts.maximum == FULL_HEALTH and shown
 	await snapshot("start")
@@ -43,12 +44,25 @@ func run() -> void:
 	step("aim")
 	var aim: Node = hero().get_node("AttackAim")
 	var offset := Vector2.from_angle(deg_to_rad(DRAG_DEG)) * DRAG_PX
-	await touch_drag(offset, func() -> void:
-		print("combat_hud: aiming %s toward %s at %.0f deg" % [aim.aiming, aim.aim_direction(), rad_to_deg(aim.aim_angle())])
-		ok = ok and aim.aiming and aim.aim_direction() == "Up")
+	await touch_drag(
+		offset,
+		func() -> void:
+			print(
+				(
+					"combat_hud: aiming %s toward %s at %.0f deg"
+					% [aim.aiming, aim.aim_direction(), rad_to_deg(aim.aim_angle())]
+				)
+			)
+			ok = ok and aim.aiming and aim.aim_direction() == "Up"
+	)
 	swung = await wait_until(func() -> bool: return hero().isAttacking, SWING_TIMEOUT_S)
 	var turn := rad_to_deg(hero().swing_turn)
-	print("combat_hud: aimed swing %s, facing %s, turn %.0f deg" % [swung, hero().lastAnimDirection, turn])
+	print(
+		(
+			"combat_hud: aimed swing %s, facing %s, turn %.0f deg"
+			% [swung, hero().lastAnimDirection, turn]
+		)
+	)
 	ok = ok and swung and hero().lastAnimDirection == "Up" and absf(turn - EXPECT_TURN_DEG) < 1.0
 	await snapshot("aimed-swing")
 	await wait_until(func() -> bool: return not hero().isAttacking, SWING_TIMEOUT_S)
@@ -57,9 +71,12 @@ func run() -> void:
 	await click(MENU_BUTTON)
 	var panel: Control = current_scene.get_node(MENU_PANEL)
 	var opened := await wait_until(func() -> bool: return panel.is_visible_in_tree(), 5.0)
-	await touch_drag(offset, func() -> void:
-		print("combat_hud: menu open %s, aiming %s" % [opened, aim.aiming])
-		ok = ok and opened and not aim.aiming)
+	await touch_drag(
+		offset,
+		func() -> void:
+			print("combat_hud: menu open %s, aiming %s" % [opened, aim.aiming])
+			ok = ok and opened and not aim.aiming
+	)
 	for i in range(10):
 		await physics_frame
 	print("combat_hud: swing under the menu %s" % hero().isAttacking)
@@ -147,8 +164,12 @@ func _sword_los_shots() -> bool:
 		if through:
 			break
 		await physics_frame
-	print("combat_hud: open-gate clear=%s overlap=%s hit=%s (hp %s -> %s)"
-			% [clear, saw_overlap, through, hp0, mob.hp])
+	print(
+		(
+			"combat_hud: open-gate clear=%s overlap=%s hit=%s (hp %s -> %s)"
+			% [clear, saw_overlap, through, hp0, mob.hp]
+		)
+	)
 	# Gap must be clear (LOS); a landed swing or overlap proves the hit still works.
 	through = clear and through
 	await snapshot("open-gate-hits")

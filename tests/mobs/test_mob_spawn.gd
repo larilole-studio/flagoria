@@ -24,7 +24,12 @@ func _test_mob_predict_matches_chunks() -> int:
 			var got: Array = world.predict_cell(cell)
 			checked += 1
 			if got != want:
-				printerr("FAIL mob_predict case=%s cell=%s predicted %s, chunk has %s" % [i, cell, got, want])
+				printerr(
+					(
+						"FAIL mob_predict case=%s cell=%s predicted %s, chunk has %s"
+						% [i, cell, got, want]
+					)
+				)
 				fail += 1
 				break
 			if world.predicted_clear(cell) != world.is_clear_ground(cell):
@@ -63,7 +68,12 @@ func _test_mob_plan() -> int:
 				printerr("FAIL mob_plan %s differs between runs" % label)
 				fail += 1
 			if plan.size() > MobSpawner.MAX_MOBS:
-				printerr("FAIL mob_plan %s has %s mobs, cap %s" % [label, plan.size(), MobSpawner.MAX_MOBS])
+				printerr(
+					(
+						"FAIL mob_plan %s has %s mobs, cap %s"
+						% [label, plan.size(), MobSpawner.MAX_MOBS]
+					)
+				)
 				fail += 1
 			total += plan.size()
 			for i in plan.size():
@@ -71,7 +81,9 @@ func _test_mob_plan() -> int:
 				var type: String = plan[i]["type"]
 				var home: int = MobCatalog.stat(type, "home")
 				if not MobSpawner.is_home_cell(world, cell, home):
-					printerr("FAIL mob_plan %s %s at %s is not on its home ground" % [label, type, cell])
+					printerr(
+						"FAIL mob_plan %s %s at %s is not on its home ground" % [label, type, cell]
+					)
 					fail += 1
 				if maxi(absi(cell.x), absi(cell.y)) <= MobSpawner.SAFE_RADIUS:
 					printerr("FAIL mob_plan %s %s at %s is next to the spawn" % [label, type, cell])
@@ -102,7 +114,12 @@ func _test_mob_spawn_rate() -> int:
 	DirAccess.remove_absolute(game.save_path)
 	game.load_from_disk()
 	if game.mob_rate != game.MOB_RATE_DEFAULT or game.MOB_RATE_DEFAULT <= 1.0:
-		printerr("FAIL mob_spawn_rate: fresh rate %s, default %s (must be above 1x)" % [game.mob_rate, game.MOB_RATE_DEFAULT])
+		printerr(
+			(
+				"FAIL mob_spawn_rate: fresh rate %s, default %s (must be above 1x)"
+				% [game.mob_rate, game.MOB_RATE_DEFAULT]
+			)
+		)
 		fail += 1
 	# Corrupt or hand-edited values: default or clamp, never a crash.
 	for pair in [["abc", 2.0], [NAN, 2.0], [INF, 2.0], [-1, 0.5], [9, 3.0], [1.1, 1.0]]:
@@ -111,7 +128,12 @@ func _test_mob_spawn_rate() -> int:
 		cfg.save(game.save_path)
 		game.load_from_disk()
 		if not is_equal_approx(game.mob_rate, pair[1]):
-			printerr("FAIL mob_spawn_rate: saved %s loads as %s, want %s" % [pair[0], game.mob_rate, pair[1]])
+			printerr(
+				(
+					"FAIL mob_spawn_rate: saved %s loads as %s, want %s"
+					% [pair[0], game.mob_rate, pair[1]]
+				)
+			)
 			fail += 1
 	DirAccess.remove_absolute(game.save_path)
 	game.load_from_disk()
@@ -119,8 +141,16 @@ func _test_mob_spawn_rate() -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
-	if not is_equal_approx(menu.mob_rate.value, game.MOB_RATE_DEFAULT) or menu.mob_rate_value.text != "2x":
-		printerr("FAIL mob_spawn_rate: slider starts at %s (%s)" % [menu.mob_rate.value, menu.mob_rate_value.text])
+	if (
+		not is_equal_approx(menu.mob_rate.value, game.MOB_RATE_DEFAULT)
+		or menu.mob_rate_value.text != "2x"
+	):
+		printerr(
+			(
+				"FAIL mob_spawn_rate: slider starts at %s (%s)"
+				% [menu.mob_rate.value, menu.mob_rate_value.text]
+			)
+		)
 		fail += 1
 	menu.mob_rate.value = 0.75
 	if menu.mob_rate_value.text != "0.75x":
@@ -139,7 +169,9 @@ func _test_mob_spawn_rate() -> int:
 	for rate in want_caps:
 		var c: Dictionary = MobSpawner.caps(rate)
 		if [c["cells_per_mob"], c["per_island"], c["total"]] != want_caps[rate]:
-			printerr("FAIL mob_spawn_rate: caps at %sx are %s, want %s" % [rate, c, want_caps[rate]])
+			printerr(
+				"FAIL mob_spawn_rate: caps at %sx are %s, want %s" % [rate, c, want_caps[rate]]
+			)
 			fail += 1
 	var counts := {}
 	var most := 0
@@ -151,15 +183,25 @@ func _test_mob_spawn_rate() -> int:
 			world.apply_map_params(scene.world_params)
 			var n: int = scene.spawn_mobs()
 			if n != mobs_node.mobs().size() or n > MobSpawner.caps(rate)["total"]:
-				printerr("FAIL mob_spawn_rate: rate %s seed %s spawned %s, %s in the tree" % [rate, seed_value, n, mobs_node.mobs().size()])
+				printerr(
+					(
+						"FAIL mob_spawn_rate: rate %s seed %s spawned %s, %s in the tree"
+						% [rate, seed_value, n, mobs_node.mobs().size()]
+					)
+				)
 				fail += 1
 			counts[rate] += n
 			most = maxi(most, n)
-	if not (counts[game.MOB_RATE_DEFAULT] >= counts[1.0] * 3 / 2 and counts[game.MOB_RATE_MAX] > counts[game.MOB_RATE_DEFAULT]):
+	if not (
+		counts[game.MOB_RATE_DEFAULT] >= counts[1.0] * 3 / 2
+		and counts[game.MOB_RATE_MAX] > counts[game.MOB_RATE_DEFAULT]
+	):
 		printerr("FAIL mob_spawn_rate: mobs over 3 maps by rate %s" % counts)
 		fail += 1
 	if most <= MobSpawner.MAX_MOBS:
-		printerr("FAIL mob_spawn_rate: no map got more than the 1x cap of %s mobs" % MobSpawner.MAX_MOBS)
+		printerr(
+			"FAIL mob_spawn_rate: no map got more than the 1x cap of %s mobs" % MobSpawner.MAX_MOBS
+		)
 		fail += 1
 
 	# A client with its own rate spawns nothing; it only gets the host's mobs.
@@ -172,7 +214,12 @@ func _test_mob_spawn_rate() -> int:
 	game.set_mob_rate(game.MOB_RATE_MAX, false)
 	var client_count: int = scene.spawn_mobs()
 	if client_count != 0 or mobs_node.mobs().size() != 0:
-		printerr("FAIL mob_spawn_rate: client spawned %s mobs (%s in the tree)" % [client_count, mobs_node.mobs().size()])
+		printerr(
+			(
+				"FAIL mob_spawn_rate: client spawned %s mobs (%s in the tree)"
+				% [client_count, mobs_node.mobs().size()]
+			)
+		)
 		fail += 1
 	cpeer.close()
 	set_multiplayer(null, scene.get_path())
@@ -218,7 +265,9 @@ func _test_mob_wander() -> int:
 				moved[m] = true
 			var cell: Vector2i = world.local_to_map(m.position)
 			if not MobSpawner.is_home_cell(world, cell, MobCatalog.stat(m.mob_type, "home")):
-				printerr("FAIL mob_wander %s %s left home ground at %s" % [m.name, m.mob_type, cell])
+				printerr(
+					"FAIL mob_wander %s %s left home ground at %s" % [m.name, m.mob_type, cell]
+				)
 				fail += 1
 			if m.position.distance_to(m.home) > Mob.WANDER_RADIUS + 0.01:
 				printerr("FAIL mob_wander %s left its wander radius" % m.name)
@@ -226,7 +275,12 @@ func _test_mob_wander() -> int:
 			var row: int = m.sprite.frame_coords.y
 			var block: int = MobCatalog.ANIMS[m.anim_name()]["row"]
 			if row != block + m.facing:
-				printerr("FAIL mob_wander %s shows row %s for %s facing %s" % [m.name, row, m.anim_name(), m.facing])
+				printerr(
+					(
+						"FAIL mob_wander %s shows row %s for %s facing %s"
+						% [m.name, row, m.anim_name(), m.facing]
+					)
+				)
 				fail += 1
 		if fail > 0:
 			break
@@ -257,10 +311,16 @@ func _test_mob_sheet_swap() -> int:
 		if tex == null or tex.resource_path != want:
 			printerr("FAIL mob_sheet_swap %s sprite is not %s" % [type, want])
 			fail += 1
-		elif tex.get_size() != Vector2(MobCatalog.SHEET_COLS, MobCatalog.SHEET_ROWS) * MobCatalog.FRAME_SIZE:
+		elif (
+			tex.get_size()
+			!= Vector2(MobCatalog.SHEET_COLS, MobCatalog.SHEET_ROWS) * MobCatalog.FRAME_SIZE
+		):
 			printerr("FAIL mob_sheet_swap %s sheet is %s" % [type, tex.get_size()])
 			fail += 1
-		if mob.sprite.hframes != MobCatalog.SHEET_COLS or mob.sprite.vframes != MobCatalog.SHEET_ROWS:
+		if (
+			mob.sprite.hframes != MobCatalog.SHEET_COLS
+			or mob.sprite.vframes != MobCatalog.SHEET_ROWS
+		):
 			printerr("FAIL mob_sheet_swap %s sprite grid is not 8x16" % type)
 			fail += 1
 		mob.queue_free()
@@ -279,18 +339,33 @@ func _test_mob_band_plan() -> int:
 	var player := Vector2i(-11, -17)
 	var fail := 0
 	var plans := [
-		[[player], 0, [
-			["slime", Vector2i(29, -46)], ["crab", Vector2i(23, -13)],
-			["slime", Vector2i(-25, -39)], ["piglet", Vector2i(-47, -52)],
-			["slime", Vector2i(-21, -32)], ["slime", Vector2i(29, 2)],
-		]],
-		[[player, Vector2i(-3, -17)], 4, [
-			["piglet", Vector2i(32, -21)], ["slime", Vector2i(30, -53)],
-			["crab", Vector2i(23, -13)], ["piglet", Vector2i(37, -48)],
-			["piglet", Vector2i(-25, -39)], ["piglet", Vector2i(-47, -52)],
-			["slime", Vector2i(31, 1)], ["piglet", Vector2i(-21, -32)],
-			["piglet", Vector2i(32, 4)],
-		]],
+		[
+			[player],
+			0,
+			[
+				["slime", Vector2i(29, -46)],
+				["crab", Vector2i(23, -13)],
+				["slime", Vector2i(-25, -39)],
+				["piglet", Vector2i(-47, -52)],
+				["slime", Vector2i(-21, -32)],
+				["slime", Vector2i(29, 2)],
+			]
+		],
+		[
+			[player, Vector2i(-3, -17)],
+			4,
+			[
+				["piglet", Vector2i(32, -21)],
+				["slime", Vector2i(30, -53)],
+				["crab", Vector2i(23, -13)],
+				["piglet", Vector2i(37, -48)],
+				["piglet", Vector2i(-25, -39)],
+				["piglet", Vector2i(-47, -52)],
+				["slime", Vector2i(31, 1)],
+				["piglet", Vector2i(-21, -32)],
+				["piglet", Vector2i(32, 4)],
+			]
+		],
 	]
 	for fixture in plans:
 		var wave := MobSpawner.plan_tick(world, fixture[0], [], 11, fixture[1], 1.0)
@@ -326,8 +401,10 @@ func _test_mob_band_plan() -> int:
 		distant.append({"name": "hold_%d" % i, "cell": player + Vector2i(60, 0), "pinned": false})
 		if i < 10:
 			nearby.append({"name": "mob_%d" % i, "cell": player + Vector2i(20, 0), "pinned": false})
-	if MobSpawner.plan_tick(world, [player], nearby, 11, 2, 1.0) != empty \
-			or MobSpawner.plan_tick(world, [player], distant, 11, 3, 1.0) != empty:
+	if (
+		MobSpawner.plan_tick(world, [player], nearby, 11, 2, 1.0) != empty
+		or MobSpawner.plan_tick(world, [player], distant, 11, 3, 1.0) != empty
+	):
 		printerr("FAIL mob_band_plan exceeded the per-player or global 1x cap")
 		fail += 1
 	if MobSpawner.plan_tick(world, [player], nearby, 11, 2, 2.0)["spawn"].is_empty():

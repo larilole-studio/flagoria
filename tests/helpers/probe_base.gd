@@ -56,7 +56,11 @@ func host_saved_game(main, path: String, before_player: Callable = Callable()) -
 	if not error.is_empty():
 		return error
 	if not before_player.is_valid():
-		return "" if host_game(main, map_gen.params.duplicate_params()) == OK else "could not start listening"
+		return (
+			""
+			if host_game(main, map_gen.params.duplicate_params()) == OK
+			else "could not start listening"
+		)
 	if main.setup_server(map_gen.params.duplicate_params(), probe_port) != OK:
 		return "could not start listening"
 	error = before_player.call()
@@ -78,8 +82,12 @@ func join_game(main: Node) -> void:
 
 
 func game_active(main, deadline: int) -> bool:
-	return is_instance_valid(main) and main.is_inside_tree() \
-			and Time.get_ticks_msec() < deadline and not FileAccess.file_exists(probe_out + ".stop")
+	return (
+		is_instance_valid(main)
+		and main.is_inside_tree()
+		and Time.get_ticks_msec() < deadline
+		and not FileAccess.file_exists(probe_out + ".stop")
+	)
 
 
 func wait_for_peers(main, count: int, timeout_ms: int) -> bool:
@@ -199,7 +207,8 @@ func peer_positions(main: Node) -> Dictionary:
 	return positions
 
 
-class ReliableRoundTrip extends Node:
+class ReliableRoundTrip:
+	extends Node
 	var reply := 0
 
 	@rpc("any_peer", "call_remote", "reliable")
@@ -211,12 +220,21 @@ class ReliableRoundTrip extends Node:
 			reply = sequence
 
 
-class _ErrorLog extends Logger:
+class _ErrorLog:
+	extends Logger
 	var lines: Array[String] = []
 	var _lock := Mutex.new()
 
-	func _log_error(function: String, _file: String, _line: int, code: String, rationale: String,
-			_editor_notify: bool, _error_type: int, _script_backtraces: Array[ScriptBacktrace]) -> void:
+	func _log_error(
+		function: String,
+		_file: String,
+		_line: int,
+		code: String,
+		rationale: String,
+		_editor_notify: bool,
+		_error_type: int,
+		_script_backtraces: Array[ScriptBacktrace]
+	) -> void:
 		_lock.lock()
 		if lines.size() < 5:
 			lines.append("%s: %s" % [function, rationale if rationale != "" else code])

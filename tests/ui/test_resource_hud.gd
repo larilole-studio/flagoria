@@ -19,16 +19,30 @@ func _test_resource_hud_in_scene() -> int:
 	var menu_rect: Rect2 = scene.get_node("CanvasLayer1/InGameMenu").menu_button.get_global_rect()
 	hud.follow_hearts()
 	var hud_rect := hud.get_global_rect()
-	if not hud.visible or hud.label.text != "0" or hud.scale != hearts.scale \
-			or plate == null or not plate.visible \
-			or hud.get_parent() != plate or hud_rect.intersects(menu_rect) \
-			or not plate.get_theme_stylebox("panel") is StyleBoxEmpty \
-			or hud.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS:
-		printerr("FAIL resource_hud_in_scene: counter visible %s text '%s' at %s plate %s"
-				% [hud.visible, hud.label.text, hud_rect, plate])
+	if (
+		not hud.visible
+		or hud.label.text != "0"
+		or hud.scale != hearts.scale
+		or plate == null
+		or not plate.visible
+		or hud.get_parent() != plate
+		or hud_rect.intersects(menu_rect)
+		or not plate.get_theme_stylebox("panel") is StyleBoxEmpty
+		or hud.texture_filter != CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	):
+		printerr(
+			(
+				"FAIL resource_hud_in_scene: counter visible %s text '%s' at %s plate %s"
+				% [hud.visible, hud.label.text, hud_rect, plate]
+			)
+		)
 		fail += 1
 	var inventory: Inventory = scene.get_node("Inventory")
-	if inventory.add(Inventory.WOOD, 3) != 3 or inventory.count_of(Inventory.WOOD) != 3 or hud.label.text != "3":
+	if (
+		inventory.add(Inventory.WOOD, 3) != 3
+		or inventory.count_of(Inventory.WOOD) != 3
+		or hud.label.text != "3"
+	):
 		printerr("FAIL resource_hud_in_scene: counter '%s' after 3 wood" % hud.label.text)
 		fail += 1
 	if not inventory.spend(Inventory.WOOD, 2) or hud.label.text != "1":

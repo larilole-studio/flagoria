@@ -28,7 +28,9 @@ func _test_mob_contact() -> int:
 	player.position = mob.position + Vector2(mob.contact_box().size.x + 8, 0)
 	mob.think(dt)
 	if health.health != full:
-		printerr("FAIL mob_contact hurt a player %s px away" % mob.position.distance_to(player.position))
+		printerr(
+			"FAIL mob_contact hurt a player %s px away" % mob.position.distance_to(player.position)
+		)
 		fail += 1
 	# Touching: one hit, then the mob stands still for HIT_PAUSE.
 	player.position = mob.position
@@ -87,7 +89,14 @@ func _test_mob_contact_two_players() -> int:
 		return 1
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if pid <= 0:
 		printerr("FAIL mob_contact_two_players could not start the server process")
@@ -119,7 +128,12 @@ func _test_mob_contact_two_players() -> int:
 			player.velocity = Vector2.ZERO
 			await process_frame
 		if health.health != full - Mob.CONTACT_DAMAGE:
-			printerr("FAIL mob_contact_two_players client health %s of %s after touching %s" % [health.health, full, mob.name])
+			printerr(
+				(
+					"FAIL mob_contact_two_players client health %s of %s after touching %s"
+					% [health.health, full, mob.name]
+				)
+			)
 			fail += 1
 	OS.kill(pid)
 	scene.enet_peer.close()

@@ -7,7 +7,10 @@ extends RefCounted
 const DEFAULT_MAX_ATTEMPTS := 64
 
 const STEPS: Array[Vector2i] = [
-	Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0),
+	Vector2i(0, -1),
+	Vector2i(1, 0),
+	Vector2i(0, 1),
+	Vector2i(-1, 0),
 ]
 
 
@@ -25,12 +28,12 @@ static func adjacency_table(pieces: Array) -> Dictionary:
 
 
 static func solve(
-		width: int,
-		height: int,
-		pieces: Array,
-		seed: int,
-		max_attempts: int = DEFAULT_MAX_ATTEMPTS,
-		cell_allowed: Array = [],
+	width: int,
+	height: int,
+	pieces: Array,
+	seed: int,
+	max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+	cell_allowed: Array = [],
 ) -> Dictionary:
 	if width < 1 or height < 1:
 		return _fail("grid size must be positive")
@@ -67,11 +70,11 @@ static func _fail(message: String, attempts: int = 0) -> Dictionary:
 
 
 static func _collapse(
-		wave: Array,
-		width: int,
-		height: int,
-		adjacency: Dictionary,
-		rng: RandomNumberGenerator,
+	wave: Array,
+	width: int,
+	height: int,
+	adjacency: Dictionary,
+	rng: RandomNumberGenerator,
 ) -> bool:
 	while true:
 		if _has_contradiction(wave):
@@ -122,13 +125,13 @@ static func _pick_cell(wave: Array, width: int, height: int) -> Vector2i:
 
 
 static func _revise(
-		wave: Array,
-		ax: int,
-		ay: int,
-		bx: int,
-		by: int,
-		side_on_a: String,
-		adjacency: Dictionary,
+	wave: Array,
+	ax: int,
+	ay: int,
+	bx: int,
+	by: int,
+	side_on_a: String,
+	adjacency: Dictionary,
 ) -> bool:
 	var changed := false
 	changed = _filter_toward(wave, ax, ay, bx, by, side_on_a, adjacency) or changed
@@ -138,13 +141,13 @@ static func _revise(
 
 
 static func _filter_toward(
-		wave: Array,
-		from_x: int,
-		from_y: int,
-		to_x: int,
-		to_y: int,
-		side_on_from: String,
-		adjacency: Dictionary,
+	wave: Array,
+	from_x: int,
+	from_y: int,
+	to_x: int,
+	to_y: int,
+	side_on_from: String,
+	adjacency: Dictionary,
 ) -> bool:
 	var from_opts: Array = wave[from_y][from_x]
 	var to_opts: Array = wave[to_y][to_x]
@@ -164,11 +167,11 @@ static func _filter_toward(
 
 
 static func _initial_opts(
-		x: int,
-		y: int,
-		all_opts: Array,
-		piece_ids: Array[String],
-		cell_allowed: Array,
+	x: int,
+	y: int,
+	all_opts: Array,
+	piece_ids: Array[String],
+	cell_allowed: Array,
 ) -> Array:
 	if cell_allowed.is_empty():
 		return all_opts.duplicate()

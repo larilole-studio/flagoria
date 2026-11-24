@@ -2,7 +2,6 @@ extends "res://tests/helpers/test_helpers.gd"
 ## Raid target, clock and palisade damage (#529). No ENet.
 ## Time cost: about 1 s inside tools/verify.sh. A standalone run is about 4 s.
 
-
 const SEED := 11
 
 
@@ -40,7 +39,9 @@ func _test_raid_target() -> int:
 	var near := _place_ring(world, cities, tower, Vector2i(23, -33))
 	var far := _place_ring(world, cities, tower, Vector2i(62, 49))
 	var owned: int = world.place_structure(tower, Vector2i(-47, -51), 1)
-	var neutral: int = world.place_structure(tower, Vector2i(-33, -39), StructurePlacer.OWNER_NEUTRAL)
+	var neutral: int = world.place_structure(
+		tower, Vector2i(-33, -39), StructurePlacer.OWNER_NEUTRAL
+	)
 	var mobs: int = world.place_structure(tower, Vector2i(-32, -36), StructurePlacer.OWNER_MOBS)
 	if near <= 0 or far <= 0 or owned <= 0 or neutral <= 0 or mobs <= 0:
 		printerr("FAIL raid_target: could not place seed-11 fixtures")
@@ -84,10 +85,23 @@ func _settings(game) -> int:
 	game.set_raid_group(3, false)
 	game.set_raid_radius_cells(96, false)
 	game.load_from_disk()
-	if not game.raids_enabled or game.raid_interval_s != 30.0 or game.raid_group != 4 \
-			or game.raid_radius_cells != 20:
-		printerr("FAIL raid_target: reload on=%s interval=%s group=%s radius=%s" % [
-			game.raids_enabled, game.raid_interval_s, game.raid_group, game.raid_radius_cells])
+	if (
+		not game.raids_enabled
+		or game.raid_interval_s != 30.0
+		or game.raid_group != 4
+		or game.raid_radius_cells != 20
+	):
+		printerr(
+			(
+				"FAIL raid_target: reload on=%s interval=%s group=%s radius=%s"
+				% [
+					game.raids_enabled,
+					game.raid_interval_s,
+					game.raid_group,
+					game.raid_radius_cells
+				]
+			)
+		)
 		fail += 1
 	game.set_raids_enabled(false, false)
 	return fail
@@ -107,8 +121,12 @@ func _targets(game, director: RaidDirector, near: int, far: int, owned: int) -> 
 		var target := director.choose_target(row[0])
 		var repeated := director.choose_target(row[0])
 		if target != row[2] or repeated != row[2]:
-			printerr("FAIL raid_target: radius %d from %s got %s then %s, want %s"
-					% [row[1], row[0], target, repeated, row[2]])
+			printerr(
+				(
+					"FAIL raid_target: radius %d from %s got %s then %s, want %s"
+					% [row[1], row[0], target, repeated, row[2]]
+				)
+			)
 			fail += 1
 	return fail
 
@@ -129,7 +147,9 @@ func _clock_and_hp(game, director: RaidDirector, world, near: int) -> int:
 	mobs[0].assign_raid(flag, near)
 	director.advance(90.0)
 	if mobs[0].pinned() or StructureSaves.to_changes(world) != before:
-		printerr("FAIL raid_target: disabling raids did not clear the assignment and leave walls intact")
+		printerr(
+			"FAIL raid_target: disabling raids did not clear the assignment and leave walls intact"
+		)
 		fail += 1
 	game.set_raids_enabled(true, false)
 	director.advance(44.0)
@@ -177,15 +197,19 @@ func _auto_wall(world) -> int:
 	var wall := Vector2i(-10, -33)
 	var stand := Vector2i(-11, -33)
 	var before: Vector2i = world.predict_cell(wall)[1]
-	if world.has_wall(wall) or not TileCatalog.TILES.keys().any(func(tile: String) -> bool:
-			return tile.begins_with("WALL_") and TileCatalog.TILES[tile]["atlas"] == before):
+	var matches_wall := func(tile: String) -> bool:
+		return tile.begins_with("WALL_") and TileCatalog.TILES[tile]["atlas"] == before
+	if world.has_wall(wall) or not TileCatalog.TILES.keys().any(matches_wall):
 		printerr("FAIL raid_target: seed-11 stone wall missing")
 		return 1
 	var mob := _mob(world, "mob_stone", stand)
 	mob.assign_raid(Vector2i(-9, -33), -1)
 	for _i in 6:
 		mob.think(0.25)
-	if world.predict_cell(wall)[1] != before or mob.global_position != world.to_global(world.map_to_local(stand)):
+	if (
+		world.predict_cell(wall)[1] != before
+		or mob.global_position != world.to_global(world.map_to_local(stand))
+	):
 		printerr("FAIL raid_target: castle wall changed or the mob moved through it")
 		return 1
 	return 0

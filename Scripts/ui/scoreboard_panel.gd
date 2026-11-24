@@ -101,10 +101,12 @@ func sorted_rows() -> Array:
 		return rows
 	for peer_id in _connected_peer_ids():
 		rows.append([peer_id, _points.total_of(peer_id)])
-	rows.sort_custom(func(a: Array, b: Array) -> bool:
-		if a[1] != b[1]:
-			return a[1] > b[1]
-		return a[0] < b[0])
+	rows.sort_custom(
+		func(a: Array, b: Array) -> bool:
+			if a[1] != b[1]:
+				return a[1] > b[1]
+			return a[0] < b[0]
+	)
 	return rows
 
 

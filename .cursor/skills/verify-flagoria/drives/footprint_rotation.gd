@@ -6,11 +6,26 @@ const SETTLE := 10
 const ROTATE_BTN := "CanvasLayer1/FootprintRotateButton"
 const WOOD := 30
 const STAND_OFFS := [
-	Vector2i(0, 5), Vector2i(5, 0), Vector2i(0, -5), Vector2i(-5, 0),
-	Vector2i(0, 6), Vector2i(6, 0), Vector2i(0, -6), Vector2i(-6, 0),
-	Vector2i(4, 4), Vector2i(-4, 4), Vector2i(4, -4), Vector2i(-4, -4),
-	Vector2i(0, 7), Vector2i(7, 0), Vector2i(0, -7), Vector2i(-7, 0),
-	Vector2i(5, 5), Vector2i(-5, 5), Vector2i(5, -5), Vector2i(-5, -5),
+	Vector2i(0, 5),
+	Vector2i(5, 0),
+	Vector2i(0, -5),
+	Vector2i(-5, 0),
+	Vector2i(0, 6),
+	Vector2i(6, 0),
+	Vector2i(0, -6),
+	Vector2i(-6, 0),
+	Vector2i(4, 4),
+	Vector2i(-4, 4),
+	Vector2i(4, -4),
+	Vector2i(-4, -4),
+	Vector2i(0, 7),
+	Vector2i(7, 0),
+	Vector2i(0, -7),
+	Vector2i(-7, 0),
+	Vector2i(5, 5),
+	Vector2i(-5, 5),
+	Vector2i(5, -5),
+	Vector2i(-5, -5),
 ]
 
 
@@ -50,8 +65,12 @@ func run() -> void:
 
 	step("preview-90")
 	if not await _preview_valid(it, map, vp, preview, 1):
-		printerr("footprint_rotation: preview 90 not green at %s rot %d reasons %s"
-				% [preview, it.build.footprint_rotation, it.build.reasons])
+		printerr(
+			(
+				"footprint_rotation: preview 90 not green at %s rot %d reasons %s"
+				% [preview, it.build.footprint_rotation, it.build.reasons]
+			)
+		)
 		done(false)
 		return
 	await snapshot("preview-90")
@@ -72,13 +91,17 @@ func run() -> void:
 	done(true)
 
 
-func _plan_sites(it: Interaction, map: TileMap, inventory: Inventory, placer: ConstructionPlacer) -> Dictionary:
+func _plan_sites(
+	it: Interaction, map: TileMap, inventory: Inventory, placer: ConstructionPlacer
+) -> Dictionary:
 	var preview: Variant = null
 	for cell in map.get_used_cells(0):
 		if not it.in_reach(cell):
 			continue
-		if placer.can_place(BuildCosts.TOWER, [cell], inventory, 0).is_empty() \
-				and placer.can_place(BuildCosts.TOWER, [cell], inventory, 1).is_empty():
+		if (
+			placer.can_place(BuildCosts.TOWER, [cell], inventory, 0).is_empty()
+			and placer.can_place(BuildCosts.TOWER, [cell], inventory, 1).is_empty()
+		):
 			preview = cell
 			break
 	if preview == null:
@@ -114,15 +137,23 @@ func _overlap(a: Array, b: Array) -> bool:
 	return false
 
 
-func _footprint_cells(placer: ConstructionPlacer, anchor: Vector2i, quarter_turns: int) -> Dictionary:
+func _footprint_cells(
+	placer: ConstructionPlacer, anchor: Vector2i, quarter_turns: int
+) -> Dictionary:
 	var out := {}
 	for c: Vector2i in placer.tower_footprint(anchor, quarter_turns):
 		out[c] = true
 	return out
 
 
-func _stand_for_anchor(it: Interaction, map: TileMap, placer: ConstructionPlacer,
-		inventory: Inventory, anchor: Vector2i, rotations: Array[int]) -> bool:
+func _stand_for_anchor(
+	it: Interaction,
+	map: TileMap,
+	placer: ConstructionPlacer,
+	inventory: Inventory,
+	anchor: Vector2i,
+	rotations: Array[int]
+) -> bool:
 	var blocked := {}
 	for rot in rotations:
 		for c in _footprint_cells(placer, anchor, rot):
@@ -147,15 +178,20 @@ func _stand_for_anchor(it: Interaction, map: TileMap, placer: ConstructionPlacer
 	return false
 
 
-func _preview_valid(it: Interaction, map: TileMap, vp: Vector2, anchor: Vector2i,
-		want_rot: int) -> bool:
+func _preview_valid(
+	it: Interaction, map: TileMap, vp: Vector2, anchor: Vector2i, want_rot: int
+) -> bool:
 	await _preview_at(it, map, vp)
 	var guard := 0
 	while it.build.footprint_rotation != want_rot:
 		guard += 1
 		if guard > 4:
-			printerr("footprint_rotation: rotate stuck at %d want %d"
-					% [it.build.footprint_rotation, want_rot])
+			printerr(
+				(
+					"footprint_rotation: rotate stuck at %d want %d"
+					% [it.build.footprint_rotation, want_rot]
+				)
+			)
 			return false
 		await click(ROTATE_BTN)
 		it.build.update_preview(vp, vp)
@@ -163,26 +199,44 @@ func _preview_valid(it: Interaction, map: TileMap, vp: Vector2, anchor: Vector2i
 		for i in SETTLE:
 			await process_frame
 	if it.build._snap_from != anchor:
-		printerr("footprint_rotation: preview snapped to %s, want %s"
-				% [it.build._snap_from, anchor])
+		printerr(
+			"footprint_rotation: preview snapped to %s, want %s" % [it.build._snap_from, anchor]
+		)
 		return false
-	return it.build.footprint_rotation == want_rot \
-			and it.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+	return (
+		it.build.footprint_rotation == want_rot
+		and it.build.cell_ok.all(func(ok: bool) -> bool: return ok)
+	)
 
 
-func _place_tower(it: Interaction, map: TileMap, placer: ConstructionPlacer,
-		inventory: Inventory, anchor: Vector2i, want_rot: int, rotations: Array[int]) -> bool:
+func _place_tower(
+	it: Interaction,
+	map: TileMap,
+	placer: ConstructionPlacer,
+	inventory: Inventory,
+	anchor: Vector2i,
+	want_rot: int,
+	rotations: Array[int]
+) -> bool:
 	if not await _stand_for_anchor(it, map, placer, inventory, anchor, rotations):
 		printerr("footprint_rotation: no stand at %s rot %d" % [anchor, want_rot])
 		return false
 	var vp := _cell_vp(it, map, anchor)
 	if not await _preview_valid(it, map, vp, anchor, want_rot):
-		printerr("footprint_rotation: preview failed at %s rot %d reasons %s"
-				% [anchor, want_rot, it.build.reasons])
+		printerr(
+			(
+				"footprint_rotation: preview failed at %s rot %d reasons %s"
+				% [anchor, want_rot, it.build.reasons]
+			)
+		)
 		return false
 	if not it.build.commit():
-		printerr("footprint_rotation: commit failed at %s rot %d reasons %s"
-				% [anchor, want_rot, it.build.reasons])
+		printerr(
+			(
+				"footprint_rotation: commit failed at %s rot %d reasons %s"
+				% [anchor, want_rot, it.build.reasons]
+			)
+		)
 		return false
 	return true
 

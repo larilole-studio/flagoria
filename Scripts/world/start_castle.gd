@@ -64,12 +64,14 @@ static func find_anchor(map: _WorldMap, castle: Structure, origin: Vector2i, kee
 	for y in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
 		for x in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
 			fronts.append(origin + Vector2i(x, y))
-	fronts.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		var da := (a - origin).length_squared()
-		var db := (b - origin).length_squared()
-		if da != db:
-			return da < db
-		return a.y < b.y if a.y != b.y else a.x < b.x)
+	fronts.sort_custom(
+		func(a: Vector2i, b: Vector2i) -> bool:
+			var da := (a - origin).length_squared()
+			var db := (b - origin).length_squared()
+			if da != db:
+				return da < db
+			return a.y < b.y if a.y != b.y else a.x < b.x
+	)
 	var restrict_biome := map.spawn_biome >= 0 and map.biome_at(origin) == map.spawn_biome
 	for front in fronts:
 		if restrict_biome and map.biome_at(front) != map.spawn_biome:
@@ -79,14 +81,18 @@ static func find_anchor(map: _WorldMap, castle: Structure, origin: Vector2i, kee
 	return null
 
 
-static func _find_outside(map: _WorldMap, castle: Structure, origin: Vector2i, keep: int) -> Variant:
+static func _find_outside(
+	map: _WorldMap, castle: Structure, origin: Vector2i, keep: int
+) -> Variant:
 	## Nearer rings first, every front, so a spot the full grid would accept
 	## is still accepted. The actor check stays off until the terrain fits.
 	var reach := _front_reach(castle)
 	for dist in range(keep + 1, SEARCH_RADIUS + 1):
 		for front in _ring(origin, dist, 1):
-			if _front_too_close(front, origin, keep, reach) \
-					and _covers_spawn(castle, front - GATE_FRONT, origin, keep):
+			if (
+				_front_too_close(front, origin, keep, reach)
+				and _covers_spawn(castle, front - GATE_FRONT, origin, keep)
+			):
 				continue
 			if _fits(map, castle, front, true):
 				return front - GATE_FRONT
@@ -109,13 +115,18 @@ static func _ring(origin: Vector2i, dist: int, step: int) -> Array[Vector2i]:
 
 static func _fits(map: _WorldMap, castle: Structure, front: Vector2i, from_host: bool) -> bool:
 	var anchor := front - GATE_FRONT
-	if not map.predicted_clear(front) \
-			or not map._structures.can_place(castle, anchor, 0, from_host, false).is_empty():
+	if (
+		not map.predicted_clear(front)
+		or not map._structures.can_place(castle, anchor, 0, from_host, false).is_empty()
+	):
 		return false
 	if not map._structures.can_place(castle, anchor, 0, from_host).is_empty():
 		return false
 	var foot := StructurePlacer.footprint(castle, anchor)
-	return SpawnFinder.reachable_clear_cells(map, front, SpawnFinder.SPAWN_MIN_REACHABLE, foot).size() >= SpawnFinder.SPAWN_MIN_REACHABLE
+	return (
+		SpawnFinder.reachable_clear_cells(map, front, SpawnFinder.SPAWN_MIN_REACHABLE, foot).size()
+		>= SpawnFinder.SPAWN_MIN_REACHABLE
+	)
 
 
 static func _front_reach(castle: Structure) -> int:

@@ -189,7 +189,9 @@ func resolve() -> void:
 		var name: String = solved.get(cell, "PALISADE_POST")
 		var atlas: Vector2i = TileCatalog.TILES[name]["atlas"]
 		var caps: Array = capmap.get(cell, [])
-		var changed: bool = not _pieces.has(cell) or _pieces[cell] != atlas or not _same(caps, _caps.get(cell, []))
+		var changed: bool = (
+			not _pieces.has(cell) or _pieces[cell] != atlas or not _same(caps, _caps.get(cell, []))
+		)
 		_pieces[cell] = atlas
 		if caps.is_empty():
 			_caps.erase(cell)
@@ -287,8 +289,11 @@ static func _atlas_wall_name(atlas: Vector2i) -> String:
 static func atlas_wall_name(atlas: Vector2i) -> String:
 	## WALL_*, PALISADE_* or TOWER_STONE_* name at `atlas`, or "".
 	for name: String in TileCatalog.TILES:
-		if not name.begins_with("WALL_") and not name.begins_with("PALISADE_") \
-				and not name.begins_with("TOWER_STONE_"):
+		if (
+			not name.begins_with("WALL_")
+			and not name.begins_with("PALISADE_")
+			and not name.begins_with("TOWER_STONE_")
+		):
 			continue
 		if TileCatalog.TILES[name]["atlas"] == atlas:
 			return name

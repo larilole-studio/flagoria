@@ -48,7 +48,8 @@ static func socket_compatible(a: String, b: String) -> bool:
 
 
 static func edge_compatible(
-		piece_a: BuildingBlockPiece, side_a: String, piece_b: BuildingBlockPiece) -> bool:
+	piece_a: BuildingBlockPiece, side_a: String, piece_b: BuildingBlockPiece
+) -> bool:
 	var opp: String = OPPOSITE[side_a]
 	return socket_compatible(piece_a.socket(side_a), piece_b.socket(opp))
 

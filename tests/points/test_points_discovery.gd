@@ -22,11 +22,20 @@ func _test_points_discovery() -> int:
 	var p1: Node2D = scene.get_node("World/1")
 	var p2: Node2D = scene.get_node("World/2")
 	var chunk_px := Vector2(world.chunk_width, world.chunk_height) * 16.0
-	var cases := [[Vector2i(0, 0), Vector2i(0, 0)], [Vector2i(31, 31), Vector2i(0, 0)],
-			[Vector2i(32, 0), Vector2i(1, 0)], [Vector2i(-1, -33), Vector2i(-1, -2)]]
+	var cases := [
+		[Vector2i(0, 0), Vector2i(0, 0)],
+		[Vector2i(31, 31), Vector2i(0, 0)],
+		[Vector2i(32, 0), Vector2i(1, 0)],
+		[Vector2i(-1, -33), Vector2i(-1, -2)]
+	]
 	for c in cases:
 		if DiscoveryPoints.chunk_of(c[0], world) != c[1]:
-			printerr("FAIL points_discovery chunk_of(%s) = %s, want %s" % [c[0], DiscoveryPoints.chunk_of(c[0], world), c[1]])
+			printerr(
+				(
+					"FAIL points_discovery chunk_of(%s) = %s, want %s"
+					% [c[0], DiscoveryPoints.chunk_of(c[0], world), c[1]]
+				)
+			)
 			fail += 1
 	var home: Vector2i = DiscoveryPoints.chunk_of(world.local_to_map(p1.position), world)
 	p2.position = p1.position + chunk_px * 4.0
@@ -38,8 +47,12 @@ func _test_points_discovery() -> int:
 	for i in 3:
 		discovery.check_players()
 	if points.total_of(1) != Points.DISCOVERY_POINTS or discovery.discoverer_of(home) != 1:
-		printerr("FAIL points_discovery host has %s after staying in %s (discoverer %s)"
-				% [points.total_of(1), home, discovery.discoverer_of(home)])
+		printerr(
+			(
+				"FAIL points_discovery host has %s after staying in %s (discoverer %s)"
+				% [points.total_of(1), home, discovery.discoverer_of(home)]
+			)
+		)
 		fail += 1
 	if points.total_of(2) != 0:
 		printerr("FAIL points_discovery dead player got %s" % points.total_of(2))
@@ -50,7 +63,12 @@ func _test_points_discovery() -> int:
 	for i in 3:
 		discovery.check_players()
 	if points.total_of(2) != 0:
-		printerr("FAIL points_discovery second player paid %s for a discovered chunk" % points.total_of(2))
+		printerr(
+			(
+				"FAIL points_discovery second player paid %s for a discovered chunk"
+				% points.total_of(2)
+			)
+		)
 		fail += 1
 	# Flicking between two new chunks on every check never pays.
 	for i in 4:
@@ -68,18 +86,29 @@ func _test_points_discovery() -> int:
 	for i in 3:
 		discovery.check_players()
 	var far_chunk: Vector2i = DiscoveryPoints.chunk_of(world.local_to_map(far), world)
-	if points.total_of(2) != Points.DISCOVERY_POINTS or points.total_of(1) != Points.DISCOVERY_POINTS \
-			or discovery.discoverer_of(far_chunk) != 2:
-		printerr("FAIL points_discovery after the new chunk: host %s, second %s, discoverer %s"
-				% [points.total_of(1), points.total_of(2), discovery.discoverer_of(far_chunk)])
+	if (
+		points.total_of(2) != Points.DISCOVERY_POINTS
+		or points.total_of(1) != Points.DISCOVERY_POINTS
+		or discovery.discoverer_of(far_chunk) != 2
+	):
+		printerr(
+			(
+				"FAIL points_discovery after the new chunk: host %s, second %s, discoverer %s"
+				% [points.total_of(1), points.total_of(2), discovery.discoverer_of(far_chunk)]
+			)
+		)
 		fail += 1
 	# A new world: the same chunk pays again.
 	world.apply_map_params(scene.world_params)
 	discovery.check_players()
 	discovery.check_players()
 	if points.total_of(1) != 2 * Points.DISCOVERY_POINTS or discovery.discoverer_of(far_chunk) != 1:
-		printerr("FAIL points_discovery new world: host %s, discoverer %s"
-				% [points.total_of(1), discovery.discoverer_of(far_chunk)])
+		printerr(
+			(
+				"FAIL points_discovery new world: host %s, discoverer %s"
+				% [points.total_of(1), discovery.discoverer_of(far_chunk)]
+			)
+		)
 		fail += 1
 	scene.queue_free()
 	await process_frame
@@ -99,7 +128,14 @@ func _test_points_discovery_two_players() -> int:
 		return 1
 	var pid := OS.create_process(
 		OS.get_executable_path(),
-		["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server", "--port=%d" % port]
+		[
+			"--headless",
+			"--path",
+			ProjectSettings.globalize_path("res://"),
+			"--",
+			"--server",
+			"--port=%d" % port
+		]
 	)
 	if pid <= 0:
 		printerr("FAIL points_discovery_two_players could not start the server process")
@@ -122,16 +158,27 @@ func _test_points_discovery_two_players() -> int:
 			break
 		await process_frame
 	if covered <= 0 or points.total_of(me) != Points.DISCOVERY_POINTS + covered:
-		printerr("FAIL points_discovery_two_players client total %s, want %s plus land %s"
-				% [points.total_of(me), Points.DISCOVERY_POINTS, covered])
+		printerr(
+			(
+				"FAIL points_discovery_two_players client total %s, want %s plus land %s"
+				% [points.total_of(me), Points.DISCOVERY_POINTS, covered]
+			)
+		)
 		fail += 1
 	else:
 		var until := Time.get_ticks_msec() + 1500  # several more checks
 		while Time.get_ticks_msec() < until:
 			await process_frame
-		if points.total_of(me) != Points.DISCOVERY_POINTS + covered or hud.text != "%d" % points.total_of(me):
-			printerr("FAIL points_discovery_two_players standing still: total %s, counter '%s'"
-					% [points.total_of(me), hud.text])
+		if (
+			points.total_of(me) != Points.DISCOVERY_POINTS + covered
+			or hud.text != "%d" % points.total_of(me)
+		):
+			printerr(
+				(
+					"FAIL points_discovery_two_players standing still: total %s, counter '%s'"
+					% [points.total_of(me), hud.text]
+				)
+			)
 			fail += 1
 	OS.kill(pid)
 	scene.enet_peer.close()

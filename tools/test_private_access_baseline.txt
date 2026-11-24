@@ -19,12 +19,12 @@
 3 tests/mechanics/conquest/test_tower_capture.gd
 1 tests/mechanics/day_night/test_day_night.gd
 4 tests/mechanics/defense/test_tower_guns.gd
-14 tests/mechanics/interactables/test_bushes.gd
+23 tests/mechanics/interactables/test_bushes.gd
 4 tests/mechanics/npcs/test_soldier_fight.gd
 2 tests/mechanics/structures/test_footprint_rotation.gd
 2 tests/mechanics/trees/test_dead_cut.gd
 6 tests/mechanics/trees/test_tree_chop.gd
-13 tests/mechanics/trees/test_tree_frames.gd
+24 tests/mechanics/trees/test_tree_frames.gd
 1 tests/mechanics/trees/test_tree_sounds.gd
 19 tests/mechanics/walls/test_wall_health.gd
 2 tests/mobs/test_mob_contact.gd

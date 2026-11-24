@@ -10,7 +10,9 @@ const DAMAGE := 1
 const COOLDOWN := 1.0  ## matches PlayerHealth.invulnerable_time
 
 
-static func fly(map: Node, origin: Vector2, direction: Vector2, mobs: Array, players: Array, shooter: Node) -> Dictionary:
+static func fly(
+	map: Node, origin: Vector2, direction: Vector2, mobs: Array, players: Array, shooter: Node
+) -> Dictionary:
 	## Walk origin along direction at SPEED, sampling every STEP, and stop
 	## at RANGE. A blocked AttackAim.clear_shot between two samples is
 	## terrain. Otherwise the first mob contact box or player box on the
@@ -73,7 +75,9 @@ static func _bodies(players: Array, shooter: Node) -> Array:
 	return exclude
 
 
-static func _along(a: Vector2, b: Vector2, mobs: Array, players: Array, shooter: Node) -> Dictionary:
+static func _along(
+	a: Vector2, b: Vector2, mobs: Array, players: Array, shooter: Node
+) -> Dictionary:
 	var best_t := 2.0
 	var best := {}
 	var delta := b - a

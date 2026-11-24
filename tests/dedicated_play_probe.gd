@@ -10,8 +10,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## Writes a JSON snapshot about every 100 ms. Quits when PATH.stop exists.
 
 
-
-
 func _run() -> void:
 	var save := option("--save")
 	var dedicated := has_option("--dedicated")
@@ -19,12 +17,16 @@ func _run() -> void:
 	var mob_name := option("--mob")
 	var listed := _parse_cells(option("--cells"))
 	if dedicated and save == "":
-		printerr("dedicated_play_probe: needs --port=N --out=PATH, and --save=PATH with --dedicated")
+		printerr(
+			"dedicated_play_probe: needs --port=N --out=PATH, and --save=PATH with --dedicated"
+		)
 		quit(1)
 		return
 	var main = await open_game(dedicated)
 	if main == null:
-		printerr("dedicated_play_probe: needs --port=N --out=PATH, and --save=PATH with --dedicated")
+		printerr(
+			"dedicated_play_probe: needs --port=N --out=PATH, and --save=PATH with --dedicated"
+		)
 		quit(1)
 		return
 	if dedicated:
@@ -49,7 +51,12 @@ func _run() -> void:
 	var deadline := Time.get_ticks_msec() + 90000
 	while game_active(main, deadline):
 		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
-		if not dedicated and me and main.world_params != null and FileAccess.file_exists(probe_out + ".cut"):
+		if (
+			not dedicated
+			and me
+			and main.world_params != null
+			and FileAccess.file_exists(probe_out + ".cut")
+		):
 			for cell in _parse_cells(FileAccess.get_file_as_string(probe_out + ".cut")):
 				if cut_done.has(cell):
 					continue
@@ -77,8 +84,22 @@ func _run() -> void:
 		if snapshot_due(main):
 			_write(main, world, listed, me, dedicated, mob_name, seen, watched_hp, present, hitting)
 		await process_frame
-	finish(main, func() -> void:
-		_write(main, world, listed, local_player(main), dedicated, mob_name, seen, watched_hp, present, hitting))
+	finish(
+		main,
+		func() -> void:
+			_write(
+				main,
+				world,
+				listed,
+				local_player(main),
+				dedicated,
+				mob_name,
+				seen,
+				watched_hp,
+				present,
+				hitting
+			)
+	)
 
 
 static func _parse_cells(text: String) -> Array[Vector2i]:
@@ -96,8 +117,18 @@ static func _sword_on(player: Node2D, mob: Mob) -> void:
 	player.velocity = Vector2.ZERO
 
 
-func _write(main, world, listed: Array[Vector2i], me: Node2D, dedicated: bool,
-		mob_name: String, seen: Array[int], watched_hp: int, present: bool, hitting: bool) -> void:
+func _write(
+	main,
+	world,
+	listed: Array[Vector2i],
+	me: Node2D,
+	dedicated: bool,
+	mob_name: String,
+	seen: Array[int],
+	watched_hp: int,
+	present: bool,
+	hitting: bool
+) -> void:
 	var players: Array[String] = []
 	for node in main.get_node("World").get_children():
 		if node is CharacterBody2D and str(node.name).is_valid_int():
@@ -122,18 +153,20 @@ func _write(main, world, listed: Array[Vector2i], me: Node2D, dedicated: bool,
 	var wood := 0
 	if not dedicated:
 		wood = main.get_node("Inventory").count_of(Inventory.WOOD)
-	write_result({
-		"id": str(main.multiplayer.get_unique_id()),
-		"ready": main.world_params != null and (dedicated or me != null),
-		"dedicated": dedicated,
-		"players": players,
-		"cuts": cuts,
-		"cells": cells,
-		"wood": wood,
-		"mob": mob_name,
-		"mob_states": seen,
-		"mob_hp": watched_hp,
-		"mob_present": present,
-		"hitting": hitting,
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id": str(main.multiplayer.get_unique_id()),
+			"ready": main.world_params != null and (dedicated or me != null),
+			"dedicated": dedicated,
+			"players": players,
+			"cuts": cuts,
+			"cells": cells,
+			"wood": wood,
+			"mob": mob_name,
+			"mob_states": seen,
+			"mob_hp": watched_hp,
+			"mob_present": present,
+			"hitting": hitting,
+			"errors": _errors.snapshot(),
+		}
+	)

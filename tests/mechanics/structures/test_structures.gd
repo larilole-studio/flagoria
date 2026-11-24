@@ -7,7 +7,9 @@ func _test_structure_round_trip() -> int:
 	## matches the file name, and it re-exports byte for byte.
 	print("-- test_structure_round_trip")
 	var fail := 0
-	var files := Array(DirAccess.get_files_at("res://structures")).filter(func(f): return f.ends_with(".txt"))
+	var files := Array(DirAccess.get_files_at("res://structures")).filter(
+		func(f): return f.ends_with(".txt")
+	)
 	if not "guard_post.txt" in files:
 		printerr("FAIL structure_round_trip: res://structures/guard_post.txt is missing")
 		fail += 1
@@ -23,7 +25,12 @@ func _test_structure_round_trip() -> int:
 			printerr("FAIL structure_round_trip %s: name is %s" % [file, s.name])
 			fail += 1
 		if s.to_text() != text:
-			printerr("FAIL structure_round_trip %s is not canonical, re-export:\n%s" % [file, s.to_text()])
+			printerr(
+				(
+					"FAIL structure_round_trip %s is not canonical, re-export:\n%s"
+					% [file, s.to_text()]
+				)
+			)
 			fail += 1
 	if fail == 0:
 		print("PASS test_structure_round_trip (%d files)" % files.size())
@@ -70,7 +77,9 @@ func _test_structure_rejects() -> int:
 		if errors.size() != 1 or not c[2] in errors[0]:
 			printerr("FAIL structure_rejects want '%s', got %s" % [c[2], errors])
 			fail += 1
-	var empty := _structure_errors("flagoria-structure 1\nname: x\nversion: 1\nsize: 1x1\nanchor: 0,0\nlegend:\nobject:\n  .\n")
+	var empty := _structure_errors(
+		"flagoria-structure 1\nname: x\nversion: 1\nsize: 1x1\nanchor: 0,0\nlegend:\nobject:\n  .\n"
+	)
 	if empty.size() != 1 or not "object layer is empty" in empty[0]:
 		printerr("FAIL structure_rejects want 'object layer is empty', got %s" % [empty])
 		fail += 1
@@ -93,7 +102,9 @@ func _test_structure_export_filter() -> int:
 			continue
 		var filters := str(presets.get_value(section, "include_filter", "")).split(",", false)
 		if not "structures/*.txt" in Array(filters).map(func(f): return f.strip_edges()):
-			printerr("FAIL structure_export_filter: %s include_filter lacks structures/*.txt" % section)
+			printerr(
+				"FAIL structure_export_filter: %s include_filter lacks structures/*.txt" % section
+			)
 			fail += 1
 	if fail == 0:
 		print("PASS test_structure_export_filter")

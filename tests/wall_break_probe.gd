@@ -2,7 +2,6 @@ extends "res://tests/helpers/probe_base.gd"
 ## Two-player wall damage probe (#35).
 ## Host: --host --save --port --out. Client: --port --out [--phase=...].
 
-
 var _place_error := ""
 var _target := Vector2i(1 << 20, 0)
 var _phase_done := ""
@@ -67,7 +66,9 @@ func _prepare_break(main, world, me: Node2D) -> String:
 	_target = spot
 	me.global_position = interaction.cell_center(spot) + Vector2(0, 48)
 	var peer_id := str(main.multiplayer.get_unique_id())
-	if not await wait_for_state(func() -> bool: return host_sees_position(peer_id, me.global_position), 8000):
+	if not await wait_for_state(
+		func() -> bool: return host_sees_position(peer_id, me.global_position), 8000
+	):
 		return "host did not ack position"
 	var one: Array[Vector2i] = [spot]
 	if not requests.place(BuildCosts.WALL_BLOCK, one):
@@ -82,7 +83,9 @@ func _break_sequence(main, world, me: Node2D) -> String:
 	var interaction: Interaction = main.get_node("World/Interaction")
 	me.global_position = interaction.cell_center(spot + Vector2i(0, 1))
 	var peer_id := str(main.multiplayer.get_unique_id())
-	if not await wait_for_state(func() -> bool: return host_sees_position(peer_id, me.global_position), 5000):
+	if not await wait_for_state(
+		func() -> bool: return host_sees_position(peer_id, me.global_position), 5000
+	):
 		return "could not stand south"
 	if not await _swing(me, "Down", PI / 2.0) or _wall_hp(world, spot) != 3:
 		return "away swing did not finish with hp 3"
@@ -104,7 +107,9 @@ func _swing(me: Node2D, direction: String, angle: float) -> bool:
 func _wall_hp(world, cell: Vector2i) -> int:
 	if not world.has_wall(cell):
 		return -1
-	var entry: Dictionary = StructureSaves.to_changes(world).get(WorldSave.chunk_key(cell), {}).get(WorldSave.cell_key(cell), {})
+	var entry: Dictionary = StructureSaves.to_changes(world).get(WorldSave.chunk_key(cell), {}).get(
+		WorldSave.cell_key(cell), {}
+	)
 	return int(entry.get("hp", 3))
 
 
@@ -147,15 +152,22 @@ func _write(main, world, me: Node2D) -> void:
 				var atlas: Vector2i = world.get_cell_atlas_coords(1, cell)
 				walls[key] = [hp, atlas.x, atlas.y]
 				_saw_hp2 = _saw_hp2 or hp == 2
-	write_result({
-		"id": str(main.multiplayer.get_unique_id()) if main != null and main.multiplayer != null else "",
-		"ready": main != null and main.world_params != null and me != null,
-		"place_error": _place_error,
-		"phase_done": _phase_done,
-		"saw_hp2": _saw_hp2,
-		"target": WorldSave.cell_key(_target),
-		"break_done": _break_done,
-		"walls": walls,
-		"peers": peer_positions(main),
-		"errors": _errors.snapshot(),
-	})
+	write_result(
+		{
+			"id":
+			(
+				str(main.multiplayer.get_unique_id())
+				if main != null and main.multiplayer != null
+				else ""
+			),
+			"ready": main != null and main.world_params != null and me != null,
+			"place_error": _place_error,
+			"phase_done": _phase_done,
+			"saw_hp2": _saw_hp2,
+			"target": WorldSave.cell_key(_target),
+			"break_done": _break_done,
+			"walls": walls,
+			"peers": peer_positions(main),
+			"errors": _errors.snapshot(),
+		}
+	)

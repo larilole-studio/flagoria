@@ -37,7 +37,9 @@ func follow_hearts() -> void:
 		return
 	reset_size()
 	scale = hearts.scale
-	position = Vector2(roundf((get_viewport_rect().size.x - size.x * scale.x) / 2.0), hearts.position.y)
+	position = Vector2(
+		roundf((get_viewport_rect().size.x - size.x * scale.x) / 2.0), hearts.position.y
+	)
 
 
 func bind(inventory: Inventory) -> void:

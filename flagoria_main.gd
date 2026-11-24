@@ -38,8 +38,9 @@ var _server_shutdown_started := false
 
 
 func _ready():
-	get_node("CanvasLayer2/MainMenu").connect("new_server_created",
-		func(params: MapGenParams) -> void: setup_server(params, host_port))
+	get_node("CanvasLayer2/MainMenu").connect(
+		"new_server_created", func(params: MapGenParams) -> void: setup_server(params, host_port)
+	)
 	get_node("CanvasLayer2/MainMenu").connect("new_player_added", add_player)
 	get_node("CanvasLayer2/MainMenu").connect("new_player_joined", add_player_joined)
 	get_node("World").child_entered_tree.connect(_on_world_child_entered)
@@ -98,7 +99,9 @@ func start_dedicated_server(port: int, params: MapGenParams = null) -> Error:
 	## normal Join path.
 	get_node("CanvasLayer2/MainMenu").hide()
 	get_node("/root/MusicPlayer").stop(0.0)  # no one listens on a dedicated server
-	var err := setup_server(params if params != null else get_node("/root/MapGen").params, port, false)
+	var err := setup_server(
+		params if params != null else get_node("/root/MapGen").params, port, false
+	)
 	if err != OK:
 		push_error("dedicated server: cannot listen on UDP port %s (error %s)" % [port, err])
 		return err
@@ -115,8 +118,13 @@ func _install_server_quit() -> void:
 	## already loaded, which is fine.
 	_dedicated = true
 	_server_quit_path = "/tmp/flagoria-server-quit-%d" % OS.get_process_id()
-	var status := GDExtensionManager.load_extension("res://addons/server_shutdown/server_shutdown.gdextension")
-	if status != GDExtensionManager.LOAD_STATUS_OK and status != GDExtensionManager.LOAD_STATUS_ALREADY_LOADED:
+	var status := GDExtensionManager.load_extension(
+		"res://addons/server_shutdown/server_shutdown.gdextension"
+	)
+	if (
+		status != GDExtensionManager.LOAD_STATUS_OK
+		and status != GDExtensionManager.LOAD_STATUS_ALREADY_LOADED
+	):
 		push_error("dedicated server: SIGTERM helper failed to load (status %s)" % status)
 
 
@@ -140,8 +148,7 @@ func _shutdown_dedicated() -> void:
 	enet_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	print("Dedicated server stopped.")
-	get_tree().create_timer(0.2).timeout.connect(func() -> void:
-		get_tree().quit(0))
+	get_tree().create_timer(0.2).timeout.connect(func() -> void: get_tree().quit(0))
 
 
 func setup_server(params: MapGenParams, port: int = PORT, with_castle := true) -> Error:
@@ -158,7 +165,11 @@ func setup_server(params: MapGenParams, port: int = PORT, with_castle := true) -
 	if with_castle and not StructureSaves.adopt_start_castle(get_node("World/worldMap"), 1):
 		get_node("World/worldMap").place_start_castle(1)  # the host is peer 1
 
-	if world_params.starter_wood and world_params.starter_grove.is_empty() and not _saved_player_ready:
+	if (
+		world_params.starter_wood
+		and world_params.starter_grove.is_empty()
+		and not _saved_player_ready
+	):
 		var world = get_node("World/worldMap")
 		world_params.starter_grove = world.ensure_starter_wood(world.resolve_player_spawn())
 		get_node("/root/MapGen").params.starter_grove = world_params.starter_grove.duplicate()
@@ -199,7 +210,12 @@ func _restore_loaded_world() -> int:
 	_saved_player_ready = true
 	var bridges: int = world.replace_bridges(BridgeBuilder.from_changes(loaded.tile_edits, world))
 	var cuts: int = world.restore_object_changes(loaded.object_changes)
-	return cuts + bridges + StructureSaves.restore(loaded.structures, world) + SoldierSaves.restore(loaded.soldiers, get_node("World/Soldiers"))  # after cuts: a structure clears its cells
+	return (
+		cuts
+		+ bridges
+		+ StructureSaves.restore(loaded.structures, world)
+		+ SoldierSaves.restore(loaded.soldiers, get_node("World/Soldiers"))
+	)  # after cuts: a structure clears its cells
 
 
 func _apply_params_to_world(params: MapGenParams) -> void:
@@ -301,9 +317,17 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	var spot: Vector2 = player.position if player else Vector2.INF
 	var world = get_node("World/worldMap")
 	var parts := WorldSave.split_changes(world.object_changes(), JOIN_CUTS_PER_MESSAGE)
-	rpc_id(peer_id, "receive_map_params", world_params.to_dict(), spot, parts[0],
-			world.structures_for_sync(), world.bridges_for_sync(), _player_spots(),
-			world.resolve_player_spawn())
+	rpc_id(
+		peer_id,
+		"receive_map_params",
+		world_params.to_dict(),
+		spot,
+		parts[0],
+		world.structures_for_sync(),
+		world.bridges_for_sync(),
+		_player_spots(),
+		world.resolve_player_spawn()
+	)
 	var requests := get_node_or_null("World/StructureRequests")
 	if requests != null:
 		requests.sync_to_peer(peer_id)
@@ -313,14 +337,23 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 	var capture := get_node_or_null("World/TowerCapture")
 	if capture != null:
 		capture.sync_to_peer(peer_id)
-	var generated := get_node_or_null("World/GeneratedBuildings"); if generated != null: generated.sync_to_peer(peer_id)
+	var generated := get_node_or_null("World/GeneratedBuildings")
+	if generated != null:
+		generated.sync_to_peer(peer_id)
 	for i in range(1, parts.size()):
 		rpc_id(peer_id, "receive_join_cuts", parts[i])
 
 
 @rpc("authority", "reliable", "call_remote")
-func receive_map_params(data: Dictionary, spot: Vector2, cuts: Dictionary, placements: Array,
-		bridges: Array = [], spots: Dictionary = {}, spawn_cell: Vector2i = Vector2i.ZERO) -> void:
+func receive_map_params(
+	data: Dictionary,
+	spot: Vector2,
+	cuts: Dictionary,
+	placements: Array,
+	bridges: Array = [],
+	spots: Dictionary = {},
+	spawn_cell: Vector2i = Vector2i.ZERO
+) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return  # only the host sends the map; the rpc mode already refuses others
 	var params = MapGenParams.new()
@@ -365,7 +398,10 @@ func add_player(peer_id):
 	var origin: Vector2i = world.resolve_player_spawn()
 	var rate: float = get_node("/root/GameSettings").mob_rate
 	var mobs: MobSpawner = get_node("World/Mobs")
-	var opening := world_params != null and mobs.opening_roster(world, origin, world_params.altitude_seed, rate)
+	var opening := (
+		world_params != null
+		and mobs.opening_roster(world, origin, world_params.altitude_seed, rate)
+	)
 	var anchor: Variant = StartCastle.place_for_peer(world, int(peer_id))
 	if anchor is Vector2i:
 		var requests := get_node_or_null("World/StructureRequests")
@@ -485,14 +521,16 @@ func unpn_setup():
 	var upnp = UPNP.new()
 
 	var discover_result = upnp.discover()
-	assert(discover_result == UPNP.UPNP_RESULT_SUCCESS, \
-		"UPNP Discovery failed! Error %s" % discover_result)
+	assert(
+		discover_result == UPNP.UPNP_RESULT_SUCCESS,
+		"UPNP Discovery failed! Error %s" % discover_result
+	)
 
-	assert(upnp.get_gateway() and upnp.get_gateway().is_valid_gateway(), \
-		"UPNP Invalid gateway")
+	assert(upnp.get_gateway() and upnp.get_gateway().is_valid_gateway(), "UPNP Invalid gateway")
 
 	var map_result = upnp.add_port_mapping(PORT)
-	assert(map_result == UPNP.UPNP_RESULT_SUCCESS, \
-		"UPNP Port mapping failed! Error %s" % map_result)
+	assert(
+		map_result == UPNP.UPNP_RESULT_SUCCESS, "UPNP Port mapping failed! Error %s" % map_result
+	)
 
 	print("SUCCESS!! Join address: %s" % upnp.query_external_address())

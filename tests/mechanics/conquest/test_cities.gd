@@ -38,7 +38,9 @@ func _find_clear(world, size: Vector2i) -> Variant:
 func _structure_spot(world, structure: Structure) -> Variant:
 	for cell: Vector2i in world.get_used_cells(0):
 		var cells: Array = StructurePlacer.footprint(structure, cell).keys()
-		if cells.all(func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)):
+		if cells.all(
+			func(c): return world.get_cell_source_id(0, c) != -1 and world.predicted_clear(c)
+		):
 			return cell
 	return null
 
@@ -77,8 +79,11 @@ func _setup_ring_city(label: String) -> Dictionary:
 		# Ring cells must stay clear of the tower footprint.
 		var blocked := false
 		for cell in ring:
-			if world._structures.has_cell(cell) or not world.predicted_clear(cell) \
-					or world.get_cell_source_id(0, cell) == -1:
+			if (
+				world._structures.has_cell(cell)
+				or not world.predicted_clear(cell)
+				or world.get_cell_source_id(0, cell) == -1
+			):
 				blocked = true
 				break
 		if blocked:
@@ -128,7 +133,12 @@ func _test_cities_closed_loop_makes_city() -> int:
 	var id: int = t["id"]
 	cities.rebuild()
 	if not cities.cities.has(id):
-		printerr("FAIL cities_closed_loop_makes_city: no city for tower %s; cities=%s" % [id, cities.cities.keys()])
+		printerr(
+			(
+				"FAIL cities_closed_loop_makes_city: no city for tower %s; cities=%s"
+				% [id, cities.cities.keys()]
+			)
+		)
 		fail += 1
 	else:
 		var rec: Dictionary = cities.cities[id]
@@ -183,8 +193,12 @@ func _test_cities_open_loop_does_not() -> int:
 		var gap := o + Vector2i(2, 0)
 		var open_ring: Array[Vector2i] = []
 		for cell in ring:
-			if cell != gap and world.predicted_clear(cell) and world.get_cell_source_id(0, cell) != -1 \
-					and not world._structures.has_cell(cell):
+			if (
+				cell != gap
+				and world.predicted_clear(cell)
+				and world.get_cell_source_id(0, cell) != -1
+				and not world._structures.has_cell(cell)
+			):
 				open_ring.append(cell)
 		if open_ring.size() < ring.size() - 1:
 			continue
@@ -224,12 +238,18 @@ func _test_cities_capture_changes_owner() -> int:
 	var id: int = t["id"]
 	cities.rebuild()
 	if not cities.cities.has(id) or cities.owner_of(id) != 1:
-		printerr("FAIL cities_capture_changes_owner: setup city owner %s has=%s"
-				% [cities.owner_of(id), cities.cities.has(id)])
+		printerr(
+			(
+				"FAIL cities_capture_changes_owner: setup city owner %s has=%s"
+				% [cities.owner_of(id), cities.cities.has(id)]
+			)
+		)
 		fail += 1
 	t["world"]._structures.set_owner(id, 2)
 	if cities.owner_of(id) != 2:
-		printerr("FAIL cities_capture_changes_owner: after set_owner owner %s" % cities.owner_of(id))
+		printerr(
+			"FAIL cities_capture_changes_owner: after set_owner owner %s" % cities.owner_of(id)
+		)
 		fail += 1
 	t["scene"].queue_free()
 	return fail
@@ -307,8 +327,12 @@ func _test_cities_water_does_not_close() -> int:
 				walls.append(cell + Vector2i(3, y))
 			var placeable: Array[Vector2i] = []
 			for w in walls:
-				if world.get_cell_source_id(0, w) != -1 and world.predicted_clear(w) \
-						and not world.has_wall(w) and not world._structures.has_cell(w):
+				if (
+					world.get_cell_source_id(0, w) != -1
+					and world.predicted_clear(w)
+					and not world.has_wall(w)
+					and not world._structures.has_cell(w)
+				):
 					placeable.append(w)
 			if placeable.size() < walls.size():
 				continue

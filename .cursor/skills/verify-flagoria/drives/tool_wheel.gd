@@ -22,11 +22,19 @@ func run() -> void:
 	if not await wait_until(func() -> bool: return button.size.y > 1.0, 2.0):
 		_fail("tool button has no size")
 		return
-	print("tool wheel: window %s visible %s" % [win.size, current_scene.get_viewport().get_visible_rect().size])
+	print(
+		(
+			"tool wheel: window %s visible %s"
+			% [win.size, current_scene.get_viewport().get_visible_rect().size]
+		)
+	)
 
 	step("closed")
-	if not _selected(wheel, interaction, ToolWheel.Tool.SWORD) \
-			or not _icon_is(button, "wheel_sword") or not _arc_left(wheel):
+	if (
+		not _selected(wheel, interaction, ToolWheel.Tool.SWORD)
+		or not _icon_is(button, "wheel_sword")
+		or not _arc_left(wheel)
+	):
 		_fail("wheel did not start closed with the sword icon and left arc")
 		return
 	await snapshot("tool-closed")
@@ -40,9 +48,12 @@ func run() -> void:
 
 	step("hold")
 	_touch(at, true)
-	if not await wait_until(func() -> bool: return wheel.is_open(), 2.0) \
-			or not _options_visible(wheel) or not _arc_left(wheel) \
-			or wheel.highlighted() != ToolWheel.Tool.SWORD:
+	if (
+		not await wait_until(func() -> bool: return wheel.is_open(), 2.0)
+		or not _options_visible(wheel)
+		or not _arc_left(wheel)
+		or wheel.highlighted() != ToolWheel.Tool.SWORD
+	):
 		_fail("hold did not open the arc with sword highlighted")
 		return
 	await snapshot("tool-open")
@@ -84,9 +95,15 @@ func run() -> void:
 
 
 func _selected(wheel: ToolWheel, interaction: Interaction, tool: ToolWheel.Tool) -> bool:
-	var mode := Interaction.Mode.INTERACT if tool == ToolWheel.Tool.CHOP else Interaction.Mode.COMBAT
-	return not wheel.is_open() and wheel.tool == tool and interaction.mode == mode \
-			and wheel.bow_armed() == (tool == ToolWheel.Tool.BOW)
+	var mode := (
+		Interaction.Mode.INTERACT if tool == ToolWheel.Tool.CHOP else Interaction.Mode.COMBAT
+	)
+	return (
+		not wheel.is_open()
+		and wheel.tool == tool
+		and interaction.mode == mode
+		and wheel.bow_armed() == (tool == ToolWheel.Tool.BOW)
+	)
 
 
 func _tap(at: Vector2, offset := Vector2.ZERO) -> void:
@@ -117,8 +134,13 @@ func _options_visible(wheel: ToolWheel) -> bool:
 
 func _icon_is(button: Button, sprite: String) -> bool:
 	var style := button.get_theme_stylebox("normal") as StyleBoxTexture
-	return style != null and (style.texture == RoundHudStyle.texture(sprite + "_normal")
-			or style.texture == RoundHudStyle.texture(sprite + "_selected"))
+	return (
+		style != null
+		and (
+			style.texture == RoundHudStyle.texture(sprite + "_normal")
+			or style.texture == RoundHudStyle.texture(sprite + "_selected")
+		)
+	)
 
 
 func _touch(at: Vector2, pressed: bool) -> void:

@@ -26,24 +26,36 @@ func _test_tower_gun_two_players() -> int:
 	else:
 		launch.call(false, "place")
 		if not await wait_for.call(func() -> bool: return _client_stood(read), 30000):
-			printerr("FAIL tower_gun_two_players: the host did not see the client at the spot: host %s client %s"
-					% [read.call(0), read.call(1)])
+			printerr(
+				(
+					"FAIL tower_gun_two_players: the host did not see the client at the spot: host %s client %s"
+					% [read.call(0), read.call(1)]
+				)
+			)
 			fail = 1
 		else:
 			var go := FileAccess.open(session["outs"][1] + ".go", FileAccess.WRITE)
 			go.store_string("go")
 			go.close()
 			if not await wait_for.call(func() -> bool: return _tower_up(read), 20000):
-				printerr("FAIL tower_gun_two_players: the tower was not placed: host %s client %s"
-						% [read.call(0), read.call(1)])
+				printerr(
+					(
+						"FAIL tower_gun_two_players: the tower was not placed: host %s client %s"
+						% [read.call(0), read.call(1)]
+					)
+				)
 				fail = 1
 			else:
 				var phase := FileAccess.open(session["outs"][0] + ".phase", FileAccess.WRITE)
 				phase.store_string("in")
 				phase.close()
 				if not await wait_for.call(func() -> bool: return _shot(read), 15000):
-					printerr("FAIL tower_gun_two_players: no shared hit inside range: host %s client %s"
-							% [read.call(0), read.call(1)])
+					printerr(
+						(
+							"FAIL tower_gun_two_players: no shared hit inside range: host %s client %s"
+							% [read.call(0), read.call(1)]
+						)
+					)
 					fail = 1
 				else:
 					var hurt := int(read.call(0).get("host_health", -1))
@@ -51,23 +63,42 @@ func _test_tower_gun_two_players() -> int:
 					out.store_string("out")
 					out.close()
 					if not await wait_for.call(func() -> bool: return _held(read, hurt), 15000):
-						printerr("FAIL tower_gun_two_players: health did not stay outside range: host %s client %s"
-								% [read.call(0), read.call(1)])
+						printerr(
+							(
+								"FAIL tower_gun_two_players: health did not stay outside range: host %s client %s"
+								% [read.call(0), read.call(1)]
+							)
+						)
 						fail = 1
 					else:
 						launch.call(false, "watch")
-						if not await wait_for.call(func() -> bool: return _joiner_sees(read, hurt), 30000):
-							printerr("FAIL tower_gun_two_players: the late joiner does not see the health: host %s joiner %s"
-									% [read.call(0), read.call(2)])
+						if not await wait_for.call(
+							func() -> bool: return _joiner_sees(read, hurt), 30000
+						):
+							printerr(
+								(
+									"FAIL tower_gun_two_players: the late joiner does not see the health: host %s joiner %s"
+									% [read.call(0), read.call(2)]
+								)
+							)
 							fail = 1
 		for i in session["outs"].size():
 			var row: Dictionary = read.call(i)
 			if not row.get("errors", []).is_empty() or str(row.get("place_error", "")) != "":
-				printerr("FAIL tower_gun_two_players: peer %d errors %s place %s"
-						% [i, row.get("errors", []), row.get("place_error", "")])
+				printerr(
+					(
+						"FAIL tower_gun_two_players: peer %d errors %s place %s"
+						% [i, row.get("errors", []), row.get("place_error", "")]
+					)
+				)
 				fail = 1
 			if i == 1 and int(row.get("self_health", -1)) != 6:
-				printerr("FAIL tower_gun_two_players: the builder's health is %s, want 6" % row.get("self_health", -1))
+				printerr(
+					(
+						"FAIL tower_gun_two_players: the builder's health is %s, want 6"
+						% row.get("self_health", -1)
+					)
+				)
 				fail = 1
 	await _close(session)
 	if fail == 0:
@@ -84,32 +115,47 @@ func _client_stood(read: Callable) -> bool:
 	var seen = host.get("players", {}).get(cid)
 	if seen == null:
 		return false
-	return Vector2(seen[0], seen[1]).distance_to(Vector2(client["want"][0], client["want"][1])) <= 4.0
+	return (
+		Vector2(seen[0], seen[1]).distance_to(Vector2(client["want"][0], client["want"][1])) <= 4.0
+	)
 
 
 func _tower_up(read: Callable) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
 	var cid := int(str(client.get("id", "0")))
-	return cid > 1 and int(host.get("tower_owner", -1)) == cid and int(client.get("tower_owner", -1)) == cid \
-			and int(client.get("self_health", -1)) == 6 and int(host.get("host_health", -1)) == 6
+	return (
+		cid > 1
+		and int(host.get("tower_owner", -1)) == cid
+		and int(client.get("tower_owner", -1)) == cid
+		and int(client.get("self_health", -1)) == 6
+		and int(host.get("host_health", -1)) == 6
+	)
 
 
 func _shot(read: Callable) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
 	var hp := int(host.get("host_health", -1))
-	return hp >= 0 and hp < 6 and int(client.get("host_health", -1)) == hp \
-			and int(client.get("self_health", -1)) == 6
+	return (
+		hp >= 0
+		and hp < 6
+		and int(client.get("host_health", -1)) == hp
+		and int(client.get("self_health", -1)) == 6
+	)
 
 
 func _held(read: Callable, hurt: int) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
 	var hp := int(host.get("host_health", -1))
-	return bool(host.get("held", false)) and not bool(host.get("dropped_outside", false)) \
-			and hp >= hurt and int(client.get("host_health", -1)) == hp \
-			and int(client.get("self_health", -1)) == 6
+	return (
+		bool(host.get("held", false))
+		and not bool(host.get("dropped_outside", false))
+		and hp >= hurt
+		and int(client.get("host_health", -1)) == hp
+		and int(client.get("self_health", -1)) == 6
+	)
 
 
 func _joiner_sees(read: Callable, hurt: int) -> bool:
@@ -118,7 +164,12 @@ func _joiner_sees(read: Callable, hurt: int) -> bool:
 	var host: Dictionary = read.call(0)
 	var joiner: Dictionary = read.call(2)
 	var hp := int(host.get("host_health", -1))
-	return joiner.get("ready", false) and hp < 6 and hp >= hurt and int(joiner.get("host_health", -1)) == hp
+	return (
+		joiner.get("ready", false)
+		and hp < 6
+		and hp >= hurt
+		and int(joiner.get("host_health", -1)) == hp
+	)
 
 
 func _open() -> Dictionary:
@@ -128,7 +179,9 @@ func _open() -> Dictionary:
 		return {}
 	var dir := make_probe_dir("tower_gun_%d_%d" % [OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(WorldSave.new(params), "test_tower_gun_%d_%d" % [OS.get_process_id(), port])
+	var saved := MapSave.save_world(
+		WorldSave.new(params), "test_tower_gun_%d_%d" % [OS.get_process_id(), port]
+	)
 	if saved["error"] != "":
 		printerr("FAIL tower gun could not save the map: %s" % saved["error"])
 		return {}
@@ -145,8 +198,13 @@ func _open() -> Dictionary:
 	var wait_for := wait_until
 	launch.call(true, "host")
 	return {
-		"dir": dir, "outs": outs, "probes": probes, "saved": saved["path"],
-		"launch": launch, "read": read, "wait_for": wait_for,
+		"dir": dir,
+		"outs": outs,
+		"probes": probes,
+		"saved": saved["path"],
+		"launch": launch,
+		"read": read,
+		"wait_for": wait_for,
 	}
 
 

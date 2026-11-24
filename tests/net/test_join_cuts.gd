@@ -29,7 +29,7 @@ func _cut_many(world, count: int) -> int:
 	var r := 0
 	while cut < count and r < 200:
 		for x in range(-r, r + 1):
-			for y in ([-r, r] if absi(x) != r else range(-r, r + 1)):
+			for y in [-r, r] if absi(x) != r else range(-r, r + 1):
 				world.play_time = 100.0 - cut % 50
 				if cut < count and world.cut_grown(Vector2i(x, y)) != null:
 					cut += 1
@@ -65,7 +65,10 @@ func _test_join_cuts_split() -> int:
 		return 1
 	var want: Dictionary = host["world"].cut_changes()
 	host["scene"]._sync_map_params_to_peer(2)
-	var msgs: Array = host_api.sent.filter(func(r: Array) -> bool: return r[0] == 2 and str(r[1]) in ["receive_map_params", "receive_join_cuts"])
+	var msgs: Array = host_api.sent.filter(
+		func(r: Array) -> bool:
+			return r[0] == 2 and str(r[1]) in ["receive_map_params", "receive_join_cuts"]
+	)
 	await close_rpc_test_scene(host["scene"])
 	var counts: Array[int] = []
 	var biggest := 0
@@ -75,12 +78,31 @@ func _test_join_cuts_split() -> int:
 		counts.append(_cut_count(cuts))
 		biggest = maxi(biggest, var_to_bytes(args).size())
 	var total := counts.reduce(func(a: int, b: int) -> int: return a + b, 0) as int
-	if msgs.is_empty() or str(msgs[0][1]) != "receive_map_params" or cap <= 0 or cap >= CUTS \
-			or msgs.size() != ceili(CUTS / float(cap)) or counts.any(func(n: int) -> bool: return n > cap) \
-			or total != CUTS or biggest > MESSAGE_BYTES:
-		printerr("FAIL join_cuts_split: cap %d, %d messages %s carrying %s cuts (total %d of %d), biggest %d bytes (most %d)"
-				% [cap, msgs.size(), msgs.map(func(m: Array) -> String: return str(m[1])), counts, total, CUTS,
-				biggest, MESSAGE_BYTES])
+	if (
+		msgs.is_empty()
+		or str(msgs[0][1]) != "receive_map_params"
+		or cap <= 0
+		or cap >= CUTS
+		or msgs.size() != ceili(CUTS / float(cap))
+		or counts.any(func(n: int) -> bool: return n > cap)
+		or total != CUTS
+		or biggest > MESSAGE_BYTES
+	):
+		printerr(
+			(
+				"FAIL join_cuts_split: cap %d, %d messages %s carrying %s cuts (total %d of %d), biggest %d bytes (most %d)"
+				% [
+					cap,
+					msgs.size(),
+					msgs.map(func(m: Array) -> String: return str(m[1])),
+					counts,
+					total,
+					CUTS,
+					biggest,
+					MESSAGE_BYTES
+				]
+			)
+		)
 		fail += 1
 	# A client applies the messages in the order the reliable channel keeps.
 	var client_api := Batch.FakeApi.new()
@@ -92,13 +114,21 @@ func _test_join_cuts_split() -> int:
 			client["scene"].callv(m[1], m[2])
 	var got: Dictionary = client["world"].cut_changes()
 	if got != want:
-		printerr("FAIL join_cuts_split: the client holds %d cuts, the host %d (or ages differ)"
-				% [_cut_count(got), _cut_count(want)])
+		printerr(
+			(
+				"FAIL join_cuts_split: the client holds %d cuts, the host %d (or ages differ)"
+				% [_cut_count(got), _cut_count(want)]
+			)
+		)
 		fail += 1
 	await close_rpc_test_scene(client["scene"])
 	if fail == 0:
-		print("PASS test_join_cuts_split (%d cuts in %d messages of %s, biggest %d bytes)"
-				% [CUTS, msgs.size(), counts, biggest])
+		print(
+			(
+				"PASS test_join_cuts_split (%d cuts in %d messages of %s, biggest %d bytes)"
+				% [CUTS, msgs.size(), counts, biggest]
+			)
+		)
 	return fail
 
 
@@ -123,13 +153,23 @@ func _test_join_cuts_host_only() -> int:
 		api.sender = from
 		s["scene"].receive_join_cuts(cuts)
 		if not s["world"].cut_changes().is_empty():
-			printerr("FAIL join_cuts_host_only: a message from peer %d added %s" % [from, s["world"].cut_changes()])
+			printerr(
+				(
+					"FAIL join_cuts_host_only: a message from peer %d added %s"
+					% [from, s["world"].cut_changes()]
+				)
+			)
 			fail += 1
 			s["world"].replace_cuts({})
 	api.sender = 1
 	s["scene"].receive_join_cuts(cuts)
 	if s["world"].cut_changes() != cuts:
-		printerr("FAIL join_cuts_host_only: the host's message gave %s, want %s" % [s["world"].cut_changes(), cuts])
+		printerr(
+			(
+				"FAIL join_cuts_host_only: the host's message gave %s, want %s"
+				% [s["world"].cut_changes(), cuts]
+			)
+		)
 		fail += 1
 	await close_rpc_test_scene(s["scene"])
 	if fail == 0:

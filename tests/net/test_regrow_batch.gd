@@ -73,8 +73,13 @@ func _regrow_scene(api: FakeApi) -> Dictionary:
 	world.play_time = 100.0
 	for cell in cells:
 		world.cut_choppable(cell)
-	return {"scene": scene, "world": world, "interaction": scene.get_node("World/Interaction"),
-			"cells": cells, "atlases": atlases}
+	return {
+		"scene": scene,
+		"world": world,
+		"interaction": scene.get_node("World/Interaction"),
+		"cells": cells,
+		"atlases": atlases
+	}
 
 
 func _drop_scene(s: Dictionary) -> void:
@@ -97,20 +102,44 @@ func _test_regrow_one_rpc_per_tick() -> int:
 	var host := _regrow_scene(host_api)
 	var cells: Array[Vector2i] = host["cells"]
 	if cells.size() < CELLS:
-		printerr("FAIL regrow_one_rpc_per_tick: no seed has %d plants near the origin (found %d)" % [CELLS, cells.size()])
+		printerr(
+			(
+				"FAIL regrow_one_rpc_per_tick: no seed has %d plants near the origin (found %d)"
+				% [CELLS, cells.size()]
+			)
+		)
 		await _drop_scene(host)
 		return 1
 	host["world"].play_time = 131.0
 	var regrew: int = host["world"].regrow_due()
 	var rpcs := _regrow_rpcs(host_api)
 	if regrew != CELLS or rpcs.size() != 1:
-		printerr("FAIL regrow_one_rpc_per_tick: %d stumps regrew in one tick, sent %d regrowth RPCs, want 1: %s"
-				% [regrew, rpcs.size(), rpcs])
+		printerr(
+			(
+				"FAIL regrow_one_rpc_per_tick: %d stumps regrew in one tick, sent %d regrowth RPCs, want 1: %s"
+				% [regrew, rpcs.size(), rpcs]
+			)
+		)
 		fail += 1
-	var listed: Array = rpcs[0][2][0] if rpcs.size() == 1 and rpcs[0][2].size() == 1 and rpcs[0][2][0] is Array else []
-	if rpcs.size() == 1 and (rpcs[0][0] != 0 or listed.size() != CELLS
-			or not cells.all(func(c: Vector2i) -> bool: return listed.has(c))):
-		printerr("FAIL regrow_one_rpc_per_tick: the RPC %s does not list %s for every peer" % [rpcs[0], cells])
+	var listed: Array = (
+		rpcs[0][2][0]
+		if rpcs.size() == 1 and rpcs[0][2].size() == 1 and rpcs[0][2][0] is Array
+		else []
+	)
+	if (
+		rpcs.size() == 1
+		and (
+			rpcs[0][0] != 0
+			or listed.size() != CELLS
+			or not cells.all(func(c: Vector2i) -> bool: return listed.has(c))
+		)
+	):
+		printerr(
+			(
+				"FAIL regrow_one_rpc_per_tick: the RPC %s does not list %s for every peer"
+				% [rpcs[0], cells]
+			)
+		)
 		fail += 1
 	host_api.sent.clear()
 	host["world"].play_time = 200.0
@@ -133,8 +162,17 @@ func _test_regrow_one_rpc_per_tick() -> int:
 			interaction.callv(rpcs[0][1], rpcs[0][2])
 		for cell in cells:
 			var here: Vector2i = client["world"].get_cell_atlas_coords(1, cell)
-			if here != host_plants[cell] or here != client["atlases"][cell] or client["world"].choppable(cell) == null:
-				printerr("FAIL regrow_one_rpc_per_tick: %s is %s on the client, %s on the host" % [cell, here, host_plants[cell]])
+			if (
+				here != host_plants[cell]
+				or here != client["atlases"][cell]
+				or client["world"].choppable(cell) == null
+			):
+				printerr(
+					(
+						"FAIL regrow_one_rpc_per_tick: %s is %s on the client, %s on the host"
+						% [cell, here, host_plants[cell]]
+					)
+				)
 				fail += 1
 		await _drop_scene(client)
 	if fail == 0:
@@ -163,13 +201,18 @@ func _test_regrow_refuses_non_host() -> int:
 		interaction.apply_regrow_cells(cells)
 		for cell in cells:
 			if world.choppable(cell) != null:
-				printerr("FAIL regrow_refuses_non_host: a message from peer %d regrew %s" % [from, cell])
+				printerr(
+					"FAIL regrow_refuses_non_host: a message from peer %d regrew %s" % [from, cell]
+				)
 				fail += 1
 				break
 	api.sender = 1
 	interaction.apply_regrow_cells(cells)
 	for cell in cells:
-		if world.choppable(cell) == null or world.get_cell_atlas_coords(1, cell) != s["atlases"][cell]:
+		if (
+			world.choppable(cell) == null
+			or world.get_cell_atlas_coords(1, cell) != s["atlases"][cell]
+		):
 			printerr("FAIL regrow_refuses_non_host: the host's message did not regrow %s" % cell)
 			fail += 1
 	await _drop_scene(s)

@@ -7,11 +7,18 @@ const MIN_INTERIOR_FLOORS := 4
 const BUILDING_SOLVE_ATTEMPTS := 64
 
 const WALL_RING_IDS: Array[String] = [
-	"wall_straight", "door", "window",
+	"wall_straight",
+	"door",
+	"window",
 ]
 const ROOF_IDS: Array[String] = ["roof_edge", "roof_fill"]
 const RING_PIECE_IDS: Array[String] = [
-	"wall_straight", "door", "window", "roof_edge", "roof_fill", "wall_corner",
+	"wall_straight",
+	"door",
+	"window",
+	"roof_edge",
+	"roof_fill",
+	"wall_corner",
 ]
 const ROOF_ROW := 0
 
@@ -19,24 +26,33 @@ const WALKABLE_IDS: Array[String] = ["floor", "door"]
 
 
 static func solve_building(
-		width: int,
-		height: int,
-		seed: int,
-		pieces: Array = [],
-		max_attempts: int = BUILDING_SOLVE_ATTEMPTS,
+	width: int,
+	height: int,
+	seed: int,
+	pieces: Array = [],
+	max_attempts: int = BUILDING_SOLVE_ATTEMPTS,
 ) -> Dictionary:
 	if pieces.is_empty():
 		for piece: BuildingBlockPiece in BuildingBlockCatalog.all():
 			pieces.append(piece)
 	var interior := interior_floor_count(width, height)
 	if interior < MIN_INTERIOR_FLOORS:
-		return _fail("building %dx%d interior %d < %d" % [
-				width, height, interior, MIN_INTERIOR_FLOORS,
-		])
+		return _fail(
+			(
+				"building %dx%d interior %d < %d"
+				% [
+					width,
+					height,
+					interior,
+					MIN_INTERIOR_FLOORS,
+				]
+			)
+		)
 	var allowed := build_cell_allowed(width, height)
 	for attempt in max_attempts:
 		var result := WfcSolver.solve(
-				width, height, pieces, seed + attempt * 0x9E3779B9, 1, allowed)
+			width, height, pieces, seed + attempt * 0x9E3779B9, 1, allowed
+		)
 		if not result.ok:
 			continue
 		var err := validate_all(result.grid)

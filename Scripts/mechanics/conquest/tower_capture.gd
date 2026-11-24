@@ -24,7 +24,9 @@ const CAPTURE_RADIUS := 32.0  ## px (2 cells) from the flag cell's centre
 const BAR_SIZE := Vector2(16, 3)  ## px, drawn above the flag cell
 const BAR_OFFSET := Vector2(-8, -14)  ## px from the flag cell's centre
 const BAR_BACK := Color(0.08, 0.07, 0.12, 0.85)
-const BAR_COLOURS := {1: Color(0.23, 0.44, 0.88), StructurePlacer.OWNER_MOBS: Color(0.61, 0.33, 0.77)}
+const BAR_COLOURS := {
+	1: Color(0.23, 0.44, 0.88), StructurePlacer.OWNER_MOBS: Color(0.61, 0.33, 0.77)
+}
 const BAR_OTHER := Color(0.88, 0.29, 0.29)
 
 ## Placement id -> {"side": the side the progress belongs to, "progress": s}.
@@ -174,8 +176,11 @@ func sides_near(centre: Vector2, players: Variant = null) -> Dictionary:
 			out[int(str(node.name))] = true
 	if _mobs != null:
 		for node in _mobs.get_children():
-			if node is Mob and node.state != Mob.State.DYING \
-					and node.global_position.distance_to(centre) <= CAPTURE_RADIUS:
+			if (
+				node is Mob
+				and node.state != Mob.State.DYING
+				and node.global_position.distance_to(centre) <= CAPTURE_RADIUS
+			):
 				out[StructurePlacer.OWNER_MOBS] = true
 	return out
 
@@ -193,4 +198,7 @@ func _draw() -> void:
 		var at := to_local(_centre(_towers[id][0])) + BAR_OFFSET
 		var part: float = progress[id]["progress"] / CAPTURE_TIME
 		draw_rect(Rect2(at - Vector2.ONE, BAR_SIZE + Vector2(2, 2)), BAR_BACK)
-		draw_rect(Rect2(at, Vector2(BAR_SIZE.x * part, BAR_SIZE.y)), BAR_COLOURS.get(progress[id]["side"], BAR_OTHER))
+		draw_rect(
+			Rect2(at, Vector2(BAR_SIZE.x * part, BAR_SIZE.y)),
+			BAR_COLOURS.get(progress[id]["side"], BAR_OTHER)
+		)

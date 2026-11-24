@@ -5,7 +5,6 @@ extends RefCounted
 ## A shorter press chops in the facing direction at full reach. A second
 ## finger cancels. The map is not a chop target.
 
-
 var touch := -1
 var dragging := false
 var start := Vector2.ZERO
@@ -18,8 +17,12 @@ func cancel() -> void:
 
 
 func handle(host, event: InputEvent) -> void:
-	if host.mode != Interaction.Mode.INTERACT or host.build.tool != BuildPlacement.Tool.CUT \
-			or host.player == null or Interaction.player_dead(host.player):
+	if (
+		host.mode != Interaction.Mode.INTERACT
+		or host.build.tool != BuildPlacement.Tool.CUT
+		or host.player == null
+		or Interaction.player_dead(host.player)
+	):
 		if touch != -1:
 			cancel()
 		return
@@ -57,7 +60,12 @@ func _touch(host, event: InputEventScreenTouch) -> void:
 
 func _on_button(host, pos: Vector2) -> bool:
 	var button = _button(host)
-	return button != null and button.is_visible_in_tree() and button.has_method("hits") and button.hits(pos)
+	return (
+		button != null
+		and button.is_visible_in_tree()
+		and button.has_method("hits")
+		and button.hits(pos)
+	)
 
 
 func _button(host):

@@ -152,8 +152,11 @@ func _hits(node: Node, pos: Vector2) -> bool:
 			continue
 		if child is TouchScreenButton and _hits_button(child, pos):
 			return true
-		if child is Control and child.mouse_filter != Control.MOUSE_FILTER_IGNORE \
-				and child.get_global_rect().grow(HUD_MARGIN_PX).has_point(pos):
+		if (
+			child is Control
+			and child.mouse_filter != Control.MOUSE_FILTER_IGNORE
+			and child.get_global_rect().grow(HUD_MARGIN_PX).has_point(pos)
+		):
 			return true
 		if _hits(child, pos):
 			return true

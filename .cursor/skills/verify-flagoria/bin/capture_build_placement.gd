@@ -78,9 +78,13 @@ func _run() -> void:
 
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	interaction.build.set_tool(BuildPlacement.Tool.PLANK)
-	var start: Vector2 = interaction.get_canvas_transform() * world.to_global(world.map_to_local(water_run[0]))
-	var end: Vector2 = interaction.get_canvas_transform() * world.to_global(
-			world.map_to_local(water_run[water_run.size() - 1]))
+	var start: Vector2 = (
+		interaction.get_canvas_transform() * world.to_global(world.map_to_local(water_run[0]))
+	)
+	var end: Vector2 = (
+		interaction.get_canvas_transform()
+		* world.to_global(world.map_to_local(water_run[water_run.size() - 1]))
+	)
 	interaction.build.update_preview(start, end)
 	# Fake an active drag so _draw runs the preview every frame.
 	interaction._dragging = true
@@ -100,8 +104,16 @@ func _run() -> void:
 		quit(1)
 		return
 	var save_err = img.save_png(abs_out)
-	print("capture_build_placement: save_err=", save_err, " path=", out_res,
-			" cells=", interaction.build.cells, " cost=", interaction.build.cost)
+	print(
+		"capture_build_placement: save_err=",
+		save_err,
+		" path=",
+		out_res,
+		" cells=",
+		interaction.build.cells,
+		" cost=",
+		interaction.build.cost
+	)
 	if save_err != OK:
 		quit(1)
 		return

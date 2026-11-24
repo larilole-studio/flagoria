@@ -3,7 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## On-demand building (#26). Seed 49. B places a building at the hero.
 ## Two placements, each with a door, then the hero walks into a wall.
 
-
 const STILL_FRAMES := 120
 const ARRIVE_FRAMES := 240
 const PATH_ATTEMPTS := 24
@@ -51,7 +50,12 @@ func run() -> void:
 		return
 	await snapshot("building-two")
 	if buildings.record_count() != 2 or buildings.door_cells().size() != 2:
-		printerr("generated_building: records %s doors %s" % [buildings.record_count(), buildings.door_cells().size()])
+		printerr(
+			(
+				"generated_building: records %s doors %s"
+				% [buildings.record_count(), buildings.door_cells().size()]
+			)
+		)
 		done(false)
 		return
 	if buildings.grid_of(0) == buildings.grid_of(1):
@@ -135,8 +139,10 @@ func _leave_through_door(buildings: GeneratedBuildings) -> bool:
 		if _hero_cell(map) == outside:
 			return true
 	printerr(
-		"generated_building: leave ended at %s after %d steps, want outside %s (door %s)"
-		% [_hero_cell(map), attempts, outside, door]
+		(
+			"generated_building: leave ended at %s after %d steps, want outside %s (door %s)"
+			% [_hero_cell(map), attempts, outside, door]
+		)
 	)
 	return false
 
@@ -197,7 +203,12 @@ func _walk_into_wall(buildings: GeneratedBuildings) -> bool:
 	if _hero_cell(map) != beside:
 		await _arrive_at_cell(map, beside)
 	if _hero_cell(map) != beside:
-		printerr("generated_building: could not reach wall-side cell %s (at %s)" % [beside, _hero_cell(map)])
+		printerr(
+			(
+				"generated_building: could not reach wall-side cell %s (at %s)"
+				% [beside, _hero_cell(map)]
+			)
+		)
 		return false
 	var here := _hero_cell(map)
 	var wall := Vector2i.ZERO
@@ -231,8 +242,6 @@ func _hero_cell(map: TileMap) -> Vector2i:
 	return map.local_to_map(map.to_local(hero().global_position))
 
 
-
-
 func _release_walk() -> void:
 	for action: String in ["ui_left", "ui_right", "ui_up", "ui_down"]:
 		_action(action, false)
@@ -260,8 +269,10 @@ func _arrive_at_cell(map: TileMap, cell: Vector2i) -> bool:
 		if not await _arrive_on_axis(centre, axis):
 			_release_walk()
 			printerr(
-				"generated_building: arrive failed, want %s at %s, at %s (%s)"
-				% [cell, centre, _hero_cell(map), hero().global_position]
+				(
+					"generated_building: arrive failed, want %s at %s, at %s (%s)"
+					% [cell, centre, _hero_cell(map), hero().global_position]
+				)
 			)
 			return false
 	if not await _wait_still():
@@ -270,8 +281,10 @@ func _arrive_at_cell(map: TileMap, cell: Vector2i) -> bool:
 	if _hero_cell(map) == cell or hero().global_position.distance_to(centre) <= 12.0:
 		return true
 	printerr(
-		"generated_building: arrive failed, want %s at %s, at %s (%s)"
-		% [cell, centre, _hero_cell(map), hero().global_position]
+		(
+			"generated_building: arrive failed, want %s at %s, at %s (%s)"
+			% [cell, centre, _hero_cell(map), hero().global_position]
+		)
 	)
 	return false
 
@@ -305,8 +318,10 @@ func _arrive_on_axis(centre: Vector2, axis: int) -> bool:
 			if stalled >= 30 and absf(remaining) > 12.0:
 				_action(action, false)
 				printerr(
-					"generated_building: stalled on axis %d at %s after %d frames, remaining %s"
-					% [axis, hero().global_position, frames, remaining]
+					(
+						"generated_building: stalled on axis %d at %s after %d frames, remaining %s"
+						% [axis, hero().global_position, frames, remaining]
+					)
 				)
 				return false
 		else:
@@ -333,7 +348,9 @@ func _wait_still() -> bool:
 	var left: float = hero().velocity.length()
 	if left <= 20.0:
 		return true
-	printerr("generated_building: still moving at %s px/s after %d physics frames" % [left, STILL_FRAMES])
+	printerr(
+		"generated_building: still moving at %s px/s after %d physics frames" % [left, STILL_FRAMES]
+	)
 	return false
 
 

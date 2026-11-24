@@ -39,17 +39,34 @@ func _test_tile_catalog() -> int:
 	var tile_set: TileSet = scene.get_node("World/worldMap").tile_set
 	for n in TileCatalog.TILES:
 		var entry: Dictionary = TileCatalog.TILES[n]
-		var src = tile_set.get_source(entry["source_id"]) if tile_set.has_source(entry["source_id"]) else null
+		var src = (
+			tile_set.get_source(entry["source_id"])
+			if tile_set.has_source(entry["source_id"])
+			else null
+		)
 		if not src is TileSetAtlasSource or not src.has_tile(entry["atlas"]):
-			printerr("FAIL tile_catalog: %s %s not in TileSet source %s" % [n, entry["atlas"], entry["source_id"]])
+			printerr(
+				(
+					"FAIL tile_catalog: %s %s not in TileSet source %s"
+					% [n, entry["atlas"], entry["source_id"]]
+				)
+			)
 			fail += 1
 	## The map fill tiles keep their cells across tileset versions, so saved
 	## maps and the pinned tests stay valid.
 	var pinned := {
-		"WATER": Vector2i(5, 6), "SAND": Vector2i(5, 4), "SWAMP": Vector2i(14, 7),
-		"SWAMP_SPECIAL": Vector2i(27, 7), "GRASS_A": Vector2i(5, 0), "GRASS_B": Vector2i(5, 1),
-		"GRASS_C": Vector2i(6, 0), "GRASS_D": Vector2i(6, 1), "BUSH": Vector2i(7, 3),
-		"TREE": Vector2i(7, 0), "FLOWER": Vector2i(9, 3), "STONES": Vector2i(0, 7),
+		"WATER": Vector2i(5, 6),
+		"SAND": Vector2i(5, 4),
+		"SWAMP": Vector2i(14, 7),
+		"SWAMP_SPECIAL": Vector2i(27, 7),
+		"GRASS_A": Vector2i(5, 0),
+		"GRASS_B": Vector2i(5, 1),
+		"GRASS_C": Vector2i(6, 0),
+		"GRASS_D": Vector2i(6, 1),
+		"BUSH": Vector2i(7, 3),
+		"TREE": Vector2i(7, 0),
+		"FLOWER": Vector2i(9, 3),
+		"STONES": Vector2i(0, 7),
 		"PINE": Vector2i(7, 2),
 	}
 	for n in pinned:
@@ -68,11 +85,27 @@ func _test_tile_catalog() -> int:
 	## Collision drives walkability: water blocks, ground fill does not.
 	var src0: TileSetAtlasSource = tile_set.get_source(TileCatalog.SOURCE_ID)
 	for n in ["WATER", "TREE", "BUSH", "PINE", "TREE_BIRCH_BOTTOM"]:
-		if src0.get_tile_data(TileCatalog.TILES[n]["atlas"], 0).get_collision_polygons_count(0) == 0:
+		if (
+			src0.get_tile_data(TileCatalog.TILES[n]["atlas"], 0).get_collision_polygons_count(0)
+			== 0
+		):
 			printerr("FAIL tile_catalog: %s has no collision polygon" % n)
 			fail += 1
-	for n in ["SAND", "SWAMP", "SWAMP_SPECIAL", "GRASS_A", "GRASS_B", "GRASS_C", "GRASS_D", "FLOWER", "STONES"]:
-		if src0.get_tile_data(TileCatalog.TILES[n]["atlas"], 0).get_collision_polygons_count(0) != 0:
+	for n in [
+		"SAND",
+		"SWAMP",
+		"SWAMP_SPECIAL",
+		"GRASS_A",
+		"GRASS_B",
+		"GRASS_C",
+		"GRASS_D",
+		"FLOWER",
+		"STONES"
+	]:
+		if (
+			src0.get_tile_data(TileCatalog.TILES[n]["atlas"], 0).get_collision_polygons_count(0)
+			!= 0
+		):
 			printerr("FAIL tile_catalog: %s should be walkable" % n)
 			fail += 1
 	## Plank bridges: 28 walkable cells, row 15/16 sky pieces and the same
@@ -86,15 +119,26 @@ func _test_tile_catalog() -> int:
 		if src0.get_tile_data(a, 0).get_collision_polygons_count(0) != 0:
 			printerr("FAIL tile_catalog: %s should be walkable" % n)
 			fail += 1
-		if n.ends_with("_WATER") and TileCatalog.TILES.get(n.trim_suffix("_WATER"), {}).get("atlas") != a - Vector2i(0, 2):
+		if (
+			n.ends_with("_WATER")
+			and (
+				TileCatalog.TILES.get(n.trim_suffix("_WATER"), {}).get("atlas")
+				!= a - Vector2i(0, 2)
+			)
+		):
 			printerr("FAIL tile_catalog: %s is not two rows below its sky piece" % n)
 			fail += 1
 	if planks != 28:
 		printerr("FAIL tile_catalog: expected 28 plank bridge pieces, got %d" % planks)
 		fail += 1
 	## Island terrain: one terrain set with every ISLAND_BLOB_ base piece in it.
-	if tile_set.get_terrain_sets_count() <= TileCatalog.ISLAND_TERRAIN_SET \
-			or tile_set.get_terrain_name(TileCatalog.ISLAND_TERRAIN_SET, TileCatalog.ISLAND_TERRAIN) != "Island":
+	if (
+		tile_set.get_terrain_sets_count() <= TileCatalog.ISLAND_TERRAIN_SET
+		or (
+			tile_set.get_terrain_name(TileCatalog.ISLAND_TERRAIN_SET, TileCatalog.ISLAND_TERRAIN)
+			!= "Island"
+		)
+	):
 		printerr("FAIL tile_catalog: no Island terrain in the world TileSet")
 		fail += 1
 	else:
@@ -105,7 +149,10 @@ func _test_tile_catalog() -> int:
 			if not n.contains("_W"):
 				bases += 1
 			var td: TileData = src0.get_tile_data(TileCatalog.TILES[n]["atlas"], 0)
-			if td.terrain_set != TileCatalog.ISLAND_TERRAIN_SET or td.terrain != TileCatalog.ISLAND_TERRAIN:
+			if (
+				td.terrain_set != TileCatalog.ISLAND_TERRAIN_SET
+				or td.terrain != TileCatalog.ISLAND_TERRAIN
+			):
 				printerr("FAIL tile_catalog: %s is not an Island terrain tile" % n)
 				fail += 1
 		if bases != 47:

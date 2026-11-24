@@ -72,9 +72,11 @@ func _hook(field: LineEdit, rules: Dictionary) -> void:
 	field.virtual_keyboard_enabled = false
 	field.select_all_on_focus = true
 	field.focus_entered.connect(open.bind(field))
-	field.gui_input.connect(func(event: InputEvent) -> void:
-		if _is_tap(event) and not visible:
-			open(field))
+	field.gui_input.connect(
+		func(event: InputEvent) -> void:
+			if _is_tap(event) and not visible:
+				open(field)
+	)
 
 
 func open(field: LineEdit) -> void:
@@ -89,9 +91,12 @@ func open(field: LineEdit) -> void:
 	_place_beside(field)
 	# Deferred, so a click that focused the field and placed its caret does
 	# not clear the selection again.
-	(func() -> void:
-		if target == field:
-			field.select_all()).call_deferred()
+	(
+		(func() -> void:
+			if target == field:
+				field.select_all())
+		. call_deferred()
+	)
 
 
 func close() -> void:
@@ -178,7 +183,9 @@ func _on_key(key: String) -> void:
 	else:
 		match key:
 			"Minus":
-				target.text = target.text.substr(1) if target.text.begins_with("-") else "-" + target.text
+				target.text = (
+					target.text.substr(1) if target.text.begins_with("-") else "-" + target.text
+				)
 			"Point":
 				if not target.text.contains("."):
 					target.text += "0." if target.text in ["", "-"] else "."

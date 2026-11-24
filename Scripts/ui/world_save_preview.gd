@@ -75,8 +75,9 @@ static func build_image(map: TileMap, params: MapGenParams) -> Image:
 		for px in ICON_SIZE.x:
 			var idx := py * ICON_SIZE.x + px
 			var cell := Vector2i(
-					region.position.x + int((px * region.size.x) / float(ICON_SIZE.x)),
-					region.position.y + int((py * region.size.y) / float(ICON_SIZE.y)))
+				region.position.x + int((px * region.size.x) / float(ICON_SIZE.x)),
+				region.position.y + int((py * region.size.y) / float(ICON_SIZE.y))
+			)
 			cells[idx] = cell
 			kinds[idx] = MapChart.kind_of(map.predict_cell(cell))
 	var img := Image.create(ICON_SIZE.x, ICON_SIZE.y, false, Image.FORMAT_RGBA8)

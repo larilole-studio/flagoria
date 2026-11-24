@@ -33,5 +33,9 @@ func players() -> Array:
 
 func print_world(who: String) -> void:
 	var p: MapGenParams = current_scene.world_params
-	var seeds := "none" if p == null else "%d,%d,%d,%d" % [p.altitude_seed, p.moisture_seed, p.temperature_seed, p.items_seed]
+	var seeds := (
+		"none"
+		if p == null
+		else "%d,%d,%d,%d" % [p.altitude_seed, p.moisture_seed, p.temperature_seed, p.items_seed]
+	)
 	print("two_player: %s players=%s seeds=%s" % [who, ",".join(players()), seeds])

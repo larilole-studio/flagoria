@@ -14,7 +14,12 @@ func _test_main_menu_letter_keyboard() -> int:
 	var kb = menu.get_node_or_null("LetterKeyboard")
 	var fail := 0
 	if kb == null or field.virtual_keyboard_enabled:
-		printerr("FAIL letter_keyboard address field has no in-game keyboard (os keyboard=%s)" % field.virtual_keyboard_enabled)
+		printerr(
+			(
+				"FAIL letter_keyboard address field has no in-game keyboard (os keyboard=%s)"
+				% field.virtual_keyboard_enabled
+			)
+		)
 		scene.queue_free()
 		return 1
 	field.text = "old.host"
@@ -40,7 +45,9 @@ func _test_main_menu_letter_keyboard() -> int:
 		printerr("FAIL letter_keyboard letter keys gave %s want localhost" % field.text)
 		fail += 1
 	for key in ["l", "Digit5", "Delete", "OK"]:
-		var want_style: StringName = {"Delete": &"KeyCapDelete", "OK": &"KeyCapOK"}.get(key, &"KeyCap")
+		var want_style: StringName = {"Delete": &"KeyCapDelete", "OK": &"KeyCapOK"}.get(
+			key, &"KeyCap"
+		)
 		if kb.find_child(key, true, false).theme_type_variation != want_style:
 			printerr("FAIL letter_keyboard %s key is not styled %s" % [key, want_style])
 			fail += 1
@@ -109,12 +116,18 @@ func _test_letter_keyboard_first_minus_replaces() -> int:
 	await process_frame
 	await process_frame
 	if field.get_selected_text() != "old.host":
-		printerr("FAIL letter_keyboard_first_minus_replaces: address not selected on open (%s)"
-				% field.get_selected_text())
+		printerr(
+			(
+				"FAIL letter_keyboard_first_minus_replaces: address not selected on open (%s)"
+				% field.get_selected_text()
+			)
+		)
 		fail += 1
 	kb.find_child("Minus", true, false).pressed.emit()
 	if field.text != "-":
-		printerr("FAIL letter_keyboard_first_minus_replaces: first Minus gave %s want -" % field.text)
+		printerr(
+			"FAIL letter_keyboard_first_minus_replaces: first Minus gave %s want -" % field.text
+		)
 		fail += 1
 	kb.close()
 	await free_ui_scene(scene)
@@ -143,16 +156,25 @@ func _test_letter_keyboard_third_row_fits() -> int:
 	else:
 		var counts := [rows[0].size(), rows[1].size(), rows[2].size(), rows[3].size()]
 		if counts != [10, 10, 11, 10]:
-			printerr("FAIL letter_keyboard_third_row_fits: row sizes %s want [10, 10, 11, 10]" % [counts])
+			printerr(
+				"FAIL letter_keyboard_third_row_fits: row sizes %s want [10, 10, 11, 10]" % [counts]
+			)
 			fail += 1
 		if rows[2][-1] != "Minus" or rows[2][-2] != "Colon":
-			printerr("FAIL letter_keyboard_third_row_fits: third row ends %s, want Colon then Minus" % [rows[2].slice(-2)])
+			printerr(
+				(
+					"FAIL letter_keyboard_third_row_fits: third row ends %s, want Colon then Minus"
+					% [rows[2].slice(-2)]
+				)
+			)
 			fail += 1
 	var panel: Control = kb.get_node("Panel")
 	var pad_w: float = panel.get_combined_minimum_size().x
 	var screen_w: float = kb.get_viewport_rect().size.x
 	if pad_w > screen_w + 0.5:
-		printerr("FAIL letter_keyboard_third_row_fits: panel width %s > viewport %s" % [pad_w, screen_w])
+		printerr(
+			"FAIL letter_keyboard_third_row_fits: panel width %s > viewport %s" % [pad_w, screen_w]
+		)
 		fail += 1
 	else:
 		print("letter_keyboard_third_row_fits: panel_w=%s viewport_w=%s" % [pad_w, screen_w])
@@ -161,12 +183,15 @@ func _test_letter_keyboard_third_row_fits() -> int:
 		var node_name: String = ("Digit" + key) if key.is_valid_int() else key
 		var b: Button = kb.find_child(node_name, true, false)
 		if b == null or b.size.x < 1.0 or b.size.y < 1.0:
-			printerr("FAIL letter_keyboard_third_row_fits: key %s missing or untappable size %s"
-					% [key, b.size if b else Vector2.ZERO])
+			printerr(
+				(
+					"FAIL letter_keyboard_third_row_fits: key %s missing or untappable size %s"
+					% [key, b.size if b else Vector2.ZERO]
+				)
+			)
 			fail += 1
 	kb.close()
 	await free_ui_scene(scene)
 	if fail == 0:
 		print("PASS test_letter_keyboard_third_row_fits")
 	return fail
-

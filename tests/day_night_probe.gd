@@ -64,14 +64,20 @@ func _rows(main) -> Array:
 		return rows
 	for child in mobs_node.get_children():
 		if child is Mob and not child.is_queued_for_deletion():
-			rows.append({
-				"name": str(child.name),
-				"type": str(child.mob_type),
-				"x": int(round(child.home.x)),
-				"y": int(round(child.home.y)),
-			})
-	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return str(a["name"]) < str(b["name"]))
+			(
+				rows
+				. append(
+					{
+						"name": str(child.name),
+						"type": str(child.mob_type),
+						"x": int(round(child.home.x)),
+						"y": int(round(child.home.y)),
+					}
+				)
+			)
+	rows.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool: return str(a["name"]) < str(b["name"])
+	)
 	return rows
 
 
