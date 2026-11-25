@@ -323,8 +323,11 @@ func _test_biome_plants() -> int:
 	var dense := BiomeCatalog.ARCHIPELAGO_DENSE
 	# Distinguish the biome mixes at representative dry and wet sites.
 	for c in [
-		[0.5, 0.4, 0.4, T, TileCatalog.TREE],
-		[0.5, 0.4, 0.4, ocean, NONE],
+		[0.5, 0.2, 0.33, T, TileCatalog.TREE],
+		[0.5, 0.2, 0.33, ocean, NONE],
+		# Cay trees: OCEANIC tree land above tree_min_chance + cay_tree_chance.
+		[0.5, 0.2, 0.4, ocean, TileCatalog.TREE],
+		[0.5, 0.4, 0.4, ocean, TileCatalog.TREE_BUSHY],
 		[0.35, 0.4, 0.1, T, TileCatalog.BUSH],
 		[0.35, 0.4, 0.1, ocean, NONE],
 		[0.6, -0.1, 0.1, cont, TileCatalog.PINE],
@@ -449,6 +452,18 @@ func _test_biome_plants() -> int:
 			"FAIL biome_plants: pre-swamp-tree save grew swamp trees (error=%s)" % loaded["error"]
 		)
 		fail += 1
+	# A save from before cay trees keeps OCEANIC as bare as it was.
+	var pre_cay: Dictionary = older.to_dict()
+	pre_cay.erase("cay_trees")
+	file = FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({"format_version": 1, "params": pre_cay}))
+	file.close()
+	loaded = MapSave.load_map(path)
+	DirAccess.remove_absolute(path)
+	world.apply_map_params(loaded["params"])
+	if loaded["error"] != "" or world.plant_tile(0.5, 0.2, 0.4, ocean) != NONE:
+		printerr("FAIL biome_plants: pre-cay-tree save grew cay trees (error=%s)" % loaded["error"])
+		fail += 1
 	var saved = MapSave.save_map(older, "test_pine_save")
 	var reloaded = MapSave.load_map(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
@@ -459,6 +474,7 @@ func _test_biome_plants() -> int:
 		or reloaded["params"].swamp_bush_min_chance != older.swamp_bush_min_chance
 		or reloaded["params"].birch_min_chance != older.birch_min_chance
 		or not reloaded["params"].swamp_trees
+		or not reloaded["params"].cay_trees
 	):
 		printerr("FAIL biome_plants: pine save reloaded error=%s" % reloaded["error"])
 		fail += 1

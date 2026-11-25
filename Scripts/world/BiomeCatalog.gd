@@ -37,6 +37,10 @@ const TERRAIN := {
 ## swamp_tree_chance: added to swamp_bush_min_chance; swamp cells with a higher
 ## chance grow a bushy tree instead of scrub (swamp trees, MapGenParams
 ## swamp_trees). 2.0 means none, so TEMPERATE still matches biomes off.
+## cay_tree_chance: with MapGenParams cay_trees on, the tree threshold is
+## tree_min_chance plus the lower of tree_chance and this, so a biome whose
+## tree_chance leaves it bare still grows some trees (cay trees). 2.0 means no change, so
+## TEMPERATE still matches biomes off.
 const PLANTS := {
 	OCEANIC:
 	{
@@ -46,7 +50,8 @@ const PLANTS := {
 		"bushy_moist": 0.0,
 		"swamp_bush_chance": 2.0,
 		"birch_chance": 2.0,
-		"swamp_tree_chance": 2.0
+		"swamp_tree_chance": 2.0,
+		"cay_tree_chance": 0.05
 	},
 	TEMPERATE:
 	{
@@ -56,7 +61,8 @@ const PLANTS := {
 		"bushy_moist": 2.0,
 		"swamp_bush_chance": 2.0,
 		"birch_chance": 2.0,
-		"swamp_tree_chance": 2.0
+		"swamp_tree_chance": 2.0,
+		"cay_tree_chance": 2.0
 	},
 	CONTINENTAL:
 	{
@@ -66,7 +72,8 @@ const PLANTS := {
 		"bushy_moist": 0.15,
 		"swamp_bush_chance": 2.0,
 		"birch_chance": -0.25,
-		"swamp_tree_chance": 2.0
+		"swamp_tree_chance": 2.0,
+		"cay_tree_chance": 2.0
 	},
 	ARCHIPELAGO_DENSE:
 	{
@@ -76,7 +83,8 @@ const PLANTS := {
 		"bushy_moist": -0.2,
 		"swamp_bush_chance": 0.0,
 		"birch_chance": 2.0,
-		"swamp_tree_chance": 0.1
+		"swamp_tree_chance": 0.1,
+		"cay_tree_chance": 2.0
 	},
 }
 
@@ -97,7 +105,7 @@ const STRUCTURES := {
 ## generates there. Defaults are the share map generation produces (wide
 ## render, seeds 11, 42 and 99, docs/biomes.md); a taste call to tune.
 const TREE_SHARE := {
-	OCEANIC: 0.0005,
+	OCEANIC: 0.025,
 	TEMPERATE: 0.04,
 	CONTINENTAL: 0.27,
 	ARCHIPELAGO_DENSE: 0.03,

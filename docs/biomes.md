@@ -120,7 +120,7 @@ and `bush_min_chance`, so higher means fewer plants:
 
 | Biome             | Trees (`tree_chance`) | Bushes (`bush_chance`) |
 |-------------------|-----------------------|------------------------|
-| OCEANIC           | +0.3 (almost bare)    | +0.2 (sparse)          |
+| OCEANIC           | +0.3 (+0.05 with cay trees, see below) | +0.2 (sparse) |
 | TEMPERATE         | 0                     | 0                      |
 | CONTINENTAL       | -0.25 (forests)       | 0                      |
 | ARCHIPELAGO_DENSE | +0.15 (few trees)     | -0.25 (scrub)          |
@@ -140,12 +140,13 @@ generation produces on the `render_biomes` wide grid, pooled over seeds 11,
 
 | Biome             | `TREE_SHARE` | Generated (11 / 42 / 99)      |
 |-------------------|--------------|-------------------------------|
-| OCEANIC           | 0.0005       | 0.0013 / 0 / 0                |
+| OCEANIC           | 0.025        | 0.0239 / 0.0241 / 0.0287 (with cay trees; 0.0005 / 0.0008 / 0 before) |
 | TEMPERATE         | 0.04         | 0.0391 / 0.0393 / 0.0407      |
 | CONTINENTAL       | 0.27         | 0.2704 / 0.2700 / 0.2707      |
 | ARCHIPELAGO_DENSE | 0.03         | 0.0293 / 0.0289 / 0.0278 (with swamp trees) |
 
-OCEANIC's value rounds to 0 trees in a 3x3-chunk area, so it never sprouts.
+Before cay trees, OCEANIC's value (0.0005) rounded to 0 trees in a
+3x3-chunk area, so it never sprouted.
 
 ### Pines
 
@@ -179,7 +180,7 @@ moderately moist land and bushy trees take the wettest tree land:
 
 | Biome             | `bushy_moist`        | Share of land (seeds 11, 42, 99) |
 |-------------------|----------------------|----------------------------------|
-| OCEANIC           | 0.0                  | 0 % (its land grows almost no trees) |
+| OCEANIC           | 0.0                  | about 0.6 % (cay trees on its wettest land) |
 | TEMPERATE         | 2.0 (none)           | 0 %                              |
 | CONTINENTAL       | +0.15 (wettest only) | about 1.0-1.2 %                  |
 | ARCHIPELAGO_DENSE | -0.2 (most trees)    | about 2.6 % with swamp trees (see below) |
@@ -232,6 +233,32 @@ on still matches the map with biomes off. Saves from before swamp trees have
 no `swamp_trees` field and load with none (`MapGenParams.swamp_trees`
 false), so they regenerate unchanged.
 
+### Cay trees
+
+OCEANIC's `tree_chance` (+0.3) put its tree threshold above almost every
+cell's plant chance, so its islands grew about 0.05 % trees: grass, stones
+and the odd bush, with no wood unless the spawn fallback planted some. With
+biomes on and `MapGenParams.cay_trees` on, the tree threshold is
+`tree_min_chance` plus the lower of the biome's `tree_chance` and
+`cay_tree_chance` (`BiomeCatalog.PLANTS`, `PlantPicker.tree_chance_shift`).
+The usual tree rules still apply (moisture above 0, altitude above
+`tree_min_alt`), and wet cells become bushy trees as before. There is no Map
+Settings row for it. Only OCEANIC has a value:
+
+| Biome             | `cay_tree_chance` | Tree share of land (seeds 11, 42, 99) |
+|-------------------|-------------------|---------------------------------------|
+| OCEANIC           | 0.05              | 0.0239 / 0.0241 / 0.0287 (0.0005 / 0.0008 / 0 before) |
+| TEMPERATE         | 2.0 (none)        | unchanged                             |
+| CONTINENTAL       | 2.0 (none)        | unchanged                             |
+| ARCHIPELAGO_DENSE | 2.0 (none)        | unchanged                             |
+
+OCEANIC stays the sparsest biome (TEMPERATE is about 0.04), but each of its
+islands now holds a few choppable trees. The trees take some cells that held
+stones, so OCEANIC stones drop from about 9.0-9.3 % to 6.1-7.0 % of its land,
+and `TREE_SHARE` for OCEANIC is now 0.025. TEMPERATE with biomes on still
+matches the map with biomes off. Saves from before cay trees have no
+`cay_trees` field and load with it off, so they regenerate unchanged.
+
 ### Birches
 
 With biomes on, a CONTINENTAL cell that would grow a plain broadleaf tree
@@ -264,7 +291,7 @@ plants with biomes on) and its items chance is above the biome's
 
 | Biome             | Stones (`stone_chance`) | Share of land (seeds 11, 42, 99) |
 |-------------------|-------------------------|----------------------------------|
-| OCEANIC           | 0.3 (rocky cays)        | about 7.6-10 %                   |
+| OCEANIC           | 0.3 (rocky cays)        | about 6.1-7.0 % (9.0-9.3 % before cay trees) |
 | TEMPERATE         | 2.0 (none)              | 0 %                              |
 | CONTINENTAL       | 0.35 (dry, stony)       | about 1.6-1.7 %                  |
 | ARCHIPELAGO_DENSE | 2.0 (none)              | 0 %                              |

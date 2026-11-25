@@ -22,7 +22,7 @@ static func bottom_would_grow(
 	## passes (before top-cell placement rules).
 	if map.biome_frequency <= 0.0:
 		return false
-	var tree_chance := map.tree_min_chance + BiomeCatalog.plants(biome_id, "tree_chance")
+	var tree_chance := map.tree_min_chance + PlantPicker.tree_chance_shift(map, biome_id)
 	if not (moist > 0 and alt > map.tree_min_alt and chance > tree_chance):
 		return false
 	if moist > map.bushy_tree_min_moist + BiomeCatalog.plants(biome_id, "bushy_moist"):

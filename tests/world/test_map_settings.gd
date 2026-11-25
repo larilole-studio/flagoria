@@ -89,7 +89,10 @@ func _test_map_settings_covers_params() -> int:
 	for prop in params.get_property_list():
 		if (
 			not (prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE)
-			or prop["name"] in ["island_preset", "starter_grove", "starter_wood", "swamp_trees"]
+			or (
+				prop["name"]
+				in ["island_preset", "starter_grove", "starter_wood", "swamp_trees", "cay_trees"]
+			)
 		):
 			continue
 		var key: String = prop["name"]
