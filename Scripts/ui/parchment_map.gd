@@ -6,6 +6,9 @@ extends Control
 
 const GROUP := "fullscreen_map"
 const INSET := 8
+const BUTTON_SIZE := Vector2(24, 20)  ## 10% above the original 22×18, in whole pixels
+const BUTTON_GAP := 2
+const BUTTON_MARGIN := 8
 const CELL_PX := 2
 const MIN_CELL_PX := 1  ## most zoomed out; nearest-filter pixel steps
 const DEFAULT_CELL_PX := 2  ## opening zoom; one world cell per two art pixels
@@ -142,7 +145,7 @@ func _button(node_name: String, glyph: int, handler: Callable) -> MapWoodButton:
 	var button := MapWoodButton.new()
 	button.name = node_name
 	button.glyph = glyph
-	button.size = Vector2(22, 18)
+	button.size = BUTTON_SIZE
 	button.activated.connect(handler)
 	add_child(button)
 	return button
@@ -154,14 +157,30 @@ func _fit() -> void:
 	size = rect.size
 	_view.position = Vector2(INSET, INSET)
 	_view.size = Vector2(maxi(size.x - INSET * 2, 1), maxi(size.y - INSET * 2, 1))
-	# Top-left, under the hearts, so closing does not land on the menu button.
-	var row := Vector2(8, 36)
-	var step := Vector2(24, 0)
-	_zoom_out.position = row
-	_zoom_in.position = row + step
-	_recentre.position = row + step * 2
-	_close.position = row + step * 3
+	# Top-right, below Map and Menu so Close does not land on the menu button.
+	var origin := _toolbar_origin()
+	var step := Vector2(BUTTON_SIZE.x + BUTTON_GAP, 0)
+	_zoom_out.position = origin
+	_zoom_in.position = origin + step
+	_recentre.position = origin + step * 2
+	_close.position = origin + step * 3
 	queue_redraw()
+
+
+func _toolbar_origin() -> Vector2:
+	var row_width := BUTTON_SIZE.x * 4 + BUTTON_GAP * 3
+	var x := maxf(float(BUTTON_MARGIN), size.x - BUTTON_MARGIN - row_width)
+	var y := float(BUTTON_MARGIN)
+	var row := Rect2(global_position + Vector2(x, y), Vector2(row_width, BUTTON_SIZE.y))
+	for path in ["../MapButton", "../InGameMenu/MenuButton"]:
+		var other := get_node_or_null(path) as Control
+		if other == null:
+			continue
+		var other_rect := other.get_global_rect()
+		if row.intersects(other_rect.grow(BUTTON_GAP)):
+			y = maxf(y, other_rect.end.y - global_position.y + BUTTON_GAP)
+			row.position.y = global_position.y + y
+	return Vector2(x, y)
 
 
 func _process(_delta: float) -> void:
