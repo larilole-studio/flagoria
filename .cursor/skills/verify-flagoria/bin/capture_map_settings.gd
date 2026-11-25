@@ -28,6 +28,7 @@ func _run() -> void:
 		quit(1)
 		return
 
+	menu._on_settings_pressed()
 	menu._on_map_settings_pressed()
 	for i in range(20):
 		await process_frame

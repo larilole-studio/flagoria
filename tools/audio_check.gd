@@ -157,7 +157,7 @@ const TIMELINE := [
 	},
 	# Mobs hidden on uncharted ground make no sound for any event.
 	{"name": "mob_hidden", "action": "mob_hidden", "duration": 0.6, "expect": {}},
-	# UI, through the real buttons: Map settings opens the panel, Back closes it.
+	# UI, through the real buttons: Map Settings opens the panel, Back closes it.
 	{"name": "ui_click", "action": "ui_click", "duration": 0.5, "expect": {"click": 1}},
 	{"name": "ui_back", "action": "ui_back", "duration": 0.6, "expect": {"back": 1}},
 	# A "ui_menu" panel (the group an in-game menu joins) shown, then hidden.
@@ -399,12 +399,10 @@ func _begin_step(i: int, t: float) -> void:
 		"chop_tree":
 			_chop_tree()
 		"ui_click":
-			(
-				_scene
-				. get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MapSettingsButton")
-				. pressed
-				. emit()
-			)
+			var menu = _scene.get_node("CanvasLayer2/MainMenu")
+			# Set up the Settings screen before measuring the Map Settings click.
+			menu._on_settings_pressed()
+			menu.get_node("SettingsPanel/SettingsLayout/MapSettingsButton").pressed.emit()
 		"ui_back":
 			(
 				_scene

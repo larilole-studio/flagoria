@@ -14,7 +14,7 @@ The host owns a 10 minute clock. The world is tinted through day, dusk, night an
 
 ## How to get to it (user POV)
 
-- Main menu, Map Settings: Day and night is on. Host. The world starts in daytime.
+- Open Settings, then Map Settings. Day and night is on. Host. The world starts in daytime.
 - Turn the switch off before Host and the world stays at daytime.
 
 ## Driving it with verify-flagoria helpers

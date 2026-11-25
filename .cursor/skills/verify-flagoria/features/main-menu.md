@@ -2,7 +2,7 @@
 
 Drive: not player-facing
 
-The main menu keeps Map Settings, Host, Worlds, Join, the join address and Settings in one view. Settings opens the Music and Sound effects sliders, Mob spawns, tower range, damage and cooldown, and raid controls. Only the settings list scrolls when it needs more room. Back stays below the list and returns to the main menu. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
+The main menu keeps Host, Worlds, Join, the join address and Settings in one view. Settings opens the Music and Sound effects sliders, Mob spawns, tower range, damage and cooldown, and raid controls. [Map Settings](./map-settings-panel.md) and Back stay below the scrolling list. Back from Map Settings returns to Settings, and Back from Settings returns to the main menu. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
 
 ## Sub-features
 
@@ -24,7 +24,7 @@ The main menu keeps Map Settings, Host, Worlds, Join, the join address and Setti
 Preconditions: `doctor.sh` exits `0`.
 
 - **Run.** Run `./.cursor/skills/verify-flagoria/bin/drive-verify.sh` (or `./tools/verify.sh`) and read `artifacts/verify.log`.
-- **Layout test.** Run `test_main_menu_landscape_layout` at 2400×1080. The visible main menu controls fit inside the viewport. Clicking Settings reveals the scroll area and Back within the viewport. Clicking Back restores the main menu.
+- **Layout test.** `test_main_menu_landscape_layout` checks the single Settings entry and menu bounds at 2400×1080 and 480×270. It clicks Settings, opens Map Settings, and uses both Back buttons to return to the main menu.
 - **Proof.** Each header `-- test_audio_settings`, `-- test_dedicated_server_join`, `-- test_mob_spawn_rate`, `-- test_main_menu_letter_keyboard`, `-- test_main_menu_input_no_log_spam` (runs a separate headless process, ~2 s) appears in the log, no `FAIL` line follows it, and the run ends with `All tests passed.` and `Verification passed.`
 
 ## Gotchas
