@@ -168,20 +168,6 @@ Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in
 Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	d3dc6f31a363eb7d
 Scripts/ui/map_chart.gd	class-definitions-order	Definition out of order in global scope	4315ca7c7146cc78
 Scripts/ui/map_chart.gd	max-line-length	Max allowed line length (100) exceeded	b58b0e95a1313026
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	0b7f0ede3aa1c1b2
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	1349f91688cf1ab3
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	2d9e75ab077cf254
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	2daa5e741a849658
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	44cb681fd36c2d28
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	4c6185f3540b58e8
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	4f9c6a22a5b6a890
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	59d639c2b816858c
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	86e20955e5fac4dd
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	8b924481c19e2e79
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	9325123c11f908da
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	a0998b1016e25fb5
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	b0dfd9017f10ac35
-Scripts/ui/parchment_map.gd	class-definitions-order	Definition out of order in global scope	b32d3b1ac154dee5
 Scripts/ui/tool_wheel.gd	max-returns	Function "_keys" has more than 6 return statements
 Scripts/world/MapGenParams.gd	class-definitions-order	Definition out of order in global scope	96f7a36376e5f1ec
 Scripts/world/MapGenParams.gd	class-definitions-order	Definition out of order in global scope	e8c4a285c2b92887
