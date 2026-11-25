@@ -212,11 +212,8 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		done(false)
 		return
-	await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON),
-		START_TIMEOUT_S
-	)
-	await click(HOST_BUTTON)
+	await wait_until(menu_root_visible, START_TIMEOUT_S)
+	await host_from_menu()
 	await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S)
 	layer = current_scene.get_node("CanvasLayer1") as CanvasLayer
 	attack = current_scene.get_node(ATTACK) as TouchScreenButton

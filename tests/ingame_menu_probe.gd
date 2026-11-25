@@ -56,7 +56,8 @@ func _host(port: int, label: String) -> Node:
 	## Press Host on the current main menu; the game's main node, or null.
 	var main = current_scene
 	main.host_port = port
-	main.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/HostButton").pressed.emit()
+	main.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton").pressed.emit()
+	main.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Actions/HostButton").pressed.emit()
 	await _frames(5)
 	var me = main.get_node_or_null("World/1")
 	_check(me != null, "%s: no host player after Host" % label)

@@ -75,6 +75,9 @@ func _test_ui_sfx_presses() -> int:
 	var ui = root.get_node("UiSfx")
 	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var layer: Node = scene.get_node("CanvasLayer2")
+	var menu = layer.get_node("MainMenu")
+	menu.get_node("MarginContainer/VBoxContainer/WorldsButton").pressed.emit()
+	var worlds: Control = layer.get_node("WorldsPanel/Margin/VBox")
 	var buttons := layer.find_children("*", "BaseButton", true, false)
 	var names := []
 	for b in buttons:
@@ -95,6 +98,7 @@ func _test_ui_sfx_presses() -> int:
 		"MapSettingsButton",
 		"HostButton",
 		"JoinButton",
+		"MultiplayerButton",
 		"SettingsButton",
 		"BackButton",
 		"RandomSeed",
@@ -108,16 +112,20 @@ func _test_ui_sfx_presses() -> int:
 			printerr("FAIL ui_sfx_presses: no %s button found" % n)
 			fail += 1
 	# Real presses that stay local (Host and Join start networking).
-	var menu = layer.get_node("MainMenu")
 	var panel = menu.admin_panel
 	var settings = menu.get_node("SettingsPanel/SettingsLayout")
+	var top: Control = menu.get_node("MarginContainer/VBoxContainer")
+	var multiplayer: Control = menu.get_node("MultiplayerPanel/VBoxContainer")
 	var presses := [
-		[menu.get_node("MarginContainer/VBoxContainer/SettingsButton"), "click"],
-		[settings.get_node("MapSettingsButton"), "click"],
+		[worlds.get_node("Actions/MapSettingsButton"), "click"],
 		[panel.get_node("Margin/VBox/Buttons/RandomSeed"), "click"],
 		[panel.get_node("Margin/VBox/Buttons/RandomSpecs"), "click"],
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Reset"), "click"],
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Back"), "back"],
+		[worlds.get_node("Back"), "back"],
+		[top.get_node("MultiplayerButton"), "click"],
+		[multiplayer.get_node("BackButton"), "back"],
+		[top.get_node("SettingsButton"), "click"],
 		[settings.get_node("BackButton"), "back"],
 	]
 	for press in presses:

@@ -8,9 +8,8 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## local MapGen fixture. World snapshots wait for those params, then for
 ## nearby ground cells drawn after that apply.
 
-const ADDRESS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry"
-const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
-const STATUS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinStatus"
+const ADDRESS := MULTIPLAYER_VIEW + "/AddressEntry"
+const STATUS := MULTIPLAYER_VIEW + "/JoinStatus"
 const MENU := "CanvasLayer2/MainMenu"
 const MAIN_MENU_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MainMenu"
 ## 9x9 around the hero, the same square snapshot() records for foliage.
@@ -31,14 +30,15 @@ func run() -> void:
 		_end(false, "cannot load " + MAIN)
 		return
 	if not await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(JOIN),
+		func() -> bool: return current_scene != null and current_scene.has_node(JOIN_BUTTON),
 		START_TIMEOUT_S
 	):
 		_end(false, "no join button")
 		return
+	await click(MULTIPLAYER_BUTTON)
 	if not await wait_until(
 		func() -> bool:
-			var button: Control = current_scene.get_node(JOIN)
+			var button: Control = current_scene.get_node(JOIN_BUTTON)
 			return button.size.x > 1.0,
 		5.0
 	):
@@ -52,7 +52,7 @@ func run() -> void:
 		return
 	await snapshot("default-address")
 	var local_altitude := _local_altitude()
-	await click(JOIN)
+	await click(JOIN_BUTTON)
 	if not await wait_until(func() -> bool: return hero() != null, 20.0):
 		_end(false, "localhost did not spawn a player (port %s)" % current_scene._join_port)
 		return
@@ -75,7 +75,7 @@ func run() -> void:
 		_end(false, "could not type host:abc (field '%s')" % _field().text)
 		return
 	var started := Time.get_ticks_msec()
-	await click(JOIN)
+	await click(JOIN_BUTTON)
 	var status := _status()
 	var invalid_ms := Time.get_ticks_msec() - started
 	var invalid_ok: bool = (
@@ -98,7 +98,7 @@ func run() -> void:
 		_end(false, "could not type 127.0.0.1:1 (field '%s')" % _field().text)
 		return
 	started = Time.get_ticks_msec()
-	await click(JOIN)
+	await click(JOIN_BUTTON)
 	status = _status()
 	var back := await wait_until(
 		func() -> bool: return _menu().visible and _status().visible and _status().text != "", 8.0
@@ -121,7 +121,7 @@ func run() -> void:
 		_end(false, "could not type 127.0.0.1:9799 (field '%s')" % _field().text)
 		return
 	local_altitude = _local_altitude()
-	await click(JOIN)
+	await click(JOIN_BUTTON)
 	var joined := await wait_until(func() -> bool: return hero() != null, 20.0)
 	if not joined:
 		_end(false, "127.0.0.1:9799 did not spawn a player (port %s)" % current_scene._join_port)
@@ -166,9 +166,10 @@ func _back_to_menu() -> bool:
 	if not await wait_until(func() -> bool: return panel.is_visible_in_tree(), 5.0):
 		return false
 	await click(MAIN_MENU_BUTTON)
-	return await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0
-	)
+	if not await wait_until(menu_root_visible, 10.0):
+		return false
+	await click(MULTIPLAYER_BUTTON)
+	return true
 
 
 func _field() -> LineEdit:

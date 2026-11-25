@@ -9,7 +9,7 @@ var enet_peer = ENetMultiplayerPeer.new()
 ## UDP port the main menu's Host button listens on.
 var host_port := PORT
 const Player = preload("res://Scripts/player/character_body_2d.tscn")
-@onready var address_entry = $CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry
+@onready var address_entry = $CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/AddressEntry
 var world_params: MapGenParams
 ## The world save this match writes. Empty until Host or Load chooses one.
 var save_name := ""
@@ -25,7 +25,6 @@ var _saved_player_ready := false
 ## Called instead of SceneTree.quit() when set (tests).
 var quit_hook := Callable()
 ## Address last passed to create_client; used by the join-failed message (#348).
-## The typed endpoint when the field has text, otherwise "localhost".
 var _join_address := ""
 ## Host and port of the last Join attempt. 0 / "" until one starts.
 var _join_host := ""
@@ -45,6 +44,7 @@ func _ready():
 	get_node("CanvasLayer2/MainMenu").connect("new_player_joined", add_player_joined)
 	get_node("World").child_entered_tree.connect(_on_world_child_entered)
 	$QuitLayer/QuitPrompt.quit_confirmed.connect(quit_game)
+	$QuitLayer/QuitPrompt.navigate_back = $CanvasLayer2/MainMenu.navigate_back
 
 	var args := OS.get_cmdline_user_args()
 	var server_port := server_port_from_args(args)

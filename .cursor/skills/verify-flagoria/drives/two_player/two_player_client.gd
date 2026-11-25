@@ -3,8 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/drives/two_player/two_player_host.
 ## drives/two_player/two_player_host.gd: it enters localhost as the address, clicks
 ## Join, and waits for both players and the host's map params.
 
-const JOIN_BUTTON := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
-
 
 func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
@@ -17,6 +15,7 @@ func run() -> void:
 		_fail("no " + JOIN_BUTTON)
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
+	await click(MULTIPLAYER_BUTTON)
 	step("join")
 	current_scene.address_entry.text = "localhost"
 	await click(JOIN_BUTTON)

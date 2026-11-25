@@ -2,9 +2,9 @@ extends "res://tests/helpers/test_helpers.gd"
 ## Main Menu Join accepts a hostname or IPv4 address with an optional port.
 
 const JoinAddress = preload("res://Scripts/net/join_address.gd")
-const ADDRESS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/AddressEntry"
-const STATUS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinStatus"
-const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
+const ADDRESS := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/AddressEntry"
+const STATUS := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/JoinStatus"
+const JOIN := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/JoinButton"
 
 
 func _test_join_port_button() -> int:
@@ -14,6 +14,12 @@ func _test_join_port_button() -> int:
 	root.add_child(scene)
 	await process_frame
 	var menu: Control = scene.get_node("CanvasLayer2/MainMenu")
+	(
+		scene
+		. get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MultiplayerButton")
+		. pressed
+		. emit()
+	)
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
 	var address: LineEdit = scene.get_node(ADDRESS)
 	var status: Label = scene.get_node(STATUS)
@@ -172,6 +178,12 @@ func _button_join(pid: int, typed: String, error_text: String, want_player: bool
 	root.add_child(scene)
 	await process_frame
 	var menu: Node = scene.get_node("CanvasLayer2/MainMenu")
+	(
+		scene
+		. get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MultiplayerButton")
+		. pressed
+		. emit()
+	)
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
 	var status: Label = scene.get_node(STATUS)
 	scene.get_node(ADDRESS).text = typed

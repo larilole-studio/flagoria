@@ -10,6 +10,7 @@ func _test_main_menu_letter_keyboard() -> int:
 	print("-- test_main_menu_letter_keyboard")
 	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
+	menu.show_multiplayer()
 	var field: LineEdit = menu.address_entry
 	var kb = menu.get_node_or_null("LetterKeyboard")
 	var fail := 0
@@ -77,6 +78,7 @@ func _test_letter_keyboard_minus_key() -> int:
 	print("-- test_letter_keyboard_minus_key")
 	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
+	menu.show_multiplayer()
 	var field: LineEdit = menu.address_entry
 	var kb = menu.get_node("LetterKeyboard")
 	var fail := 0
@@ -108,6 +110,7 @@ func _test_letter_keyboard_first_minus_replaces() -> int:
 	print("-- test_letter_keyboard_first_minus_replaces")
 	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
+	menu.show_multiplayer()
 	var field: LineEdit = menu.address_entry
 	var kb = menu.get_node("LetterKeyboard")
 	var fail := 0
@@ -143,6 +146,7 @@ func _test_letter_keyboard_third_row_fits() -> int:
 	print("-- test_letter_keyboard_third_row_fits")
 	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
+	menu.show_multiplayer()
 	var field: LineEdit = menu.address_entry
 	var kb: NumberPad = menu.get_node("LetterKeyboard")
 	var fail := 0

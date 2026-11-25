@@ -56,9 +56,7 @@ func run() -> void:
 		return
 	await snapshot("saved")
 	await click(MAIN_MENU_BUTTON)
-	await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0
-	)
+	await wait_until(menu_root_visible, 10.0)
 
 	step("load")
 	var err: String = root.get_node("MapGen").load_map_inputs(saved[0])

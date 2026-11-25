@@ -18,8 +18,8 @@ Each player starts with one castle (#271): `structures/castle.txt`, a walled cou
 
 ## How to get to it (user POV)
 
-- Main menu → Host. The player starts just below the castle gate and can walk into the courtyard.
-- A second instance: Main menu → Join that host. The joiner starts beside the gate and the castle walls block it as they block the host.
+- Main menu → Worlds → Host. The player starts just below the castle gate and can walk into the courtyard.
+- A second instance: Main menu → Multiplayer → Join that host. The joiner starts beside the gate and the castle walls block it as they block the host.
 
 ## Driving it with verify-flagoria helpers
 

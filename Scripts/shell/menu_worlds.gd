@@ -48,13 +48,14 @@ func _worlds_panel() -> PanelContainer:
 	margin.add_child(box)
 	var title := Label.new()
 	title.text = "Worlds"
+	title.theme_type_variation = &"TitleLabel"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 	var scroll := ScrollContainer.new()
 	scroll.name = "Scroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 96)
+	scroll.custom_minimum_size = Vector2(0, 48)
 	box.add_child(scroll)
 	var list := WorldsSaveList.new()
 	list.name = "List"
@@ -70,6 +71,13 @@ func _worlds_panel() -> PanelContainer:
 	_world_button(buttons, "Delete", _on_delete_world_pressed)
 	_world_button(buttons, "Rename", _on_rename_world_pressed)
 	_world_button(buttons, "NewWorld", menu._on_new_world_pressed).text = "New world"
+	var actions := HBoxContainer.new()
+	actions.name = "Actions"
+	box.add_child(actions)
+	_world_button(actions, "HostButton", menu._on_host_button_pressed).text = "Host"
+	_world_button(actions, "MapSettingsButton", menu._on_map_settings_pressed).text = "Map Settings"
+	for button: Button in actions.get_children():
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var confirm := HBoxContainer.new()
 	confirm.name = "Confirm"
 	confirm.visible = false
@@ -100,7 +108,7 @@ func _worlds_panel() -> PanelContainer:
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(status)
-	_world_button(box, "Back", _on_worlds_back_pressed)
+	_world_button(box, "Back", _on_worlds_back_pressed).add_to_group("ui_back")
 	menu.get_parent().add_child(panel)
 	return panel
 

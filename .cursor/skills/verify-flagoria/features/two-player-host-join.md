@@ -8,13 +8,13 @@ Two-player Host/Join starts a listen-server on one instance and connects a secon
 
 ## Sub-features
 
-- `mp-host` Main Menu → Host creates the server (UDP port `9786`) and spawns the host player.
-- `mp-join` Main Menu → Join with the host address (`localhost` for the same machine) connects and receives map params from the host.
+- `mp-host` Main Menu → Worlds → Host creates the server (UDP port `9786`) and spawns the host player.
+- `mp-join` Main Menu → Multiplayer → Join with the host address (`localhost` for the same machine) connects and receives map params from the host.
 - `mp-move-attack-regen` both players move, attack, and regenerate (manual checklist).
 
 ## How to get to it (user POV)
 
-- Instance A: Host. Instance B: Enter `localhost` or the host address, then press Join.
+- Instance A: Open Worlds and press Host. Instance B: Open Multiplayer, enter `localhost` or the host address, then press Join.
 - Follow the README **Two-player play-test checklist** when present.
 
 ## Driving it with verify-flagoria helpers
@@ -29,8 +29,8 @@ Preconditions:
   ```bash
   bin/launch.sh drives/two_player/two_player_host.gd & sleep 4; bin/launch.sh drives/two_player/two_player_client.gd; wait
   ```
-  - Host drive: `start_game()` (presses `CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/HostButton`), waits until two player nodes are under `World`, prints them and the seeds from `world_params`, waits a few seconds so the client can finish, then `done()`.
-  - Client drive, started a few seconds later: loads the main scene, enters `localhost` in the address field, clicks `CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton`, waits until two player nodes are under `World` and `world_params` arrived, prints the same, then `done()`.
+  - Host drive: `start_game()` (clicks Worlds, then Host), waits until two player nodes are under `World`, prints them and the seeds from `world_params`, waits a few seconds so the client can finish, then `done()`.
+  - Client drive, started a few seconds later: loads the main scene, opens Multiplayer, enters `localhost` in the address field and clicks Join, waits until two player nodes are under `World` and `world_params` arrived, prints the same, then `done()`.
   - Time cost: ~10 s for the pair, most of it the stagger and the host's 5 s linger.
 - **Proof (two launches).** Both `game.log` files have a `two_player: host players=... seeds=...` (or `client`) line listing the same two player nodes under `World` (`1` and the client's peer id) and the same map seeds (`altitude_seed`, `moisture_seed`, `temperature_seed`, `items_seed`), and both launches exit `0`.
 - **Manual.** Run two instances; complete the README checklist (host, join, move, attack, regen, death).

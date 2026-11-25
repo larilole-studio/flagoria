@@ -143,7 +143,6 @@ Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in glo
 Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	d1ab74b1c5aabbed
 Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	e9fcd6d243d41faa
 Scripts/shell/ingame_menu.gd	expression-not-assigned	expression is not asigned, and hence it can be removed
-Scripts/shell/quit_prompt.gd	expression-not-assigned	expression is not asigned, and hence it can be removed
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	26db0f4b0eae23d1
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	39f8f92fb63ce1ea
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	7605f8b426b54630

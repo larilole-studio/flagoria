@@ -21,7 +21,7 @@ Flag towers change hands (#274). Every placement with a `team` flag (the castle'
 
 ## How to get to it (user POV)
 
-- Main menu → Host, then walk into the castle courtyard: nothing happens, the host owns it. A tower changes hands only when someone else or a mob stands by its flag, so a solo session sees a capture only when a mob wanders or chases into the courtyard and stays for 5 s (the flag turns purple).
+- Main menu → Worlds → Host, then walk into the castle courtyard: nothing happens, the host owns it. A tower changes hands only when someone else or a mob stands by its flag, so a solo session sees a capture only when a mob wanders or chases into the courtyard and stays for 5 s (the flag turns purple).
 
 ## Driving it with verify-flagoria helpers
 

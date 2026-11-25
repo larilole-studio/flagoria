@@ -400,9 +400,12 @@ func _begin_step(i: int, t: float) -> void:
 			_chop_tree()
 		"ui_click":
 			var menu = _scene.get_node("CanvasLayer2/MainMenu")
-			# Set up the Settings screen before measuring the Map Settings click.
-			menu._on_settings_pressed()
-			menu.get_node("SettingsPanel/SettingsLayout/MapSettingsButton").pressed.emit()
+			# Set up Worlds before measuring the Map Settings click.
+			menu._on_worlds_pressed()
+			var button := _scene.get_node(
+				"CanvasLayer2/WorldsPanel/Margin/VBox/Actions/MapSettingsButton"
+			)
+			button.pressed.emit()
 		"ui_back":
 			(
 				_scene

@@ -75,7 +75,7 @@ static func _show_status(menu: PanelContainer, message: String) -> void:
 	if menu.admin_panel:
 		menu.admin_panel.hide()
 	menu.ux_layer.hide()
-	menu.main_menu.show()
+	menu.show_multiplayer()
 	menu.join_status.text = message
 	menu.join_status.visible = true
 	menu.get_node("/root/MusicPlayer").play(menu.get_node("/root/MusicPlayer").MENU_TRACK)
