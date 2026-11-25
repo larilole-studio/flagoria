@@ -40,7 +40,7 @@ Time cost: `test_construction_remove` about 1 s. The existing tower sync
 scenario adds one bounded step and reuses its peers. Drive under 45 s.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=construction_remove,tower_place_two_players,build_picker_buttons` with scratch XDG directories.
-- **Drive (live).** `bin/launch.sh drives/demolish_construction.gd --display`. The fixture starts with enough wood for one wall block. The drive clicks the picker and taps the map using real input.
-- **Proof.** `demolish-picker` shows Demolish with the wall in place,
-  `demolish-before` shows the red tint and `+1 wood`, and `demolish-after`
-  shows the cleared cell and updated wood counter.
+- **Drive (live).** `bin/launch.sh drives/demolish_construction.gd --display`. The fixture adds 10 wood. The drive places a tower with the picker, then taps Demolish and the tower using real input.
+- **Proof.** `demolish-picker` shows Demolish with the tower in place,
+  `demolish-before` shows the red footprint and `+5 wood`, and `demolish-after`
+  shows the cleared footprint and updated wood counter.
