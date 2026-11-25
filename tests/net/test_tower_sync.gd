@@ -33,6 +33,12 @@ func _test_tower_place_two_players() -> int:
 				)
 			)
 			fail = 1
+		elif (
+			not publish_probe_command(session["outs"][0] + ".demolish", "place host tower")
+			or not await wait_for.call(func() -> bool: return _demolished(read), 15000)
+		):
+			printerr("FAIL tower demolition: host %s client %s" % [read.call(0), read.call(1)])
+			fail = 1
 		else:
 			launch.call(false, "watch")
 			if not await wait_for.call(
@@ -67,6 +73,18 @@ func _test_tower_place_two_players() -> int:
 	if fail == 0:
 		print("PASS test_tower_place_two_players")
 	return fail
+
+
+func _demolished(read: Callable) -> bool:
+	var host: Dictionary = read.call(0)
+	var client: Dictionary = read.call(1)
+	return (
+		int(client.get("wood", -1)) == 5
+		and int(host.get("wood", -1)) == 0
+		and _tower_count(host) == 1
+		and _owner_named(host, "tower_wood") == 1
+		and _same_place(client, host)
+	)
 
 
 func _placed(read: Callable) -> bool:

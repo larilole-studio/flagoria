@@ -29,8 +29,12 @@ static func place(map: _WorldMap, owner: int) -> Variant:
 	## placed when no spot fits.
 	var castle := structure()
 	var anchor: Variant = find_anchor(map, castle, map.resolve_player_spawn())
-	if anchor == null or map.place_structure(castle, anchor, owner) <= 0:
+	if anchor == null:
 		return null
+	var id := map.place_structure(castle, anchor, owner)
+	if id <= 0:
+		return null
+	map._structures.mark_start_castle(id)
 	return anchor + GATE_FRONT
 
 
@@ -44,8 +48,12 @@ static func place_for_peer(map: _WorldMap, owner: int) -> Variant:
 			return null
 	var origin: Vector2i = map.resolve_player_spawn()
 	var anchor: Variant = find_anchor(map, castle, origin, SPAWN_KEEP)
-	if anchor == null or map._structures.place_from_host(castle, anchor, owner) <= 0:
+	if anchor == null:
 		return null
+	var id := map._structures.place_from_host(castle, anchor, owner)
+	if id <= 0:
+		return null
+	map._structures.mark_start_castle(id)
 	return anchor
 
 

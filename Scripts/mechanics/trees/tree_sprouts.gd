@@ -187,20 +187,20 @@ func add(cell: Vector2i) -> bool:
 
 
 func touch(cell: Vector2i) -> void:
-	## Note that a cut, sprout, structure or bridge was put on `cell`
-	## (TreeCuts, StructurePlacer, BridgeBuilder), for deficits.
-	var square := Vector2i(floori(cell.x / float(BLOCK)), floori(cell.y / float(BLOCK)))
-	if not _changed.has(square):
-		_changed[square] = {}
-	_changed[square][cell] = true
+	## Track edits for tree deficits.
+	var square := (Vector2(cell) / BLOCK).floor()
+	_changed.get_or_add(Vector2i(square), {})[cell] = true
+
+
+func untouch(cell: Vector2i) -> void:
+	var square := Vector2i((Vector2(cell) / BLOCK).floor())
+	var cells: Dictionary = _changed.get(square, {})
+	cells.erase(cell)
+	if cells.is_empty():
+		_changed.erase(square)
 
 
 func deficits(window: Rect2i) -> Dictionary:
-	## Biome id -> trees missing in `window`: the smaller of TREE_SHARE of its
-	## land cells (rounded down) and the trees the map generates there
-	## (counting cells under structures), less the trees, sprouts and tree
-	## stumps it holds. Only biomes missing at least one are listed.
-	## Counted per square (_count_square) without visiting every cell.
 	var counts := [{}, {}, {}]
 	for square in _squares(window):
 		_count_square(square, window, counts)

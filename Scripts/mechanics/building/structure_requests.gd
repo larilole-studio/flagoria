@@ -64,12 +64,75 @@ func host_place(
 	if kind == BuildCosts.WALL_BLOCK:
 		_publish()
 	else:
+		var anchor := cells[0]
+		var placement := map.structure_placement_at(anchor)
 		apply_structure.rpc(
-			ConstructionPlacer.named_structure_file(kind), peer_id, cells[0], quarter_turns
+			placement["name"], peer_id, anchor, quarter_turns, placement["id"], false
 		)
 		if cities != null and BuildCosts.CITY_KINDS.has(kind):
 			cities.tick()
 	return true
+
+
+func demolish(cell: Vector2i) -> bool:
+	if multiplayer.is_server():
+		return host_demolish(cell, multiplayer.get_unique_id())
+	var peer := multiplayer.multiplayer_peer
+	if peer == null or peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+		return false
+	request_demolish.rpc_id(1, cell)
+	return true
+
+
+func host_demolish(cell: Vector2i, peer_id: int) -> bool:
+	if not multiplayer.is_server():
+		return false
+	var body := world.get_node_or_null(str(peer_id)) as Node2D
+	if body == null or Interaction.player_dead(body):
+		return false
+	var local := peer_id == multiplayer.get_unique_id()
+	var reach := Interaction.REACH if local else Interaction.REACH + Interaction.REACH_SLACK
+	if body.global_position.distance_to(interaction.cell_center(cell)) > reach:
+		return false
+	if local and inventory == null:
+		return false
+	var target := ConstructionRemover.new(map).remove(cell, peer_id, inventory if local else null)
+	if target.is_empty():
+		return false
+	var online := not multiplayer.get_peers().is_empty()
+	match target["kind"]:
+		BuildCosts.PLANK:
+			if online:
+				interaction.apply_bridge_removed.rpc(target["cells"])
+		BuildCosts.WALL_BLOCK:
+			_publish()
+		_:
+			if online:
+				apply_structure_removed.rpc(target["anchor"])
+			_publish()
+	if not local and target["refund"] > 0:
+		receive_refund.rpc_id(peer_id, target["refund"])
+	return true
+
+
+@rpc("any_peer", "reliable", "call_remote")
+func request_demolish(cell: Vector2i) -> void:
+	host_demolish(cell, multiplayer.get_remote_sender_id())
+
+
+@rpc("authority", "reliable", "call_remote")
+func apply_structure_removed(anchor: Vector2i) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	var placement := map.structure_placement_at(anchor)
+	if not placement.is_empty() and placement["anchor"] == anchor:
+		map.remove_structure(placement["id"])
+
+
+@rpc("authority", "reliable", "call_remote")
+func receive_refund(wood: int) -> void:
+	if multiplayer.get_remote_sender_id() == 1 and inventory != null and wood > 0:
+		inventory.add(Inventory.WOOD, wood)
 
 
 func host_damage_wall(cell: Vector2i) -> bool:
@@ -104,7 +167,8 @@ func publish_structure(structure_name: String, owner: int, anchor: Vector2i) -> 
 	if not multiplayer.is_server():
 		return
 	if not multiplayer.get_peers().is_empty():
-		apply_structure.rpc(structure_name, owner, anchor, 0)
+		var placement := map.structure_placement_at(anchor)
+		apply_structure.rpc(structure_name, owner, anchor, 0, placement["id"], true)
 	if cities != null:
 		cities.tick()
 
@@ -121,8 +185,9 @@ func sync_to_peer(peer_id: int) -> void:
 func _publish() -> void:
 	## Walls first, then Cities.tick, so a closed or opened loop is the host's
 	## decision and leaves on the same reliable channel.
-	var snap := _wall_snapshot()
-	apply_wall_state.rpc(snap[0], snap[1], snap[2])
+	if not multiplayer.get_peers().is_empty():
+		var snap := _wall_snapshot()
+		apply_wall_state.rpc(snap[0], snap[1], snap[2])
 	if cities != null:
 		cities.tick()
 
@@ -156,14 +221,19 @@ func request_place(kind: String, cells: Array, quarter_turns: int = 0) -> void:
 
 @rpc("authority", "reliable", "call_remote")
 func apply_structure(
-	structure_name: String, owner: int, anchor: Vector2i, quarter_turns: int = 0
+	structure_name: String,
+	owner: int,
+	anchor: Vector2i,
+	quarter_turns: int,
+	placement_id: int,
+	start_castle: bool
 ) -> void:
-	## Applied only from peer 1, so ids follow the host's list. The same
-	## placement arriving again (snapshot, then this call) is left as it is.
-	## `quarter_turns` is clockwise; 0 keeps an older three-field row.
+	## Preserve the host ID for city and capture state, including after removal.
 	if multiplayer.get_remote_sender_id() != 1:
 		return
-	ConstructionPlacer.new(map).apply_replica(structure_name, anchor, owner, quarter_turns)
+	ConstructionPlacer.new(map).apply_replica(
+		structure_name, anchor, owner, quarter_turns, placement_id, start_castle
+	)
 
 
 @rpc("authority", "reliable", "call_remote")

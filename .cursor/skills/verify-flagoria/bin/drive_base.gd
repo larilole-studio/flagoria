@@ -121,7 +121,7 @@ func tap_key(keycode: Key) -> void:
 ## A touch tap on a map cell, at the screen position World/worldMap and the
 ## camera give it now. Like a finger, a tap on a cell under the HUD (the
 ## the map button) reaches the HUD, not the map.
-func tap_cell(cell: Vector2i) -> void:
+func tap_cell(cell: Vector2i, while_pressed := Callable()) -> void:
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var at := to_window(map, map.map_to_local(cell))
 	for pressed in [true, false]:
@@ -132,6 +132,8 @@ func tap_cell(cell: Vector2i) -> void:
 		Input.parse_input_event(e)
 		await process_frame
 		await process_frame
+		if pressed and while_pressed.is_valid():
+			await while_pressed.call()
 
 
 ## Opens the in-game menu with its menu button and clicks Save. Returns false

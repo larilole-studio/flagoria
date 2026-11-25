@@ -181,6 +181,12 @@ to other tile edits (#41) and are left alone.
 
 ## Structures and walls
 
+Buildings → Demolish removes a reachable plank, free-form wall block, or
+owned named construction. The refund is 50% of one unit's wood cost rounded
+down, with no refund when nothing is removed. Starting castles are protected.
+The next save writes the remaining bridges, walls, and structures from the
+live map, including the starting castle designation.
+
 A placed structure (#42) is a `world.structures` entry on its anchor cell; a
 free-form palisade wall cell (#276) is an entry on its cell:
 
@@ -192,7 +198,8 @@ free-form palisade wall cell (#276) is an entry on its cell:
 | --- | --- |
 | `structure` | The shipped structure file, by name (`res://structures/<name>.txt`). |
 | `owner` | The owning peer id, `0` for a neutral tower or `-1` for one the mobs took (#274). The flag colour follows it. |
-| `order` | Placement order, so placement ids come back the same. |
+| `order` | Placement order used when rebuilding the map. |
+| `start_castle` | For castles, whether this placement is a protected starting castle. Older saves infer it from each owner’s first castle. |
 | `rotation` | Optional quarter turns clockwise (0–3) for a footprint structure placed in a rotated orientation (#493). Omitted when zero. |
 | `wall` | `palisade`: a free-form wall cell. Its piece is solved again on load. |
 | `hp` | Optional remaining hits on a free-form wall (1 or 2). Omitted means full health (#35). |

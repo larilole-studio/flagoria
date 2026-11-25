@@ -35,7 +35,7 @@ const OTHER_OWNER_FLAG := "PROP_FLAG_RED"
 const DIR := "res://structures"
 
 ## Placed cell -> [layer-0 atlas or NO_PLANT to keep the generated ground,
-## layer-1 atlas or NO_PLANT for none]. generate_chunk draws these instead
+## layer-1 atlas or NO_PLANT for none, placement id]. generate_chunk draws these instead
 ## of the generated cell; a new map clears them.
 var _cells: Dictionary = {}
 ## Auto wall or tower-ring cell -> WallSolver entry. Solved with free-form
@@ -43,6 +43,7 @@ var _cells: Dictionary = {}
 var _auto: Dictionary = {}
 ## Placement id -> {"name", "owner", "anchor"} (for saves, #42).
 var _placed: Dictionary = {}
+var _footprints: Dictionary = {}  ## Placement id -> occupied cells.
 ## Placement id -> its `team` flag cells, the towers TowerCapture watches.
 var _flags: Dictionary = {}
 var _next_id := 1
@@ -74,11 +75,59 @@ func placements() -> Dictionary:
 	return _placed.duplicate(true)
 
 
+func placement_at(cell: Vector2i) -> int:
+	return _cells[cell][2] if _cells.has(cell) else 0
+
+
+func placement_details_at(cell: Vector2i) -> Dictionary:
+	var id := placement_at(cell)
+	if id == 0:
+		return {}
+	var details: Dictionary = _placed[id].duplicate()
+	details["id"] = id
+	details["cells"] = _footprints[id].duplicate()
+	return details
+
+
+func mark_start_castle(id: int) -> void:
+	if _placed.has(id):
+		_placed[id]["start_castle"] = true
+
+
+func remove(id: int) -> bool:
+	if not _placed.has(id) or _placed[id].get("start_castle", false):
+		return false
+	var cells: Array[Vector2i] = _footprints[id]
+	_placed.erase(id)
+	_footprints.erase(id)
+	_flags.erase(id)
+	var marker := _markers.get(id) as Sprite2D
+	if is_instance_valid(marker):
+		marker.hide()
+		marker.queue_free()
+	_markers.erase(id)
+	var bounds := Rect2i(cells[0], Vector2i.ONE)
+	for cell in cells:
+		_cells.erase(cell)
+		_auto.erase(cell)
+		_map.tree_sprouts().untouch(cell)
+		if _map.is_drawn(cell):
+			_map.erase_cell(1, cell)
+			_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
+			_map.repaint_ground_cell(cell)
+		_map.invalidate_painted_cell(cell)
+		bounds = bounds.expand(cell)
+	_map._walls.resolve()
+	_map.ground_changed.emit(bounds)
+	return true
+
+
 func clear() -> void:
 	_FootprintOrientation.clear_sprites(_markers)
 	_cells.clear()
 	_auto.clear()
 	_placed.clear()
+	_footprints.clear()
 	_flags.clear()
 	_next_id = 1
 
@@ -200,7 +249,11 @@ func place(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turn
 
 
 func place_from_host(
-	structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turns: int = 0
+	structure: Structure,
+	anchor_cell: Vector2i,
+	owner: int,
+	quarter_turns: int = 0,
+	placement_id: int = 0
 ) -> int:
 	## The host already decided this placement (#497, #278, #493). Same footprint
 	## rules as can_place, without the multiplayer refuse a client still gets
@@ -208,20 +261,24 @@ func place_from_host(
 	## Returns the new id, or -1 when the footprint is refused.
 	if not can_place(structure, anchor_cell, quarter_turns, true).is_empty():
 		return -1
-	return _write(structure, anchor_cell, owner, quarter_turns)
+	return _write(structure, anchor_cell, owner, quarter_turns, placement_id)
 
 
-func to_sync() -> Array:
+func to_sync(include_identity := false) -> Array:
 	## The placements in id order as [name, owner, anchor, rotation?], the
-	## list the host sends a joining peer with the map. Rotation is quarter
-	## turns clockwise (0–3); omitted when zero for older readers.
+	## list in id order. Join snapshots also carry the id and starting castle
+	## designation so a removed placement does not shift city or capture IDs.
 	var out := []
 	var ids := _placed.keys()
 	ids.sort()
 	for id in ids:
 		var p: Dictionary = _placed[id]
 		var turns: int = int(p.get("rotation", 0))
-		if turns == 0:
+		if include_identity:
+			out.append(
+				[p["name"], p["owner"], p["anchor"], turns, id, p.get("start_castle", false)]
+			)
+		elif turns == 0:
 			out.append([p["name"], p["owner"], p["anchor"]])
 		else:
 			out.append([p["name"], p["owner"], p["anchor"], turns])
@@ -250,7 +307,10 @@ func replace_from_host(list: Array) -> int:
 			turns = entry[3]
 		var structure := load_named(entry[0])
 		if structure != null:
-			_write(structure, entry[2], entry[1], turns)
+			var id := int(entry[4]) if entry.size() >= 5 else 0
+			var placed_id := _write(structure, entry[2], entry[1], turns, id)
+			if entry.size() >= 6 and entry[5] == true:
+				mark_start_castle(placed_id)
 	return _placed.size()
 
 
@@ -266,9 +326,18 @@ static func load_named(structure_name: String) -> Structure:
 	return Structure.parse(FileAccess.get_file_as_string(path))["structure"]
 
 
-func _write(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turns: int = 0) -> int:
+func _write(
+	structure: Structure,
+	anchor_cell: Vector2i,
+	owner: int,
+	quarter_turns: int,
+	placement_id: int = 0
+) -> int:
+	var id := placement_id if placement_id > 0 else _next_id
+	_next_id = maxi(_next_id, id + 1)
 	var placed := Structure.rotated(structure, quarter_turns)
 	var foot := footprint(placed, anchor_cell)
+	var occupied: Array[Vector2i] = []
 	var flags: Array[Vector2i] = []
 	for cell: Vector2i in foot:
 		var g: Dictionary = foot[cell][0]
@@ -285,7 +354,8 @@ func _write(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_tur
 					tile = OWNER_FLAGS.get(owner, OTHER_OWNER_FLAG)
 					flags.append(cell)
 				object = _atlas(tile)
-		_cells[cell] = [ground, object]
+		_cells[cell] = [ground, object, id]
+		occupied.append(cell)
 		_map.forget_cut(cell)
 		_map._predict_cache.erase(cell)
 		if not _map.is_drawn(cell):
@@ -296,8 +366,7 @@ func _write(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_tur
 		_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
 		if object != _WorldMap.NO_PLANT:
 			_map.set_cell(1, cell, TileCatalog.SOURCE_ID, object)
-	var id := _next_id
-	_next_id += 1
+	_footprints[id] = occupied
 	var meta := {"name": structure.name, "owner": owner, "anchor": anchor_cell}
 	var turns := posmod(quarter_turns, 4)
 	if turns != 0:

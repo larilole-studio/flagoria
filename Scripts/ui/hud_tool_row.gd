@@ -13,7 +13,7 @@ const GAP := 4.0
 const WHEEL_GAP := 2.0
 const SIDE := 12.0
 const PICKER_RADII := [50.0, 90.0]
-const PICKER_ANGLES := [[0.0, 50.0, 100.0], [0.0, 40.0, 80.0]]
+const PICKER_ANGLES := [[0.0, 50.0, 100.0], [0.0, 40.0, 80.0, 120.0]]
 const PICKER_SPACING := 40.0
 const PLAYER_CLEARANCE := 70.0
 const LAYOUT := {
@@ -316,9 +316,9 @@ func _picker_candidate(
 	var occupied := blocked.duplicate()
 	for button in buttons:
 		var index: int = button.get_meta(&"picker_slot")
-		@warning_ignore("integer_division")
-		var ring := index / 3
-		var angle := deg_to_rad(PICKER_ANGLES[ring][index % 3])
+		var inner_count: int = PICKER_ANGLES[0].size()
+		var ring := 0 if index < inner_count else 1
+		var angle := deg_to_rad(PICKER_ANGLES[ring][index - ring * inner_count])
 		var offset := (
 			Vector2(side * sin(angle), -cos(angle)) * float(PICKER_RADII[ring]) * scale_factor
 		)
