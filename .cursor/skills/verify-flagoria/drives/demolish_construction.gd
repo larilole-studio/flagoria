@@ -17,7 +17,7 @@ func run() -> void:
 	inventory.add(Inventory.WOOD, 10)
 	var initial := inventory.count_of(Inventory.WOOD)
 	await toggle_mode()
-	var anchor: Variant = tower_anchor(map, interaction)
+	var anchor: Variant = await tower_anchor(map, interaction)
 	if anchor == null:
 		printerr("demolish: no reachable tower anchor by the starting castle")
 		done(false)
@@ -64,16 +64,22 @@ func run() -> void:
 
 
 func tower_anchor(map: TileMap, interaction: Interaction) -> Variant:
+	## Nearest clear tower spot, then stand the hero beside it.
 	var placer := ConstructionPlacer.new(map)
 	var origin := map.local_to_map(map.to_local(hero().global_position))
-	for dy in range(1, -6, -1):
-		for dx in [0, -1, 1, -2, 2, -3, 3, -4, 4]:
-			var cell := origin + Vector2i(dx, dy)
-			if (
-				interaction.in_reach(cell)
-				and placer.can_place_geometry(BuildCosts.TOWER, [cell]).is_empty()
-			):
-				return cell
+	for r in range(2, 30):
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r:
+					continue
+				var cell := origin + Vector2i(dx, dy)
+				if not placer.can_place_geometry(BuildCosts.TOWER, [cell]).is_empty():
+					continue
+				hero().global_position = map.to_global(map.map_to_local(cell + Vector2i(0, 3)))
+				for _i in 8:
+					await process_frame
+				if interaction.in_reach(cell):
+					return cell
 	return null
 
 
