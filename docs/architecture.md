@@ -48,8 +48,10 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/mechanics/building/build_costs.gd`
 - `Scripts/mechanics/building/build_placement.gd`
 - `Scripts/mechanics/building/build_placement_rotate.gd`
+- `Scripts/mechanics/building/build_preview.gd`
 - `Scripts/mechanics/building/build_tool_row.gd`
 - `Scripts/mechanics/building/construction_placer.gd`
+- `Scripts/mechanics/building/construction_remover.gd`
 - `Scripts/mechanics/building/footprint_orientation.gd`
 - `Scripts/mechanics/building/structure_requests.gd`
 
