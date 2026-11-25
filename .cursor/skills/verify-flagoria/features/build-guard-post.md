@@ -28,7 +28,7 @@ with #37 and #280.
 ## How to get to it (user POV)
 
 1. Host alone or two-player with at least 20 wood.
-2. Open Buildings, tap Guard post, rotate if needed, aim at clear land (anchor
+2. Open Buildings, tap Guard post, rotate if needed, then drag the centered preview to clear land (anchor
    on the gate cell).
 3. Lift to place; the flag uses the builder's colour.
 

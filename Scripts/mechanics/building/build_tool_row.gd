@@ -101,6 +101,24 @@ static func _add_picker_label(button: Button, caption: String) -> void:
 	button.add_child(label)
 
 
+static func snap_run(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
+	## Contiguous horizontal or vertical cells from `from_cell` to `to_cell`,
+	## snapping to the dominant axis (ties go horizontal).
+	var delta := to_cell - from_cell
+	var horizontal := absi(delta.x) >= absi(delta.y)
+	var end := Vector2i(to_cell.x, from_cell.y) if horizontal else Vector2i(from_cell.x, to_cell.y)
+	var step := Vector2i(
+		0 if end.x == from_cell.x else (1 if end.x > from_cell.x else -1),
+		0 if end.y == from_cell.y else (1 if end.y > from_cell.y else -1),
+	)
+	var out: Array[Vector2i] = [from_cell]
+	var cur := from_cell
+	while cur != end:
+		cur += step
+		out.append(cur)
+	return out
+
+
 static func wall_segment(
 	tip: Vector2i, has_tip: bool, from_cell: Vector2i, to_cell: Vector2i
 ) -> Array[Vector2i]:
@@ -108,7 +126,7 @@ static func wall_segment(
 	if not has_tip:
 		if from_cell == to_cell:
 			return [to_cell]
-		return BuildPlacement.snap_run(from_cell, to_cell)
+		return snap_run(from_cell, to_cell)
 	var delta := to_cell - tip
 	if delta == Vector2i.ZERO:
 		return empty
@@ -135,4 +153,4 @@ static func wall_segment(
 	var end := Vector2i(to_cell.x, tip.y) if horizontal else Vector2i(tip.x, to_cell.y)
 	if start == tip:
 		return empty
-	return BuildPlacement.snap_run(start, end)
+	return snap_run(start, end)

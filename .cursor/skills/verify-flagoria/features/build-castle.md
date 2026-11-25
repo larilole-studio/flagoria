@@ -28,7 +28,7 @@ syncs through `StructureRequests` (#527), including late joiners and world saves
 ## How to get to it (user POV)
 
 1. Host alone or two-player with at least 50 wood.
-2. Open Buildings, tap Castle, rotate if needed, aim at clear land.
+2. Open Buildings, tap Castle, rotate if needed, then drag the centered preview to clear land.
 3. Lift to place; the flag uses the builder's colour.
 
 ## Driving it with verify-flagoria helpers

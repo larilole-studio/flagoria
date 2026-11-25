@@ -1,6 +1,10 @@
 # Build placement
 
-Drive: not player-facing
+Drive: drives/center_build_preview.gd
+Source: Scripts/mechanics/building/build_placement.gd
+Source: Scripts/mechanics/building/build_preview.gd
+Source: Scripts/mechanics/building/build_tool_row.gd
+Source: Scripts/mechanics/interact/interaction.gd
 
 Interact-mode build tools (#225 / #273 / #276). The build picker lists Plank,
 Wall and Tower in the inner ring, and Castle, Guard post and Barracks in the
@@ -8,11 +12,15 @@ outer ring (see [Round HUD buttons](./hud-round-buttons.md)). The rings open
 inward above Buildings and dim the playfield. The picker stays closed until
 Buildings is open (`BuildPlacement._list_open` starts false; each tool button is
 visible only while the list is open). Cut keeps the existing tap, drag and chop
-behaviour and is the tool when none of those is selected. Plank snaps a drag to a
-horizontal or vertical cell run. Tower, Castle, Guard post and Barracks preview a
-footprint under the finger (see [Build tower](./build-tower.md), [Build castle](./build-castle.md),
-[Build guard post](./build-guard-post.md) and [Build barracks](./build-barracks.md)).
-Wall keeps a tip and places a connected palisade chain (see [Free-form walls](./free-form-walls.md)).
+behaviour and is the tool when none of those is selected. Selecting Tower, Castle,
+Guard post or Barracks enters interact mode and immediately previews the
+footprint at the snapped screen center (#711). Press open playfield and drag to move the preview by the finger's
+travel. Cost and refusals are drawn beside the snapped preview. See [Build tower](./build-tower.md), [Build castle](./build-castle.md),
+[Build guard post](./build-guard-post.md) and [Build barracks](./build-barracks.md).
+Plank and the first Wall run start at the snapped center and extend by the drag
+delta along the dominant axis. Wall extensions start from the existing tip
+(see [Free-form walls](./free-form-walls.md)). [Demolish](./demolish-construction.md)
+previews and removes by tapping the target.
 The preview greens exactly the cells `commit` will place and shows that wood cost;
 the rest is red. A refusal reason appears when nothing is placeable (including an
 empty wall gap). On release, placement goes through `ConstructionPlacer`
@@ -24,9 +32,9 @@ only when the snapped cells, wood count, player position and map revision are
 unchanged, so a wood spend, a walk out of reach, or a map change cannot leave a
 stale green preview. The tool wheel and the lilac picker discs use Candy Glass sprites from `art/ui/hud_e4/`.
 
-Plank drags start at the first snapped cell within normal reach. Preview and
-commit use up to 10 consecutive cells from that start at one wood per cell
-(#684). Cells beyond the cap stay red.
+For a center-origin Plank drag, leading shore and existing deck stay red.
+Preview and commit use up to 10 consecutive cells from the first reachable
+water cell at one wood per cell (#684). Cells beyond the cap stay red.
 
 ## Sub-features
 
@@ -45,10 +53,10 @@ commit use up to 10 consecutive cells from that start at one wood per cell
 1. Start a local game (Host alone, offline, or two-player — Plank works in all).
 2. Tap Buildings to open the picker, then select chop on the tool wheel to enter interact
    mode if needed.
-3. Tap Plank, drag across water next to land; green cells and the wood cost
-   follow the finger (green = what will place). Lift to place. Tower, Castle,
-   Guard post and Barracks: see their feature files. Wall: see
-   [Free-form walls](./free-form-walls.md).
+3. Tap Plank near a shore, then drag in the direction of the water. Lift to
+   place the green cells. For a footprint, pick the tool and drag from open
+   playfield until the preview is valid. Lift to place or switch tools or modes
+   to dismiss the preview.
 
 ## Driving it with verify-flagoria helpers
 
@@ -61,11 +69,12 @@ under 0.05 s in `tools/verify.sh`; `test_build_picker_switches_tool` about 0.3 s
 `test_build_preview_matches_commit_mid_invalid` about 0.2 s;
 `test_build_preview_cache_invalidates_on_wood` about 0.5 s;
 `test_build_picker_buttons` about 0.4 s (each ~1.9–2.2 s alone
-with `--only=`, against ~1.7 s runner start-up). Screenshot drive about 15 s
-under xvfb.
+with `--only=`, against ~1.7 s runner start-up). The centered-preview scene
+test adds one scene boot, about 0.5 s.
 
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=build_placement_snap_run,build_picker_switches_tool,build_plank_preview_tint_and_cost,build_cut_mode_unchanged,build_plank_drag_places,build_preview_matches_commit_short_wood,build_preview_matches_commit_mid_invalid,build_preview_cache_invalidates_on_wood,build_picker_buttons`, or the full `tools/verify.sh`.
+- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=build_placement_snap_run,build_preview_starts_centered_and_moves_relatively,build_picker_switches_tool,build_plank_preview_tint_and_cost,build_cut_mode_unchanged,build_plank_drag_places,build_preview_matches_commit_short_wood,build_preview_matches_commit_mid_invalid,build_preview_cache_invalidates_on_wood,build_picker_buttons`, or the full `tools/verify.sh`.
 - **Proof.** Headers `-- test_build_placement_snap_run`,
+  `-- test_build_preview_starts_centered_and_moves_relatively`,
   `-- test_build_picker_switches_tool`,
   `-- test_build_plank_preview_tint_and_cost`,
   `-- test_build_cut_mode_unchanged`,
@@ -78,6 +87,12 @@ under xvfb.
   shows the picker and a green/red plank preview. The existing
   `bin/capture_build_placement.gd` screenshot helper captures a 10-tile preview
   under xvfb.
+
+- **Run (display).** `bin/launch.sh drives/center_build_preview.gd --display`.
+  `centered-tower-warning` shows the Tower outline and wood refusal beside
+  screen center before touching the playfield. `tower-after-relative-drag`
+  shows both moved to the right. The drive checks the snapped anchor, the wood
+  refusal and that the held touch ends outside the footprint.
 
 Plank placement and per-cell charges are covered at the
 [construction seam](./construction-placement.md). The drag test covers the 10-cell preview, placement beyond normal reach,

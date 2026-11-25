@@ -5,9 +5,10 @@ Source: Scripts/mechanics/walls/wall_builder.gd
 
 Free-form wooden palisade walls as one connected chain (#276). Wall sits in the inner Buildings ring. The tool keeps a persistent tip
 while selected: the first placement must 4-touch an existing tower, castle or
-wall (otherwise refuse with feedback and spend nothing); after that a tap must
-4-touch the tip, and a drag lays an H/V-snapped straight segment
-starting on the neighbour of the tip toward the finger. Leaving the Wall tool
+wall (otherwise refuse with feedback and spend nothing). The first run starts
+at the snapped screen center and extends by the drag delta. After that, each
+drag lays an H/V-snapped straight segment from the neighbour of the tip in the
+drag direction. Leaving the Wall tool
 clears the tip. Gaps and diagonals are refused with feedback and spend no wood.
 Each wall block costs 2 wood through `ConstructionPlacer` /
 `BuildCosts.WALL_BLOCK` (spend before write, full refund on writer refusal).
@@ -24,7 +25,7 @@ to the host (#498). Preview green cells and cost match exactly what
 - `build-wall-picker` Wall appears in the Buildings picker, stays visible while multiplayer is on (#498), and switches
   `BuildPlacement.tool` to Wall.
 - `build-wall-tip` first block must 4-touch tower/castle/wall; tip persists
-  while Wall is selected; tap must 4-touch tip; drag is H/V from the tip
+  while Wall is selected; drag is H/V from the tip
   neighbour; leave tool clears tip; gap / diagonal / floating first block
   return "not adjacent" and spend nothing.
 - `build-wall-preview` green cells and cost match what commit places and
@@ -40,8 +41,9 @@ to the host (#498). Preview green cells and cost match exactly what
 
 1. Start a local game (Host alone or offline) with wood.
 2. Open Buildings to show the picker.
-3. Tap Wall, tap clear land that 4-touches the castle, a tower or a wall.
-   The tip stays. Tap a 4-neighbour or drag a straight run next to the tip;
+3. Tap Wall near the castle, a tower or a wall. Drag from open playfield to
+   extend the centered run, and release when it touches the existing structure.
+   The tip stays. Drag again to extend the chain from the tip;
    green cells show the wood cost. Lift to place. Switch away from Wall to
    clear the tip.
 

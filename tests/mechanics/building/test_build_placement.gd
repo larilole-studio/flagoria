@@ -146,6 +146,89 @@ func _cell_vp(interaction: Interaction, world, cell: Vector2i) -> Vector2:
 	return interaction.get_canvas_transform() * world.to_global(world.map_to_local(cell))
 
 
+func _test_build_preview_starts_centered_and_moves_relatively() -> int:
+	print("-- test_build_preview_starts_centered_and_moves_relatively")
+	var ctx := await _boot_interact_scene(false)
+	var interaction: Interaction = ctx["interaction"]
+	var map: TileMap = ctx["world"]
+	var viewport := interaction.get_viewport()
+	var camera := viewport.get_camera_2d()
+	camera.global_position = interaction.cell_center(Vector2i(10, 10))
+	camera.force_update_scroll()
+	var center := viewport.get_visible_rect().get_center()
+	var anchor_pos := _cell_vp(interaction, map, Vector2i(10, 10))
+	var step := _cell_vp(interaction, map, Vector2i(11, 10)) - anchor_pos
+	var finger := center + Vector2(0, -60)
+	var picker: Control = ctx["scene"].get_node("CanvasLayer1/BuildPicker")
+	var buildings: Button = ctx["scene"].get_node("CanvasLayer1/BuildingsButton")
+	var failures := 0
+	for button_name in ["TowerButton", "CastleButton", "GuardButton", "BarracksButton"]:
+		buildings.button_pressed = true
+		var button: Button = picker.get_node(button_name)
+		button.pressed.emit()
+		if (
+			not interaction.build.cells.has(Vector2i(10, 10))
+			or interaction.build.reasons.is_empty()
+		):
+			printerr("FAIL centered preview: %s did not preview a refusal at center" % button_name)
+			failures += 1
+		_build_touch(viewport, finger, true)
+		_build_drag(viewport, finger, finger + step * 3)
+		if (
+			not interaction.build.cells.has(Vector2i(13, 10))
+			or not interaction.build.cost_viewport.is_equal_approx(anchor_pos + step * 3)
+			or interaction.build.reasons.is_empty()
+		):
+			printerr(
+				(
+					"FAIL relative preview: %s cells=%s label=%s expected=%s reasons=%s"
+					% [
+						button_name,
+						interaction.build.cells,
+						interaction.build.cost_viewport,
+						anchor_pos + step * 3,
+						interaction.build.reasons,
+					]
+				)
+			)
+			failures += 1
+		interaction.set_mode(Interaction.Mode.COMBAT)
+		_build_touch(viewport, finger + step * 3, false)
+		if not interaction.build.cells.is_empty():
+			printerr("FAIL centered preview: leaving interact left preview cells")
+			failures += 1
+	interaction.set_mode(Interaction.Mode.INTERACT)
+	for tool in [BuildPlacement.Tool.WALL, BuildPlacement.Tool.PLANK]:
+		interaction.build.set_tool(tool)
+		_build_touch(viewport, finger, true)
+		_build_drag(viewport, finger, finger + step * 2)
+		if interaction.build.cells != [Vector2i(10, 10), Vector2i(11, 10), Vector2i(12, 10)]:
+			printerr("FAIL relative run: %s cells were %s" % [tool, interaction.build.cells])
+			failures += 1
+		_build_touch(viewport, finger + step * 2, false, true)
+	interaction.set_mode(Interaction.Mode.COMBAT)
+	ctx["scene"].queue_free()
+	await process_frame
+	if failures == 0:
+		print("PASS test_build_preview_starts_centered_and_moves_relatively")
+	return failures
+
+
+func _build_touch(viewport: Viewport, point: Vector2, pressed: bool, canceled := false) -> void:
+	var event := InputEventScreenTouch.new()
+	event.position = point
+	event.pressed = pressed
+	event.canceled = canceled
+	viewport.push_input(event, true)
+
+
+func _build_drag(viewport: Viewport, from: Vector2, to: Vector2) -> void:
+	var event := InputEventScreenDrag.new()
+	event.position = to
+	event.relative = to - from
+	viewport.push_input(event, true)
+
+
 func _test_build_plank_preview_tint_and_cost() -> int:
 	## A snapped plank drag marks valid water cells green and invalid cells
 	## red, and the preview cost matches ConstructionPlacer. Time cost: about
@@ -314,24 +397,23 @@ func _test_build_plank_drag_places() -> int:
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	interaction.build.set_tool(BuildPlacement.Tool.PLANK)
 	var vp: Viewport = scene.get_viewport()
-	var start := _cell_vp(interaction, world, water_run[0])
-	var end := _cell_vp(interaction, world, water_run[water_run.size() - 1])
-	var press := InputEventScreenTouch.new()
-	press.position = start
-	press.pressed = true
-	vp.push_input(press, true)
-	var drag := InputEventScreenDrag.new()
-	drag.position = end
-	drag.index = 0
-	drag.relative = end - start
-	vp.push_input(drag, true)
-	if _preview_green(interaction.build) != water_run.slice(0, 10) or interaction.build.cost != 10:
-		printerr("FAIL build_plank_drag_places: expected the first 10 cells green for 10 wood")
+	var shore: Vector2i = found["shore"]
+	var camera := vp.get_camera_2d()
+	camera.global_position = interaction.cell_center(shore)
+	camera.force_update_scroll()
+	var center := vp.get_visible_rect().get_center()
+	var start := center + Vector2(0, -60)
+	var end := start + _cell_vp(interaction, world, water_run.back()) - center
+	_build_touch(vp, start, true)
+	_build_drag(vp, start, end)
+	if (
+		interaction.build.cells.front() != shore
+		or _preview_green(interaction.build) != water_run.slice(0, 10)
+		or interaction.build.cost != 10
+	):
+		printerr("FAIL build_plank_drag_places: expected 10 green cells after the centered shore")
 		fail += 1
-	var release := InputEventScreenTouch.new()
-	release.position = end
-	release.pressed = false
-	vp.push_input(release, true)
+	_build_touch(vp, end, false)
 	await process_frame
 	var placed := water_run.filter(func(c: Vector2i) -> bool: return world.has_bridge(c))
 	if placed != water_run.slice(0, 10):

@@ -3,6 +3,8 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
 ## Seed the wood balance, then use the real picker and touch input throughout.
 
+const BuildDrag := preload("res://.cursor/skills/verify-flagoria/bin/build_drag.gd")
+
 const BUILDINGS := "CanvasLayer1/BuildingsButton"
 const TOWER_BUTTON := "CanvasLayer1/BuildPicker/TowerButton"
 const DEMOLISH_BUTTON := "CanvasLayer1/BuildPicker/DemolishButton"
@@ -25,7 +27,12 @@ func run() -> void:
 	step("place tower through the picker")
 	await click(BUILDINGS)
 	await click(TOWER_BUTTON)
-	await tap_cell(anchor)
+	var center := root.get_visible_rect().get_center()
+	var start_cell := map.local_to_map(map.to_local(interaction.to_world(center)))
+	var target := to_window(map, map.map_to_local(anchor))
+	var origin := to_window(map, map.map_to_local(start_cell))
+	var finger := root.get_final_transform() * (center + Vector2(0, -64))
+	await BuildDrag.drag_touch(self, finger, finger + target - origin)
 	if not _has_tower(map) or inventory.count_of(Inventory.WOOD) != initial - 10:
 		printerr("demolish: the Tower tool did not place a tower")
 		done(false)

@@ -136,10 +136,9 @@ func _test_build_tower_preview_matches_commit() -> int:
 	return fail
 
 
-func _test_build_tower_tap_places() -> int:
-	## A tap in Tower tool places through ConstructionPlacer. Time cost: about
-	## 0.5 s in tools/verify.sh (~2.2 s alone with --only=build_tower_tap_places).
-	print("-- test_build_tower_tap_places")
+func _test_build_tower_drag_places_and_demolish_taps() -> int:
+	## Tower commits a relative drag. Demolish commits only an absolute tap.
+	print("-- test_build_tower_drag_places_and_demolish_taps")
 	var fail := 0
 	var ctx := await _boot_tower_scene()
 	var anchor: Variant = ctx["anchor"]
@@ -155,16 +154,27 @@ func _test_build_tower_tap_places() -> int:
 	inventory.add(Inventory.WOOD, 10)
 	interaction.set_mode(Interaction.Mode.INTERACT)
 	interaction.build.set_tool(BuildPlacement.Tool.TOWER)
-	var vp_pos := _cell_vp(interaction, world, anchor)
 	var viewport: Viewport = scene.get_viewport()
-	var press := InputEventScreenTouch.new()
-	press.position = vp_pos
-	press.pressed = true
-	viewport.push_input(press, true)
-	var release := InputEventScreenTouch.new()
-	release.position = vp_pos
-	release.pressed = false
-	viewport.push_input(release, true)
+	var middle := viewport.get_visible_rect().get_center()
+	var center_cell: Vector2i = world.local_to_map(world.to_local(interaction.to_world(middle)))
+	var target := _cell_vp(interaction, world, anchor)
+	var finger := middle + Vector2(0, -60)
+	var end := finger + target - _cell_vp(interaction, world, center_cell)
+	var drag := InputEventScreenDrag.new()
+	drag.position = end
+	drag.relative = end - finger
+	for canceled in [true, false]:
+		_tower_touch(viewport, finger, true)
+		viewport.push_input(drag, true)
+		_tower_touch(viewport, end, false, canceled)
+		if (
+			canceled
+			and (
+				not world.placed_structures().is_empty() or inventory.count_of(Inventory.WOOD) != 10
+			)
+		):
+			printerr("FAIL tower drag: cancel placed a tower or spent wood")
+			fail += 1
 	await process_frame
 	if world.placed_structures().is_empty() or inventory.count_of(Inventory.WOOD) != 0:
 		printerr(
@@ -174,11 +184,39 @@ func _test_build_tower_tap_places() -> int:
 			)
 		)
 		fail += 1
+	interaction.build.set_tool(BuildPlacement.Tool.DEMOLISH)
+	if not interaction.build.cells.is_empty():
+		printerr("FAIL demolish tap: selecting the tool showed a preview")
+		fail += 1
+	_tower_touch(viewport, target, true)
+	if not interaction.build.cells.has(anchor) or interaction.build.cost != 5:
+		printerr("FAIL demolish tap: expected the tapped tower and its refund")
+		fail += 1
+	drag.position = target + Vector2(30, 0)
+	drag.relative = Vector2(30, 0)
+	viewport.push_input(drag, true)
+	_tower_touch(viewport, drag.position, false)
+	if world.placed_structures().is_empty():
+		printerr("FAIL demolish tap: a drag removed the tower")
+		fail += 1
+	_tower_touch(viewport, target, true)
+	_tower_touch(viewport, target, false)
+	if not world.placed_structures().is_empty() or inventory.count_of(Inventory.WOOD) != 5:
+		printerr("FAIL demolish tap: the tap did not remove the tower and refund 5 wood")
+		fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
-		print("PASS test_build_tower_tap_places")
+		print("PASS test_build_tower_drag_places_and_demolish_taps")
 	return fail
+
+
+func _tower_touch(viewport: Viewport, point: Vector2, pressed: bool, canceled := false) -> void:
+	var touch := InputEventScreenTouch.new()
+	touch.position = point
+	touch.pressed = pressed
+	touch.canceled = canceled
+	viewport.push_input(touch, true)
 
 
 func _test_build_tower_out_of_reach() -> int:

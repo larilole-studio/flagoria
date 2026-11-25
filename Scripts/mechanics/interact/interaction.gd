@@ -3,12 +3,10 @@ extends Node2D
 ## Combat or interact mode. Combat leaves the map to AttackAim.
 ## Interact Cut aims from the attack button (ChopStick): a drag past
 ## DRAG_START sets the cone's direction and its reach, clamped to CHOP_REACH,
-## and a shorter press chops in the facing direction at full reach. Plants in
-## the cone queue and each finishes before the next. Plank, tower and wall
-## still drag on the map. A dead player cuts nothing (#349).
-## The host decides cuts, regrowth and sprouts. Late joiners receive existing
-## cuts and plank bridges with the map. Live bridge RPCs are here; named
-## structures, walls, and demolition requests go through StructureRequests.
+## and a shorter press chops in the facing direction at full reach. Plants
+## in the cone queue. Build gestures are tracked separately from chop.
+## The host decides cuts, regrowth and sprouts. Named structure, wall and
+## demolition requests go through StructureRequests.
 
 signal mode_changed(mode: Mode)
 ## A chop's axe landed on `cell`; `hit` counts from 1 to the type's `hits`.
@@ -40,7 +38,6 @@ var _dragging := false
 var _stick = preload("res://Scripts/mechanics/interact/chop_stick.gd").new()
 ## The chop, its effects and its sounds (Scripts/mechanics/trees/chop_action.gd).
 var _chop := ChopAction.new(self)
-## Interact-mode build tool: Cut / Plank / Tower / Wall picker (#225 / #276).
 var build := BuildPlacement.new()
 ## The chop's state, read through these (kept in ChopAction).
 var chop_cell: Vector2i:
@@ -111,50 +108,45 @@ func _process(delta: float) -> void:
 	var mp := multiplayer_on(multiplayer)
 	build.on_multiplayer_changed(mp)
 	if mode == Mode.INTERACT:
-		# Keep the build preview honest while the finger is held still: wood,
-		# reach (player walked) or the map can change without a new drag event.
-		if _touch != -1 and build.tracks_pointer():
-			build.update_preview(_start, _end)
+		if player != null and player_dead(player):
+			if _touch != -1 or build.has_pointer_origin():
+				_cancel()
+		elif _touch != -1 or build.has_pointer_origin():
+			_refresh_build_preview()
 		queue_redraw()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if mode != Mode.INTERACT or player == null:
-		return
-	if player_dead(player):
-		if _touch != -1:
-			_cancel()
-		return
-	if build.tool == BuildPlacement.Tool.CUT:
+	if mode != Mode.INTERACT or player == null or player_dead(player) or not build.tracks_pointer():
 		return
 	if event is InputEventScreenTouch:
-		if event.pressed:
-			if _touch == -1 and not _on_hud(event.position):
-				_touch = event.index
-				_start = event.position
-				_end = event.position
-				_dragging = false
-			elif _touch != -1 and event.index != _touch:
-				_cancel()  # a second finger: a pinch, not a selection
-		elif event.index == _touch:
+		if event.pressed and _touch == -1 and not _on_hud(event.position):
+			_touch = event.index
+			_start = event.position
+			_end = _start
+			_refresh_build_preview()
+		elif not event.pressed and event.index == _touch:
 			_end = event.position
-			if build.tracks_pointer():
-				var tapped := not _dragging and _start.distance_to(_end) <= DRAG_START
-				if build.tool != BuildPlacement.Tool.DEMOLISH or tapped:
-					build.update_preview(_start, _end)
+			if not event.canceled:
+				_refresh_build_preview()
+				if build.tool != BuildPlacement.Tool.DEMOLISH or not _dragging:
 					build.commit()
-			elif _dragging:
-				_release_drag()
-			else:
-				_release_tap()
 			_cancel()
 			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and event.index == _touch:
 		_end = event.position
-		if _start.distance_to(_end) > DRAG_START:
-			_dragging = true
-		if build.tracks_pointer():
-			build.update_preview(_start, _end)
+		_refresh_build_preview()
+
+
+func _refresh_build_preview() -> void:
+	if build.tool != BuildPlacement.Tool.DEMOLISH:
+		build.preview_drag(_end - _start if _touch != -1 else Vector2.ZERO)
+		return
+	_dragging = _dragging or _start.distance_to(_end) > DRAG_START
+	if _dragging:
+		build.clear_preview()
+	else:
+		build.update_preview(_start, _start)
 
 
 static func player_dead(node: Node) -> bool:
@@ -167,15 +159,23 @@ func _on_hud(pos: Vector2) -> bool:
 	return zoom != null and zoom.starts_on_hud(pos)
 
 
-func _cancel() -> void:
+func cancel_build_touch() -> void:
 	_touch = -1
 	_dragging = false
+
+
+func _cancel() -> void:
+	cancel_build_touch()
 	_stick.cancel()
 	build.clear_preview()
 	queue_redraw()
 
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed and _touch != -1 and event.index != _touch:
+		_cancel()  # A second finger can start a pinch or press the HUD.
+		if not _on_hud(event.position):
+			get_viewport().set_input_as_handled()
 	if event is InputEventScreenTouch or event is InputEventScreenDrag:
 		_stick.handle(self, event)
 

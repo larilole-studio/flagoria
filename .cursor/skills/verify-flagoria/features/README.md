@@ -70,7 +70,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
 - [Generated building](./generated-building.md) — host debug key and Map Settings button place one WFC building at the player; clients and a late joiner solve the same seed (#26).
 - [Building merge](./building-merge.md) — full-edge neighbours share a wall; removal re-seals; two-player and late-joiner replay (#27).
-- [Build placement](./build-placement.md) — interact-mode build picker (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; H/V-snapped plank and wall drag, footprint previews, green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
+- [Build placement](./build-placement.md) — interact-mode build picker (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; centered footprints and relative dragging for footprints, walls and planks (#711), green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
 - [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297).
 - [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag; multiplayer asks the host (#273, #497).
 - [Build castle](./build-castle.md) — extra `castle.txt` for 50 wood with rotation, save/reload and multiplayer sync (#527).

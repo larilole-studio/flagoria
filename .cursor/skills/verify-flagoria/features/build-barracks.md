@@ -27,7 +27,7 @@ and world saves. Soldier training is #553.
 ## How to get to it (user POV)
 
 1. Host alone or two-player with at least 30 wood.
-2. Open Buildings, tap Barracks, rotate if needed, aim at clear land (anchor
+2. Open Buildings, tap Barracks, rotate if needed, then drag the centered preview to clear land (anchor
    on the gate cell).
 3. Lift to place.
 
