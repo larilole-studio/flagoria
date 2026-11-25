@@ -14,6 +14,7 @@ func _test_parchment_map() -> int:
 	var parchment: ParchmentMap = scene.get_node("CanvasLayer1/ParchmentMap")
 	var player: Node2D = scene.get_node("World/%d" % scene.multiplayer.get_unique_id())
 	map_button.pressed.emit()
+	fail += _check_toolbar(parchment, scene)
 	var before := parchment.pan
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
@@ -232,6 +233,83 @@ func _test_parchment_map() -> int:
 	await process_frame
 	if fail == 0:
 		print("PASS test_parchment_map")
+	return fail
+
+
+func _check_toolbar(parchment: ParchmentMap, scene: Node) -> int:
+	var fail := 0
+	var names := ["ZoomOutButton", "ZoomInButton", "RecentreButton", "CloseButton"]
+	var buttons: Array[Control] = []
+	for node_name in names:
+		buttons.append(parchment.get_node(node_name) as Control)
+	for button in buttons:
+		if button.size != parchment.BUTTON_SIZE:
+			printerr(
+				(
+					"FAIL parchment_map %s size %s want %s"
+					% [button.name, button.size, parchment.BUTTON_SIZE]
+				)
+			)
+			fail += 1
+		if button.position.x + button.size.x <= parchment.size.x * 0.5:
+			printerr(
+				(
+					"FAIL parchment_map %s not on the right (%s in %s)"
+					% [button.name, button.position, parchment.size]
+				)
+			)
+			fail += 1
+		if button.position.y > parchment.size.y * 0.35:
+			printerr(
+				(
+					"FAIL parchment_map %s not near the top (%s in %s)"
+					% [button.name, button.position, parchment.size]
+				)
+			)
+			fail += 1
+	for i in range(1, buttons.size()):
+		if buttons[i].position.x <= buttons[i - 1].position.x:
+			printerr(
+				(
+					"FAIL parchment_map toolbar order %s at %s after %s at %s"
+					% [
+						buttons[i].name,
+						buttons[i].position,
+						buttons[i - 1].name,
+						buttons[i - 1].position
+					]
+				)
+			)
+			fail += 1
+	var close := buttons[3]
+	var right_edge := close.position.x + close.size.x
+	if parchment.size.x - right_edge > parchment.BUTTON_MARGIN + 1:
+		printerr(
+			(
+				"FAIL parchment_map toolbar not against the right edge (end %s size %s)"
+				% [right_edge, parchment.size.x]
+			)
+		)
+		fail += 1
+	for path in ["CanvasLayer1/MapButton", "CanvasLayer1/InGameMenu/MenuButton"]:
+		var other := scene.get_node_or_null(path) as Control
+		if other == null:
+			continue
+		var other_rect := other.get_global_rect().grow(parchment.BUTTON_GAP)
+		for button in buttons:
+			if button.get_global_rect().intersects(other_rect):
+				printerr(
+					(
+						"FAIL parchment_map %s overlaps %s (%s vs %s)"
+						% [
+							button.name,
+							other.name,
+							button.get_global_rect(),
+							other.get_global_rect()
+						]
+					)
+				)
+				fail += 1
 	return fail
 
 
