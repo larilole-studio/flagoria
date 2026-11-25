@@ -2,7 +2,9 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 42
 ## Check the common and Advanced views, then host with the displayed settings.
 
-const MAP_SETTINGS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MapSettingsButton"
+const MENU := "CanvasLayer2/MainMenu"
+const SETTINGS_BUTTON := MENU + "/MarginContainer/VBoxContainer/SettingsButton"
+const MAP_SETTINGS := MENU + "/SettingsPanel/SettingsLayout/MapSettingsButton"
 const PANEL := "CanvasLayer2/MapAdminPanel"
 const ADVANCED := PANEL + "/Margin/VBox/Advanced"
 const COMMON := PANEL + "/Margin/VBox/Simple"
@@ -25,12 +27,22 @@ func run() -> void:
 		_fail("cannot load " + MAIN)
 		return
 	if not await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(MAP_SETTINGS),
+		func() -> bool: return current_scene != null and current_scene.has_node(SETTINGS_BUTTON),
 		START_TIMEOUT_S
 	):
-		_fail("no Map Settings button")
+		_fail("no Settings button")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
+	var landscape := Vector2i(854, 480)
+	var configured := OS.get_environment("VERIFY_WINDOW_SIZE").split("x")
+	if configured.size() == 2:
+		landscape = Vector2i(int(configured[0]), int(configured[1]))
+	var actual := await _resize(landscape.x, landscape.y)
+	var layout_ok := DisplayServer.get_name() == "headless" or actual == landscape
+	await snapshot("main-menu")
+	step("open-settings")
+	await click(SETTINGS_BUTTON)
+	await snapshot("settings")
 	step("open-map-settings")
 	await click(MAP_SETTINGS)
 	if not await wait_until(
@@ -44,12 +56,6 @@ func run() -> void:
 	var panel: Node = current_scene.get_node(PANEL)
 	var simple: Control = current_scene.get_node(COMMON)
 	var raw: Control = current_scene.get_node(RAW)
-	var landscape := Vector2i(854, 480)
-	var configured := OS.get_environment("VERIFY_WINDOW_SIZE").split("x")
-	if configured.size() == 2:
-		landscape = Vector2i(int(configured[0]), int(configured[1]))
-	var actual := await _resize(landscape.x, landscape.y)
-	var layout_ok := DisplayServer.get_name() == "headless" or actual == landscape
 	layout_ok = _buttons_fit("common") and simple.visible and not raw.visible and layout_ok
 	for control_name in ["IslandSize", "BiomeSize", "SpawnBiome"]:
 		var option: OptionButton = panel.find_child(control_name, true, false)
@@ -64,14 +70,14 @@ func run() -> void:
 
 	step("back")
 	await click(BACK)
-	var menu_back := await wait_until(
+	var settings_back := await wait_until(
 		func() -> bool:
-			var menu := current_scene.get_node_or_null("CanvasLayer2/MainMenu")
-			return menu != null and menu.visible and not panel.visible,
+			var map_button: Button = current_scene.get_node(MAP_SETTINGS)
+			return map_button.is_visible_in_tree() and not panel.visible,
 		5.0
 	)
-	if not menu_back:
-		_fail("Back did not return to the main menu")
+	if not settings_back:
+		_fail("Back did not return to Settings")
 		return
 	await click(MAP_SETTINGS)
 	step("host-with-these")

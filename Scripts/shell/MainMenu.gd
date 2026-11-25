@@ -54,7 +54,7 @@ func _ready() -> void:
 	admin_panel = preload("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	admin_panel.visible = false
 	admin_panel.closed.connect(_on_admin_closed)
-	admin_panel.start_host_requested.connect(_on_host_button_pressed)
+	admin_panel.start_host_requested.connect(_on_admin_host_requested)
 	# Defer so we are not adding children while the parent CanvasLayer is still setting up.
 	get_parent().call_deferred("add_child", admin_panel)
 
@@ -143,6 +143,7 @@ func _on_settings_back_pressed() -> void:
 
 
 func _on_map_settings_pressed() -> void:
+	# Keep Settings selected while the map panel is open so Back reveals it.
 	main_menu.hide()
 	if admin_panel == null:
 		return
@@ -151,6 +152,13 @@ func _on_map_settings_pressed() -> void:
 		await admin_panel.ready
 	admin_panel.load_from_params(get_node("/root/MapGen").params)
 	admin_panel.show()
+
+
+func _on_admin_host_requested() -> void:
+	# Hosting leaves Settings behind: the menu comes back at the top level.
+	settings_panel.hide()
+	play_panel.show()
+	_on_host_button_pressed()
 
 
 func _on_admin_closed() -> void:

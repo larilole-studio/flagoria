@@ -25,6 +25,7 @@ func _run() -> void:
 
 	var menu = flagoria.get_node_or_null("CanvasLayer2/MainMenu")
 	if menu and menu.has_method("_on_map_settings_pressed"):
+		menu._on_settings_pressed()
 		menu._on_map_settings_pressed()
 	for i in range(15):
 		await process_frame

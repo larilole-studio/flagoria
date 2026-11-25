@@ -110,12 +110,15 @@ func _test_ui_sfx_presses() -> int:
 	# Real presses that stay local (Host and Join start networking).
 	var menu = layer.get_node("MainMenu")
 	var panel = menu.admin_panel
+	var settings = menu.get_node("SettingsPanel/SettingsLayout")
 	var presses := [
-		[menu.get_node("MarginContainer/VBoxContainer/MapSettingsButton"), "click"],
+		[menu.get_node("MarginContainer/VBoxContainer/SettingsButton"), "click"],
+		[settings.get_node("MapSettingsButton"), "click"],
 		[panel.get_node("Margin/VBox/Buttons/RandomSeed"), "click"],
 		[panel.get_node("Margin/VBox/Buttons/RandomSpecs"), "click"],
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Reset"), "click"],
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Back"), "back"],
+		[settings.get_node("BackButton"), "back"],
 	]
 	for press in presses:
 		ui._last_ms.clear()  # cooldowns are wall-clock; each step is a new press

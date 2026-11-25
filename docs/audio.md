@@ -128,7 +128,7 @@ and player scenes, and runs a timeline: idle, walk on
 grass, sand and swamp, swing, damage, kill, a regen heal on this peer's own
 player, then one mob of each type
 noticing, attacking, getting hurt, dying, idling and staying silent while
-hidden, then a Map settings click, its Back, a `ui_menu` panel opening and
+hidden, then a Map Settings click from the Settings screen, its Back, a `ui_menu` panel opening and
 closing, and a map save. It records the mixer output
 while it runs. Headless Godot uses the Dummy audio driver, which still mixes
 in real time, so no sound card or display is needed.

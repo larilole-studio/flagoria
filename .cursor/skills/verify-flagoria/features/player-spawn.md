@@ -16,7 +16,7 @@ Players spawn on walkable land from which they can reach at least 200 clear cell
 
 ## How to get to it (user POV)
 
-- Host on several seeds (Map Settings → Random seeds → Host with these).
+- Host on several seeds (Settings → Map Settings → Random seeds → Host with these).
 
 ## Driving it with verify-flagoria helpers
 
