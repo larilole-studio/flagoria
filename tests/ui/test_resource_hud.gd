@@ -48,6 +48,37 @@ func _test_resource_hud_in_scene() -> int:
 	if not inventory.spend(Inventory.WOOD, 2) or hud.label.text != "1":
 		printerr("FAIL resource_hud_in_scene: counter '%s' after spending 2 wood" % hud.label.text)
 		fail += 1
+	var score: Control = _hud_on_canvas(scene, "ScoreHud") as Control
+	var star := plate.get_node_or_null("Star") as Control
+	var inset := StatusPlateHud.safe_inset(plate)
+	var content := hearts.get_global_rect().merge(hud.get_global_rect())
+	if score != null:
+		content = content.merge(score.get_global_rect())
+	var left := content.position.x - inset.x
+	var top := content.position.y - inset.y
+	var row_h := maxf(hearts.size.y, hud.size.y)
+	if score != null:
+		row_h = maxf(row_h, score.size.y)
+	if star != null:
+		row_h = maxf(row_h, star.size.y)
+	if (
+		not is_equal_approx(left, top)
+		or not is_equal_approx(left, StatusPlateHud.MARGIN)
+		or not is_equal_approx(plate.size.y, row_h)
+	):
+		printerr(
+			(
+				"FAIL resource_hud_in_scene: margins left=%s top=%s inset=%s plate=%s row_h=%s"
+				% [left, top, inset, plate.get_global_rect(), row_h]
+			)
+		)
+		fail += 1
+	var notch := StatusPlateHud.safe_inset_from(
+		Rect2(0, 48, 1920, 1032), Vector2.ZERO, Vector2(1920, 1080), Vector2(480, 270)
+	)
+	if notch != Vector2(0, 12):
+		printerr("FAIL resource_hud_in_scene: safe inset %s, want (0, 12)" % notch)
+		fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
