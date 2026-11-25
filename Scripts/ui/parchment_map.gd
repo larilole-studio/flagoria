@@ -18,8 +18,6 @@ const PAPER_EDGE := Color("8a5a32")
 const PAPER_HI := Color("f3e6c4")
 const INK := Color("2a2238")
 
-@onready var chart: MapChart = $"../MapChart"
-@onready var _map_button: Button = $"../MapButton"
 var pan := Vector2.ZERO  ## pixels added to the hero-centred origin
 var cell_px := DEFAULT_CELL_PX  ## art pixels per world cell; nearest-filter steps
 var _health: PlayerHealth
@@ -34,6 +32,10 @@ var _zoom_out: MapWoodButton
 var _touches := {}  ## touch index -> screen position
 var _pinch_span := 0.0
 var _pinch_cell_px := DEFAULT_CELL_PX
+var _magnify_cell_px := 0.0  ## fractional zoom carried between magnify events
+
+@onready var chart: MapChart = $"../MapChart"
+@onready var _map_button: Button = $"../MapButton"
 
 
 func _ready() -> void:
@@ -80,6 +82,8 @@ func hide_map() -> void:
 	_unbind_health()
 	_touches.clear()
 	_pinch_span = 0.0
+	_pinch_cell_px = DEFAULT_CELL_PX
+	_magnify_cell_px = 0.0
 
 
 func min_cell_px() -> int:
@@ -190,9 +194,15 @@ func _gui_input(event: InputEvent) -> void:
 		pan = _press_pan - (event.position - _press_pos)
 		_view.queue_redraw()
 		accept_event()
+	elif event is InputEventMagnifyGesture:
+		var base := _magnify_cell_px if _magnify_cell_px > 0.0 else float(cell_px)
+		var target := clampf(base * event.factor, min_cell_px(), MAX_CELL_PX)
+		_zoom_at(_view_focus(event.position), roundi(target))
+		_magnify_cell_px = target
+		accept_event()
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
-		if touch.pressed:
+		if touch.pressed and not touch.canceled:
 			if _touches.size() >= 2:
 				accept_event()
 				return
@@ -203,27 +213,29 @@ func _gui_input(event: InputEvent) -> void:
 			if _touches.size() == 2:
 				_pinch_span = _touch_span()
 				_pinch_cell_px = cell_px
-		else:
-			_touches.erase(touch.index)
+		elif _touches.erase(touch.index):
 			_pinch_span = 0.0
+			if _touches.size() == 1:
+				_press_pos = _touches.values()[0]
+				_press_pan = pan
 		accept_event()
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
-		if _touches.has(drag.index):
-			_touches[drag.index] = drag.position
-		if _touches.size() == 2 and _pinch_span > 0.0:
+		accept_event()
+		if not _touches.has(drag.index):
+			return
+		_touches[drag.index] = drag.position
+		if _touches.size() == 2:
 			var span := _touch_span()
-			if span > 0.0:
-				var stepped := clampi(
-					roundi(_pinch_cell_px * span / _pinch_span), min_cell_px(), MAX_CELL_PX
-				)
+			if _pinch_span > 0.0:
+				var stepped := roundi(_pinch_cell_px * span / _pinch_span)
 				_zoom_at(_view_focus(_pinch_mid()), stepped)
+			elif span > 0.0:
 				_pinch_span = span
 				_pinch_cell_px = cell_px
-		elif _touches.size() == 1:
+		else:
 			pan = _press_pan - (drag.position - _press_pos)
 			_view.queue_redraw()
-		accept_event()
 
 
 func _toggle_map() -> void:
@@ -289,6 +301,7 @@ func _origin() -> Vector2:
 
 
 func _zoom_at(focus: Vector2, stepped: int) -> void:
+	_magnify_cell_px = 0.0
 	var clamped := clampi(stepped, min_cell_px(), MAX_CELL_PX)
 	var old_px := cell_px
 	var changed := clamped != old_px

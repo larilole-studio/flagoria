@@ -1,6 +1,6 @@
 extends Node
 ## Map zoom for the local player's camera: two-finger pinch on touch screens,
-## mouse wheel or Ctrl +/- on desktop. Double-tap on the open map (or Ctrl 0)
+## magnify gestures, mouse wheel or Ctrl +/-. Double-tap on the open map (or Ctrl 0)
 ## returns to the default zoom. Zoom is local and is never synced.
 ##
 ## Only touches that start on the open map count toward a pinch. A touch that
@@ -42,6 +42,9 @@ func handle(event: InputEvent) -> bool:
 		return _on_touch(event)
 	if event is InputEventScreenDrag:
 		return _on_drag(event)
+	if event is InputEventMagnifyGesture:
+		set_factor(factor * event.factor)
+		return true
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			set_factor(factor * STEP)
@@ -86,17 +89,17 @@ func _on_touch(event: InputEventScreenTouch) -> bool:
 		return was_pinching
 	if starts_on_hud(event.position):
 		return false
-	if event.double_tap and _map_touches.is_empty():
-		reset()
-		return true
 	if _map_touches.size() >= 2:
 		return false  # a third finger does not join the pinch
+	var resets_zoom := event.double_tap and _map_touches.is_empty()
 	_map_touches[event.index] = event.position
+	if resets_zoom:
+		reset()
 	if _map_touches.size() == 2:
 		for index in _map_touches:
 			_pinching[index] = true
 		_pinch_distance = _touch_distance()
-	return false
+	return resets_zoom
 
 
 func _on_drag(event: InputEventScreenDrag) -> bool:

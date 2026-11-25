@@ -57,34 +57,44 @@ func _test_map_zoom() -> int:
 		vp.push_input(e)
 	var factor := func() -> float: return camera.zoom.x / default_zoom.x
 
-	# Fingers apart on the open map: zoom in, clamped at MAX_FACTOR.
+	# Small drags zoom monotonically in each direction, reaching both limits.
 	touch.call(0, Vector2(200, 120), true)
 	touch.call(1, Vector2(260, 120), true)
-	drag.call(1, Vector2(290, 120))
-	if not factor.call() > 1.0:
-		printerr("FAIL map_zoom pinch out did not zoom in (%s)" % factor.call())
+	var previous := 1.0
+	var monotonic := true
+	for x in range(263, 351, 3):
+		drag.call(1, Vector2(x, 120))
+		var current: float = zoom.factor
+		monotonic = monotonic and current >= previous and current <= zoom.MAX_FACTOR
+		previous = current
+	if not monotonic or not is_equal_approx(previous, zoom.MAX_FACTOR):
+		printerr("FAIL map_zoom slow pinch out reached %s" % previous)
 		fail += 1
-	drag.call(1, Vector2(470, 120))
-	drag.call(0, Vector2(10, 120))
-	if not is_equal_approx(factor.call(), zoom.MAX_FACTOR):
-		printerr("FAIL map_zoom zoom in not clamped (%s)" % factor.call())
+	monotonic = true
+	for x in range(347, 208, -3):
+		drag.call(1, Vector2(x, 120))
+		var current: float = zoom.factor
+		monotonic = monotonic and current <= previous and current >= zoom.MIN_FACTOR
+		previous = current
+	if not monotonic or not is_equal_approx(previous, zoom.MIN_FACTOR):
+		printerr("FAIL map_zoom slow pinch in reached %s" % previous)
 		fail += 1
-	# Fingers together: zoom out, clamped at MIN_FACTOR.
-	drag.call(0, Vector2(230, 120))
-	drag.call(1, Vector2(240, 120))
-	drag.call(1, Vector2(231, 120))
-	if not is_equal_approx(factor.call(), zoom.MIN_FACTOR):
-		printerr("FAIL map_zoom zoom out not clamped (%s)" % factor.call())
-		fail += 1
-	touch.call(0, Vector2(230, 120), false)
-	touch.call(1, Vector2(231, 120), false)
+	touch.call(0, Vector2(200, 120), false)
+	touch.call(1, Vector2(209, 120), false)
 
-	# Double-tap on the open map: back to the default.
+	# A double-tap resets the zoom and can still be the first touch of a pinch.
 	touch.call(0, Vector2(240, 100), true, true)
-	touch.call(0, Vector2(240, 100), false)
 	if camera.zoom != default_zoom or not zoom.is_default():
 		printerr("FAIL map_zoom double-tap did not reset (%s)" % camera.zoom)
 		fail += 1
+	touch.call(1, Vector2(300, 100), true)
+	drag.call(1, Vector2(330, 100))
+	if not is_equal_approx(factor.call(), 1.5):
+		printerr("FAIL map_zoom double-tapped finger could not pinch (%s)" % factor.call())
+		fail += 1
+	touch.call(0, Vector2(240, 100), false)
+	touch.call(1, Vector2(330, 100), false)
+	zoom.reset()
 
 	# One finger on the joystick and one on the attack button never pinch.
 	for start in [joystick.global_position, attack_center]:
@@ -137,6 +147,18 @@ func _test_map_zoom() -> int:
 		fail += 1
 	touch.call(0, center, false)
 	touch.call(1, center + Vector2(60, 0), false)
+	zoom.reset()
+
+	var magnify := InputEventMagnifyGesture.new()
+	magnify.position = vp.get_visible_rect().get_center()
+	magnify.factor = 1.25
+	vp.push_input(magnify, true)
+	var magnified: float = factor.call()
+	magnify.factor = 0.8
+	vp.push_input(magnify, true)
+	if not is_equal_approx(magnified, 1.25) or not zoom.is_default():
+		printerr("FAIL map_zoom magnify factors 1.0 -> %s -> %s" % [magnified, factor.call()])
+		fail += 1
 	zoom.reset()
 
 	# Desktop: wheel and Ctrl +/- zoom, Ctrl 0 resets.
