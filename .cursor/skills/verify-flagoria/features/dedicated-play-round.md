@@ -18,7 +18,7 @@ This is not the listen Host/Join pair. That pair clicks Host and is [Two-player 
 ## How to get to it (user POV)
 
 - One process: `godot --headless --path . -- --server` (or the server drive below, seed 5).
-- Two others: Main Menu Join, address blank (`localhost:9786`). Chop a plant near spawn, then swing at the nearest mob.
+- Two others: Enter `localhost` and press Join to connect on UDP `9786`. Chop a plant near spawn, then swing at the nearest mob.
 
 ## Driving it with verify-flagoria helpers
 

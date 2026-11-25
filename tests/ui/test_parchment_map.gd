@@ -120,7 +120,7 @@ func _test_parchment_map() -> int:
 		)
 		fail += 1
 	scene.get_node("CanvasLayer1").show()
-	var pinch_px := parchment.cell_px
+	parchment.cell_px = ParchmentMap.DEFAULT_CELL_PX
 	var pinch_a := InputEventScreenTouch.new()
 	pinch_a.index = 0
 	pinch_a.pressed = true
@@ -134,21 +134,50 @@ func _test_parchment_map() -> int:
 	var pinch_factor: float = zoom.factor
 	var drag := InputEventScreenDrag.new()
 	drag.index = 1
-	drag.position = Vector2(280, 200)
-	root.push_input(drag, true)
-	await process_frame
+	var max_px := parchment.cell_px
+	for offset in range(3, 121, 3):
+		drag.position = pinch_b.position + Vector2(offset, 0)
+		root.push_input(drag, true)
+		max_px = maxi(max_px, parchment.cell_px)
+	if max_px <= ParchmentMap.DEFAULT_CELL_PX or max_px > ParchmentMap.MAX_CELL_PX:
+		printerr("FAIL parchment_map slow pinch out reached %s px" % max_px)
+		fail += 1
+	var min_px := parchment.cell_px
+	for offset in range(117, -76, -3):
+		drag.position = pinch_b.position + Vector2(offset, 0)
+		root.push_input(drag, true)
+		min_px = mini(min_px, parchment.cell_px)
+	if min_px != ParchmentMap.MIN_CELL_PX or parchment.cell_px != ParchmentMap.MIN_CELL_PX:
+		printerr("FAIL parchment_map slow pinch in reached %s px" % min_px)
+		fail += 1
+	pinch_b.position = drag.position
+	pinch_b.pressed = false
+	root.push_input(pinch_b, true)
+	pinch_a.pressed = false
+	root.push_input(pinch_a, true)
+
+	var magnify := InputEventMagnifyGesture.new()
+	magnify.position = Vector2(180, 200)
+	magnify.factor = 1.03
+	for i in 24:
+		root.push_input(magnify, true)
+	var magnified_px := parchment.cell_px
+	magnify.factor = 0.97
+	for i in 24:
+		root.push_input(magnify, true)
+	if magnified_px <= min_px or parchment.cell_px >= magnified_px:
+		printerr(
+			(
+				"FAIL parchment_map magnify steps %s -> %s -> %s"
+				% [min_px, magnified_px, parchment.cell_px]
+			)
+		)
+		fail += 1
 	if not is_equal_approx(zoom.factor, pinch_factor):
-		printerr("FAIL parchment_map pinch moved camera (%s -> %s)" % [pinch_factor, zoom.factor])
+		printerr(
+			"FAIL parchment_map gestures moved camera (%s -> %s)" % [pinch_factor, zoom.factor]
+		)
 		fail += 1
-	if parchment.cell_px <= pinch_px:
-		printerr("FAIL parchment_map viewport pinch did not zoom the sheet")
-		fail += 1
-	var up_a := pinch_a.duplicate() as InputEventScreenTouch
-	up_a.pressed = false
-	root.push_input(up_a, true)
-	var up_b := pinch_b.duplicate() as InputEventScreenTouch
-	up_b.pressed = false
-	root.push_input(up_b, true)
 	var health: PlayerHealth = player.get_node("Health")
 	if not health.take_damage(1):
 		printerr("FAIL parchment_map damage did not land")

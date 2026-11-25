@@ -24,14 +24,13 @@ func run() -> void:
 	await snapshot("default")
 	step("pinch-out")
 	await _touch(0, a, true)
-	await _touch(1, a, true)
-	await _drag(1, b)
-	await _drag(1, wide)
+	await _touch(1, b, true)
+	await _drag_pinch(1, b, wide)
 	var zoom_in := camera.zoom.x / default_zoom.x
 	var rendered_in := await _camera_settled(camera)
 	await snapshot("zoomed-in")
 	step("pinch-in")
-	await _drag(1, narrow)
+	await _drag_pinch(1, wide, narrow)
 	var zoom_out := camera.zoom.x / default_zoom.x
 	var rendered_out := await _camera_settled(camera)
 	await snapshot("zoomed-out")
@@ -54,8 +53,9 @@ func run() -> void:
 	var default_cell_px := parchment.cell_px
 	await _touch(0, a, true)
 	await _touch(1, b, true)
-	await _drag(1, wide)
+	await _drag_pinch(1, b, wide)
 	var sheet_zoomed := parchment.cell_px > default_cell_px
+	await snapshot("parchment-zoomed")
 	await _touch(0, a, false)
 	await _touch(1, wide, false)
 	print(
@@ -93,9 +93,14 @@ func _touch(index: int, at: Vector2, pressed: bool) -> void:
 	await process_frame
 
 
-func _drag(index: int, at: Vector2) -> void:
-	var event := InputEventScreenDrag.new()
-	event.index = index
-	event.position = at
-	Input.parse_input_event(event)
-	await process_frame
+func _drag_pinch(index: int, from: Vector2, to: Vector2) -> void:
+	var steps := ceili(from.distance_to(to) / 3.0)
+	var previous := from
+	for i in range(1, steps + 1):
+		var event := InputEventScreenDrag.new()
+		event.index = index
+		event.position = from.lerp(to, float(i) / steps)
+		event.relative = event.position - previous
+		previous = event.position
+		Input.parse_input_event(event)
+		await process_frame

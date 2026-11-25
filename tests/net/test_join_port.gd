@@ -71,13 +71,32 @@ func _test_join_port_button() -> int:
 		printerr("FAIL join_port_button: invalid retry showed '%s'" % status.text)
 		fail += 1
 
-	address.text = ""
+	for blank in ["", "   "]:
+		address.text = blank
+		join.pressed.emit()
+		if (
+			not menu.visible
+			or hud.visible
+			or not status.is_visible_in_tree()
+			or status.text != "Enter the host's IP address"
+			or address.text != blank
+			or requested != [1]
+		):
+			printerr(
+				(
+					"FAIL join_port_button: blank retry showed '%s' with join requests %s"
+					% [status.text, requested]
+				)
+			)
+			fail += 1
+
+	address.text = "localhost"
 	join.pressed.emit()
 	if (
 		menu.visible
 		or not hud.visible
 		or status.visible
-		or address.text != ""
+		or address.text != "localhost"
 		or requested != [1, 9786]
 	):
 		printerr("FAIL join_port_button: default retry gave join requests %s" % [requested])
