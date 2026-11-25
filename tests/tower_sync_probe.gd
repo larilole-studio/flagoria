@@ -50,6 +50,7 @@ func _run() -> void:
 	var world = main.get_node("World/worldMap")
 	var phase := "idle"
 	var flags_ticked := false
+	var demolish_started := false
 	var capture_done := false
 	var capture_more_done := false
 	var deadline := Time.get_ticks_msec() + 90000
@@ -67,6 +68,19 @@ func _run() -> void:
 		if host and mode == "place" and not flags_ticked and ready and _remote_tower(world):
 			flags_ticked = true
 			main.get_node("FlagsHeldPoints").tick()
+		if mode == "place" and ready and not demolish_started:
+			if host and FileAccess.file_exists(probe_out + ".demolish"):
+				demolish_started = true
+				_place_error = _place_host_tower(main, world, me)
+			elif not host and phase == "done":
+				var towers := _tower_anchors(world)
+				var peer: int = main.multiplayer.get_unique_id()
+				if towers.has(1) and towers.has(peer):
+					demolish_started = true
+					var requests: StructureRequests = main.get_node("World/StructureRequests")
+					# These reach the host in order. The refund is the barrier for both.
+					requests.request_demolish.rpc_id(1, towers[1])
+					requests.request_demolish.rpc_id(1, towers[peer])
 		if host and mode == "capture" and ready:
 			if not capture_done and FileAccess.file_exists(probe_out + ".capture"):
 				capture_done = true
@@ -160,6 +174,36 @@ func _do_place(main, world, me: Node2D, mode: String) -> String:
 		me.global_position = interaction.cell_center(info["flag"]) + Vector2(48, 0)
 		await _wait(300)
 	return ""
+
+
+func _place_host_tower(main, world, me: Node2D) -> String:
+	var interaction: Interaction = main.get_node("World/Interaction")
+	var requests: StructureRequests = main.get_node("World/StructureRequests")
+	var peer: int = _tower_owner(world)
+	var builder: Node2D = main.get_node("World/" + str(peer))
+	var near := builder.global_position
+	var anchor: Variant = _search(
+		world,
+		func(cell: Vector2i) -> bool:
+			return (
+				interaction.cell_center(cell).distance_to(near) <= Interaction.REACH
+				and _tower_ok(world, cell, 0.0)
+			)
+	)
+	if anchor == null:
+		return "no reachable host tower anchor"
+	me.global_position = near
+	var inventory: Inventory = main.get_node("Inventory")
+	inventory.add(Inventory.WOOD, 10)
+	return "" if requests.host_place(BuildCosts.TOWER, [anchor], 1) else "host tower refused"
+
+
+func _tower_anchors(world) -> Dictionary:
+	var anchors := {}
+	for entry in world.placed_structures().values():
+		if entry["name"] == "tower_wood":
+			anchors[entry["owner"]] = entry["anchor"]
+	return anchors
 
 
 func _scripted_ticks(main, world, text: String) -> void:

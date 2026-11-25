@@ -20,6 +20,7 @@ const TOOL_TIPS := {
 	BuildPlacement.Tool.GUARD: "Guard post",
 	BuildPlacement.Tool.BARRACKS: "Barracks",
 	BuildPlacement.Tool.WALL: "Wall",
+	BuildPlacement.Tool.DEMOLISH: "Demolish",
 }
 const BUTTON_NAMES := {
 	BuildPlacement.Tool.PLANK: "PlankButton",
@@ -28,6 +29,7 @@ const BUTTON_NAMES := {
 	BuildPlacement.Tool.GUARD: "GuardButton",
 	BuildPlacement.Tool.BARRACKS: "BarracksButton",
 	BuildPlacement.Tool.WALL: "WallButton",
+	BuildPlacement.Tool.DEMOLISH: "DemolishButton",
 }
 
 
@@ -39,6 +41,7 @@ static func picker_tools() -> Array:
 		BuildPlacement.Tool.CASTLE,
 		BuildPlacement.Tool.GUARD,
 		BuildPlacement.Tool.BARRACKS,
+		BuildPlacement.Tool.DEMOLISH,
 	]
 
 
@@ -59,11 +62,7 @@ static func is_footprint(tool: BuildPlacement.Tool) -> bool:
 
 
 static func tracks_pointer(tool: BuildPlacement.Tool) -> bool:
-	if tool == BuildPlacement.Tool.CUT:
-		return false
-	return (
-		tool == BuildPlacement.Tool.PLANK or tool == BuildPlacement.Tool.WALL or is_footprint(tool)
-	)
+	return tool != BuildPlacement.Tool.CUT
 
 
 static func populate_picker(

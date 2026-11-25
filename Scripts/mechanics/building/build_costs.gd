@@ -46,8 +46,7 @@ const WOOD := {
 	BARRACKS: 30,
 	START_CASTLE: 0,
 }
-## Share of the cost given back when a build is removed. Nothing removes a
-## build yet; removal reads refund when it lands.
+## Share of a build’s cost given back when Demolish removes it.
 const REFUND_SHARE := 0.5
 
 const NOT_ENOUGH_WOOD := "not enough wood"

@@ -16,10 +16,12 @@ static func to_changes(map: _WorldMap) -> Dictionary[String, Dictionary]:
 	## The map's placements and free-form walls as world.structures entries.
 	var out: Dictionary[String, Dictionary] = {}
 	var order := 0
-	for entry in map.structures_for_sync():  # [name, owner, anchor, rotation?] in id order
+	for entry in map.structures_for_sync(true):
 		var cell_data := {"structure": entry[0], "owner": entry[1], "order": order}
 		if entry.size() >= 4 and int(entry[3]) != 0:
 			cell_data["rotation"] = int(entry[3])
+		if entry[0] == BuildCosts.NAMED_STRUCTURES[BuildCosts.CASTLE]:
+			cell_data["start_castle"] = entry[5]
 		_put(out, entry[2], cell_data)
 		order += 1
 	for cell: Vector2i in map._walls._wall_cells:
@@ -60,7 +62,8 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 						entry["structure"],
 						int(entry.get("owner", 0)),
 						cell,
-						turns
+						turns,
+						entry.get("start_castle")
 					]
 				)
 			elif (
@@ -70,13 +73,15 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 				if entry.has("hp"):
 					hp_by_cell[cell] = int(entry["hp"])
 	placed.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
-	var list := placed.map(
-		func(p: Array) -> Array:
-			var row: Array = [p[1], p[2], p[3]]
-			if p.size() >= 5 and int(p[4]) != 0:
-				row.append(int(p[4]))
-			return row
-	)
+	var list := []
+	var castle_owners := {}
+	for p: Array in placed:
+		var starting := false
+		if p[1] == BuildCosts.NAMED_STRUCTURES[BuildCosts.CASTLE]:
+			# Older saves recorded the starting castle as the owner's first castle.
+			starting = bool(p[5]) if p[5] != null else not castle_owners.has(p[2])
+			castle_owners[p[2]] = true
+		list.append([p[1], p[2], p[3], p[4], 0, starting])
 	var count: int = map.replace_structures(list) if not list.is_empty() else 0
 	if not walls.is_empty() and map.place_wall_cells(walls):
 		for cell: Vector2i in walls:
@@ -97,7 +102,7 @@ static func adopt_start_castle(map: _WorldMap, owner: int) -> bool:
 	ids.sort()
 	for id in ids:
 		var p: Dictionary = placements[id]
-		if p["name"] == StartCastle.structure().name and p["owner"] == owner:
+		if p.get("start_castle", false) and p["owner"] == owner:
 			map._castle_front = p["anchor"] + StartCastle.GATE_FRONT
 			map.spawn_point = map._castle_front
 			return true

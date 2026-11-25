@@ -241,6 +241,10 @@ func build_bridge(from: Vector2i, to: Vector2i) -> bool:
 	return _bridges.build_bridge(from, to)
 
 
+func erase_bridge_cells(cells: Array[Vector2i]) -> bool:
+	return _bridges.erase_cells(cells)
+
+
 func has_bridge(cell: Vector2i) -> bool:
 	return _bridges.has_bridge(cell)
 
@@ -327,6 +331,14 @@ func placed_structures() -> Dictionary:
 	return _structures.placements()
 
 
+func structure_placement_at(cell: Vector2i) -> Dictionary:
+	return _structures.placement_details_at(cell)
+
+
+func remove_structure(id: int) -> bool:
+	return _structures.remove(id)
+
+
 func place_start_castle(owner: int) -> bool:
 	## Peer `owner`'s starting castle by the spawn (StartCastle); false when none fits.
 	_castle_front = StartCastle.place(self, owner)
@@ -335,8 +347,8 @@ func place_start_castle(owner: int) -> bool:
 	return _castle_front != null
 
 
-func structures_for_sync() -> Array:
-	return _structures.to_sync()
+func structures_for_sync(include_identity := false) -> Array:
+	return _structures.to_sync(include_identity)
 
 
 func replace_structures(list: Array) -> int:

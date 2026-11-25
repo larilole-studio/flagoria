@@ -72,12 +72,7 @@ func erase_cells(cells: Array[Vector2i]) -> bool:
 	for cell in cells:
 		if not _wall_cells.has(cell):
 			continue
-		_wall_cells.erase(cell)
-		_pieces.erase(cell)
-		_caps.erase(cell)
-		_hp.erase(cell)
-		_map.invalidate_painted_cell(cell)
-		_erase_tiles(cell)
+		_erase_free(cell)
 		removed = true
 	if removed:
 		resolve()
@@ -154,12 +149,7 @@ func replace_from_host(cells: Array) -> void:
 	for cell: Vector2i in _wall_cells.keys():
 		if keep.has(cell):
 			continue
-		_wall_cells.erase(cell)
-		_pieces.erase(cell)
-		_caps.erase(cell)
-		_hp.erase(cell)
-		_map.invalidate_painted_cell(cell)
-		_erase_tiles(cell)
+		_erase_free(cell)
 		removed = true
 	var added := false
 	for cell: Vector2i in keep:
@@ -234,6 +224,16 @@ func _paint_caps(cell: Vector2i) -> void:
 			_map.set_cell(layer, cell, TileCatalog.SOURCE_ID, TileCatalog.TILES[caps[i]]["atlas"])
 		elif _map.get_cell_source_id(layer, cell) != -1:
 			_map.erase_cell(layer, cell)
+
+
+func _erase_free(cell: Vector2i) -> void:
+	_wall_cells.erase(cell)
+	_pieces.erase(cell)
+	_caps.erase(cell)
+	_hp.erase(cell)
+	_map.tree_sprouts().untouch(cell)
+	_map.invalidate_painted_cell(cell)
+	_erase_tiles(cell)
 
 
 func _erase_tiles(cell: Vector2i) -> void:

@@ -133,7 +133,12 @@ func place_for_peer(
 
 
 func apply_replica(
-	structure_name: String, anchor: Vector2i, owner: int, quarter_turns: int
+	structure_name: String,
+	anchor: Vector2i,
+	owner: int,
+	quarter_turns: int,
+	placement_id: int,
+	start_castle: bool
 ) -> void:
 	var turns := posmod(quarter_turns, 4)
 	for entry in _map.placed_structures().values():
@@ -146,7 +151,11 @@ func apply_replica(
 			return
 	var structure := StructurePlacer.load_named(structure_name)
 	if structure != null:
-		_map._structures.place_from_host(structure, anchor, owner, quarter_turns)
+		var id := _map._structures.place_from_host(
+			structure, anchor, owner, quarter_turns, placement_id
+		)
+		if start_castle:
+			_map._structures.mark_start_castle(id)
 
 
 func _purchase(

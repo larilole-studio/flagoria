@@ -1,19 +1,9 @@
 class_name BuildPlacement
 extends RefCounted
-## Build tool (#225 / #273 / #276, #480): Buildings opens a fan of round
-## Plank / Tower / Wall buttons. Cut is the tool when none is selected. H/V-snapped
-## plank and wall drag, single-anchor tower preview,
-## green/red preview and wood cost. Placement goes only through
-## ConstructionPlacer (planks, towers and walls ask the host in multiplayer,
-## #297 / #497 / #498). Preview green cells and cost match exactly what
-## commit places and charges. Wall keeps a persistent tip while selected (#276).
+## Tracks Buildings tools, placement previews, wall tips, and demolition taps.
 
-enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS }
+enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS, DEMOLISH }
 
-const VALID_TINT := Color(0.2, 0.85, 0.3, 0.42)
-const INVALID_TINT := Color(0.92, 0.22, 0.18, 0.48)
-const COST_COLOR := Color(0.98, 0.95, 0.88, 1.0)
-const REASON_COLOR := Color(1.0, 0.75, 0.55, 1.0)
 const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
@@ -27,6 +17,7 @@ var cost_viewport := Vector2.ZERO  ## where the cost label sits (finger)
 
 var _interaction: Interaction
 var _placer: ConstructionPlacer
+var _remover: ConstructionRemover
 var _picker: Control
 var _buildings: Button
 var _list_open := false
@@ -59,6 +50,7 @@ var footprint_rotation: int:
 func setup(interaction: Interaction) -> void:
 	_interaction = interaction
 	_placer = ConstructionPlacer.new(interaction.world_map)
+	_remover = ConstructionRemover.new(interaction.world_map)
 	if interaction.world_map != null and interaction.world_map.has_signal("ground_changed"):
 		interaction.world_map.ground_changed.connect(_on_ground_changed)
 	_ensure_picker()
@@ -151,6 +143,9 @@ func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 		clear_preview()
 		return
 	cost_viewport = end_viewport
+	if tool == Tool.DEMOLISH:
+		_update_demolish_preview(end_viewport)
+		return
 	if BuildToolRow.is_footprint(tool):
 		_update_footprint_preview(end_viewport, inventory, BuildToolRow.footprint_kind(tool))
 		return
@@ -172,7 +167,7 @@ func longest_placeable(run: Array[Vector2i], inventory: Inventory) -> Array[Vect
 
 
 func commit() -> bool:
-	## Place what the current preview greens; false when none.
+	## Apply the current preview; false when no action is accepted.
 	if tool == Tool.CUT or cells.is_empty():
 		clear_preview()
 		return false
@@ -181,7 +176,10 @@ func commit() -> bool:
 		clear_preview()
 		return false
 	var ok := false
-	if BuildToolRow.is_footprint(tool):
+	if tool == Tool.DEMOLISH and reasons.is_empty():
+		var requests := _interaction.get_node("../StructureRequests") as StructureRequests
+		ok = requests.demolish(_cell_at(cost_viewport))
+	elif BuildToolRow.is_footprint(tool):
 		ok = _commit_footprint(inventory, BuildToolRow.footprint_kind(tool))
 	elif tool == Tool.PLANK:
 		ok = _commit_plank(inventory)
@@ -194,40 +192,26 @@ func commit() -> bool:
 	return ok
 
 
-func draw_preview(ci: CanvasItem) -> void:
+func draw_preview(ci: Node2D) -> void:
 	## Green/red cell tints, wood cost and refusal reason near the finger.
 	## A wall gap / diagonal leaves cells empty but still shows the reason (#276).
 	if tool == Tool.CUT or _interaction == null:
 		return
 	if cells.is_empty() and reasons.is_empty():
 		return
-	var map: TileMap = _interaction.world_map
-	var half: Vector2 = Vector2(map.tile_set.tile_size) * map.global_scale / 2.0
-	for i in cells.size():
-		var center: Vector2 = ci.to_local(_interaction.cell_center(cells[i]))
-		var rect := Rect2(center - half, half * 2.0)
-		ci.draw_rect(rect, VALID_TINT if cell_ok[i] else INVALID_TINT)
+	BuildPreview.draw_cells(ci, _interaction, cells, cell_ok)
 	if is_footprint_tool(tool) and _snap_valid and cells.size() > 0:
 		var mark: Vector2 = ci.to_local(_interaction.cell_center(_snap_from))
 		_FootprintOrientation.draw_at(ci, mark, _rotate.quarter_turns)
-	var anchor: Vector2 = ci.to_local(_interaction.to_world(cost_viewport)) + Vector2(8, -12)
-	var font: Font = ThemeDB.fallback_font
-	var font_size := 10
-	if cost > 0 or not reasons.is_empty():
-		var label := "%d wood" % cost if cost > 0 else ""
-		if not reasons.is_empty():
-			label = ("%s — %s" % [label, ", ".join(PackedStringArray(reasons))]).strip_edges()
-			if label.begins_with("—"):
-				label = label.substr(2).strip_edges()
-		ci.draw_string(
-			font,
-			anchor,
-			label,
-			HORIZONTAL_ALIGNMENT_LEFT,
-			-1,
-			font_size,
-			COST_COLOR if reasons.is_empty() else REASON_COLOR
-		)
+	var label := ", ".join(PackedStringArray(reasons))
+	if tool == Tool.DEMOLISH and reasons.is_empty():
+		label = "+%d wood" % cost
+	elif cost > 0:
+		label = "%d wood" % cost if reasons.is_empty() else "%d wood — %s" % [cost, label]
+	var label_at := _interaction.to_world(cost_viewport)
+	if tool == Tool.DEMOLISH:
+		label_at.y -= 18.0
+	BuildPreview.draw_label(ci, label_at, label, not reasons.is_empty())
 
 
 func on_mode_changed(mode: Interaction.Mode) -> void:
@@ -246,6 +230,22 @@ func on_multiplayer_changed(mp_on: bool) -> void:
 		return
 	_mp_was_on = mp_on
 	_refresh_picker_visible()
+
+
+func _update_demolish_preview(viewport_pos: Vector2) -> void:
+	var cell := _cell_at(viewport_pos)
+	var target := _remover.target_at(cell, _interaction.multiplayer.get_unique_id())
+	cells = target["cells"]
+	cell_ok.clear()
+	cell_ok.resize(cells.size())
+	cell_ok.fill(false)
+	reasons.clear()
+	var why: String = target["reason"]
+	if why == "" and not _interaction.in_reach(cell):
+		why = "out of reach"
+	if why != "":
+		reasons.append(why)
+	cost = target["refund"] if why == "" else 0
 
 
 func _update_plank_preview(

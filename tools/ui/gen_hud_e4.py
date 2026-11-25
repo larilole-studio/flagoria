@@ -142,6 +142,8 @@ def icon_shapes(name):
         E += [('f', '<g transform="rotate(-20 50 50)"><rect x="6" y="34" width="88" height="32" rx="6"/></g>', 'plank'),
               ('d', '<g transform="rotate(-20 50 50)"><path d="M16 46 L60 46 M30 56 L82 56" fill="none"/></g>', 'wood2', 4),
               ('f', '<g transform="rotate(-20 50 50)"><circle cx="16" cy="50" r="4.5"/><circle cx="84" cy="50" r="4.5"/></g>', 'shade')]
+    elif name == 'demolish':
+        E += [('f', '<path d="M25 12 L50 37 L75 12 L88 25 L63 50 L88 75 L75 88 L50 63 L25 88 L12 75 L37 50 L12 25 Z"/>', 'red')]
     elif name == 'barracks':   # tent with flag
         E += [('s', 'M50 34 L50 6', 'shade', 4),
               ('f', '<path d="M50 6 L68 12 L50 18 Z"/>', 'red'),
@@ -297,7 +299,7 @@ def main():
     disc('rotate', 24, 'build', 'rotate', 1.42, basic)
     for icon in ('sword', 'chop', 'bow'):
         disc(f'wheel_{icon}', 24, 'wheel', icon, 1.4, toggle)
-    for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks'):
+    for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'demolish'):
         disc(f'pick_{icon}', 24, 'pick', icon, 1.72, toggle)
     disc('run', 32, 'run', 'run', 1.45, basic)
     disc('attack', 40, 'attack', 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))

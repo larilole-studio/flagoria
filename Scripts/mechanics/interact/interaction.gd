@@ -6,22 +6,9 @@ extends Node2D
 ## and a shorter press chops in the facing direction at full reach. Plants in
 ## the cone queue and each finishes before the next. Plank, tower and wall
 ## still drag on the map. A dead player cuts nothing (#349).
-## While multiplayer is active the host decides every cut (#223, #350). A
-## client asks with request_cut and plays the fall only when the host
-## accepts. Peers that join later get the host's cuts, with
-## their ages, with the map params. Regrowth is the host's too (#298): a
-## client never regrows a stump on its own, and when stumps regrow on the host
-## (TileMap.regrow_due) the host sends every peer one apply_regrow_cells per
-## tick (#353), which a client applies only when it came from the host.
-## Trees that sprout on the host (TreeSprouts, #361) go out the same way, in
-## apply_sprout_cells per sprout pass, SPROUTS_PER_MESSAGE cells at most each.
-## Plank bridges sync the same way (#297): a client asks with
-## request_place_planks, the host checks the placer is alive and in reach,
-## writes through ConstructionPlacer.place_for_peer, sends apply_bridge to every
-## other peer and charges the placer with receive_charge. A host placing with
-## peers connected spends its own wood through ConstructionPlacer.place and
-## broadcasts apply_bridge. Peers that join later get the host's bridges with
-## the map params. Towers and walls use StructureRequests (#497, #498).
+## The host decides cuts, regrowth and sprouts. Late joiners receive existing
+## cuts and plank bridges with the map. Live bridge RPCs are here; named
+## structures, walls, and demolition requests go through StructureRequests.
 
 signal mode_changed(mode: Mode)
 ## A chop's axe landed on `cell`; `hit` counts from 1 to the type's `hits`.
@@ -152,8 +139,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.index == _touch:
 			_end = event.position
 			if build.tracks_pointer():
-				build.update_preview(_start, _end)
-				build.commit()
+				var tapped := not _dragging and _start.distance_to(_end) <= DRAG_START
+				if build.tool != BuildPlacement.Tool.DEMOLISH or tapped:
+					build.update_preview(_start, _end)
+					build.commit()
 			elif _dragging:
 				_release_drag()
 			else:
@@ -473,6 +462,12 @@ func request_place_planks(cells: Array[Vector2i]) -> void:
 func apply_bridge(from: Vector2i, to: Vector2i) -> void:
 	## A plank run the host decided: lay it here too.
 	world_map.build_bridge(from, to)
+
+
+@rpc("authority", "reliable", "call_remote")
+func apply_bridge_removed(cells: Array[Vector2i]) -> void:
+	if multiplayer.get_remote_sender_id() == 1:
+		world_map.erase_bridge_cells(cells)
 
 
 @rpc("authority", "reliable", "call_remote")

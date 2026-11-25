@@ -47,6 +47,10 @@ func _ready() -> void:
 
 func _on_ground_changed(_cells: Rect2i) -> void:
 	_refresh_towers()
+	for id in progress.keys():
+		if not _towers.has(id):
+			progress.erase(id)
+			queue_redraw()
 
 
 func _refresh_towers() -> void:
@@ -121,7 +125,7 @@ func receive_capture_state(entries: Array) -> void:
 		var side := int(entry[2])
 		var prog := float(entry[3])
 		seen[id] = true
-		if _map._structures.owner_of(id) != 0 and _map._structures.owner_of(id) != owner:
+		if _towers.has(id) and _map._structures.owner_of(id) != owner:
 			_map._structures.set_owner(id, owner)
 		if prog <= 0.0:
 			progress.erase(id)

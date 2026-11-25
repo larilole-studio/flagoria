@@ -163,7 +163,7 @@ func _test_build_picker_saved_layout_tap() -> int:
 			and root.get_visible_rect().encloses(button.get_global_rect())
 		):
 			visible_count += 1
-	var opened := buildings.button_pressed and visible_count == 6
+	var opened := buildings.button_pressed and visible_count == 7
 	_tap_sequence(at, ["touch_down", "touch_up"])
 	await process_frame
 	var closed := not buildings.button_pressed

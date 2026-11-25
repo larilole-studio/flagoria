@@ -323,7 +323,7 @@ func _sync_map_params_to_peer(peer_id: int) -> void:
 		world_params.to_dict(),
 		spot,
 		parts[0],
-		world.structures_for_sync(),
+		world.structures_for_sync(true),
 		world.bridges_for_sync(),
 		_player_spots(),
 		world.resolve_player_spawn()

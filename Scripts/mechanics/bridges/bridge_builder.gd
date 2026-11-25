@@ -174,6 +174,7 @@ func erase_cells(cells: Array[Vector2i]) -> bool:
 	if gone.is_empty():
 		return false
 	for cell in gone:
+		_map.tree_sprouts().untouch(cell)
 		_map._predict_cache.erase(cell)
 		if _map.is_drawn(cell):
 			_map.repaint_ground_cell(cell)
