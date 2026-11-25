@@ -39,7 +39,7 @@ Each VPN client uses Main Menu Join:
 - `<server-vpn-ipv4>` when the server is on port 9786
 - `<server-vpn-ipv4>:9799` when the server was started with `--port 9799`
 
-A bare address still uses port 9786. A blank field dials the name localhost, which is the machine running that client, not `<server-vpn-ipv4>`.
+A bare address still uses port 9786. A blank field shows `Enter the host's IP address`. The name `localhost` refers to the machine running the client.
 
 `--params <file>` loads generation parameters only. Cuts, bridges, structures, and walls in the file are not restored, and the server does not autosave (#15).
 

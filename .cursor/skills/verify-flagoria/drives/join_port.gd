@@ -1,6 +1,6 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 42
-## Join address: blank uses localhost:9786, a bad address is rejected on the
+## Join address: localhost uses port 9786, a bad address is rejected on the
 ## menu, 127.0.0.1:1 times out with "Could not join 127.0.0.1:1", and
 ## 127.0.0.1:9799 joins a dedicated server started by this drive (#434).
 ## The address is typed and Join is clicked. Servers are loopback only.
@@ -47,11 +47,14 @@ func run() -> void:
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 
 	step("default")
+	if not await _type_address("localhost"):
+		_end(false, "could not type localhost")
+		return
 	await snapshot("default-address")
 	var local_altitude := _local_altitude()
 	await click(JOIN)
 	if not await wait_until(func() -> bool: return hero() != null, 20.0):
-		_end(false, "blank address did not spawn a player (port %s)" % current_scene._join_port)
+		_end(false, "localhost did not spawn a player (port %s)" % current_scene._join_port)
 		return
 	var default_ready := await _await_server_ground(9786, local_altitude)
 	if default_ready == "":

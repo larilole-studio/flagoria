@@ -6,7 +6,7 @@ Source: Scripts/shell/menu_join_flow.gd
 
 Assertion owner for failed-join UI: `drives/join_fail.gd` checks the returned menu, hidden HUD, and exact visible status.
 
-A Join that never connects (wrong address, host not running, port blocked) returns to the main menu with a visible `Could not join <address>` message instead of leaving the player on an empty game screen (#348). A client whose host quits mid-game also lands back on the main menu.
+A Join that never connects (wrong address, host not running, port blocked) returns to the main menu with a visible `Could not join <address>` message instead of leaving the player on an empty game screen (#348). A client whose host quits mid-game also lands back on the main menu. A [blank address](./join-no-ip.md) shows `Enter the host's IP address` before any connection attempt.
 
 ## Sub-features
 

@@ -1,6 +1,6 @@
 extends "res://.cursor/skills/verify-flagoria/drives/two_player/two_player_host.gd"
 ## Client half of the two-launch Host/Join drive. Start it a few seconds after
-## drives/two_player/two_player_host.gd: it leaves the address empty (localhost), clicks
+## drives/two_player/two_player_host.gd: it enters localhost as the address, clicks
 ## Join, and waits for both players and the host's map params.
 
 const JOIN_BUTTON := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
@@ -18,6 +18,7 @@ func run() -> void:
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 	step("join")
+	current_scene.address_entry.text = "localhost"
 	await click(JOIN_BUTTON)
 	var joined := await wait_until(
 		func() -> bool: return players().size() >= 2 and current_scene.world_params != null,

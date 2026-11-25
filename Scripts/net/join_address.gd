@@ -8,6 +8,7 @@ const DEFAULT_PORT := 9786
 const PORT_MIN := 1
 const PORT_MAX := 65535
 
+const ERROR_EMPTY := "Enter the host's IP address"
 const ERROR_ADDRESS := "Enter a hostname or an IPv4 address, and an optional port from 1 to 65535."
 const ERROR_PORT := "Enter a port from 1 to 65535."
 const ERROR_UNSUPPORTED := "Addresses with more than one colon are not supported. Enter a hostname or an IPv4 address, and an optional port from 1 to 65535."

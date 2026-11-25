@@ -38,6 +38,7 @@ func join_dedicated(who: String) -> bool:
 		return _fail("no " + JOIN_BUTTON)
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 	step("join")
+	current_scene.address_entry.text = "localhost"
 	await click(JOIN_BUTTON)
 	if not await wait_until(
 		func() -> bool:
