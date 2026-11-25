@@ -54,10 +54,10 @@ Debug APKs are published as pre-releases on the Releases page. See [docs/android
 
 ## Two-player play-test checklist
 
-Use two instances on one machine. Empty join address means localhost.
+Use two instances on one machine. A blank Join address shows `Enter the host's IP address` and keeps the main menu open.
 
 1. **Host** — Instance A: Main Menu → Host. Confirm the world loads and a local player spawns.
-2. **Join** — Instance B: Main Menu → Join (leave address empty for localhost, or enter the host address). Confirm the second player appears for both.
+2. **Join** — Instance B: Enter `localhost` for the same machine or enter the host address, then press Join. Confirm the second player appears for both.
 3. **Move** — Move both players with keyboard or on-screen joystick; each should see the other move.
 4. **Attack** — Attack (space / attack button) near the other player; confirm the hit player loses half a heart in the top-left hearts on their own screen and blinks on both screens.
 5. **Regen** — After taking damage, wait for the regen timer; confirm half a heart comes back (unless dead).

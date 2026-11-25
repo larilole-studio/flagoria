@@ -26,6 +26,7 @@ func _run() -> void:
 	await process_frame
 	var main = current_scene
 	main.host_port = port
+	main.address_entry.text = "localhost"
 	var join := main.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton")
 	main.get_node("CanvasLayer2/MainMenu").hide()
 	main.get_node("CanvasLayer1").show()

@@ -33,6 +33,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Map Settings panel](./map-settings-panel.md) — map parameters before Host, five seeds and a noise selector, numeric and toggle rows, number pad, Generate building, and five pinned actions.
 - [Two-player Host/Join](./two-player-host-join.md) — multiplayer boot (headless peers scripted; two-launch menu drive; GUI checklist manual).
 - [Join failure returns to the main menu](./join-fail.md) — failed Join shows `Could not join …` on the main menu; host quit reloads to the menu (#348).
+- [Join requires a host address](./join-no-ip.md) — a blank address keeps the main menu open and prompts for the host's IP address.
 - [Join an address with an optional port](./join-port.md) — hostname or IPv4, optional `:port`, default UDP 9786; bad addresses rejected on the menu (#434).
 - [Dedicated server](./dedicated-server.md) — `-- --server` headless host, `--params` generation params only, SIGTERM quit, a client joining it, `test_two_player_smoke` (two headless clients, input walk, server and the other client see the move), optional Docker image.
 - [Dedicated cut-and-hit round](./dedicated-play-round.md) — two Join clients on a dedicated host with no player `1`: one plant cut, one mob killed (#436). Not the listen Host/Join pair.

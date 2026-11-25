@@ -40,7 +40,11 @@ static func _begin_host(menu: PanelContainer) -> void:
 
 
 static func _on_join_button_pressed(menu: PanelContainer):
-	var parsed: Dictionary = JoinAddress.parse(menu.address_entry.text)
+	var address: String = menu.address_entry.text
+	if address.strip_edges().is_empty():
+		menu.show_address_error(JoinAddress.ERROR_EMPTY)
+		return
+	var parsed: Dictionary = JoinAddress.parse(address)
 	if not parsed["ok"]:
 		# Stay on the menu. A bad address never opens an ENet client.
 		menu.show_address_error(str(parsed["error"]))
