@@ -54,13 +54,7 @@ func run() -> void:
 	)
 	step("check the removal and wood refund")
 	await snapshot("demolish-after")
-	done(
-		(
-			preview[0]
-			and not _has_tower(map)
-			and inventory.count_of(Inventory.WOOD) == initial - 5
-		)
-	)
+	done(preview[0] and not _has_tower(map) and inventory.count_of(Inventory.WOOD) == initial - 5)
 
 
 func tower_anchor(map: TileMap, interaction: Interaction) -> Variant:

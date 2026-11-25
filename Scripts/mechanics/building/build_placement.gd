@@ -177,8 +177,8 @@ func commit() -> bool:
 		return false
 	var ok := false
 	if tool == Tool.DEMOLISH and reasons.is_empty():
-		var requests := _interaction.get_node("../StructureRequests") as StructureRequests
-		ok = requests.demolish(_cell_at(cost_viewport))
+		var requests := _interaction.get_node_or_null("../StructureRequests") as StructureRequests
+		ok = requests != null and requests.demolish(_cell_at(cost_viewport))
 	elif BuildToolRow.is_footprint(tool):
 		ok = _commit_footprint(inventory, BuildToolRow.footprint_kind(tool))
 	elif tool == Tool.PLANK:
