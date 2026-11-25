@@ -34,6 +34,9 @@ var archipelago_jitter: float = 0.5
 var archipelago_seed: int = 0
 var archipelago_world_extent: int = 0
 var archipelago_island_count: int = 0
+# Biomes on: cay trees (MapGenParams.cay_trees). Declared above the private
+# vars for gdlint; apply_map_params copies it with the other PlantPicker.PARAMS.
+var cay_trees: bool = false
 # predict_cell results by cell; cleared when the params change.
 var _predict_cache: Dictionary = {}
 var _tree_cuts := TreeCuts.new(self)

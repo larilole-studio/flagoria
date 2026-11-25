@@ -17,6 +17,9 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 # Biomes on: swamp trees (BiomeCatalog.PLANTS swamp_tree_chance). Not a Map
 # Settings row; saves without it load off, so their swamps stay as they were.
 @export_storage var swamp_trees: bool = true
+# Biomes on: cay trees (BiomeCatalog.PLANTS cay_tree_chance). Not a Map
+# Settings row; saves without it load off, so their islands stay as they were.
+@export_storage var cay_trees: bool = true
 
 # Seeds (0 means "pick a random seed when applied", matching prior randi() behaviour)
 @export var altitude_seed: int = 0
@@ -380,7 +383,8 @@ func to_dict() -> Dictionary:
 		"spawn_biome": spawn_biome,
 		"starter_wood": starter_wood,
 		"starter_grove": starter_grove.duplicate(),
-		"swamp_trees": swamp_trees
+		"swamp_trees": swamp_trees,
+		"cay_trees": cay_trees
 	}
 	for prop in exported_properties():
 		data[prop["name"]] = get(prop["name"])

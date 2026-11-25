@@ -1,0 +1,22 @@
+seed=99 biome_frequency=0.003 area=4096x4096 tiles step=8
+left to right: biome map, terrain (water/sand/swamp/grass/hills), plants (tree #0b2e12, bushy tree #8be04a, pine #00e0c0, bush #d9a521, flower #ff4fd8, stones #6e6a80, bare land #cfc9b0), swatches top to bottom
+bottom row: 256-tile close-up per biome with plants drawn, left to right in swatch order (other biomes dimmed)
+OCEANIC            #1d4e89  21.74%
+TEMPERATE          #6dbf4b  28.12%
+CONTINENTAL        #b5853f  28.26%
+ARCHIPELAGO_DENSE  #e05aa8  21.87%
+land mix per biome (share of that biome's land samples):
+OCEANIC            land=  9.10% sand= 12.8% swamp= 14.4% grass= 72.8%
+TEMPERATE          land= 28.76% sand=  3.7% swamp= 48.2% grass= 48.1%
+CONTINENTAL        land= 34.27% sand=  2.0% swamp= 16.8% grass= 81.2%
+ARCHIPELAGO_DENSE  land= 33.58% sand=  6.6% swamp= 71.5% grass= 21.8%
+plant mix per biome (share of that biome's land samples):
+OCEANIC            tree=  2.3% birch=  0.0% bushy=  0.6% pine=  0.0% bush=  0.7% flower=  0.0% stones=  6.1%
+TEMPERATE          tree=  4.2% birch=  0.1% bushy=  0.0% pine=  0.0% bush=  2.0% flower=  0.2% stones=  0.0%
+CONTINENTAL        tree= 18.3% birch=  4.9% bushy=  1.1% pine= 10.0% bush=  1.8% flower=  0.5% stones=  1.7%
+ARCHIPELAGO_DENSE  tree=  0.3% birch=  0.0% bushy=  2.6% pine=  0.0% bush=  7.2% flower=  0.0% stones=  0.0%
+trees + bushy trees + pines + bushes per biome (wide samples + close-up land cells):
+OCEANIC            wide=186 of 5188 land  close_up=169 of 6831 land
+TEMPERATE          wide=1319 of 21205 land  close_up=762 of 13109 land
+CONTINENTAL        wide=7929 of 25392 land  close_up=3932 of 14981 land
+ARCHIPELAGO_DENSE  wide=1932 of 19254 land  close_up=1700 of 16851 land

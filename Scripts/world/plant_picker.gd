@@ -23,6 +23,7 @@ const PARAMS := [
 	"swamp_bush_min_chance",
 	"birch_min_chance",
 	"swamp_trees",
+	"cay_trees",
 ]
 
 
@@ -38,7 +39,7 @@ static func plant_tile(
 	var flower_chance := map.flower_min_chance
 	if map.biome_frequency > 0.0:
 		bush_chance += BiomeCatalog.plants(biome_id, "bush_chance")
-		tree_chance += BiomeCatalog.plants(biome_id, "tree_chance")
+		tree_chance += tree_chance_shift(map, biome_id)
 		flower_chance += BiomeCatalog.terrain(biome_id, "flower_chance")
 	if moist > 0 and alt > map.bush_min_alt and alt <= map.bush_max_alt and chance > bush_chance:
 		return TileCatalog.BUSH
@@ -79,6 +80,15 @@ static func plant_tile(
 	):
 		return TileCatalog.FLOWER
 	return _WorldMap.NO_PLANT
+
+
+static func tree_chance_shift(map: _WorldMap, biome_id: int) -> float:
+	## The biome's tree_chance, or its cay_tree_chance when that is lower and
+	## cay_trees is on (cay trees on otherwise bare biomes).
+	var shift := BiomeCatalog.plants(biome_id, "tree_chance")
+	if map.cay_trees:
+		shift = minf(shift, BiomeCatalog.plants(biome_id, "cay_tree_chance"))
+	return shift
 
 
 static func structure_tile(
