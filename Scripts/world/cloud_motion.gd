@@ -3,8 +3,6 @@ extends Node2D
 ## Local sprite motion for the cloud stamps painted by SkyIslands.
 
 # A 686 world-pixel screen at zoom 0.7 takes about 23 min (far) or 11 min (near).
-const FAR_SPEED := 0.5
-const NEAR_SPEED := 1.0
 const FADE_SECONDS := 12.0
 const NEAR_LAYER_FRACTION := 0.25
 const TRAVEL_PIXELS := 704.0
@@ -114,7 +112,8 @@ func show_at_time(seconds: float) -> void:
 	var viewport := Rect2(Vector2.ZERO, get_viewport_rect().size)
 	var view := get_global_transform_with_canvas().affine_inverse() * viewport
 	for stamp: Stamp in _stamps.values():
-		var speed := NEAR_SPEED if stamp.near else FAR_SPEED
+		var key := &"visuals.cloud_near_speed" if stamp.near else &"visuals.cloud_far_speed"
+		var speed := Tuning.value(key)
 		var age := fposmod(_time + stamp.phase * TRAVEL_PIXELS / speed, TRAVEL_PIXELS / speed)
 		var distance := age * speed
 		stamp.sprite.position = (stamp.origin + Vector2(distance - TRAVEL_PIXELS / 2.0, 0)).round()

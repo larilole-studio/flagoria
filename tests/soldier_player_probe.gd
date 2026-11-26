@@ -86,7 +86,7 @@ func _do_host_place(main, world, me: Node2D, requests: SoldierRequests) -> Strin
 	_train_anchor = land
 	_pin(me, interaction.cell_center(land) + Vector2(0, 48))
 	await process_frame
-	inventory.add(Inventory.WOOD, SoldierStats.TRAIN_WOOD)
+	inventory.add(Inventory.WOOD, 8)
 	requests.host_train(builder, land)
 	if not await _until(func() -> bool: return _soldier_rows(requests).size() >= 1, 15000):
 		return "soldier did not spawn"

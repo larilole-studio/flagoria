@@ -35,7 +35,7 @@ func place(kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0) -> 
 	# Each peer owns its inventory. Include processed debits so the host can
 	# subtract every charge it has issued, including ones still in transit.
 	var reported := Vector2i.ZERO
-	if BuildCosts.STONE.has(kind) and inventory != null:
+	if BuildCosts.has_stone_price(kind) and inventory != null:
 		reported = BuildCosts.balance(inventory) + inventory.processed_charges
 	request_place.rpc_id(1, String(kind), cells, quarter_turns, reported)
 	return true

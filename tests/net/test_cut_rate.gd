@@ -185,7 +185,7 @@ func _test_cut_rate_numbers() -> int:
 			)
 		)
 		fail += 1
-	var speed := float(preload("res://Scripts/player/player.gd").MAX_SPEED)
+	var speed := 130.0
 	for dir in [Vector2.RIGHT, Vector2(1, 1).normalized(), Vector2(2, 1).normalized()]:
 		var limit = script.new()
 		var now := [0.0]

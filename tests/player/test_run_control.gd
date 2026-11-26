@@ -97,7 +97,7 @@ func _test_run_control() -> int:
 	run_button.button_down.emit()
 	run_button.button_up.emit()
 	var ran: float = await _run_speed(body, 36)
-	if ran <= walked * 1.7 or ran <= float(body.MAX_SPEED):
+	if ran <= walked * 1.7 or ran <= 130.0:
 		printerr("FAIL run_control speed walk %s run %s" % [walked, ran])
 		fail += 1
 	run_button.button_down.emit()
@@ -105,8 +105,8 @@ func _test_run_control() -> int:
 	await physics_frame
 	var back: float = body.velocity.length()
 	Input.action_release("ui_right")
-	if run_button.running() or back > float(body.MAX_SPEED) + 0.05:
-		printerr("FAIL run_control after toggle off speed %s (cap %s)" % [back, body.MAX_SPEED])
+	if run_button.running() or back > 130.0 + 0.05:
+		printerr("FAIL run_control after toggle off speed %s (cap %s)" % [back, 130])
 		fail += 1
 
 	body.velocity = Vector2.ZERO
@@ -137,7 +137,7 @@ func _test_run_control() -> int:
 	if not axis_walk.is_equal_approx(axis_run) or axis_walk.x < 0.9 or absf(axis_walk.y) > 0.05:
 		printerr("FAIL run_control joystick axis walk %s run %s" % [axis_walk, axis_run])
 		fail += 1
-	var stick: float = body.JOYSTICK_MAX_SPEED
+	var stick := 60.0
 	if (
 		joy_walk < stick * 0.9
 		or joy_walk > stick + 0.05

@@ -28,11 +28,11 @@ static func _speed_scale(player: Node) -> float:
 
 static func move_player(player, delta) -> void:
 	player.input = player.get_input_axis()
-	var max_speed: int = player.MAX_SPEED
+	var max_speed := int(Tuning.value(&"movement.keyboard_speed"))
 	if player.input == Vector2.ZERO:
 		player.input = player.get_joystick_axis()
 		if player.input != Vector2.ZERO:
-			max_speed = player.JOYSTICK_MAX_SPEED
+			max_speed = int(Tuning.value(&"movement.joystick_speed"))
 	var scale := _speed_scale(player)
 	max_speed *= scale
 

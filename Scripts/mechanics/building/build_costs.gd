@@ -25,22 +25,20 @@ const CITY_KINDS := {
 	GUARD_POST: true,
 }
 
-## Kind -> wood for one unit: a plank is one bridge cell, a wall block one
-## wall cell, a tower one tower, a castle one extra castle (#527). The
-## starting castle each player gets is free.
-const WOOD := {
-	PLANK: 1,
-	WALL_BLOCK: 2,
-	TOWER: 10,
-	CASTLE: 35,
-	GUARD_POST: 14,
-	BARRACKS: 20,
-	MINE: 15,
-	START_CASTLE: 0,
+const _WOOD_KEYS := {
+	PLANK: &"building.plank_wood",
+	WALL_BLOCK: &"building.wall_block_wood",
+	TOWER: &"building.tower_wood",
+	CASTLE: &"building.castle_wood",
+	GUARD_POST: &"building.guard_post_wood",
+	BARRACKS: &"building.barracks_wood",
+	MINE: &"building.mine_wood",
 }
-const STONE := {CASTLE: 15, GUARD_POST: 6, BARRACKS: 10}
-## Share of a build’s cost given back when Demolish removes it.
-const REFUND_SHARE := 0.5
+const _STONE_KEYS := {
+	CASTLE: &"building.castle_stone",
+	GUARD_POST: &"building.guard_post_stone",
+	BARRACKS: &"building.barracks_stone",
+}
 
 const NOT_ENOUGH_WOOD := "not enough wood"
 const NOT_ENOUGH_STONE := "not enough stone"
@@ -65,21 +63,33 @@ static func is_requestable(kind: StringName) -> bool:
 	return kind == WALL_BLOCK or NAMED_STRUCTURES.has(kind)
 
 
+static func has_price(kind: StringName) -> bool:
+	return kind == START_CASTLE or _WOOD_KEYS.has(kind)
+
+
+static func has_stone_price(kind: StringName) -> bool:
+	return _STONE_KEYS.has(kind)
+
+
 static func cost(kind: StringName, units := 1) -> int:
-	## Wood for `units` of `kind`; -1 for a kind not in WOOD.
-	return WOOD[kind] * units if WOOD.has(kind) else -1
+	## Wood for `units` of `kind`; -1 for an unknown kind.
+	if kind == START_CASTLE:
+		return 0
+	return int(Tuning.value(_WOOD_KEYS[kind])) * units if _WOOD_KEYS.has(kind) else -1
 
 
 static func price(kind: StringName, units := 1) -> Vector2i:
 	## x is wood and y is stone.
-	return Vector2i(cost(kind, units), int(STONE.get(kind, 0)) * units)
+	var stone := int(Tuning.value(_STONE_KEYS[kind])) if has_stone_price(kind) else 0
+	return Vector2i(cost(kind, units), stone * units)
 
 
 static func refund(kind: StringName, units := 1) -> Vector2i:
-	if not WOOD.has(kind):
+	if not has_price(kind):
 		return Vector2i.ZERO
 	var amount := price(kind, units)
-	return Vector2i(floori(amount.x * REFUND_SHARE), floori(amount.y * REFUND_SHARE))
+	var share := Tuning.value(&"building.refund_share")
+	return Vector2i(floori(amount.x * share), floori(amount.y * share))
 
 
 static func label(amount: Vector2i, prefix := "") -> String:
@@ -118,7 +128,7 @@ static func charge(inventory: Inventory, amount: Vector2i) -> bool:
 
 
 static func refusal(inventory: Inventory, kind: StringName, units := 1) -> String:
-	if not WOOD.has(kind):
+	if not has_price(kind):
 		return UNKNOWN_KIND
 	if HOST_ALONE.has(kind) and Interaction.multiplayer_on(inventory.multiplayer):
 		return MULTIPLAYER_ON

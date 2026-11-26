@@ -87,10 +87,7 @@ func plank_ends(cells: Array[Vector2i]) -> Array[Vector2i]:
 
 func cost(kind: StringName, cells: Array) -> int:
 	## Wood for placing `kind` on `cells`; -1 for an unknown kind. A tower is
-	## always one unit (10 wood) regardless of footprint size; a wall block is
-	## one unit per cell (2 wood each).
-	if not _can_build(kind) and not BuildCosts.WOOD.has(kind):
-		return -1
+	## always one unit regardless of footprint size; a wall block is one unit per cell.
 	return BuildCosts.cost(kind, _units(kind, cells))
 
 

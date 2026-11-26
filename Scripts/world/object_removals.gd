@@ -5,9 +5,7 @@ extends RefCounted
 
 const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
-## Two hits deplete a rock, yielding two stone once. Removals never respawn.
-const ROCK_HITS := 2
-const ROCK_YIELD := 2
+## Hand mining depletes a rock and yields stone once. Removals never respawn.
 
 var _removed: Dictionary = {}
 var _rock_hits: Dictionary[Vector2i, int] = {}
@@ -82,7 +80,7 @@ func resolve_mine_hit(interaction: Interaction, cell: Vector2i, miner: Node2D, p
 	if Interaction.multiplayer_on(_map.multiplayer):
 		_map.apply_mine_hit.rpc(cell, depleted)
 	if depleted:
-		var yields := {Inventory.STONE: ROCK_YIELD}
+		var yields := {Inventory.STONE: int(Tuning.value(&"hand_mining.rock_stone"))}
 		if peer == 1:
 			interaction.receive_yields(cell, yields)
 		else:
@@ -113,7 +111,7 @@ func _rock_impact(cell: Vector2i) -> void:
 func _hit_rock(cell: Vector2i) -> bool:
 	## The caller checks that the rock is present; true means this hit depleted it.
 	var hits: int = _rock_hits.get(cell, 0) + 1
-	if hits < ROCK_HITS:
+	if hits < int(Tuning.value(&"hand_mining.rock_hits")):
 		_rock_hits[cell] = hits
 		return false
 	_mark_removed(cell)

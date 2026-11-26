@@ -112,7 +112,7 @@ func start_chop(cell: Vector2i) -> bool:
 	chop_cell = cell
 	chop_type = plant
 	_mining = rock
-	_target_hits = ObjectRemovals.ROCK_HITS if rock else plant.hits
+	_target_hits = int(Tuning.value(&"hand_mining.rock_hits")) if rock else Tuning.chop_hits(plant)
 	_chop_atlas = _i.world_map.get_cell_atlas_coords(1, cell)
 	_sprites = null if rock else InteractableCatalog.sprites_at(_chop_atlas)
 	chop_time = 0.0
@@ -355,7 +355,7 @@ func _on_hit() -> void:
 	_play(chop_type.hit_sounds, _sfx, _last_hit_sound if chop_type.hit_no_repeat else null)
 	_last_hit_sound = _sfx.stream
 	_play(chop_type.hit_layer_sounds, _sfx_layer)
-	if chop_hits == chop_type.hits:
+	if chop_hits == _target_hits:
 		_play(chop_type.last_hit_sounds, _sfx_last)
 	var corner := (
 		_i.to_local(_i.cell_center(chop_cell)) - Vector2(_i.world_map.tile_set.tile_size) / 2.0

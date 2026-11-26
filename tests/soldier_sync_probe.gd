@@ -74,7 +74,7 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 	err = await _ready_to_build(main, me, interaction.cell_center(land) + Vector2(0, 48))
 	if err != "":
 		return err
-	inventory.add(Inventory.WOOD, SoldierStats.TRAIN_WOOD)
+	inventory.add(Inventory.WOOD, 8)
 	if main.multiplayer.is_server():
 		requests.host_train(builder, land)
 	else:

@@ -4,7 +4,6 @@ extends RefCounted
 
 const WORLD_MAP := preload("res://Scripts/world/TileMap.gd")
 const STRUCTURE_NAME := BuildCosts.NAMED_STRUCTURES[BuildCosts.MINE]
-const CYCLE_SECONDS := 60.0
 
 var _map: WORLD_MAP
 var _elapsed: Dictionary[int, float] = {}
@@ -34,7 +33,7 @@ func restore_elapsed(id: int, saved: Variant) -> void:
 	# A fresh placement already starts at zero, including legacy saves.
 	if _elapsed.has(id) and (saved is int or saved is float):
 		var seconds := float(saved)
-		if seconds >= 0.0 and seconds < CYCLE_SECONDS:
+		if seconds >= 0.0 and seconds < Tuning.value(&"mine.cycle_seconds"):
 			_elapsed[id] = seconds
 
 
@@ -50,13 +49,15 @@ func advance(seconds: float) -> void:
 	var api := _map.multiplayer
 	if not api.has_multiplayer_peer() or not api.is_server():
 		return
+	var cycle := Tuning.value(&"mine.cycle_seconds")
+	var stone_per_cycle := int(Tuning.value(&"mine.stone_per_cycle"))
 	for id in _elapsed:
 		var total := _elapsed[id] + seconds
-		if total < CYCLE_SECONDS:
+		if total < cycle:
 			_elapsed[id] = total
 			continue
-		var stone := floori(total / CYCLE_SECONDS)
-		_elapsed[id] = fmod(total, CYCLE_SECONDS)
+		var stone := floori(total / cycle) * stone_per_cycle
+		_elapsed[id] = fmod(total, cycle)
 		_deliver(_map._structures.owner_of(id), stone)
 
 

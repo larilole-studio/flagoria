@@ -48,7 +48,6 @@ Scripts/mechanics/conquest/cities.gd	unused-argument	unused function argument 'i
 Scripts/mechanics/conquest/land_score.gd	class-definitions-order	Definition out of order in global scope	1f12cc2aa2fd90ad
 Scripts/mechanics/conquest/land_score.gd	class-definitions-order	Definition out of order in global scope	79fa04398b7f6c2a
 Scripts/mechanics/day_night/day_night.gd	load-constant-name	Constant (load/preload) name "_NightLights" is not valid
-Scripts/mechanics/interact/cut_rate_limit.gd	max-line-length	Max allowed line length (100) exceeded	29096e6d8e7ec52f
 Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	01fa1476d05ce4c9
 Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	0245da594b7c2d70
 Scripts/mechanics/interact/interaction.gd	class-definitions-order	Definition out of order in global scope	23552e01c03af216

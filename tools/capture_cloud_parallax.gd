@@ -91,7 +91,10 @@ func run() -> void:
 	print(
 		(
 			"World-pixel drift per 10 s before wrap: far %.1f, near %.1f"
-			% [CloudMotion.FAR_SPEED * 10.0, CloudMotion.NEAR_SPEED * 10.0]
+			% [
+				Tuning.value(&"visuals.cloud_far_speed") * 10.0,
+				Tuning.value(&"visuals.cloud_near_speed") * 10.0
+			]
 		)
 	)
 	done(true)

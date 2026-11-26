@@ -136,6 +136,10 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/mechanics/trees/tree_cuts.gd`
 - `Scripts/mechanics/trees/tree_sprouts.gd`
 
+#### `tuning/`
+
+- `Scripts/mechanics/tuning/tuning.gd`
+
 #### `walls/`
 
 - `Scripts/mechanics/walls/wall_builder.gd`
