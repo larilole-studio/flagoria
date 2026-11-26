@@ -265,6 +265,16 @@ The host's day/night clock (#558) is the `clock` object. The in-game menu's Save
 
 An older save has no `clock` object. It loads at the start of day with the cycle on. The version stays 3.
 
+## Gameplay tuning
+
+The optional `world.tuning` object stores only values changed from their
+defaults, keyed by the tuning registry ID. For example, a mine price of
+20 wood is saved as `"tuning": {"building.mine_wood": 20}` inside `world`.
+Loading a world uses defaults for omitted keys, including when an older save
+has no tuning object. Unknown keys and non-numeric values are ignored.
+Numeric values are clamped and rounded to the registry's step. This optional
+section uses the existing version 3 format.
+
 ## Saving during play
 
 **Save** in the in-game menu writes the world being played, named after the

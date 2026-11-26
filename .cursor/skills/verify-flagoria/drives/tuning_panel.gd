@@ -8,8 +8,12 @@ const CONTENT := "CanvasLayer1/InGameMenu/TuningPanel/Margin/Content"
 const TABS := CONTENT + "/Body/Categories/"
 const SCROLL := CONTENT + "/Body/Scroll"
 const ROWS := SCROLL + "/Rows"
+const HEADER := CONTENT + "/Header"
+const CONFIRM_RESET := CONTENT + "/ConfirmReset"
 const CASTLE_WOOD := ROWS + "/building_castle_wood"
 const PLANK_WOOD := ROWS + "/building_plank_wood"
+const MINE_WOOD := ROWS + "/building_mine_wood"
+const RESET := "/ResetSlot/Reset"
 const WINDOW_SIZE := Vector2i(2400, 1080)
 const ROW_COUNTS := {
 	"Buildingcosts": 11,
@@ -36,17 +40,105 @@ func run() -> void:
 		return
 
 	step("return to Menu and preview a castle")
-	await _touch(CONTENT + "/Header/Close")
+	await _touch(HEADER + "/Close")
 	if not current_scene.get_node(TUNING_BUTTON).is_visible_in_tree():
 		_fail("Close did not return to Menu")
 		return
 	await _touch(MENU_ROWS + "/Resume")
 	await click("CanvasLayer1/BuildingsButton")
 	await click("CanvasLayer1/BuildPicker/CastleButton")
-	if not await _show_castle_preview():
+	if not await _show_preview(BuildCosts.CASTLE, Vector2i(36, 15), "castle-build-preview"):
 		_fail("no reachable castle preview showing 36 wood and 15 stone")
 		return
+	if not await _reload_with_mine_price() or not await _reset_prices():
+		return
 	done(true)
+
+
+func _reload_with_mine_price() -> bool:
+	step("set Mine wood to 20, save, and load from Worlds")
+	await _touch(MENU_BUTTON)
+	await _touch(TUNING_BUTTON)
+	await _reveal_mine_row()
+	for i in 5:
+		await _touch(MINE_WOOD + "/Increase")
+	if not _shows_value(MINE_WOOD, "20"):
+		return _fail("Mine wood did not reach 20")
+	await _touch(HEADER + "/Close")
+	await _touch(SAVE_BUTTON)
+	await _touch(MENU_ROWS + "/MainMenu")
+	if not await wait_until(menu_root_visible, 10.0):
+		return _fail("Main menu did not reopen")
+	await click(WORLDS_BUTTON)
+	var list: ItemList = current_scene.get_node(WORLDS_VIEW + "/Body/Scroll/List")
+	if list.item_count != 1:
+		return _fail("expected one saved world")
+	await _touch_at(to_window(list, list.get_item_rect(0).get_center()))
+	await click(WORLDS_VIEW + "/Body/Actions/Load")
+	if not await wait_until(func() -> bool: return hero() != null, 10.0):
+		return _fail("saved world did not load")
+	await grant_resources()
+	await click("CanvasLayer1/BuildingsButton")
+	await click("CanvasLayer1/BuildPicker/MineButton")
+	return (
+		await _show_preview(BuildCosts.MINE, Vector2i(20, 0), "mine-build-preview-20")
+		or _fail("no reachable mine preview showing 20 wood after loading")
+	)
+
+
+func _reset_prices() -> bool:
+	step("reset the Mine wood row")
+	await _touch(MENU_BUTTON)
+	await _touch(TUNING_BUTTON)
+	await _reveal_mine_row()
+	var reset: Button = current_scene.get_node(MINE_WOOD + RESET)
+	if not (
+		_shows_value(MINE_WOOD, "20")
+		and reset.is_visible_in_tree()
+		and reset.text == "Reset to 15"
+		and _check_touch_targets(MINE_WOOD + "/ResetSlot")
+	):
+		return _fail("Mine wood reset did not show its default or meet the touch target")
+	await snapshot("mine-wood-reset")
+	await _touch(MINE_WOOD + RESET)
+	if not _shows_value(MINE_WOOD, "15") or reset.is_visible_in_tree():
+		return _fail("row reset did not restore Mine wood and hide its reset control")
+	await _touch(MINE_WOOD + "/Increase")
+	await _touch(TABS + "Mine")
+	await _touch(ROWS + "/mine_cycle_seconds/Increase")
+	if not _shows_value(ROWS + "/mine_cycle_seconds", "60.5"):
+		return _fail("Mine cycle did not change before Reset all")
+	await _touch(TABS + "Buildingcosts")
+	await _reveal_mine_row()
+	return await _confirm_reset_all()
+
+
+func _confirm_reset_all() -> bool:
+	step("cancel Reset all, then open it again and confirm")
+	if not _check_touch_targets(HEADER):
+		return _fail("undersized Tuning header button")
+	await _touch(HEADER + "/ResetAll")
+	if not _check_touch_targets(CONFIRM_RESET):
+		return _fail("undersized reset confirmation button")
+	await snapshot("reset-all-confirm")
+	await _touch(CONFIRM_RESET + "/CancelReset")
+	if not _shows_value(MINE_WOOD, "16"):
+		return _fail("cancel changed Mine wood")
+	await _touch(HEADER + "/ResetAll")
+	await _touch(CONFIRM_RESET + "/ApplyReset")
+	if not (
+		_shows_value(MINE_WOOD, "15")
+		and _shows_value(CASTLE_WOOD, "35")
+		and _shows_value(PLANK_WOOD, "1")
+		and not current_scene.get_node(MINE_WOOD + RESET).is_visible_in_tree()
+	):
+		return _fail("Reset all did not restore the building costs")
+	await snapshot("reset-all-result")
+	await _touch(TABS + "Mine")
+	return (
+		_shows_value(ROWS + "/mine_cycle_seconds", "60")
+		or _fail("Reset all did not restore the Mine tab")
+	)
 
 
 func _edit_building_costs() -> bool:
@@ -95,6 +187,27 @@ func _scroll_costs() -> bool:
 	)
 
 
+func _reveal_mine_row() -> void:
+	var scroll: ScrollContainer = current_scene.get_node(SCROLL)
+	var bar := scroll.get_v_scroll_bar()
+	var start := to_window(bar, bar.size * Vector2(0.5, 0.2))
+	var end := to_window(bar, bar.size * Vector2(0.5, 0.31))
+	for at in [start, end]:
+		var motion := InputEventMouseMotion.new()
+		motion.position = at
+		motion.global_position = at
+		Input.parse_input_event(motion)
+		await process_frame
+		var button := InputEventMouseButton.new()
+		button.button_index = MOUSE_BUTTON_LEFT
+		button.pressed = at == start
+		button.position = at
+		button.global_position = at
+		Input.parse_input_event(button)
+		await process_frame
+		await process_frame
+
+
 func _visit_categories() -> bool:
 	step("visit every category and review Visuals")
 	for tab: String in ROW_COUNTS:
@@ -113,7 +226,10 @@ func _visit_categories() -> bool:
 
 func _touch(path: String) -> void:
 	var control: Control = current_scene.get_node(path)
-	var at := to_window(control, control.size / 2.0)
+	await _touch_at(to_window(control, control.size / 2.0))
+
+
+func _touch_at(at: Vector2) -> void:
 	for pressed in [true, false]:
 		var event := InputEventScreenTouch.new()
 		event.position = at
@@ -133,16 +249,17 @@ func _check_touch_targets(parent: String) -> bool:
 	for child in current_scene.get_node(parent).get_children():
 		if not child is Button:
 			continue
-		var height := (
-			to_window(child, Vector2(0, child.size.y)).y - to_window(child, Vector2.ZERO).y
-		)
-		if child.size.y < menu_button.size.y or (root.size == WINDOW_SIZE and height < 48):
-			printerr("tuning: ", child.name, " is only ", height, " screen px tall")
+		var size := to_window(child, child.size) - to_window(child, Vector2.ZERO)
+		if (
+			child.size.y < menu_button.size.y
+			or (root.size == WINDOW_SIZE and minf(size.x, size.y) < 48)
+		):
+			printerr("tuning: ", child.name, " is only ", size, " screen px")
 			return false
 	return true
 
 
-func _show_castle_preview() -> bool:
+func _show_preview(kind: StringName, price: Vector2i, screen: String) -> bool:
 	var interaction: Interaction = current_scene.get_node(INTERACTION)
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var placer := ConstructionPlacer.new(map)
@@ -156,7 +273,7 @@ func _show_castle_preview() -> bool:
 				var cell := origin + Vector2i(dx, dy)
 				if (
 					interaction.in_reach(cell)
-					and placer.can_place_geometry(BuildCosts.CASTLE, [cell]).is_empty()
+					and placer.can_place_geometry(kind, [cell]).is_empty()
 				):
 					var finger := root.get_final_transform() * (center + Vector2(-60, -64))
 					var delta := (
@@ -169,9 +286,9 @@ func _show_castle_preview() -> bool:
 						finger,
 						finger + delta,
 						func() -> void:
-							shown[0] = interaction.build.price == Vector2i(36, 15)
+							shown[0] = interaction.build.price == price
 							if shown[0]:
-								await snapshot("castle-build-preview")
+								await snapshot(screen)
 					)
 					if shown[0]:
 						return true

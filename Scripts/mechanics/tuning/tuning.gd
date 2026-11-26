@@ -88,6 +88,19 @@ static func reset_all() -> void:
 		events.changed.emit(key)
 
 
+static func overrides_for_save() -> Dictionary:
+	return _overrides.duplicate()
+
+
+static func restore_overrides(overrides: Dictionary) -> void:
+	for key in _entries:
+		var raw: Variant = overrides.get(String(key))
+		if (raw is int or raw is float) and is_finite(float(raw)):
+			set_value(key, float(raw))
+		else:
+			reset(key)
+
+
 static func entries_by_category() -> Dictionary:
 	var groups := {}
 	for entry in _entries.values():

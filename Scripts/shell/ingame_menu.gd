@@ -142,6 +142,7 @@ func save_world() -> Dictionary:
 			if owner != null:
 				owner.save_name = save_name
 		var world := WorldSave.new(params)
+		world.tuning_overrides = Tuning.overrides_for_save()
 		var world_map := owner.get_node_or_null("World/worldMap")
 		if world_map:
 			world.object_changes = world_map.object_changes()

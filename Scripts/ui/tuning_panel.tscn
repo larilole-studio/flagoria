@@ -22,6 +22,7 @@ theme_override_constants/margin_bottom = 12
 layout_mode = 2
 
 [node name="Header" type="HBoxContainer" parent="Margin/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="Title" type="Label" parent="Margin/Content/Header"]
@@ -31,11 +32,40 @@ theme_type_variation = &"TitleLabel"
 theme_override_font_sizes/font_size = 20
 text = "Tuning"
 
+[node name="ResetAll" type="Button" parent="Margin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 28)
+layout_mode = 2
+text = "Reset all"
+
 [node name="Close" type="Button" parent="Margin/Content/Header" groups=["ui_back"]]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 28)
 layout_mode = 2
 text = "Close"
+
+[node name="ConfirmReset" type="HBoxContainer" parent="Margin/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Question" type="Label" parent="Margin/Content/ConfirmReset"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "Reset all tuning values to defaults?"
+
+[node name="CancelReset" type="Button" parent="Margin/Content/ConfirmReset"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 28)
+layout_mode = 2
+text = "Cancel"
+
+[node name="ApplyReset" type="Button" parent="Margin/Content/ConfirmReset"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 28)
+layout_mode = 2
+text = "Reset all"
 
 [node name="Body" type="HBoxContainer" parent="Margin/Content"]
 layout_mode = 2
