@@ -82,6 +82,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Build barracks](./build-barracks.md) — `barracks.txt` for 20 wood and 10 stone from the build picker, save/reload and multiplayer sync (#556).
 - [Place a mine](./place-mine.md) — a 3×3 mine costs 15 wood and needs an orthogonally adjacent live rock (#722).
 - [Produce stone at placed mines](./mine-production.md) — each mine credits its owner one stone per minute (#723).
+- [Mine cart animation](./mine-cart.md) — producing mines animate the cart and idle mines show the parked pose (#725).
 - [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
 - [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bow hits from other peers land; multiplayer hp sync (#554).
 - [Soldier vs peer](./soldier-vs-peer.md) — trained soldiers on Follow or Hold strike living enemy players; owner is never a target; health sync (#555).

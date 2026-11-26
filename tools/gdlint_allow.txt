@@ -36,7 +36,6 @@
 .cursor/skills/verify-flagoria/drives/walls_cities.gd	max-returns	Function "run" has more than 6 return statements
 Scripts/mechanics/bridges/bridge_builder.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
 Scripts/mechanics/building/build_placement.gd	class-definitions-order	Definition out of order in global scope	e00821aa7e83d590
-Scripts/mechanics/building/build_placement.gd	load-constant-name	Constant (load/preload) name "_FootprintOrientation" is not valid
 Scripts/mechanics/building/construction_placer.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
 Scripts/mechanics/building/footprint_orientation.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
 Scripts/mechanics/building/structure_requests.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid

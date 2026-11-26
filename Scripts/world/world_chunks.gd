@@ -52,8 +52,7 @@ static func set_tile_type_z1(
 	if map._object_removals.has_removed(pos_vec):
 		return
 	if map._structures.has_cell(pos_vec):
-		if map._structures.object_at(pos_vec) != map.NO_PLANT:
-			map.set_cell(1, pos_vec, TileCatalog.SOURCE_ID, map._structures.object_at(pos_vec))
+		map._structures.paint_object(pos_vec)
 		return
 	if map._walls.has_wall(pos_vec):
 		map._walls.paint_cell(pos_vec)

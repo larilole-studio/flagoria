@@ -178,15 +178,16 @@ func _picker_ok() -> bool:
 			continue
 		count += 1
 		var rect := button.get_global_rect()
+		# Outer ring is 90 px at scale 1, and can grow so captions fit.
 		if (
 			not view.encloses(rect)
 			or rect.get_center().x > origin.x
-			or rect.get_center().distance_to(origin) > 92.0
+			or rect.get_center().distance_to(origin) > HudToolRow.PICKER_RADII[1] * 1.5
 			or not _round(button)
 		):
 			printerr("hud round: %s misplaced at %s" % [button.name, rect])
 			return false
-	return count == 6
+	return count == BuildToolRow.picker_tools().size()
 
 
 func _disc_is(button: Button, stem: String) -> bool:

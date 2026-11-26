@@ -44,3 +44,23 @@ static func draw_label(canvas: Node2D, point: Vector2, text: String, refused: bo
 		FONT_SIZE,
 		REASON_COLOR if refused else COST_COLOR
 	)
+
+
+static func draw_footprint(
+	canvas: Node2D,
+	interaction: Interaction,
+	top_left: Vector2i,
+	anchor: Vector2i,
+	tool: BuildPlacement.Tool,
+	turns: int
+) -> void:
+	if tool != BuildPlacement.Tool.MINE:
+		var mark := canvas.to_local(interaction.cell_center(anchor))
+		FootprintOrientation.draw_at(canvas, mark, turns)
+		return
+	var map: TileMap = interaction.world_map
+	var transform := canvas.global_transform.affine_inverse() * map.global_transform
+	transform = transform.translated_local(map.map_to_local(top_left + Vector2i.ONE))
+	canvas.draw_set_transform_matrix(transform.rotated_local(FootprintOrientation.angle_rad(turns)))
+	canvas.draw_texture(MineCart.parked_texture(), -MineCart.FOOTPRINT_CENTER, Color(1, 1, 1, 0.8))
+	canvas.draw_set_transform_matrix(Transform2D.IDENTITY)
