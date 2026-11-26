@@ -28,6 +28,7 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/run/run_control.gd" id="19_run"]
 [ext_resource type="Script" path="res://Scripts/ui/hud_tool_row.gd" id="20_hud_row"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building/structure_requests.gd" id="21_requests"]
+[ext_resource type="Script" path="res://Scripts/mechanics/building/admin_resource_grants.gd" id="22_grants"]
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/land_score.gd" id="22_land"]
 [ext_resource type="Script" path="res://Scripts/mechanics/defense/tower_guns.gd" id="23_tower_guns"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building_blocks/generated_buildings.gd" id="23_buildings"]
@@ -131,7 +132,8 @@ script = ExtResource("19_run")
 [node name="HudToolRow" type="Node" parent="CanvasLayer1"]
 script = ExtResource("20_hud_row")
 
-[node name="InGameMenu" parent="CanvasLayer1" instance=ExtResource("9_ingame_menu")]
+[node name="InGameMenu" parent="CanvasLayer1" node_paths=PackedStringArray("resource_grants") instance=ExtResource("9_ingame_menu")]
+resource_grants = NodePath("../../AdminResourceGrants")
 
 [node name="ParchmentMap" type="Control" parent="CanvasLayer1"]
 visible = false
@@ -139,6 +141,10 @@ script = ExtResource("16_parchment")
 
 [node name="Inventory" type="Node" parent="."]
 script = ExtResource("13_inventory")
+
+[node name="AdminResourceGrants" type="Node" parent="." node_paths=PackedStringArray("inventory")]
+script = ExtResource("22_grants")
+inventory = NodePath("../Inventory")
 
 [node name="Points" type="Node" parent="."]
 script = ExtResource("10_points")

@@ -12,7 +12,7 @@ const TYPES := [
 
 # Only plain values here: a static var holding a resource outlives the
 # script at exit.
-static var _by_atlas := {}  # foliage atlas coords -> index in TYPES
+static var _by_atlas: Dictionary[Vector2i, Vector2i] = {}  # atlas -> (type, variant) indices
 static var _leftovers := {}  # atlas coords a cut type leaves -> true
 
 
@@ -20,17 +20,23 @@ static func _index() -> void:
 	if not _by_atlas.is_empty():
 		return
 	for i in TYPES.size():
-		for n in TYPES[i].tiles:
-			_by_atlas[TileCatalog.TILES[n]["atlas"]] = i
+		for j in TYPES[i].variants.size():
+			var trunk: String = TYPES[i].variants[j].idle_tiles[0]
+			_by_atlas[TileCatalog.TILES[trunk]["atlas"]] = Vector2i(i, j)
 		_leftovers[TYPES[i].leaves_atlas()] = true
 
 
 static func type_at(atlas: Vector2i) -> InteractableType:
 	## The type whose tile is `atlas`, or null when it is not choppable.
 	_index()
-	if atlas == TileCatalog.TREE_BIRCH_BOTTOM:
-		return TYPES[0]
-	return TYPES[_by_atlas[atlas]] if _by_atlas.has(atlas) else null
+	return TYPES[_by_atlas[atlas].x] if _by_atlas.has(atlas) else null
+
+
+static func sprites_at(atlas: Vector2i) -> ChopSprites:
+	## Sprite set of the choppable tile at `atlas`, or null if unregistered.
+	_index()
+	var entry: Vector2i = _by_atlas.get(atlas, Vector2i(-1, -1))
+	return null if entry.x < 0 else TYPES[entry.x].variants[entry.y]
 
 
 static func by_id(id: String) -> InteractableType:

@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Draw the tree and pine chop frames (#333) from the tileset atlas.
+"""Draw the tree variant chop frames (#333) from the tileset atlas.
 
 Writes, under art/flagoria/fx/:
 - tree_hit.png (32x32): the hit sheet of tree.tres, one row per tile in its
   `tiles` (TREE, then TREE_BUSHY), 2 frames of 16x16: the canopy sways right
   on the impact, then its top swings back left. The trunk stays put.
 - pine_hit.png (32x16): the same for TREE_PINE_SMALL.
-- fx_tree.png, fx_pine.png (64x16): fx sheets like fx_leaves.png. Frames 0-1
+- birch_hit.png (32x32): two 16x32 frames of the stacked birch tiles.
+- fx_tree.png, fx_tree_bushy.png, fx_birch.png, fx_pine.png (64x16):
+  fx sheets like fx_leaves.png. Frames 0-1
   after each impact: the white hit spark on the trunk and wood chips, then the
   chips flying out with a leaf or needle off the canopy. Frames 2-3 when it
   falls (under the puff): leaves or needles burst out, then land.
@@ -15,6 +17,10 @@ Colours come from the atlas palette, and the leaf shape is the bush's in
 fx_leaves.png, so the frames match the bush ones (#293). Run from the repo
 root: python3 tools/art/gen_tree_chop_frames.py (needs Pillow).
 """
+import argparse
+import hashlib
+from pathlib import Path
+
 from PIL import Image
 
 ATLAS = "art/flagoria/flagoria_tiles_v4.png"
@@ -22,6 +28,7 @@ OUT = "art/flagoria/fx/"
 TILE = 16
 # Atlas cells (Scripts/world/tile_catalog.gd) and the first row of each trunk.
 TREE, TREE_BUSHY, TREE_PINE_SMALL = (7, 0), (7, 1), (7, 2)
+BIRCH_TOP, BIRCH_BOTTOM = (9, 0), (9, 1)
 TRUNK_FROM = {TREE: 10, TREE_BUSHY: 12, TREE_PINE_SMALL: 12}
 
 PAL = {
@@ -39,6 +46,9 @@ LEAF = [".aa.", "abca", ".ada", "..a."]  # the bush's leaf
 LEAF_SMALL = ["abda", ".aa."]
 NEEDLE = [".aa.", "adea", ".aea", "..a."]
 NEEDLE_SMALL = ["adea", ".aa."]
+BUSHY_LEAF = [".aa.", "abca", "adca", ".aa."]
+BIRCH_LEAF = ["..a.", ".aba", "abca", ".aa."]
+BIRCH_LEAF_SMALL = [".aba", "aaa."]
 CHIP = [".aa.", "agia", ".aa."]
 CHIP_SMALL = ["aga", ".a."]
 SPARK = [".W.", "W.W", ".W."]
@@ -53,8 +63,8 @@ def sway(src: Image.Image, trunk_from: int, top_dx: int, low_dx: int) -> Image.I
     """Canopy rows above trunk_from moved sideways: the top half by top_dx,
     the lower half by low_dx. Trunk rows stay where they are. A row that
     already touches the tile edge it moves to keeps its outline there."""
-    out = Image.new("RGBA", (TILE, TILE))
-    for y in range(TILE):
+    out = Image.new("RGBA", src.size)
+    for y in range(src.height):
         dx = 0 if y >= trunk_from else (top_dx if y < trunk_from // 2 else low_dx)
         row = src.crop((0, y, TILE, y + 1))
         out.paste(row, (dx, y), row)
@@ -80,6 +90,17 @@ def hit_sheet(atlas: Image.Image, cells: list) -> Image.Image:
     return sheet
 
 
+def birch_hit_sheet(atlas: Image.Image) -> Image.Image:
+    src = Image.new("RGBA", (TILE, 2 * TILE))
+    src.paste(tile(atlas, BIRCH_TOP), (0, 0))
+    src.paste(tile(atlas, BIRCH_BOTTOM), (0, TILE))
+    sheet = Image.new("RGBA", (2 * TILE, src.height))
+    # The white trunk starts on row 4 of the lower tile.
+    for col, (top, low) in enumerate([(1, 1), (-1, 0)]):
+        sheet.paste(sway(src, TILE + 4, top, low), (col * TILE, 0))
+    return sheet
+
+
 def fx_sheet(leaf: list, leaf_small: list) -> Image.Image:
     frames = [
         # 0: the axe lands: spark on the trunk, chips off both sides.
@@ -99,11 +120,31 @@ def fx_sheet(leaf: list, leaf_small: list) -> Image.Image:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--update-golden", action="store_true")
+    args = parser.parse_args()
     atlas = Image.open(ATLAS).convert("RGBA")
-    hit_sheet(atlas, [TREE, TREE_BUSHY]).save(OUT + "tree_hit.png")
-    hit_sheet(atlas, [TREE_PINE_SMALL]).save(OUT + "pine_hit.png")
+    hits = {
+        "tree_hit.png": hit_sheet(atlas, [TREE, TREE_BUSHY]),
+        "pine_hit.png": hit_sheet(atlas, [TREE_PINE_SMALL]),
+        "birch_hit.png": birch_hit_sheet(atlas),
+    }
+    for name, sheet in hits.items():
+        sheet.save(OUT + name)
     fx_sheet(LEAF, LEAF_SMALL).save(OUT + "fx_tree.png")
+    fx_sheet(BUSHY_LEAF, LEAF_SMALL).save(OUT + "fx_tree_bushy.png")
+    fx_sheet(BIRCH_LEAF, BIRCH_LEAF_SMALL).save(OUT + "fx_birch.png")
     fx_sheet(NEEDLE, NEEDLE_SMALL).save(OUT + "fx_pine.png")
+    if args.update_golden:
+        lines = [
+            "# Hit-sheet reference (#357). sha256 of file bytes, then width height.",
+            "# Update with: python3 tools/art/gen_tree_chop_frames.py --update-golden",
+        ]
+        for name, sheet in hits.items():
+            path = Path(OUT + name)
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            lines.append(f"{path} {digest} {sheet.width} {sheet.height}")
+        Path("tests/golden/hit_sheets.txt").write_text("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":
