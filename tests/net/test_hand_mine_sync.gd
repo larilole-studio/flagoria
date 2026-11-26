@@ -91,13 +91,16 @@ func _mine_with_peers(host: Node, joiner: Node, peer: int) -> bool:
 	):
 		printerr(
 			(
-				"FAIL mine_sync: joiner award or depletion did not reach both peers (joiner stone %s, host stone %s, host rock %s, joiner rock %s)"
-				% [
-					join_inventory.count_of(Inventory.STONE),
-					host_inventory.count_of(Inventory.STONE),
-					_has_rock(maps[0], rocks[1]),
-					_has_rock(maps[1], rocks[1]),
-				]
+				"FAIL mine_sync: joiner award or depletion did not reach both peers "
+				+ (
+					"(joiner stone %s, host stone %s, host rock %s, joiner rock %s)"
+					% [
+						join_inventory.count_of(Inventory.STONE),
+						host_inventory.count_of(Inventory.STONE),
+						_has_rock(maps[0], rocks[1]),
+						_has_rock(maps[1], rocks[1]),
+					]
+				)
 			)
 		)
 		return false
