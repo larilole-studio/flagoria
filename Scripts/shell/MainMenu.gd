@@ -166,7 +166,7 @@ func navigate_back() -> bool:
 		hud_editor.close_editor()
 		return true
 	if ux_layer.visible:
-		return false
+		return ux_layer.get_node("InGameMenu").close_tuning()
 	var worlds := get_parent().get_node_or_null("WorldsPanel") as Control
 	if letter_keyboard.is_visible_in_tree():
 		letter_keyboard.close()

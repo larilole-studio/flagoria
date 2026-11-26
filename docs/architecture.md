@@ -203,6 +203,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/ui/scoreboard_panel.gd`
 - `Scripts/ui/status_plate_hud.gd`
 - `Scripts/ui/tool_wheel.gd`
+- `Scripts/ui/tuning_panel.gd`
 - `Scripts/ui/world_save_preview.gd`
 
 ### `Scripts/world/`
