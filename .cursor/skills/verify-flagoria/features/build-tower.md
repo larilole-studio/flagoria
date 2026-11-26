@@ -2,8 +2,8 @@
 
 Drive: not player-facing
 
-Wooden palisade tower for 10 wood (#273). Tower sits in the inner Buildings ring. The tool previews the 3×3 `tower_wood` footprint under
-the finger: all green and "10 wood" when `commit` will place, all red with a
+Wooden palisade tower for 10 wood (#273). Tower sits in the inner Buildings ring. The tool previews the 3×3 `tower_wood` footprint at
+the snapped screen center: all green and "10 wood" when `commit` will place, all red with a
 refusal reason otherwise. On release, placement goes through
 `ConstructionPlacer` (`BuildCosts.TOWER` → `StructurePlacer` writing
 `structures/tower_wood.txt`). The builder owns the tower and its team flag so
@@ -32,7 +32,7 @@ as the auto entries the solver replaces. The picker icon comes from
 
 1. Start a local game (Host alone or offline) with at least 10 wood.
 2. Open Buildings to show the picker.
-3. Tap Tower, aim at clear land; the 3×3 footprint greens with "10 wood".
+3. Tap Tower, then drag from open playfield to move the preview to clear land; the 3×3 footprint greens with "10 wood".
    Lift to place. The tower's flag takes the builder's colour.
 
 ## Driving it with verify-flagoria helpers
@@ -40,7 +40,7 @@ as the auto entries the solver replaces. The picker icon comes from
 Preconditions: `doctor.sh` exits `0`. Placement and charge use the shared
 [construction seam](./construction-placement.md).
 `test_build_tower_preview_matches_commit` about 0.5 s (~2.2 s alone);
-`test_build_tower_tap_places` about 0.5 s (~2.2 s alone).
+`test_build_tower_drag_places_and_demolish_taps` about 0.5 s (~2.2 s alone).
 `test_build_tower_out_of_reach` about 0.12 s (~2.6 s alone with `--only=`);
 `test_construction_tower_cached` about 0.06 s (~2.6 s alone).
 Staged screenshot harness about 3 s under xvfb.
@@ -50,7 +50,7 @@ Staged screenshot harness about 3 s under xvfb.
   `-- test_building_seam_refund`,
   `-- test_build_picker_buttons`,
   `-- test_build_tower_preview_matches_commit`,
-  `-- test_build_tower_tap_places`, `-- test_build_tower_out_of_reach` and
+  `-- test_build_tower_drag_places_and_demolish_taps`, `-- test_build_tower_out_of_reach` and
   `-- test_construction_tower_cached` in `artifacts/verify.log` with no `FAIL`
   after them. The reach test also checks no wood is spent / no tower is placed
   on refusal, then moving into reach restores the green preview. The cache

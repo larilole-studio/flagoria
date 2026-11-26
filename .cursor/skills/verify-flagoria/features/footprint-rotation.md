@@ -24,8 +24,8 @@ it (#493).
 
 1. Start a local game with at least 10 wood.
 2. Enter interact mode, open Buildings, choose Tower.
-3. Touch the map to preview the 3×3 footprint; the Rotate disc appears beside
-   the finger. Tap it to turn the preview, then lift to place.
+3. The centered 3×3 preview appears with the Rotate disc beside it. Tap Rotate,
+   then drag from open playfield and lift to place at the previewed cell.
 
 ## Driving it with verify-flagoria helpers
 

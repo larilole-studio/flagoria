@@ -22,9 +22,18 @@ static func draw_label(canvas: Node2D, point: Vector2, text: String, refused: bo
 	if text.is_empty():
 		return
 	var font := ThemeDB.fallback_font
-	var anchor := canvas.to_local(point) + Vector2(8, -12)
+	const FONT_SIZE := 13
+	var anchor := canvas.to_local(point) + Vector2(10, -8)
+	var visible := (
+		canvas.get_global_transform_with_canvas().affine_inverse() * canvas.get_viewport_rect()
+	)
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE).x
+	anchor.x = clampf(
+		anchor.x, visible.position.x + 4, maxf(visible.position.x + 4, visible.end.x - width - 4)
+	)
+	anchor.y = clampf(anchor.y, visible.position.y + FONT_SIZE, visible.end.y - 4)
 	canvas.draw_string_outline(
-		font, anchor, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 2, Color(0.15, 0.10, 0.20)
+		font, anchor, text, HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, 3, Color(0.15, 0.10, 0.20)
 	)
 	canvas.draw_string(
 		font,
@@ -32,6 +41,6 @@ static func draw_label(canvas: Node2D, point: Vector2, text: String, refused: bo
 		text,
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
-		10,
+		FONT_SIZE,
 		REASON_COLOR if refused else COST_COLOR
 	)

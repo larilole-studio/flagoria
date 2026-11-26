@@ -185,9 +185,17 @@ func _test_build_wall_preview_matches_commit() -> int:
 		)
 		fail += 1
 	# Chain: drag run[1]..run[3] next to tip.
-	var vp1 := _cell_vp(interaction, world, run[1])
-	var vp3 := _cell_vp(interaction, world, run[3])
-	interaction.build.update_preview(vp1, vp3)
+	var viewport := interaction.get_viewport()
+	var point := viewport.get_visible_rect().get_center() + Vector2(0, -60)
+	var delta := _cell_vp(interaction, world, run[3]) - vp0
+	var press := InputEventScreenTouch.new()
+	press.pressed = true
+	press.position = point
+	viewport.push_input(press, true)
+	var drag := InputEventScreenDrag.new()
+	drag.position = point + delta
+	drag.relative = delta
+	viewport.push_input(drag, true)
 	if (
 		interaction.build.cells.size() != 3
 		or interaction.build.cost != 6
@@ -201,9 +209,9 @@ func _test_build_wall_preview_matches_commit() -> int:
 		)
 		fail += 1
 	wood_before = inventory.count_of(Inventory.WOOD)
-	if not interaction.build.commit():
-		printerr("FAIL build_wall_preview_matches_commit: chain commit false")
-		fail += 1
+	var release := InputEventScreenTouch.new()
+	release.position = drag.position
+	viewport.push_input(release, true)
 	if (
 		not [run[1], run[2], run[3]].all(func(c: Vector2i) -> bool: return world.has_wall(c))
 		or inventory.count_of(Inventory.WOOD) != wood_before - 6

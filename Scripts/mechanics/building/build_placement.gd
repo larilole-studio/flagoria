@@ -9,11 +9,11 @@ const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
 
 var tool := Tool.CUT
-var cells: Array[Vector2i] = []  ## snapped run or tower footprint under the finger
+var cells: Array[Vector2i] = []  ## snapped run or footprint
 var cell_ok: Array[bool] = []  ## parallel to cells: green iff commit will place
 var cost := 0
 var reasons: Array[String] = []
-var cost_viewport := Vector2.ZERO  ## where the cost label sits (finger)
+var cost_viewport := Vector2.ZERO  ## viewport position of the snapped target
 
 var _interaction: Interaction
 var _placer: ConstructionPlacer
@@ -22,21 +22,18 @@ var _picker: Control
 var _buildings: Button
 var _list_open := false
 var _buttons: Dictionary = {}  ## Tool -> Button
+var _pointer_origin := Vector2.INF  ## world center of the gesture's starting cell
 var _snap_from := Vector2i.ZERO
 var _snap_to := Vector2i.ZERO
 var _snap_valid := false
 var _snap_frame := 0
-## Last placed wall cell while the Wall tool stays selected; cleared on leave.
 var _wall_tip := Vector2i.ZERO
 var _has_wall_tip := false
-## Skip-cache extras: same drag cells can still go stale when wood, reach
-## (player position) or the map change. Bumped on worldMap.ground_changed.
 var _snap_wood := -1
 var _snap_player_pos := Vector2(INF, INF)
 var _snap_map_rev := -1
 var _snap_rotation := -1
 var _map_rev := 0
-## Last multiplayer_on seen; Interaction polls and calls on_multiplayer_changed.
 var _mp_was_on := false
 var _rotate := BuildPlacementRotate.new()
 
@@ -71,6 +68,8 @@ func set_tool(value: Tool) -> void:
 	if tool == Tool.WALL and value != Tool.WALL:
 		_has_wall_tip = false
 	tool = value
+	if _interaction != null:
+		_interaction.cancel_build_touch()
 	_rotate.reset()
 	clear_preview()
 	for t in _buttons:
@@ -83,6 +82,7 @@ func set_tool(value: Tool) -> void:
 			_buildings.set_pressed_no_signal(false)
 			RoundHudStyle.refresh_toggle(_buildings)
 	_refresh_picker_visible()
+	_start_centered_preview()
 
 
 func clear_preview() -> void:
@@ -91,50 +91,58 @@ func clear_preview() -> void:
 	cost = 0
 	reasons.clear()
 	cost_viewport = Vector2.ZERO
+	_pointer_origin = Vector2.INF
 	_snap_valid = false
-	_snap_wood = -1
-	_snap_player_pos = Vector2(INF, INF)
-	_snap_map_rev = -1
-	_snap_rotation = -1
 	_refresh_rotate_visible()
 
 
 func rotate_footprint() -> void:
-	## Turn the footprint preview 90° clockwise (#493).
 	if not is_footprint_tool(tool):
 		return
 	_rotate.step_cw()
 	_snap_valid = false
-	if cost_viewport != Vector2.ZERO:
-		var inventory := _inventory()
-		if inventory != null:
-			update_preview(cost_viewport, cost_viewport)
+	if not cells.is_empty():
+		_update_preview(cost_viewport, cost_viewport)
 
 
 static func snap_run(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
-	## Contiguous horizontal or vertical cells from `from_cell` to `to_cell`,
-	## snapping to the dominant axis (ties go horizontal).
-	var delta := to_cell - from_cell
-	var horizontal := absi(delta.x) >= absi(delta.y)
-	var end := Vector2i(to_cell.x, from_cell.y) if horizontal else Vector2i(from_cell.x, to_cell.y)
-	var step := Vector2i(
-		0 if end.x == from_cell.x else (1 if end.x > from_cell.x else -1),
-		0 if end.y == from_cell.y else (1 if end.y > from_cell.y else -1),
-	)
-	var out: Array[Vector2i] = [from_cell]
-	var cur := from_cell
-	while cur != end:
-		cur += step
-		out.append(cur)
-	return out
+	return BuildToolRow.snap_run(from_cell, to_cell)
+
+
+func has_pointer_origin() -> bool:
+	return _pointer_origin.is_finite()
+
+
+func preview_drag(delta: Vector2) -> void:
+	if not has_pointer_origin():
+		_snap_valid = false
+		var center := _interaction.get_viewport_rect().get_center()
+		var origin := _wall_tip if tool == Tool.WALL and _has_wall_tip else _cell_at(center)
+		_pointer_origin = _interaction.cell_center(origin)
+	var start := _interaction.get_canvas_transform() * _pointer_origin
+	_update_preview(start, start + delta)
+
+
+func _start_centered_preview() -> void:
+	if (
+		_interaction != null
+		and tool != Tool.CUT
+		and tool != Tool.DEMOLISH
+		and _interaction.mode == Interaction.Mode.INTERACT
+		and _interaction.player != null
+		and not Interaction.player_dead(_interaction.player)
+	):
+		preview_drag(Vector2.ZERO)
 
 
 func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
-	## Recompute the preview for the active tool. Plank: snapped run, green =
-	## longest placeable prefix. Tower: footprint of the anchor under the
-	## finger, all green iff commit will place, else all red. Skips work when
-	## the snapped cells, wood count, player position and map revision are
-	## unchanged (#383).
+	if has_pointer_origin():
+		_pointer_origin = Vector2.INF
+		_snap_valid = false
+	_update_preview(start_viewport, end_viewport)
+
+
+func _update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 	if tool == Tool.CUT or _interaction == null or _interaction.player == null:
 		clear_preview()
 		return
@@ -142,17 +150,22 @@ func update_preview(start_viewport: Vector2, end_viewport: Vector2) -> void:
 	if inventory == null:
 		clear_preview()
 		return
-	cost_viewport = end_viewport
+	cost_viewport = (
+		_interaction.get_canvas_transform() * _interaction.cell_center(_cell_at(end_viewport))
+	)
 	if tool == Tool.DEMOLISH:
 		_update_demolish_preview(end_viewport)
 		return
 	if BuildToolRow.is_footprint(tool):
 		_update_footprint_preview(end_viewport, inventory, BuildToolRow.footprint_kind(tool))
+		_position_rotate_button(cost_viewport)
 		return
 	if tool == Tool.WALL:
 		_update_wall_preview(start_viewport, end_viewport, inventory)
-		return
-	_update_plank_preview(start_viewport, end_viewport, inventory)
+	else:
+		_update_plank_preview(start_viewport, end_viewport, inventory)
+	if not cells.is_empty():
+		cost_viewport = _interaction.get_canvas_transform() * _interaction.cell_center(cells.back())
 
 
 func longest_placeable(run: Array[Vector2i], inventory: Inventory) -> Array[Vector2i]:
@@ -167,7 +180,6 @@ func longest_placeable(run: Array[Vector2i], inventory: Inventory) -> Array[Vect
 
 
 func commit() -> bool:
-	## Apply the current preview; false when no action is accepted.
 	if tool == Tool.CUT or cells.is_empty():
 		clear_preview()
 		return false
@@ -193,10 +205,6 @@ func commit() -> bool:
 
 
 func draw_preview(ci: Node2D) -> void:
-	## Green/red cell tints, wood cost and refusal reason near the finger.
-	## A wall gap / diagonal leaves cells empty but still shows the reason (#276).
-	if tool == Tool.CUT or _interaction == null:
-		return
 	if cells.is_empty() and reasons.is_empty():
 		return
 	BuildPreview.draw_cells(ci, _interaction, cells, cell_ok)
@@ -211,6 +219,9 @@ func draw_preview(ci: Node2D) -> void:
 	var label_at := _interaction.to_world(cost_viewport)
 	if tool == Tool.DEMOLISH:
 		label_at.y -= 18.0
+	elif is_footprint_tool(tool):
+		for cell in cells:
+			label_at.x = maxf(label_at.x, _interaction.cell_center(cell).x)
 	BuildPreview.draw_label(ci, label_at, label, not reasons.is_empty())
 
 
@@ -218,14 +229,12 @@ func on_mode_changed(mode: Interaction.Mode) -> void:
 	if mode != Interaction.Mode.INTERACT:
 		set_tool(Tool.CUT)
 	else:
-		_refresh_rotate_visible()
+		_start_centered_preview()
 	_mp_was_on = Interaction.multiplayer_on(_interaction.multiplayer) if _interaction else false
 	_refresh_picker_visible()
 
 
 func on_multiplayer_changed(mp_on: bool) -> void:
-	## Called from Interaction when multiplayer_on flips (peer joins while the
-	## host is already in interact + Plank, etc.).
 	if mp_on == _mp_was_on:
 		return
 	_mp_was_on = mp_on
@@ -267,11 +276,7 @@ func _update_plank_preview(
 		cell_ok.append(placeable_set.has(cell))
 	if placeable.is_empty():
 		cost = 0
-		reasons = (
-			_placer.can_place(BuildCosts.PLANK, anchored_run, inventory)
-			if not anchored_run.is_empty()
-			else [ConstructionPlacer.EMPTY_CELLS]
-		)
+		reasons = _placer.can_place(BuildCosts.PLANK, anchored_run, inventory)
 	else:
 		cost = _placer.cost(BuildCosts.PLANK, placeable)
 		reasons = []
@@ -280,8 +285,6 @@ func _update_plank_preview(
 func _update_footprint_preview(
 	end_viewport: Vector2, inventory: Inventory, kind: StringName
 ) -> void:
-	## Footprint of the anchor under the finger. All green and the kind's cost
-	## when commit will place; all red with reasons otherwise.
 	var anchor := _cell_at(end_viewport)
 	if _preview_inputs_unchanged(anchor, anchor, inventory):
 		return
@@ -307,12 +310,17 @@ func _update_footprint_preview(
 	for _i in cells.size():
 		cell_ok.append(placeable)
 	cost = _placer.cost(kind, one) if placeable else 0
-	_position_rotate_button(end_viewport)
 
 
 func _plank_run_from_reachable_start() -> Array[Vector2i]:
+	var map := _interaction.world_map
 	for i in cells.size():
-		if _interaction.in_reach(cells[i]):
+		var cell := cells[i]
+		# A run drawn from the camera center can cross the shore before reaching water.
+		if has_pointer_origin():
+			if map.has_bridge(cell) or map.ground_is_walkable(map.predict_cell(cell)[0]):
+				continue
+		if _interaction.in_reach(cell):
 			return cells.slice(i)
 	return []
 
@@ -363,9 +371,15 @@ func _ensure_picker() -> void:
 		_picker.name = "BuildPicker"
 		_picker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hud.add_child(_picker)
-	BuildToolRow.populate_picker(_picker, theme, _buttons, set_tool)
+	BuildToolRow.populate_picker(_picker, theme, _buttons, _pick_tool)
 	_rotate.ensure(hud, theme)
 	_rotate.connect_pressed(rotate_footprint)
+
+
+func _pick_tool(value: Tool) -> void:
+	if is_footprint_tool(value) and _interaction.mode != Interaction.Mode.INTERACT:
+		_interaction.set_mode(Interaction.Mode.INTERACT)
+	set_tool(value)
 
 
 func _refresh_picker_visible() -> void:
@@ -405,57 +419,40 @@ func _update_wall_preview(
 	if _preview_inputs_unchanged(from_cell, to_cell, inventory):
 		return
 	_remember_preview_inputs(from_cell, to_cell, inventory)
-	var run := wall_segment(_wall_tip, _has_wall_tip, from_cell, to_cell)
-	cells = run
+	cells = wall_segment(_wall_tip, _has_wall_tip, from_cell, to_cell)
 	cell_ok.clear()
-	reasons.clear()
-	if run.is_empty():
+	if cells.is_empty():
 		cost = 0
 		reasons.clear()
 		if _has_wall_tip:
 			reasons.append("not adjacent")
-			# Show the refused finger cell in red so the gap / diagonal is
-			# visible even when wall_segment returns no cells.
-			var refused: Array[Vector2i] = [to_cell]
-			var refused_ok: Array[bool] = [false]
-			cells = refused
-			cell_ok = refused_ok
+			cells.append(to_cell)
+			cell_ok.append(false)
 		else:
 			reasons.append(ConstructionPlacer.EMPTY_CELLS)
 		return
+	var in_reach := _reachable_wall_run()
+	reasons = _placer.can_place(BuildCosts.WALL_BLOCK, in_reach, inventory)
+	var placeable := reasons.is_empty()
+	for cell in cells:
+		cell_ok.append(placeable and cell in in_reach)
+	cost = _placer.cost(BuildCosts.WALL_BLOCK, in_reach) if placeable else 0
+
+
+func _reachable_wall_run() -> Array[Vector2i]:
 	var in_reach: Array[Vector2i] = []
-	for cell in run:
+	for cell in cells:
+		# The initial center can overlap the player standing below the camera.
+		if has_pointer_origin() and not _has_wall_tip and in_reach.is_empty():
+			if _interaction.world_map.player_on_cell(cell):
+				continue
 		if _interaction.in_reach(cell):
 			in_reach.append(cell)
-	# Green == commit: whole in-reach prefix the placer accepts, else all red.
-	var placeable: Array[Vector2i] = []
-	if (
-		not in_reach.is_empty()
-		and _placer.can_place(BuildCosts.WALL_BLOCK, in_reach, inventory).is_empty()
-	):
-		placeable = in_reach
-	var placeable_set := {}
-	for cell in placeable:
-		placeable_set[cell] = true
-	for cell in cells:
-		cell_ok.append(placeable_set.has(cell))
-	if placeable.is_empty():
-		cost = 0
-		reasons.clear()
-		if in_reach.is_empty():
-			reasons.append(ConstructionPlacer.EMPTY_CELLS)
-		else:
-			reasons = _placer.can_place(BuildCosts.WALL_BLOCK, in_reach, inventory)
-	else:
-		cost = _placer.cost(BuildCosts.WALL_BLOCK, placeable)
-		reasons.clear()
+	return in_reach
 
 
 func _commit_wall(inventory: Inventory) -> bool:
-	var in_reach: Array[Vector2i] = []
-	for cell in cells:
-		if _interaction.in_reach(cell):
-			in_reach.append(cell)
+	var in_reach := _reachable_wall_run()
 	if in_reach.is_empty():
 		return false
 	if not _placer.can_place(BuildCosts.WALL_BLOCK, in_reach, inventory).is_empty():
@@ -512,10 +509,9 @@ func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory:
 
 
 func _refresh_rotate_visible() -> void:
-	if _interaction == null:
-		return
 	var show := (
-		not _list_open
+		_interaction != null
+		and not _list_open
 		and _interaction.mode == Interaction.Mode.INTERACT
 		and is_footprint_tool(tool)
 		and not cells.is_empty()
@@ -525,4 +521,7 @@ func _refresh_rotate_visible() -> void:
 
 func _position_rotate_button(viewport_pos: Vector2) -> void:
 	_refresh_rotate_visible()
+	for cell in cells:
+		var point := _interaction.get_canvas_transform() * _interaction.cell_center(cell)
+		viewport_pos.x = minf(viewport_pos.x, point.x)
 	_rotate.position_at(viewport_pos)
