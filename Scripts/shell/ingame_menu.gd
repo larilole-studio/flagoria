@@ -36,10 +36,6 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var hud_layout_edit: Control = $HudLayoutEdit
 
 
-func _enter_tree() -> void:
-	ButtonStyle.apply(self)
-
-
 func _ready() -> void:
 	menu_button.icon = null
 	menu_button.text = ""

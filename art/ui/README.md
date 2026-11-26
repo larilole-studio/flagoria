@@ -60,14 +60,3 @@ keycap styles from `main_menu_theme.tres`, as theme type variations:
 that moves to the top when pressed), `KeyCapDelete` (muted red) and
 `KeyCapOK` (gold, ink text) for the action keys, and `KeyboardPanel` for the
 frame around the keys. Restyle the keys by editing those entries.
-
-## Button style exploration
-
-The [sage menu theme](main_menu_theme.tres) stays the default (A). Five optional
-[theme resources](themes/) restyle menus, keyboards and parchment controls.
-Set `FLAGORIA_BUTTON_STYLE` when launching the game, or change `SELECTED` in
-`Scripts/ui/button_style.gd` to pick a development default. Supported values
-are `current`, `wood`, `parchment`, `stone`, `pixel` and `banner`.
-
-See the [comparison sheets](../../docs/evidence/button-styles/README.md) for
-all six styles on the same screens.

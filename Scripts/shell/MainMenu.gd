@@ -28,10 +28,6 @@ var _worlds := MenuWorlds.new(self)
 @onready var hud_editor: Control = ux_layer.get_node("InGameMenu/HudLayoutEdit")
 
 
-func _enter_tree() -> void:
-	ButtonStyle.apply(self)
-
-
 func _ready() -> void:
 	var music = get_node("/root/MusicPlayer")
 	music.play(music.MENU_TRACK)

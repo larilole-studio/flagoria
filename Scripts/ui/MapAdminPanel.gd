@@ -32,10 +32,6 @@ var _spin_boxes: Dictionary = {}
 var _checks: Dictionary = {}
 
 
-func _enter_tree() -> void:
-	ButtonStyle.apply(self)
-
-
 func _ready() -> void:
 	_island_size = _add_choice("IslandSize", "Island size", MapGenParams.SIZE_LABELS)
 	_biome_size = _add_choice("BiomeSize", "Biome size", MapGenParams.SIZE_LABELS)

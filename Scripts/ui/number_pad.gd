@@ -47,10 +47,6 @@ var _letters = null
 @onready var _keys: MarginContainer = $Panel/Margin
 
 
-func _enter_tree() -> void:
-	ButtonStyle.apply(self)
-
-
 func _ready() -> void:
 	hide()
 
