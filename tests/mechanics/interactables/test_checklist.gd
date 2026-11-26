@@ -64,16 +64,11 @@ func _test_checklist_fixtures_fail() -> int:
 		["hits", 0, "tree", "step 1 data"],
 		["leaves", "NO_SUCH_TILE", "tree", "step 1 data"],
 		["regrow_delay", -5.0, "bush", "step 1 data"],
-		["tiles", _names_of(["GRASS_A"]), "bush", "step 2 art"],
-		["tiles", _names_of(["NO_SUCH_TILE"]), "bush", "step 2 art"],
+		["variants", art_fixture("GRASS_A"), "bush", "step 2 art"],
+		["variants", art_fixture("NO_SUCH_TILE"), "bush", "step 2 art"],
 		["leaves", "TREE", "bush", "step 2 art"],
-		[
-			"fx_sheet",
-			ImageTexture.create_from_image(Image.create_empty(9, 9, false, Image.FORMAT_RGBA8)),
-			"bush",
-			"step 2 art"
-		],
-		["hit_sheet", load("res://art/flagoria/fx/bush_hit.png"), "tree", "step 2 art"],
+		["variants", art_fixture("BUSH", "fx_sheet"), "bush", "step 2 art"],
+		["variants", art_fixture("BUSH", "hit_sheet"), "bush", "step 2 art"],
 		["hit_sounds", _streams([bad_wav]), "tree", "step 3 sound"],
 		["fell_sounds", _streams([]), "bush", "step 3 sound"],
 		["yields", _yields({}), "tree", "step 4 yield"],
@@ -112,10 +107,15 @@ func _test_checklist_fixtures_fail() -> int:
 	return fail
 
 
-func _names_of(a: Array) -> Array[String]:
-	var out: Array[String] = []
-	out.assign(a)
-	return out
+func art_fixture(tile: String, bad_sheet := "") -> Array[ChopSprites]:
+	var sprites: ChopSprites = InteractableCatalog.by_id("bush").variants[0].duplicate()
+	sprites.idle_tiles = [tile]
+	if not bad_sheet.is_empty():
+		sprites.set(
+			bad_sheet,
+			ImageTexture.create_from_image(Image.create_empty(9, 9, false, Image.FORMAT_RGBA8))
+		)
+	return [sprites]
 
 
 func _streams(a: Array) -> Array[AudioStream]:
@@ -149,8 +149,8 @@ func checklist_errors(types: Array) -> Array[String]:
 		var e := func(step: String, what: String) -> void:
 			out.append("%s: %s: %s" % [type.id, step, what])
 		# 1. Data: fields set and valid.
-		if type.id == "" or type.tiles.is_empty():
-			e.call("step 1 data", "id and tiles must be set")
+		if type.id == "" or type.variants.is_empty():
+			e.call("step 1 data", "id and variants must be set")
 		if type.hits < 1:
 			e.call("step 1 data", "hits is %d, want 1 or more" % type.hits)
 		if type.regrow_delay < 0.0:
@@ -161,32 +161,8 @@ func checklist_errors(types: Array) -> Array[String]:
 		if not TileCatalog.TILES.has(type.leaves):
 			e.call("step 1 data", "leaves %s is not in TileCatalog.TILES" % type.leaves)
 		# 2. Art: tiles in the catalog and TileSet, collision, tiles.md, credits.
-		for n in type.tiles:
-			if not TileCatalog.TILES.has(n):
-				e.call("step 2 art", "tile %s is not in TileCatalog.TILES" % n)
-				continue
-			var atlas: Vector2i = TileCatalog.TILES[n]["atlas"]
-			if tile_owner.has(n):
-				e.call("step 2 art", "tile %s is also %s's" % [n, tile_owner[n]])
-			tile_owner[n] = type.id
-			if not src.has_tile(atlas) or _polygons(src, atlas, 0) == 0:
-				e.call("step 2 art", "tile %s %s has no collision in %s" % [n, atlas, TILESET])
-			elif (
-				type.hit_sheet != null
-				and (
-					not src.has_alternative_tile(atlas, ChopAction.HIDDEN_ALT)
-					or _polygons(src, atlas, ChopAction.HIDDEN_ALT) == 0
-				)
-			):
-				e.call(
-					"step 2 art",
-					(
-						"tile %s has a hit_sheet but no alternative %d with collision"
-						% [n, ChopAction.HIDDEN_ALT]
-					)
-				)
-			if not tiles_doc.contains("| (%d, %d) |" % [atlas.x, atlas.y]):
-				e.call("step 2 art", "tile %s %s has no row in docs/tiles.md" % [n, atlas])
+		for sprites: ChopSprites in type.variants:
+			check_sprite_art(sprites, src, tiles_doc, art_credits, tile_owner, type.id, e)
 		if TileCatalog.TILES.has(type.leaves):
 			var left: Vector2i = TileCatalog.TILES[type.leaves]["atlas"]
 			if not src.has_tile(left) or _polygons(src, left, 0) > 0:
@@ -195,35 +171,6 @@ func checklist_errors(types: Array) -> Array[String]:
 				)
 			if not tiles_doc.contains("| (%d, %d) |" % [left.x, left.y]):
 				e.call("step 2 art", "leaves %s has no row in docs/tiles.md" % type.leaves)
-		for sheet_name in ["hit_sheet", "fx_sheet"]:
-			var sheet: Texture2D = type.get(sheet_name)
-			if sheet == null:
-				continue
-			var rows := type.tiles.size() if sheet_name == "hit_sheet" else 1
-			if (
-				sheet.get_height() != 16 * rows
-				or sheet.get_width() % 16 != 0
-				or (sheet_name == "fx_sheet" and sheet.get_width() != 64)
-			):
-				e.call(
-					"step 2 art",
-					(
-						"%s %s is %dx%d, want 16 px frames%s, %d row(s)"
-						% [
-							sheet_name,
-							sheet.resource_path,
-							sheet.get_width(),
-							sheet.get_height(),
-							" x4" if sheet_name == "fx_sheet" else "",
-							rows
-						]
-					)
-				)
-			if not art_credits.contains(sheet.resource_path.get_file()):
-				e.call(
-					"step 2 art",
-					"%s %s is not credited in %s" % [sheet_name, sheet.resource_path, ART_CREDITS]
-				)
 		# 3. Sound: files in one world/<group>/ folder, 22,050 Hz mono 16-bit, credited.
 		if type.hit_sounds.is_empty() or type.fell_sounds.is_empty():
 			e.call("step 3 sound", "hit_sounds and fell_sounds must not be empty")
@@ -299,6 +246,58 @@ func checklist_errors(types: Array) -> Array[String]:
 		if not _names(_read(CHECKLIST_DOC), type.id):
 			e.call("docs", "docs/interactables.md does not name it")
 	return out
+
+
+func check_sprite_art(
+	sprites: ChopSprites,
+	src: TileSetAtlasSource,
+	tiles_doc: String,
+	art_credits: String,
+	tile_owner: Dictionary,
+	id: String,
+	error: Callable
+) -> void:
+	if sprites == null or sprites.idle_tiles.is_empty():
+		error.call("step 2 art", "variant needs idle tiles")
+		return
+	for i in sprites.idle_tiles.size():
+		var n := sprites.idle_tiles[i]
+		if not TileCatalog.TILES.has(n):
+			error.call("step 2 art", "tile %s is not in TileCatalog.TILES" % n)
+			continue
+		var atlas: Vector2i = TileCatalog.TILES[n]["atlas"]
+		if tile_owner.has(n):
+			error.call("step 2 art", "tile %s is also %s's" % [n, tile_owner[n]])
+		tile_owner[n] = id
+		if not src.has_tile(atlas) or (i == 0 and _polygons(src, atlas, 0) == 0):
+			error.call("step 2 art", "tile %s is missing or its trunk has no collision" % n)
+		elif (
+			not src.has_alternative_tile(atlas, ChopAction.HIDDEN_ALT)
+			or (_polygons(src, atlas, ChopAction.HIDDEN_ALT) != _polygons(src, atlas, 0))
+		):
+			error.call(
+				"step 2 art", "tile %s needs a hidden alternative with matching collision" % n
+			)
+		if not tiles_doc.contains("| (%d, %d) |" % [atlas.x, atlas.y]):
+			error.call("step 2 art", "tile %s %s has no row in docs/tiles.md" % [n, atlas])
+	for sheet_name in ["hit_sheet", "fx_sheet"]:
+		var sheet: Texture2D = sprites.get(sheet_name)
+		if sheet == null:
+			error.call("step 2 art", "%s is missing" % sheet_name)
+			continue
+		var frame_height := 16 * sprites.idle_tiles.size()
+		var size := Vector2i(sheet.get_size())
+		if sheet_name == "hit_sheet":
+			if (
+				size.x != 32
+				or size.y % frame_height != 0
+				or not (sprites.hit_row >= 0 and (sprites.hit_row + 1) * frame_height <= size.y)
+			):
+				error.call("step 2 art", "hit sheet has the wrong size or hit row")
+		elif size != Vector2i(64, 16):
+			error.call("step 2 art", "fx sheet must contain four 16x16 frames")
+		if not art_credits.contains(sheet.resource_path.get_file()):
+			error.call("step 2 art", "%s %s is not credited" % [sheet_name, sheet.resource_path])
 
 
 func _polygons(src: TileSetAtlasSource, atlas: Vector2i, alt: int) -> int:

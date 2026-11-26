@@ -27,7 +27,7 @@ const HIT_FRAME_TIME := 0.05  ## s per frame of a type's hit_sheet and of fx_she
 const FX_FELL_FRAMES := [[2, 0.15], [3, 0.25]]  ## fx_sheet [frame, s] once the plant falls
 ## Alternative tile of a choppable with a hit_sheet: invisible, same
 ## collision. Swapped in while the hit sheet draws in the tile's place.
-const HIDDEN_ALT := 1
+const HIDDEN_ALT := ChopSprites.HIDDEN_ALT
 const MOVE_CANCEL := 2.0  ## world px the player can move from where a chop started
 
 var chop_cell := Vector2i.ZERO  ## the plant being chopped
@@ -42,11 +42,12 @@ var _chop_facing := "Down"
 var _felled := false
 var _puff: Sprite2D  ## the cloud over a tree that just fell
 var _puff_time := -1.0
-var _hit: Sprite2D  ## chop_type's hit_sheet, drawn in place of the hit tile
+var _hit: Sprite2D  ## the variant's hit_sheet, drawn in place of the hit tile
 var _hit_time := -1.0
-var _hit_row := 0  ## chop_type.hit_row of the hit tile
+var _chop_atlas := Vector2i(-1, -1)
+var _sprites: ChopSprites  ## resolved from the foliage atlas when the chop starts
 var _hidden_cell := Vector2i.ZERO  ## the cell showing HIDDEN_ALT while _hit plays
-var _fx: Sprite2D  ## chop_type's fx_sheet over the cell
+var _fx: Sprite2D  ## the variant's fx_sheet over the cell
 var _fx_time := -1.0
 var _fx_fell := false  ## _fx plays the falling frames, not a hit
 var _sfx: AudioStreamPlayer2D  ## hit_sounds, and fell_sounds without fell_own_player
@@ -60,7 +61,7 @@ var _last_hit_sound: AudioStream  ## for InteractableType.hit_no_repeat
 var sfx_log: Array[AudioStream] = []
 ## Times the fall and pickup actually played (a client counts only a host yes).
 var fell_count := 0
-## cell -> type a client asked the host to cut and has not heard back about.
+## cell -> [type, sprites] of a cut waiting for the host.
 var _awaiting := {}
 var _i: Interaction
 
@@ -104,6 +105,8 @@ func start_chop(cell: Vector2i) -> bool:
 	_stop = Stop.NONE
 	chop_cell = cell
 	chop_type = _i.world_map.choppable(cell)
+	_chop_atlas = _i.world_map.get_cell_atlas_coords(1, cell)
+	_sprites = InteractableCatalog.sprites_at(_chop_atlas)
 	chop_time = 0.0
 	chop_hits = 0
 	_felled = false
@@ -144,7 +147,13 @@ func step_chop(delta: float) -> void:
 		_hold_origin = false
 		cancel_chop()
 		return
-	if not _felled and _i.world_map.choppable(chop_cell) != chop_type:
+	if (
+		not _felled
+		and (
+			_i.world_map.choppable(chop_cell) != chop_type
+			or _i.world_map.get_cell_atlas_coords(1, chop_cell) != _chop_atlas
+		)
+	):
 		cancel_chop()
 		_start_queued()
 		return
@@ -278,7 +287,7 @@ func ask_host(cell: Vector2i) -> void:
 	var type: InteractableType = _i.world_map.choppable(cell)
 	if type == null:
 		return
-	_awaiting[cell] = type
+	_awaiting[cell] = [type, _sprites if chopping() and cell == chop_cell else _sprites_at(cell)]
 	_i.request_cut.rpc_id(1, cell)
 
 
@@ -286,9 +295,9 @@ func confirm_cut(cell: Vector2i) -> void:
 	## The host accepted `cell`: play the fall and pickup now.
 	if not _awaiting.has(cell):
 		return
-	var type: InteractableType = _awaiting[cell]
+	var cut: Array = _awaiting[cell]
 	_awaiting.erase(cell)
-	_play_fell(cell, type)
+	_play_fell(cell, cut[0], cut[1])
 
 
 func refuse_cut(cell: Vector2i) -> void:
@@ -333,27 +342,21 @@ func _on_hit() -> void:
 	var corner := (
 		_i.to_local(_i.cell_center(chop_cell)) - Vector2(_i.world_map.tile_set.tile_size) / 2.0
 	)
-	if chop_type.hit_sheet:
+	if _sprites.hit_sheet:
 		_end_hit()
 		_hidden_cell = chop_cell
-		_i.world_map.set_cell(
-			1,
-			chop_cell,
-			TileCatalog.SOURCE_ID,
-			_i.world_map.get_cell_atlas_coords(1, chop_cell),
-			HIDDEN_ALT
-		)
+		_sprites.set_hit_tiles(_i.world_map, chop_cell, true)
 		var size := _i.world_map.tile_set.tile_size
-		_hit.texture = chop_type.hit_sheet
-		_hit.hframes = chop_type.hit_sheet.get_width() / size.x
-		_hit.vframes = chop_type.hit_sheet.get_height() / size.y
-		_hit_row = chop_type.hit_row(_i.world_map.get_cell_atlas_coords(1, chop_cell))
-		_hit.frame_coords = Vector2i(0, _hit_row)
-		_hit.position = corner
+		_hit.texture = _sprites.hit_sheet
+		_hit.hframes = _sprites.hit_sheet.get_width() / size.x
+		var rows := _sprites.idle_tiles.size()
+		_hit.vframes = _sprites.hit_sheet.get_height() / (size.y * rows)
+		_hit.frame_coords = Vector2i(0, _sprites.hit_row)
+		_hit.position = corner - Vector2(0, size.y * (rows - 1))
 		_hit.visible = true
 		_hit_time = 0.0
-	if chop_type.fx_sheet:
-		_fx.texture = chop_type.fx_sheet
+	if _sprites.fx_sheet:
+		_fx.texture = _sprites.fx_sheet
 		_fx.hframes = 4
 		_fx.frame = 0
 		_fx.position = corner
@@ -365,10 +368,10 @@ func _on_hit() -> void:
 func _on_fell() -> void:
 	## chop_cell just became its stump and gave its yields: fall and pickup
 	## sounds, puff or fx falling frames.
-	_play_fell(chop_cell, chop_type)
+	_play_fell(chop_cell, chop_type, _sprites)
 
 
-func _play_fell(cell: Vector2i, type: InteractableType) -> void:
+func _play_fell(cell: Vector2i, type: InteractableType, sprites: ChopSprites) -> void:
 	## Fall and pickup for `cell`, plus the puff and falling frames when this
 	## chop still owns the effect sprites (a later plant in the queue does).
 	fell_count += 1
@@ -385,8 +388,8 @@ func _play_fell(cell: Vector2i, type: InteractableType) -> void:
 		_puff.frame = 0
 		_puff.visible = true
 		_puff_time = 0.0
-	if type.fx_sheet:
-		_fx.texture = type.fx_sheet
+	if sprites.fx_sheet:
+		_fx.texture = sprites.fx_sheet
 		_fx.hframes = 4
 		_fx.frame = FX_FELL_FRAMES[0][0]
 		_fx.position = corner
@@ -401,13 +404,11 @@ func _end_hit() -> void:
 		return
 	_hit_time = -1.0
 	_hit.visible = false
-	if _i.world_map.get_cell_alternative_tile(1, _hidden_cell) == HIDDEN_ALT:
-		_i.world_map.set_cell(
-			1,
-			_hidden_cell,
-			TileCatalog.SOURCE_ID,
-			_i.world_map.get_cell_atlas_coords(1, _hidden_cell)
-		)
+	_sprites.set_hit_tiles(_i.world_map, _hidden_cell, false)
+
+
+func _sprites_at(cell: Vector2i) -> ChopSprites:
+	return InteractableCatalog.sprites_at(_i.world_map.get_cell_atlas_coords(1, cell))
 
 
 func _step_fx(delta: float) -> void:
@@ -424,7 +425,7 @@ func _step_fx(delta: float) -> void:
 		if frame >= _hit.hframes:
 			_end_hit()
 		else:
-			_hit.frame_coords = Vector2i(frame, _hit_row)
+			_hit.frame_coords = Vector2i(frame, _sprites.hit_row)
 	if _fx_time >= 0.0:
 		_fx_time += delta
 		var frame := -1
