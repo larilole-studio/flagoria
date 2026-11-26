@@ -17,6 +17,12 @@ func _test_chop_tree_two_hits() -> int:
 	menu.set_process_unhandled_input(false)
 	scene.get_node("CanvasLayer1").show()
 	var world = scene.get_node("World/worldMap")
+	var params := _pre_biome_defaults()
+	params.tree_min_chance = 2.0
+	params.pine_min_chance = 2.0
+	params.birch_min_chance = 2.0
+	params.bush_min_chance = 2.0
+	world.apply_map_params(params)
 	world.clear()
 	for x in range(4, 16):
 		for y in range(4, 14):
