@@ -492,11 +492,10 @@ func _on_server_disconnected() -> void:
 
 func leave_to_main_menu() -> void:
 	## Leave the match for the main menu (the in-game menu's Main menu).
-	## Closes the network session, so the port is free to host again, then
-	## reloads this scene: the world, players and mobs are freed, and the new
-	## main menu starts its music as on launch.
+	## Frees the port and resets world tuning before reloading the scene.
 	enet_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	Tuning.reset_all()
 	get_tree().reload_current_scene()
 
 

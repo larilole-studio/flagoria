@@ -94,6 +94,7 @@ func take_loaded_world(world_params: MapGenParams) -> WorldSave:
 	var world := _loaded_world
 	_loaded_world = null
 	var matched := world != null and world.params.to_dict() == world_params.to_dict()
+	Tuning.restore_overrides(world.tuning_overrides if matched else {})
 	var clock := get_node_or_null("/root/DayNight")
 	if clock != null and clock.has_method("begin"):
 		clock.begin(world_params, world.clock_elapsed if matched else 0.0)
