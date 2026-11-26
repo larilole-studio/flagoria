@@ -303,12 +303,12 @@ func _cut(cell: Vector2i) -> bool:
 	if not multiplayer_on(multiplayer):
 		var type: InteractableType = world_map.cut_choppable(cell)
 		if type != null:
-			receive_yields(cell, type.yields)
+			receive_yields(cell, Tuning.chop_yields(type))
 		return type != null
 	if multiplayer.is_server():
 		var cut := host_cut(cell)
 		if cut != null:
-			receive_yields(cell, cut.yields)
+			receive_yields(cell, Tuning.chop_yields(cut))
 		return cut != null
 	if (
 		world_map.choppable(cell) == null
@@ -351,7 +351,7 @@ func request_cut(cell: Vector2i) -> void:
 	if type == null:
 		refuse_cut.rpc_id(peer, cell)
 		return
-	receive_yields.rpc_id(peer, cell, type.yields)
+	receive_yields.rpc_id(peer, cell, Tuning.chop_yields(type))
 
 
 @rpc("authority", "reliable", "call_remote")

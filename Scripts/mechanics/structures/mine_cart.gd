@@ -5,7 +5,6 @@ extends AnimatedSprite2D
 const SHEET := preload("res://art/structures/mine_cart_sheet.png")
 const FRAME_SIZE := Vector2i(48, 64)
 const FRAME_COUNT := 20
-const FPS := 5.0
 const IDLE_FRAME := 12
 # The track extends below the 48×48 footprint. Rotate around the footprint center.
 const FOOTPRINT_CENTER := Vector2(24, 24)
@@ -41,13 +40,26 @@ static func parked_texture() -> Texture2D:
 static func _loop_frames() -> SpriteFrames:
 	if _frames == null:
 		_frames = SpriteFrames.new()
-		_frames.set_animation_speed(&"default", FPS)
+		_frames.set_animation_speed(&"default", Tuning.value(&"visuals.mine_cart_fps"))
 		for i in FRAME_COUNT:
 			var texture := AtlasTexture.new()
 			texture.atlas = SHEET
 			texture.region = Rect2i(Vector2i(i * FRAME_SIZE.x, 0), FRAME_SIZE)
 			_frames.add_frame(&"default", texture)
 	return _frames
+
+
+func _ready() -> void:
+	Tuning.events.changed.connect(_on_tuning_changed)
+	_on_tuning_changed(&"visuals.mine_cart_fps")
+
+
+func _on_tuning_changed(key: StringName) -> void:
+	if key != &"visuals.mine_cart_fps":
+		return
+	var fps := Tuning.value(key)
+	if sprite_frames.get_animation_speed(&"default") != fps:
+		sprite_frames.set_animation_speed(&"default", fps)
 
 
 func _process(_delta: float) -> void:

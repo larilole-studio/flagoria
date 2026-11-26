@@ -107,6 +107,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
 - [Round HUD buttons](./hud-round-buttons.md) — Map beside Menu opens parchment, Attack mirrored from the joystick, Run and the tool wheel around Attack, Buildings beside the cluster with two picker rings over a dimmed playfield, map panel clear of the controls (#480).
 - [Customize HUD layout](./hud-customize.md) — Settings preview and in-game edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
+- [Gameplay tuning](./gameplay-tuning.md) — gameplay defaults and runtime overrides (#736).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
 - [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.
 - [Starting castle](./start-castle.md) — each player's castle next to the spawn, player starts outside the gate; placed by the host while alone, sent to joining peers.

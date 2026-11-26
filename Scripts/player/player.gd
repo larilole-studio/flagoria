@@ -7,13 +7,8 @@ const PlayerInput := preload("res://Scripts/player/player_input.gd")
 const AttackAimScript := preload("res://Scripts/player/attack_aim.gd")
 const PlayerWallDraw := preload("res://Scripts/player/player_wall_draw.gd")
 
-const MAX_SPEED = 130
 const ACCEL = 120
 const FRICTION = 95
-## Top speed with the touch joystick, in px/s. The joystick has always moved
-## the player at ACCEL * 0.5 = 60 px/s, under the keyboard's MAX_SPEED; kept
-## as is because matching MAX_SPEED would change how touch play feels.
-const JOYSTICK_MAX_SPEED = 60
 
 var input = Vector2.ZERO
 var _wall_draw := PlayerWallDraw.new()

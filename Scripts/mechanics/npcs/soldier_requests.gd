@@ -45,6 +45,8 @@ func _process(_delta: float) -> void:
 		_ui_peer = peer
 	var train_anchor := _train_anchor(peer)
 	_train_button.visible = train_anchor != Vector2i.MAX
+	if _train_button.visible:
+		_train_button.text = "Train %d" % int(Tuning.value(&"soldiers.training_wood"))
 	_order_button.visible = _living_for_owner(peer) > 0
 	if _order_button.visible:
 		var flip := "hold" if _owner_order(peer) == "follow" else "follow"
@@ -84,9 +86,12 @@ func host_train(peer_id: int, anchor: Vector2i) -> bool:
 		return false
 	if _slots_used(peer_id, anchor) >= SoldierStats.CAP_PER_BARRACKS:
 		return false
-	if not _charge(peer_id, SoldierStats.TRAIN_WOOD):
+	var wood := int(Tuning.value(&"soldiers.training_wood"))
+	if not _charge(peer_id, wood):
 		return false
-	_jobs.append({"peer_id": peer_id, "anchor": anchor, "left": SoldierStats.TRAIN_TIME})
+	_jobs.append(
+		{"peer_id": peer_id, "anchor": anchor, "left": SoldierStats.TRAIN_TIME, "wood": wood}
+	)
 	set_physics_process(true)
 	return true
 
@@ -141,7 +146,7 @@ func _spawn_job(job: Dictionary) -> void:
 	var rotation := int(entry.get("rotation", 0))
 	var pos := spawn_cell(map, anchor, rotation)
 	if pos == Vector2.INF:
-		_refund(peer_id, SoldierStats.TRAIN_WOOD)
+		_refund(peer_id, job["wood"])
 		return
 	var spawner := get_node_or_null("MultiplayerSpawner") as MultiplayerSpawner
 	if spawner == null:
@@ -344,7 +349,6 @@ func _ensure_buttons() -> void:
 		_train_button = Button.new()
 		_train_button.name = "TrainButton"
 		_train_button.theme = theme
-		_train_button.text = "Train %d" % SoldierStats.TRAIN_WOOD
 		_train_button.position = Vector2(4, 196)
 		_train_button.pressed.connect(_on_train_pressed)
 		hud.add_child(_train_button)

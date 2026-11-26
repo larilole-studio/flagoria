@@ -9,7 +9,7 @@ func _test_footsteps() -> int:
 	## has ended. Surfaces are chosen by TileCatalog name.
 	print("-- test_footsteps")
 	var fail := 0
-	var speed: float = load("res://Scripts/player/player.gd").MAX_SPEED
+	var speed := 130.0
 	var longest := 0.0
 	for surface in Footsteps.SOUNDS:
 		for clip in Footsteps.SOUNDS[surface]:

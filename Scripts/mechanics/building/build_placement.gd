@@ -51,6 +51,7 @@ func setup(interaction: Interaction) -> void:
 	_remover = ConstructionRemover.new(interaction.world_map)
 	if interaction.world_map != null and interaction.world_map.has_signal("ground_changed"):
 		interaction.world_map.ground_changed.connect(_on_ground_changed)
+	Tuning.events.changed.connect(_on_tuning_changed)
 	_ensure_picker()
 	set_tool(Tool.CUT)
 	_mp_was_on = Interaction.multiplayer_on(interaction.multiplayer)
@@ -469,6 +470,12 @@ func _cell_at(viewport_pos: Vector2) -> Vector2i:
 	return _interaction.world_map.local_to_map(_interaction.world_map.to_local(world))
 
 
+func _on_tuning_changed(key: StringName) -> void:
+	if key.begins_with("building."):
+		_snap_valid = false
+		BuildToolRow.refresh_picker_prices(_buttons)
+
+
 func _on_ground_changed(_cells: Rect2i) -> void:
 	_map_rev += 1
 
@@ -485,10 +492,8 @@ func _preview_inputs_unchanged(
 	# Other actors can enter a footprint without changing any tiles.
 	if Engine.get_process_frames() - _snap_frame >= _interaction.world_map.chunk_refresh_frames:
 		return false
-	if _map_rev != _snap_map_rev:
-		return false
 	var pos := _interaction.player.global_position if _interaction.player else Vector2(INF, INF)
-	return pos == _snap_player_pos
+	return _map_rev == _snap_map_rev and pos == _snap_player_pos
 
 
 func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory: Inventory) -> void:

@@ -85,7 +85,7 @@ func _step_move(delta: float) -> void:
 		direction = Vector2.ZERO
 		state = State.IDLE
 		return
-	var motion := to.normalized() * SoldierStats.WALK_SPEED * delta
+	var motion := to.normalized() * Tuning.value(&"soldiers.walk_speed") * delta
 	facing = MobCatalog.facing_for(to)
 	state = State.WALK
 	if not step(motion, false) and not step(Vector2(motion.x, 0), false):

@@ -85,23 +85,31 @@ static func populate_picker(
 		button.theme = theme
 		var caption := "Guard" if t == BuildPlacement.Tool.GUARD else tip(t)
 		var kind := footprint_kind(t)
-		if BuildCosts.STONE.has(kind):
-			var amount := BuildCosts.price(kind)
-			var quote := BuildCosts.label(amount)
-			caption += "\n%d wood\n%d stone" % [amount.x, amount.y]
-			button.tooltip_text = tip(t) + " — " + quote
-		else:
-			button.tooltip_text = tip(t)
+		button.tooltip_text = tip(t)
 		var sprite := "guard" if t == BuildPlacement.Tool.GUARD else tip(t).to_lower()
 		RoundHudStyle.apply_disc(
 			button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, true
 		)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
-		_add_picker_label(button, caption, 8 if BuildCosts.STONE.has(kind) else 10)
+		_add_picker_label(button, caption, 8 if BuildCosts.has_stone_price(kind) else 10)
 		picker.add_child(button)
 		buttons[t] = button
+	refresh_picker_prices(buttons)
 	picker.reset_size()
+
+
+static func refresh_picker_prices(buttons: Dictionary) -> void:
+	for tool: BuildPlacement.Tool in buttons:
+		var kind := footprint_kind(tool)
+		if not BuildCosts.has_stone_price(kind):
+			continue
+		var button: Button = buttons[tool]
+		var label := button.get_node("Caption") as Label
+		var caption := "Guard" if tool == BuildPlacement.Tool.GUARD else tip(tool)
+		var amount := BuildCosts.price(kind)
+		label.text = "%s\n%d wood\n%d stone" % [caption, amount.x, amount.y]
+		button.tooltip_text = tip(tool) + " — " + BuildCosts.label(amount)
 
 
 static func _add_picker_label(button: Button, caption: String, font_size: int) -> void:

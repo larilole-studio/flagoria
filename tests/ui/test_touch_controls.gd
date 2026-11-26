@@ -141,7 +141,7 @@ func _test_joystick_hold_keeps_moving() -> int:
 	drag.index = 0
 	drag.position = joystick.global_position + Vector2(40, 0) * joystick.global_scale
 	vp.push_input(drag, true)
-	var top: float = local.JOYSTICK_MAX_SPEED
+	var top := 60.0
 	for i in range(60):
 		await physics_frame
 	var held: Vector2 = local.velocity

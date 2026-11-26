@@ -9,7 +9,7 @@ extends RefCounted
 ## - A drag cuts every plant in reach at once. At most DRAG_CELLS cell centres
 ##   lie within Interaction.REACH (80 px) of a point on 16 px cells, so one
 ##   drag sends at most DRAG_CELLS requests.
-## - Walking at the keyboard's top speed (MAX_SPEED, 130 px/s) brings at most
+## - Walking at the original keyboard walk cap (130 px/s) brings at most
 ##   SWEEP_CELLS new cells a second into reach (a 2 * REACH wide strip), so
 ##   dragging nonstop through a forest with a plant on every cell sends at
 ##   most SWEEP_CELLS requests a second after the first drag. A tap's chop
@@ -18,9 +18,9 @@ extends RefCounted
 ## after a network stall. test_cut_rate_numbers recounts both figures.
 
 const TILE := 16.0  ## px per map cell (the tile set's tile_size)
-const PlayerScript := preload("res://Scripts/player/player.gd")
+const WALK_CAP := 130.0  ## fixed baseline for the request budget
 const DRAG_CELLS := 81  ## most cell centres within Interaction.REACH of one point
-const SWEEP_CELLS := 2.0 * Interaction.REACH * PlayerScript.MAX_SPEED / (TILE * TILE)  ## 81.25 cells/s
+const SWEEP_CELLS := 2.0 * Interaction.REACH * WALK_CAP / (TILE * TILE)  ## 81.25 cells/s
 const HEADROOM := 2.0
 const BURST := HEADROOM * DRAG_CELLS  ## tokens in a full bucket: 162
 const RATE := HEADROOM * SWEEP_CELLS  ## tokens added per second: 162.5
