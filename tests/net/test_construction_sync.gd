@@ -4,9 +4,9 @@ extends "res://tests/helpers/test_helpers.gd"
 
 const PROBE := "res://tests/construction_sync_probe.gd"
 const ROWS := {
-	"castle": {"seed": 7, "wood": 50, "min_owned": 2, "min_total": 3},
-	"barracks": {"seed": 11, "wood": 30, "min_owned": 1, "min_total": 0},
-	"guard_post": {"seed": 11, "wood": 20, "min_owned": 1, "min_total": 0},
+	"castle": {"seed": 7, "wood": 35, "stone": 15, "min_owned": 2, "min_total": 3},
+	"barracks": {"seed": 11, "wood": 20, "stone": 10, "min_owned": 1, "min_total": 0},
+	"guard_post": {"seed": 11, "wood": 14, "stone": 6, "min_owned": 1, "min_total": 0},
 }
 
 
@@ -46,9 +46,9 @@ func _run_row(structure: String, test_name: String, host_builds := false) -> int
 	var launch: Callable = session["launch"]
 	var read: Callable = session["read"]
 	var host_args: Array = session["host_args"]
-	var wood_arg := "--wood=%d" % row["wood"]
+	var funds := ["--wood=%d" % row["wood"], "--stone=%d" % row["stone"]]
 	if host_builds:
-		host_args.append_array([wood_arg, "--turns=1"])
+		host_args.append_array(funds + ["--turns=1"])
 	var builder_index := 0 if host_builds else 1
 	var turns := 1 if host_builds else 0
 	var fail := 0
@@ -57,7 +57,7 @@ func _run_row(structure: String, test_name: String, host_builds := false) -> int
 		printerr("FAIL %s: host did not start: %s" % [test_name, read.call(0)])
 		fail = 1
 	else:
-		launch.call([] if host_builds else [wood_arg])
+		launch.call([] if host_builds else funds)
 		if not await wait_until(func() -> bool: return read.call(1).get("ready", false), 30000):
 			printerr("FAIL %s: client did not join: %s" % [test_name, read.call(1)])
 			fail = 1
@@ -111,7 +111,14 @@ func _placed(
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
 	var buyer: Dictionary = read.call(builder_index)
-	if int(buyer.get("refused_wood", -1)) != row["wood"] or int(buyer.get("wood", -1)) != 0:
+	var observer: Dictionary = read.call(1 - builder_index)
+	if (
+		int(buyer.get("refused_wood", -1)) != row["wood"]
+		or int(buyer.get("wood", -1)) != 0
+		or int(buyer.get("stone", -1)) != 0
+		or int(observer.get("wood", -1)) != 0
+		or int(observer.get("stone", -1)) != 0
+	):
 		return false
 	var structures: Array = host.get("sync", [])
 	if structures != client.get("sync") or structures.size() < row["min_total"]:

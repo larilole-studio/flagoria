@@ -94,6 +94,18 @@ func _test_construction_remove() -> int:
 	):
 		printerr("FAIL construction_remove: saved changes did not preserve remaining cells")
 		fail += 1
+	var barracks := Vector2i(-3, -34)
+	var placer := ConstructionPlacer.new(map)
+	if (
+		remover.remove(EXTRA_CASTLE, 2, inventory).size() != 0
+		or remover.remove(EXTRA_CASTLE, 1, inventory).is_empty()
+		or BuildCosts.balance(inventory) != Vector2i(23, 7)
+		or placer.place(BuildCosts.BARRACKS, [barracks], inventory, 3)
+		or not map.structure_placement_at(barracks).is_empty()
+		or BuildCosts.balance(inventory) != Vector2i(23, 7)
+	):
+		printerr("FAIL construction_remove: castle refund or barracks affordability mismatch")
+		fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:

@@ -1,5 +1,5 @@
 extends "res://tests/helpers/probe_base.gd"
-## The builder receives --wood. A host builder waits for a .build command.
+## The builder receives --wood and --stone. A host builder waits for a .build command.
 
 var _structure: StringName
 var _turns := 0
@@ -12,6 +12,7 @@ func _run() -> void:
 	var host := has_option("--host")
 	var save := option("--save")
 	var wood := option("--wood").to_int()
+	var stone := option("--stone").to_int()
 	_turns = option("--turns").to_int()
 	if (
 		_structure not in [BuildCosts.CASTLE, BuildCosts.BARRACKS, BuildCosts.GUARD_POST]
@@ -49,12 +50,12 @@ func _run() -> void:
 			and (not host or FileAccess.file_exists(probe_out + ".build"))
 		):
 			should_place = false
-			_place_error = await _do_place(main, world, me, wood)
+			_place_error = await _do_place(main, world, me, wood, stone)
 		await process_frame
 	finish(main, func() -> void: _write(main, world, local_player(main)))
 
 
-func _do_place(main, world, me: Node2D, wood: int) -> String:
+func _do_place(main, world, me: Node2D, wood: int, stone: int) -> String:
 	var interaction: Interaction = main.get_node("World/Interaction")
 	var requests = main.get_node("World/StructureRequests")
 	var inventory: Inventory = main.get_node("Inventory")
@@ -75,6 +76,7 @@ func _do_place(main, world, me: Node2D, wood: int) -> String:
 		return err
 	var before := inventory.count_of(Inventory.WOOD)
 	inventory.add(Inventory.WOOD, wood)
+	inventory.add(Inventory.STONE, stone - 1)
 	var bad: Array[Vector2i] = [water]
 	requests.place(_structure, bad)
 	if not await _until(
@@ -95,6 +97,11 @@ func _do_place(main, world, me: Node2D, wood: int) -> String:
 	var one: Array[Vector2i] = [land]
 	var builder: int = main.multiplayer.get_unique_id()
 	var before_count := _owned_count(world, builder)
+	# Ordered on the same reliable channel. If the first request writes the site,
+	# the second cannot charge the funded price, so the balance assertion fails.
+	if requests.place(_structure, one, _turns) == main.multiplayer.is_server():
+		return "unexpected result for the request short one stone"
+	inventory.add(Inventory.STONE, 1)
 	if not requests.place(_structure, one, _turns):
 		return "place was not sent"
 	if not await _until(func() -> bool: return _owned_count(world, builder) > before_count, 8000):
@@ -183,6 +190,7 @@ func _write(main, world, me: Node2D) -> void:
 			"id": str(me.name) if me != null else "",
 			"ready": main.world_params != null and me != null,
 			"wood": inventory.count_of(Inventory.WOOD),
+			"stone": inventory.count_of(Inventory.STONE),
 			"refused_wood": _refused_wood,
 			"place_error": _place_error,
 			"peers": peers,

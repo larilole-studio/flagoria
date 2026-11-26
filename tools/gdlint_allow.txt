@@ -35,18 +35,9 @@
 .cursor/skills/verify-flagoria/drives/walls_cities.gd	max-line-length	Max allowed line length (100) exceeded	c3e4376f6546021b
 .cursor/skills/verify-flagoria/drives/walls_cities.gd	max-returns	Function "run" has more than 6 return statements
 Scripts/mechanics/bridges/bridge_builder.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	12c914138fde855a
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	77f60028aec06765
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	8a00565c90c272e6
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	8b1c93e85e317b63
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	94d4086b0c9916a1
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	af790e93697b1216
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	c502fb73d22a5902
-Scripts/mechanics/building/build_costs.gd	class-definitions-order	Definition out of order in global scope	fd3ff41e738a34df
 Scripts/mechanics/building/build_placement.gd	class-definitions-order	Definition out of order in global scope	e00821aa7e83d590
 Scripts/mechanics/building/build_placement.gd	load-constant-name	Constant (load/preload) name "_FootprintOrientation" is not valid
 Scripts/mechanics/building/construction_placer.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
-Scripts/mechanics/building/construction_placer.gd	max-line-length	Max allowed line length (100) exceeded	cd0f82ba6067ed87
 Scripts/mechanics/building/footprint_orientation.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
 Scripts/mechanics/building/structure_requests.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
 Scripts/mechanics/building/structure_requests.gd	max-returns	Function "host_place" has more than 6 return statements

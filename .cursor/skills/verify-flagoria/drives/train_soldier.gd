@@ -24,7 +24,7 @@ func run() -> void:
 	var inventory: Inventory = current_scene.get_node(INVENTORY)
 	var requests: SoldierRequests = current_scene.get_node("World/Soldiers")
 	var peer: int = current_scene.multiplayer.get_unique_id()
-	inventory.add(Inventory.WOOD, 30 + SoldierStats.TRAIN_WOOD)
+	await grant_resources()
 	await toggle_mode()
 	await click("CanvasLayer1/BuildingsButton")
 	it.build.set_tool(BuildPlacement.Tool.BARRACKS)

@@ -2,29 +2,29 @@
 
 Drive: not player-facing
 
-What each buildable costs in wood, and buying one. `BuildCosts` (`Scripts/mechanics/building/build_costs.gd`) holds the table and `buy`; `Inventory.spend` (`Scripts/mechanics/trees/inventory.gd`) takes the wood. Wood comes from chopping: a tree gives 3, a bush 1 (`data/interactables/`).
+`BuildCosts` defines construction prices, checks affordability, and charges
+before calling the placement writer. A writer refusal restores the full price.
 
-| Kind | Wood per unit | Unit |
-|---|---|---|
-| `plank` | 1 | one bridge cell |
-| `wall_block` | 2 | one wall cell |
-| `tower` | 10 | one tower |
-| `castle` | 50 | one extra castle (#527) |
-| `guard_post` | 20 | one guard post (#528) |
-| `barracks` | 30 | one barracks (#556) |
-| `start_castle` | 0 | the castle each player starts with |
+| Kind | Wood per unit | Stone per unit |
+|---|---:|---:|
+| `plank` | 1 | 0 |
+| `wall_block` | 2 | 0 |
+| `tower` | 10 | 0 |
+| `castle` | 35 | 15 |
+| `guard_post` | 14 | 6 |
+| `barracks` | 20 | 10 |
+| `mine` | 15 | 0 |
+| `start_castle` | 0 | 0 |
 
-A removal gives back `REFUND_SHARE` (half) of the total cost of the units removed together, rounded down. Nothing removes a build yet, so nothing reads it in play.
-
-`buy(inventory, kind, units, place)` checks first, takes the wood, then calls the writer `place` (for example `build_bridge`). Refusals, with nothing placed and nothing spent: `not enough wood`, `multiplayer on`, `unknown kind`. If `spend` fails after the check, `buy` returns `spend failed` and never calls the writer. If the writer refuses after the spend, the wood is put back and `buy` returns `not placed`. Charge and write stay atomic (#380 item 3).
-
-With peers connected, wood is still local. `buy` allows planks, towers, castles, guard posts, barracks and wall blocks: the host decides the placement and charges the placer (#297, #497, #498, #527, #528, #556). `buy` still refuses only the starting castle with `multiplayer on` (`HOST_ALONE` in `build_costs.gd`). A raw `StructurePlacer.can_place` still reports `multiplayer on` on clients; the host writes structures and walls after a request.
+Demolish returns half of each resource, rounded down independently. See
+[Stone building costs](./stone-costs.md) for the player-facing drive and
+two-peer coverage. The starting castle is free and the host places it directly.
 
 ## Sub-features
 
 - `build-cost-table` the costs and refunds above, and -1 cost for an unknown kind.
 - `inventory-spend` `spend` takes the amount and emits `changed` when there is enough; too little or a negative amount takes nothing and emits nothing. The wood HUD shows the new count.
-- `build-buy` too little wood places nothing and keeps the wood; enough wood places and spends the cost; a writer refusal spends nothing; the starting castle needs no wood; multiplayer on refuses before the writer runs.
+- `build-buy` insufficient resources leave the site and balances intact; sufficient resources pay for the placement; a writer refusal spends nothing; the starting castle needs no resources; multiplayer on refuses before the writer runs.
 
 ## How to get to it (user POV)
 
@@ -40,4 +40,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_build_cost_table` and `te
 ## Gotchas
 
 - Never add wood from a drive to make a purchase pass in a live game; a drive that can't reach the feature reports that.
-- `buy` must be the only place that spends wood for a build, so the check, the spend and the placement stay in one order (spend before write).
+- `buy` must be the only place that spends resources for a local build, so the check, the spend and the placement stay in one order (spend before write).

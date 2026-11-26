@@ -347,12 +347,15 @@ func _picker_captions(
 	for button: Button in slots:
 		var label := button.get_node("Caption") as Label
 		var extent := label.get_minimum_size()
-		if reserve:
-			# Keep the search footprint of the original 10-unit theme captions.
-			var font := label.get_theme_font("font")
-			extent = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).ceil()
-		var caption := _picker_caption(slots[button][0], extent, side, view, occupied)
+		var disc: Rect2 = slots[button][0]
+		var caption := _picker_caption(disc, extent, side, view, occupied)
 		if not reserve:
+			if not caption.has_area() and "\n" in label.text:
+				var nearby := view.intersection(disc.grow(55.0))
+				var target := Rect2(disc.get_center() - extent * 0.5, extent).grow(1.0)
+				var clear := HudLayoutVisual.nearest_clear_rect(target, nearby, occupied)
+				if HudLayoutVisual.rect_clear(clear, nearby, occupied):
+					caption = clear.grow(-1.0)
 			slots[button].append(caption)
 		if caption.has_area():
 			occupied.append(caption.grow(1.0))
@@ -368,9 +371,9 @@ func _picker_caption(
 	var distance := (disc.size + size) * 0.5 + Vector2.ONE * 2.0
 	for direction: Vector2 in [Vector2.DOWN, Vector2(side, 0), Vector2.UP, Vector2(-side, 0)]:
 		var base := center + direction * distance - size * 0.5
-		var offsets := [0.0, -10.0, 10.0] if direction.x != 0.0 else [0.0]
-		for offset: float in offsets:
-			var rect := Rect2((base + Vector2(0, offset)).round(), size)
+		var cross := Vector2(-direction.y, direction.x)
+		for offset: float in [0.0, -10.0, 10.0, -20.0, 20.0]:
+			var rect := Rect2((base + cross * offset).round(), size)
 			# Reserve one pixel for the text outline on each side.
 			if HudLayoutVisual.rect_clear(rect.grow(1.0), view, occupied):
 				return rect

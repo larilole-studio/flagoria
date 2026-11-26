@@ -1,12 +1,6 @@
 class_name BuildCosts
 extends RefCounted
-## What each buildable costs in wood (#272), and buying one: check the wood,
-## spend, then place. The shared construction placement module (#296) is
-## calls buy; the placement UI (#225) talks only to that module. Tests also
-## call buy directly for the cost table.
-## Wood is local to each game (Inventory). Planks (#297), towers (#497),
-## castles (#527) and walls (#498) are allowed while multiplayer is on: the
-## host decides and the placer is charged. The starting castle still refuses.
+## Shared wood and stone prices, affordability and construction transactions.
 
 const PLANK := &"plank"
 const WALL_BLOCK := &"wall_block"
@@ -31,11 +25,6 @@ const CITY_KINDS := {
 	GUARD_POST: true,
 }
 
-
-static func is_requestable(kind: StringName) -> bool:
-	return kind == WALL_BLOCK or NAMED_STRUCTURES.has(kind)
-
-
 ## Kind -> wood for one unit: a plank is one bridge cell, a wall block one
 ## wall cell, a tower one tower, a castle one extra castle (#527). The
 ## starting castle each player gets is free.
@@ -43,16 +32,19 @@ const WOOD := {
 	PLANK: 1,
 	WALL_BLOCK: 2,
 	TOWER: 10,
-	CASTLE: 50,
-	GUARD_POST: 20,
-	BARRACKS: 30,
+	CASTLE: 35,
+	GUARD_POST: 14,
+	BARRACKS: 20,
 	MINE: 15,
 	START_CASTLE: 0,
 }
+const STONE := {CASTLE: 15, GUARD_POST: 6, BARRACKS: 10}
 ## Share of a build’s cost given back when Demolish removes it.
 const REFUND_SHARE := 0.5
 
 const NOT_ENOUGH_WOOD := "not enough wood"
+const NOT_ENOUGH_STONE := "not enough stone"
+const NOT_ENOUGH_WOOD_AND_STONE := "not enough wood and stone"
 const MULTIPLAYER_ON := "multiplayer on"
 const UNKNOWN_KIND := "unknown kind"
 const NOT_PLACED := "not placed"
@@ -60,19 +52,6 @@ const NOT_PLACED := "not placed"
 ## Nothing is written (#380 item 3: charge before write, so a failed spend
 ## cannot leave tiles in place).
 const SPEND_FAILED := "spend failed"
-
-
-static func cost(kind: StringName, units := 1) -> int:
-	## Wood for `units` of `kind`; -1 for a kind not in WOOD.
-	return WOOD[kind] * units if WOOD.has(kind) else -1
-
-
-static func refund(kind: StringName, units := 1) -> int:
-	## Wood back for removing `units` of `kind` placed together: REFUND_SHARE
-	## of their total cost, rounded down (one plank alone gives 0 back, a run
-	## of four gives 2). 0 for a kind not in WOOD.
-	return floori(cost(kind, units) * REFUND_SHARE) if WOOD.has(kind) else 0
-
 
 ## Kinds that stay host-alone. Towers (#497), castles (#527) and walls (#498)
 ## are requested on StructureRequests. The starting castle is still placed by
@@ -82,36 +61,80 @@ const HOST_ALONE := {
 }
 
 
+static func is_requestable(kind: StringName) -> bool:
+	return kind == WALL_BLOCK or NAMED_STRUCTURES.has(kind)
+
+
+static func cost(kind: StringName, units := 1) -> int:
+	## Wood for `units` of `kind`; -1 for a kind not in WOOD.
+	return WOOD[kind] * units if WOOD.has(kind) else -1
+
+
+static func price(kind: StringName, units := 1) -> Vector2i:
+	## x is wood and y is stone.
+	return Vector2i(cost(kind, units), int(STONE.get(kind, 0)) * units)
+
+
+static func refund(kind: StringName, units := 1) -> Vector2i:
+	if not WOOD.has(kind):
+		return Vector2i.ZERO
+	var amount := price(kind, units)
+	return Vector2i(floori(amount.x * REFUND_SHARE), floori(amount.y * REFUND_SHARE))
+
+
+static func label(amount: Vector2i, prefix := "") -> String:
+	var wood := "%s%d wood" % [prefix, amount.x]
+	if amount.y == 0:
+		return wood
+	return "%s + %d stone" % [wood, amount.y]
+
+
+static func balance(inventory: Inventory) -> Vector2i:
+	return Vector2i(inventory.count_of(Inventory.WOOD), inventory.count_of(Inventory.STONE))
+
+
+static func shortage(available: Vector2i, amount: Vector2i) -> String:
+	if available.x < amount.x:
+		return NOT_ENOUGH_WOOD_AND_STONE if available.y < amount.y else NOT_ENOUGH_WOOD
+	return NOT_ENOUGH_STONE if available.y < amount.y else ""
+
+
+static func credit(inventory: Inventory, amount: Vector2i) -> void:
+	if amount.x > 0:
+		inventory.add(Inventory.WOOD, amount.x)
+	if amount.y > 0:
+		inventory.add(Inventory.STONE, amount.y)
+
+
+static func charge(inventory: Inventory, amount: Vector2i) -> bool:
+	if amount.x < 0 or amount.y < 0 or not shortage(balance(inventory), amount).is_empty():
+		return false
+	if amount.x > 0 and not inventory.spend(Inventory.WOOD, amount.x):
+		return false
+	if amount.y > 0 and not inventory.spend(Inventory.STONE, amount.y):
+		credit(inventory, Vector2i(amount.x, 0))
+		return false
+	return true
+
+
 static func refusal(inventory: Inventory, kind: StringName, units := 1) -> String:
-	## Why buying `units` of `kind` is refused before placing; "" when it may
-	## go ahead. Planks (#297), towers (#497), castles (#527) and walls (#498)
-	## are allowed in
-	## multiplayer. The starting castle still refuses while peers are connected
-	## (BuildCosts.START_CASTLE via place_start_castle, not the build picker).
 	if not WOOD.has(kind):
 		return UNKNOWN_KIND
 	if HOST_ALONE.has(kind) and Interaction.multiplayer_on(inventory.multiplayer):
 		return MULTIPLAYER_ON
-	if inventory.count_of(Inventory.WOOD) < cost(kind, units):
-		return NOT_ENOUGH_WOOD
-	return ""
+	return shortage(balance(inventory), price(kind, units))
 
 
 static func buy(inventory: Inventory, kind: StringName, units: int, place: Callable) -> String:
-	## Buy `units` of `kind`: when refusal gives no reason, take the wood
-	## first, then call `place` (a writer such as build_bridge or
-	## place_structure). Returns "" on success. A refused buy spends nothing
-	## and writes nothing. If spend fails after the check, return spend failed
-	## without writing. If the writer refuses after the spend, put the wood
-	## back and return not placed — charge and write stay atomic (#380 item 3).
+	## Charge before writing and put both resources back if the writer refuses.
 	var why := refusal(inventory, kind, units)
 	if why != "":
 		return why
-	var wood := cost(kind, units)
-	if not inventory.spend(Inventory.WOOD, wood):
+	var amount := price(kind, units)
+	if not charge(inventory, amount):
 		return SPEND_FAILED
 	var placed: Variant = place.call()
 	if (placed is bool and placed) or (placed is int and placed > 0):
 		return ""
-	inventory.add(Inventory.WOOD, wood)
+	credit(inventory, amount)
 	return NOT_PLACED

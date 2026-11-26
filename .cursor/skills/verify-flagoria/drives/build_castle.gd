@@ -1,6 +1,6 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
-## Place a second castle for 50 wood at rotation 90°, save and reload.
+## Place a second castle for 35 wood and 15 stone at rotation 90°, save and reload.
 
 const ROTATE_BTN := "CanvasLayer1/FootprintRotateButton"
 const MAIN_MENU_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MainMenu"
@@ -27,7 +27,7 @@ func run() -> void:
 	var it: Interaction = current_scene.get_node(INTERACTION)
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var inventory: Inventory = current_scene.get_node(INVENTORY)
-	inventory.add(Inventory.WOOD, 50)
+	await grant_resources()
 	await toggle_mode()
 	await click("CanvasLayer1/BuildingsButton")
 	it.build.set_tool(BuildPlacement.Tool.CASTLE)
@@ -47,7 +47,7 @@ func run() -> void:
 		it.build.update_preview(vp, vp)
 		for _j in 8:
 			await process_frame
-	if it.build.cost != 50 or it.build.reasons.size() > 0:
+	if it.build.price != Vector2i(35, 15) or it.build.reasons.size() > 0:
 		printerr("build_castle: preview refused %s cost %s" % [it.build.reasons, it.build.cost])
 		done(false)
 		return

@@ -12,14 +12,14 @@ Source: Scripts/ui/hud_tool_row.gd
 
 Demolish (#701) removes one reachable plank or free-form wall cell, or the
 whole footprint of an owned tower, castle, guard post, or barracks. The
-refund is 50% of one unit's wood cost, rounded down. Starting castles and
+refund is 50% of each resource's cost, rounded down independently. Starting castles and
 structures held by another peer, mobs, or nobody are protected.
 
 ## Sub-features
 
 - `demolish-picker` The round Demolish button is last in Buildings and has the
   same hit area as its siblings. The drive checks the picker and tap flow.
-- `demolish-preview` Pressing shows the red footprint and wood refund or the
+- `demolish-preview` Pressing shows the red footprint and resource refund or the
   refusal reason. A tap removes on release. A drag leaves the construction
   in place.
 - `demolish-save` `test_construction_remove` covers ownership, protected
@@ -31,8 +31,8 @@ structures held by another peer, mobs, or nobody are protected.
 
 1. Place or stand near a construction, then open Buildings.
 2. Tap Demolish and press the construction. Check the red preview and refund.
-3. Release without dragging. The construction disappears and the wood counter
-   increases by the quoted amount when the refund is positive.
+3. Release without dragging. The construction disappears and the resource counters
+   increase by the quoted amount when the refund is positive.
 
 ## Driving it with verify-flagoria helpers
 

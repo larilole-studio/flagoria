@@ -35,7 +35,8 @@ func _test_barracks_not_a_tower() -> int:
 		printerr("FAIL barracks_not_a_tower: no anchor")
 		scene.queue_free()
 		return 1
-	inventory.add(Inventory.WOOD, 30)
+	inventory.add(Inventory.WOOD, 20)
+	inventory.add(Inventory.STONE, 10)
 	var place_id := -1
 	if not placer.place(BuildCosts.BARRACKS, [anchor], inventory):
 		printerr("FAIL barracks_not_a_tower: could not place")

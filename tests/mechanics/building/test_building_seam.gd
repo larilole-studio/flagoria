@@ -6,10 +6,10 @@ const _TOWER := Vector2i(-34, -35)
 const _BLOCKED_TOWER := Vector2i(-32, -35)
 const _WALL_SUPPORT := Vector2i(-20, -28)
 const _NAMED := [
-	[&"tower", "tower_wood", _TOWER, 1, 10, Vector2i(2, -1)],
-	[&"castle", "castle", Vector2i(23, -30), 1, 50, Vector2i(4, -3)],
-	[&"guard_post", "guard_post", Vector2i(16, -33), 2, 20, Vector2i(2, 3)],
-	[&"barracks", "barracks", Vector2i(-3, -34), 3, 30, Vector2i(-3, 2)],
+	[&"tower", "tower_wood", _TOWER, 1, 10, Vector2i(2, -1), 0],
+	[&"castle", "castle", Vector2i(23, -30), 1, 35, Vector2i(4, -3), 15],
+	[&"guard_post", "guard_post", Vector2i(16, -33), 2, 14, Vector2i(2, 3), 6],
+	[&"barracks", "barracks", Vector2i(-3, -34), 3, 20, Vector2i(-3, 2), 10],
 ]
 const _SPEND_FAIL := preload("res://tests/mechanics/building/spend_fail_inventory.gd")
 
@@ -33,20 +33,31 @@ func _test_building_seam_placement() -> int:
 		var cell: Vector2i = row[2]
 		var turns: int = row[3]
 		var price: int = row[4]
+		var stone: int = row[6]
 		inventory.add(Inventory.WOOD, price - 1)
+		if stone > 0:
+			fail += _refused(
+				placer, world, inventory, kind, [cell], turns, "not enough wood and stone"
+			)
+			inventory.add(Inventory.STONE, stone)
 		fail += _refused(placer, world, inventory, kind, [cell], turns, "not enough wood")
 		if placer.cost(kind, [cell]) != price:
 			printerr("FAIL %s: expected quoted cost %d" % [kind, price])
 			fail += 1
 		inventory.add(Inventory.WOOD, 1)
+		if stone > 0:
+			inventory.spend(Inventory.STONE, 1)
+			fail += _refused(placer, world, inventory, kind, [cell], turns, "not enough stone")
+			inventory.add(Inventory.STONE, 1)
 		if (
 			not placer.place(kind, [cell], inventory, turns)
-			or inventory.count_of(Inventory.WOOD) != 0
+			or BuildCosts.balance(inventory) != Vector2i.ZERO
 			or not world.structures_for_sync().has([row[1], 1, cell, turns])
 		):
 			printerr("FAIL %s: placement, charge or sync row at %s" % [kind, cell])
 			fail += 1
 		inventory.add(Inventory.WOOD, price)
+		inventory.add(Inventory.STONE, stone)
 		if row[1] != "barracks":
 			var flag_offset: Vector2i = {
 				&"tower": Vector2i.RIGHT, &"castle": Vector2i(2, 0), &"guard_post": Vector2i.DOWN
@@ -57,6 +68,7 @@ func _test_building_seam_placement() -> int:
 		fail += _refused(placer, world, inventory, kind, [cell], turns, "occupied")
 		fail += _refused(placer, world, inventory, &"wall_block", [cell + row[5]], 0, "occupied")
 		inventory.spend(Inventory.WOOD, price)
+		inventory.spend(Inventory.STONE, stone)
 	inventory.add(Inventory.WOOD, 50)
 	for row in _NAMED:
 		fail += _refused(placer, world, inventory, row[0], [_SHORE], row[3], "wrong ground")
@@ -267,7 +279,7 @@ func _refused(
 	reason: String
 ) -> int:
 	var before := [
-		inventory.count_of(Inventory.WOOD),
+		BuildCosts.balance(inventory),
 		world.structures_for_sync(),
 		world.bridges_for_sync(),
 		cells.map(world.has_wall)
@@ -275,7 +287,7 @@ func _refused(
 	var reasons := placer.can_place(kind, cells, inventory, turns)
 	var placed := placer.place(kind, cells, inventory, turns)
 	var after := [
-		inventory.count_of(Inventory.WOOD),
+		BuildCosts.balance(inventory),
 		world.structures_for_sync(),
 		world.bridges_for_sync(),
 		cells.map(world.has_wall)

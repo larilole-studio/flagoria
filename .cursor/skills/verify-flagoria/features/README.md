@@ -67,18 +67,19 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
 - [Explored map](./explored-map.md) — parchment full map from Map or M; cells revealed within 10 cells of the hero.
-- [Build costs](./build-costs.md) — wood per plank (1), wall block (2), tower (10), castle (50), guard post (20), barracks (30), starting castle (0), half back on removal, `Inventory.spend`, `BuildCosts.buy` refuses with too little wood; only the starting castle refuses while multiplayer is on; live path is the build picker.
+- [Build costs](./build-costs.md) — the shared price table, affordability checks, and purchase rollback.
+- [Stone building costs](./stone-costs.md) — split prices for castles, guard posts and barracks, targeted multiplayer charges, and split demolish refunds.
 - [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for six buildable kinds (plank, tower, castle, guard post, barracks, wall block) through `BuildCosts.buy`; live path is the build picker.
 - [Building block pieces](./building-block-pieces.md) — WFC modular pieces and sockets (#23); debug scene; `test_building_block_sockets` and `test_wfc_solver` (#24).
 - [Generated building](./generated-building.md) — host debug key and Map Settings button place one WFC building at the player; clients and a late joiner solve the same seed (#26).
 - [Building merge](./building-merge.md) — full-edge neighbours share a wall; removal re-seals; two-player and late-joiner replay (#27).
-- [Build placement](./build-placement.md) — interact-mode build picker (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; centered footprints and relative dragging for footprints, walls and planks (#711), green/red tint and wood cost; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
+- [Build placement](./build-placement.md) — interact-mode build picker (Plank, Tower, Castle, Guard post, Barracks, Wall) closed until Buildings is open; centered footprints and relative dragging for footprints, walls and planks (#711), green/red tint and resource costs; places through ConstructionPlacer (#225 / #273 / #276 / #527 / #528 / #556); nothing hides when a peer connects.
 - [Build sync](./build-sync.md) — plank bridges decided by the host and synced to every peer; late joiner gets the list (#297).
 - [Build tower](./build-tower.md) — wooden palisade tower for 10 wood, land only, builder-owned flag; multiplayer asks the host (#273, #497).
-- [Build castle](./build-castle.md) — extra `castle.txt` for 50 wood with rotation, save/reload and multiplayer sync (#527).
-- [Build guard post](./build-guard-post.md) — `guard_post.txt` for 20 wood from the build picker, save/reload and multiplayer sync (#528).
+- [Build castle](./build-castle.md) — extra `castle.txt` for 35 wood and 15 stone with rotation, save/reload and multiplayer sync (#527).
+- [Build guard post](./build-guard-post.md) — `guard_post.txt` for 14 wood and 6 stone from the build picker, save/reload and multiplayer sync (#528).
 - [Demolish construction](./demolish-construction.md)
-- [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
+- [Build barracks](./build-barracks.md) — `barracks.txt` for 20 wood and 10 stone from the build picker, save/reload and multiplayer sync (#556).
 - [Place a mine](./place-mine.md) — a 3×3 mine costs 15 wood and needs an orthogonally adjacent live rock (#722).
 - [Produce stone at placed mines](./mine-production.md) — each mine credits its owner one stone per minute (#723).
 - [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).

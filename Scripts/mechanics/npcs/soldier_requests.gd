@@ -275,7 +275,7 @@ func _charge(peer_id: int, wood: int) -> bool:
 	var interaction := _interaction()
 	if interaction == null:
 		return false
-	interaction.rpc_id(peer_id, "receive_charge", wood)
+	interaction.issue_charge(peer_id, Vector2i(wood, 0))
 	return true
 
 

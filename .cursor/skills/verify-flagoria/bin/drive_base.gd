@@ -150,6 +150,13 @@ func tap_cell(cell: Vector2i, while_pressed := Callable()) -> void:
 			await while_pressed.call()
 
 
+func grant_resources(button := "MaxResources") -> void:
+	var rows := MENU_PANEL + "/Panel/Margin/VBox"
+	await click(MENU_BUTTON)
+	await click(rows + "/ResourceGrants/" + button)
+	await click(rows + "/Resume")
+
+
 ## Opens the in-game menu with its menu button and clicks Save. Returns false
 ## if the menu did not open.
 func menu_save() -> bool:

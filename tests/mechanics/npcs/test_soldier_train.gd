@@ -28,7 +28,8 @@ func _place_barracks(scene, world, peer: int) -> Variant:
 	if anchor == null:
 		return null
 	var inventory: Inventory = scene.get_node("Inventory")
-	inventory.add(Inventory.WOOD, 30)
+	inventory.add(Inventory.WOOD, 20)
+	inventory.add(Inventory.STONE, 10)
 	var placer := ConstructionPlacer.new(world)
 	if not placer.place(BuildCosts.BARRACKS, [anchor], inventory):
 		return null

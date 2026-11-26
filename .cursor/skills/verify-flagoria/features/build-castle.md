@@ -5,8 +5,8 @@ Source: Scripts/mechanics/building/build_placement.gd
 Source: Scripts/mechanics/structures/structure_placer.gd
 
 Interact-mode Castle tool places an extra `structures/castle.txt` footprint for
-50 wood (#527). The preview greens the full rotated footprint and charges
-50 wood when `commit` will place. On release, placement goes through
+35 wood and 15 stone (#527). The preview greens the full rotated footprint and charges
+35 wood and 15 stone when `commit` will place. On release, placement goes through
 `ConstructionPlacer` (`BuildCosts.CASTLE` → `StructurePlacer`). The builder
 owns the castle and its team flag. Land only; no overlap with structures,
 players or water. Rotation follows #493. In multiplayer the host validates and
@@ -17,8 +17,8 @@ syncs through `StructureRequests` (#527), including late joiners and world saves
 - `build-castle-picker` Castle button appears in the build picker with
   Plank, Tower and Wall, stays visible while multiplayer is on, and switches
   `BuildPlacement.tool` to Castle.
-- `build-castle-place` release spends 50 wood and writes `castle` owned by the
-  local peer; refused water, overlap or short wood spends nothing.
+- `build-castle-place` release spends 35 wood and 15 stone and writes `castle` owned by the
+  local peer; water, overlap, and resource shortages leave balances intact.
 - `build-castle-sync` a client request syncs owner, anchor and rotation to the
   host, connected peers and a late joiner.
 - `build-castle-save` a placed castle with rotation survives save and reload.
@@ -27,7 +27,7 @@ syncs through `StructureRequests` (#527), including late joiners and world saves
 
 ## How to get to it (user POV)
 
-1. Host alone or two-player with at least 50 wood.
+1. Host alone or two-player with at least 35 wood and 15 stone.
 2. Open Buildings, tap Castle, rotate if needed, then drag the centered preview to clear land.
 3. Lift to place; the flag uses the builder's colour.
 

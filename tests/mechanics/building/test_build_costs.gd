@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Wood costs for building (#272): the cost table, Inventory.spend and
+## Resource costs for building (#272): the cost table, Inventory.spend and
 ## BuildCosts.buy.
 
 
@@ -10,17 +10,19 @@ func _test_build_cost_table() -> int:
 	print("-- test_build_cost_table")
 	var fail := 0
 	var want := {
-		[BuildCosts.PLANK, 1]: [1, 0],
-		[BuildCosts.PLANK, 4]: [4, 2],
-		[BuildCosts.WALL_BLOCK, 1]: [2, 1],
-		[BuildCosts.WALL_BLOCK, 3]: [6, 3],
-		[BuildCosts.TOWER, 1]: [10, 5],
-		[BuildCosts.CASTLE, 1]: [50, 25],
-		[BuildCosts.START_CASTLE, 1]: [0, 0],
-		[&"moat", 1]: [-1, 0],
+		[BuildCosts.PLANK, 1]: [Vector2i(1, 0), Vector2i(0, 0)],
+		[BuildCosts.PLANK, 4]: [Vector2i(4, 0), Vector2i(2, 0)],
+		[BuildCosts.WALL_BLOCK, 1]: [Vector2i(2, 0), Vector2i(1, 0)],
+		[BuildCosts.WALL_BLOCK, 3]: [Vector2i(6, 0), Vector2i(3, 0)],
+		[BuildCosts.TOWER, 1]: [Vector2i(10, 0), Vector2i(5, 0)],
+		[BuildCosts.CASTLE, 1]: [Vector2i(35, 15), Vector2i(17, 7)],
+		[BuildCosts.GUARD_POST, 1]: [Vector2i(14, 6), Vector2i(7, 3)],
+		[BuildCosts.BARRACKS, 1]: [Vector2i(20, 10), Vector2i(10, 5)],
+		[BuildCosts.START_CASTLE, 1]: [Vector2i(0, 0), Vector2i(0, 0)],
+		[&"moat", 1]: [Vector2i(-1, 0), Vector2i(0, 0)],
 	}
 	for k in want:
-		var got := [BuildCosts.cost(k[0], k[1]), BuildCosts.refund(k[0], k[1])]
+		var got := [BuildCosts.price(k[0], k[1]), BuildCosts.refund(k[0], k[1])]
 		if got != want[k]:
 			printerr(
 				(
