@@ -21,15 +21,15 @@ Plank and the first Wall run start at the snapped center and extend by the drag
 delta along the dominant axis. Wall extensions start from the existing tip
 (see [Free-form walls](./free-form-walls.md)). [Demolish](./demolish-construction.md)
 previews and removes by tapping the target.
-The preview greens exactly the cells `commit` will place and shows that wood cost;
+The preview greens exactly the cells `commit` will place and shows that resource costs;
 the rest is red. A refusal reason appears when nothing is placeable (including an
 empty wall gap). On release, placement goes through `ConstructionPlacer`
 (`can_place` / `cost` / `place`). Dead-player gating stays
 on `Interaction.player_dead`. `BuildToolRow.MP_HIDDEN` is empty, so nothing hides
 when a peer connects; every picker tool stays available in multiplayer (#297,
 #497, #498, #527, #528, #556). `update_preview` skips the snap / `can_place` work
-only when the snapped cells, wood count, player position and map revision are
-unchanged, so a wood spend, a walk out of reach, or a map change cannot leave a
+only when the snapped cells, resource balances, player position and map revision are
+unchanged, so a spend, a walk out of reach, or a map change cannot leave a
 stale green preview. The tool wheel and the lilac picker discs use Candy Glass sprites from `art/ui/hud_e4/`.
 
 For a center-origin Plank drag, leading shore and existing deck stay red.
@@ -104,5 +104,5 @@ and the 10-wood charge through input.
   UI layer.
 - Preview green cells and cost must come from the same `longest_placeable`
   prefix that `commit` places; do not tint from a full-run `can_place`.
-- Preview skip cache must include wood, player position and map revision, not
+- Preview skip cache must include wood, stone, player position and map revision, not
   only the snapped cells (#383).

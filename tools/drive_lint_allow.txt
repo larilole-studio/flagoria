@@ -2,11 +2,8 @@
 # Paths are relative to drives/. Columns are tab-separated: drive, rule, count.
 bridge_joins.gd	global_position write	1
 build_barracks.gd	global_position write	1
-build_barracks.gd	inventory write	1
 build_castle.gd	global_position write	1
-build_castle.gd	inventory write	1
 build_guard_post.gd	global_position write	1
-build_guard_post.gd	inventory write	1
 castle_sync.gd	global_position write	2
 chop_trees.gd	global_position write	1
 chop_trees.gd	set_cell	2
@@ -26,10 +23,8 @@ object_removals_save.gd	global_position write	1
 object_removals_save.gd	set_cell	3
 sky_islands.gd	global_position write	1
 soldier_fight.gd	global_position write	3
-soldier_fight.gd	inventory write	1
 tower_capture.gd	global_position write	2
 train_soldier.gd	global_position write	4
-train_soldier.gd	inventory write	1
 train_soldier.gd	pressed signal	1
 wall_collar_sides.gd	global_position write	1
 wall_health.gd	global_position write	2

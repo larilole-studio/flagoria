@@ -50,7 +50,7 @@ func can_place(
 	kind: StringName, cells: Array[Vector2i], inventory: Inventory, quarter_turns: int = 0
 ) -> Array[String]:
 	## Why `kind` cannot go on `cells`; empty when it can. Each reason appears
-	## once, in `_REASON_ORDER`. Wood and multiplayer come from BuildCosts.
+	## once, in `_REASON_ORDER`. Affordability and multiplayer come from BuildCosts.
 	## A tower takes exactly one cell (its anchor); a plank or wall run takes
 	## every cell in `cells`.
 	var reasons := can_place_geometry(kind, cells, quarter_turns)
@@ -64,7 +64,7 @@ func can_place(
 func can_place_geometry(
 	kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0
 ) -> Array[String]:
-	## Why `kind` cannot go on `cells` from the map alone (no wood, no
+	## Why `kind` cannot go on `cells` from the map alone (no resource or
 	## multiplayer gate). Used for previews and host-authoritative writes.
 	var found := {}
 	if cells.is_empty():
@@ -92,6 +92,10 @@ func cost(kind: StringName, cells: Array) -> int:
 	if not _can_build(kind) and not BuildCosts.WOOD.has(kind):
 		return -1
 	return BuildCosts.cost(kind, _units(kind, cells))
+
+
+func price(kind: StringName, cells: Array) -> Vector2i:
+	return BuildCosts.price(kind, _units(kind, cells))
 
 
 func place(
@@ -304,13 +308,19 @@ func _check_named(
 	for reason in _map.can_place_structure(structure, cells[0], quarter_turns):
 		if reason == StructurePlacer.MULTIPLAYER_ON:
 			continue  # StructureRequests is the multiplayer gate (#497).
-		match reason:
-			StructurePlacer.WATER, StructurePlacer.OUT_OF_MAP:
-				found[WRONG_GROUND] = true
-			StructurePlacer.TREE, StructurePlacer.BUSH, StructurePlacer.OVERLAPS_STRUCTURE, StructurePlacer.OVERLAPS_PLAYER, StructurePlacer.OVERLAPS_MOB:
-				found[OCCUPIED] = true
-			StructurePlacer.MULTIPLAYER_ON:
-				found[MULTIPLAYER_ON] = true
+		if reason == StructurePlacer.WATER or reason == StructurePlacer.OUT_OF_MAP:
+			found[WRONG_GROUND] = true
+		elif (
+			reason
+			in [
+				StructurePlacer.TREE,
+				StructurePlacer.BUSH,
+				StructurePlacer.OVERLAPS_STRUCTURE,
+				StructurePlacer.OVERLAPS_PLAYER,
+				StructurePlacer.OVERLAPS_MOB,
+			]
+		):
+			found[OCCUPIED] = true
 
 
 func _check_mine(

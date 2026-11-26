@@ -4,8 +4,8 @@ Drive: drives/build_guard_post.gd
 Source: Scripts/mechanics/building/build_placement.gd
 Source: Scripts/mechanics/structures/structure_placer.gd
 
-Interact-mode Guard post tool places `structures/guard_post.txt` for 20 wood
-(#528). The preview greens the full rotated footprint and charges 20 wood when
+Interact-mode Guard post tool places `structures/guard_post.txt` for 14 wood and 6 stone
+(#528). The preview greens the full rotated footprint and charges 14 wood and 6 stone when
 `commit` will place. On release, placement goes through `ConstructionPlacer`
 (`BuildCosts.GUARD_POST` → `StructurePlacer`). The builder owns the guard post
 and its team flag. Land only; no overlap with structures, players or water.
@@ -18,8 +18,8 @@ with #37 and #280.
 - `build-guard-picker` Guard post button appears in the build picker with
   Plank, Tower, Castle and Wall, stays visible while multiplayer is on, and
   switches `BuildPlacement.tool` to Guard.
-- `build-guard-place` release spends 20 wood and writes `guard_post` owned by the
-  local peer; refused water, overlap or short wood spends nothing.
+- `build-guard-place` release spends 14 wood and 6 stone and writes `guard_post` owned by the
+  local peer; water, overlap, and resource shortages leave balances intact.
 - `build-guard-sync` a client request syncs owner, anchor and rotation to the
   host, connected peers and a late joiner.
 - `build-guard-save` a placed guard post with rotation survives save and reload
@@ -27,7 +27,7 @@ with #37 and #280.
 
 ## How to get to it (user POV)
 
-1. Host alone or two-player with at least 20 wood.
+1. Host alone or two-player with at least 14 wood and 6 stone.
 2. Open Buildings, tap Guard post, rotate if needed, then drag the centered preview to clear land (anchor
    on the gate cell).
 3. Lift to place; the flag uses the builder's colour.

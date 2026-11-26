@@ -32,12 +32,21 @@ func place(kind: StringName, cells: Array[Vector2i], quarter_turns: int = 0) -> 
 	var peer := multiplayer.multiplayer_peer
 	if peer == null or peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
 		return false
-	request_place.rpc_id(1, String(kind), cells, quarter_turns)
+	# Each peer owns its inventory. Include processed debits so the host can
+	# subtract every charge it has issued, including ones still in transit.
+	var reported := Vector2i.ZERO
+	if BuildCosts.STONE.has(kind) and inventory != null:
+		reported = BuildCosts.balance(inventory) + inventory.processed_charges
+	request_place.rpc_id(1, String(kind), cells, quarter_turns, reported)
 	return true
 
 
 func host_place(
-	kind: StringName, cells: Array[Vector2i], peer_id: int, quarter_turns: int = 0
+	kind: StringName,
+	cells: Array[Vector2i],
+	peer_id: int,
+	quarter_turns: int = 0,
+	reported: Vector2i = Vector2i.ZERO
 ) -> bool:
 	## Host accepts `peer_id`'s request, or places for itself. False charges nothing.
 	if not multiplayer.is_server() or not BuildCosts.is_requestable(kind) or cells.is_empty():
@@ -57,10 +66,19 @@ func host_place(
 	if local and inventory == null:
 		return false
 	var placer := ConstructionPlacer.new(map)
+	var amount := placer.price(kind, cells)
+	if not local and amount.y > 0:
+		if inventory == null:
+			return false
+		var charged := inventory.issued_charges(peer_id)
+		var why := BuildCosts.shortage(reported.max(charged) - charged, amount)
+		if not why.is_empty():
+			receive_place_shortage.rpc_id(peer_id, String(kind), cells[0], why)
+			return false
 	if not placer.place_for_peer(kind, cells, peer_id, inventory if local else null, quarter_turns):
 		return false
 	if not local:
-		interaction.rpc_id(peer_id, "receive_charge", placer.cost(kind, cells))
+		interaction.issue_charge(peer_id, amount)
 	if kind == BuildCosts.WALL_BLOCK:
 		_publish()
 	else:
@@ -110,7 +128,7 @@ func host_demolish(cell: Vector2i, peer_id: int) -> bool:
 			if online:
 				apply_structure_removed.rpc(target["anchor"])
 			_publish()
-	if not local and target["refund"] > 0:
+	if not local and target["refund"] != Vector2i.ZERO:
 		receive_refund.rpc_id(peer_id, target["refund"])
 	return true
 
@@ -130,9 +148,9 @@ func apply_structure_removed(anchor: Vector2i) -> void:
 
 
 @rpc("authority", "reliable", "call_remote")
-func receive_refund(wood: int) -> void:
-	if multiplayer.get_remote_sender_id() == 1 and inventory != null and wood > 0:
-		inventory.add(Inventory.WOOD, wood)
+func receive_refund(amount: Vector2i) -> void:
+	if multiplayer.get_remote_sender_id() == 1 and inventory != null:
+		BuildCosts.credit(inventory, amount)
 
 
 @rpc("authority", "reliable", "call_remote")
@@ -215,14 +233,28 @@ func _wall_snapshot() -> Array:
 
 
 @rpc("any_peer", "reliable", "call_remote")
-func request_place(kind: String, cells: Array, quarter_turns: int = 0) -> void:
+func request_place(
+	kind: String, cells: Array, quarter_turns: int = 0, reported := Vector2i.ZERO
+) -> void:
 	if not multiplayer.is_server():
 		return
 	var parsed: Array[Vector2i] = []
 	for cell in cells:
 		if cell is Vector2i:
 			parsed.append(cell)
-	host_place(StringName(kind), parsed, multiplayer.get_remote_sender_id(), quarter_turns)
+	host_place(
+		StringName(kind), parsed, multiplayer.get_remote_sender_id(), quarter_turns, reported
+	)
+
+
+@rpc("authority", "reliable", "call_remote")
+func receive_place_shortage(kind: String, cell: Vector2i, reason: String) -> void:
+	if BuildToolRow.footprint_kind(interaction.build.tool) != StringName(kind):
+		return
+	var point := interaction.get_canvas_transform() * interaction.cell_center(cell)
+	interaction.build.update_preview(point, point)
+	interaction.build.reasons.assign([reason])
+	interaction.build.cell_ok.fill(false)
 
 
 @rpc("authority", "reliable", "call_remote")

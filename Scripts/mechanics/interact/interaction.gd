@@ -421,9 +421,7 @@ func _place_planks_local(cells: Array[Vector2i]) -> bool:
 
 
 func host_place_planks(cells: Array[Vector2i], peer_id: int) -> bool:
-	## Host: write the plank run for `peer_id`, send it to every other peer,
-	## and charge that peer. When the host places for itself, spend and write
-	## stay atomic through ConstructionPlacer.place.
+	## Host: place and publish the plank run, then charge its builder.
 	if (
 		not multiplayer.is_server()
 		or cells.is_empty()
@@ -443,7 +441,7 @@ func host_place_planks(cells: Array[Vector2i], peer_id: int) -> bool:
 	if not placer.place_for_peer(BuildCosts.PLANK, cells, peer_id, inventory):
 		return false
 	if not local:
-		receive_charge.rpc_id(peer_id, cells.size())
+		issue_charge(peer_id, Vector2i(cells.size(), 0))
 	var ends := placer.plank_ends(cells)
 	apply_bridge.rpc(ends[0], ends[1])
 	return true
@@ -451,8 +449,6 @@ func host_place_planks(cells: Array[Vector2i], peer_id: int) -> bool:
 
 @rpc("any_peer", "reliable", "call_remote")
 func request_place_planks(cells: Array[Vector2i]) -> void:
-	## Host: a client asks to place planks on `cells`. Dropped when the
-	## placer is dead or out of reach, or the run fails geometry.
 	if not multiplayer.is_server():
 		return
 	host_place_planks(cells, multiplayer.get_remote_sender_id())
@@ -460,7 +456,6 @@ func request_place_planks(cells: Array[Vector2i]) -> void:
 
 @rpc("authority", "reliable", "call_remote")
 func apply_bridge(from: Vector2i, to: Vector2i) -> void:
-	## A plank run the host decided: lay it here too.
 	world_map.build_bridge(from, to)
 
 
@@ -470,16 +465,20 @@ func apply_bridge_removed(cells: Array[Vector2i]) -> void:
 		world_map.erase_bridge_cells(cells)
 
 
+func issue_charge(peer_id: int, amount: Vector2i) -> void:
+	var inventory := get_node_or_null(INVENTORY_PATH) as Inventory
+	if inventory != null:
+		inventory.record_charge(peer_id, amount)
+	receive_charge.rpc_id(peer_id, amount.x, amount.y)
+
+
 @rpc("authority", "reliable", "call_remote")
 func receive_charge(wood: int, stone: int = 0) -> void:
-	## Apply the host's charge to the receiving player's inventory.
 	var inventory := get_node_or_null(INVENTORY_PATH) as Inventory
-	if inventory == null:
-		return
-	if wood > 0:
-		inventory.spend(Inventory.WOOD, wood)
-	if stone > 0:
-		inventory.spend(Inventory.STONE, stone)
+	if inventory != null:
+		var amount := Vector2i(wood, stone)
+		BuildCosts.charge(inventory, amount)
+		inventory.processed_charges += amount
 
 
 @rpc("authority", "reliable", "call_remote")

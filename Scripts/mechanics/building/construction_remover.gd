@@ -39,7 +39,7 @@ func target_at(cell: Vector2i, peer_id: int) -> Dictionary:
 		"kind": kind,
 		"cells": cells,
 		"reason": reason,
-		"refund": BuildCosts.refund(kind, 1) if reason == "" else 0,
+		"refund": BuildCosts.refund(kind) if reason == "" else Vector2i.ZERO,
 		"id": placement.get("id", 0),
 		"anchor": placement.get("anchor", cell),
 	}
@@ -62,6 +62,6 @@ func remove(cell: Vector2i, peer_id: int, inventory: Inventory = null) -> Dictio
 			removed = _map.remove_structure(target["id"])
 	if not removed:
 		return {}
-	if inventory != null and target["refund"] > 0:
-		inventory.add(Inventory.WOOD, target["refund"])
+	if inventory != null:
+		BuildCosts.credit(inventory, target["refund"])
 	return target

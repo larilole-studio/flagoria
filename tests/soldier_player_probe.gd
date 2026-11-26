@@ -76,7 +76,8 @@ func _do_host_place(main, world, me: Node2D, requests: SoldierRequests) -> Strin
 	_pin(me, interaction.cell_center(land) + Vector2(0, 48))
 	await process_frame
 	var one: Array[Vector2i] = [land]
-	inventory.add(Inventory.WOOD, 30)
+	inventory.add(Inventory.WOOD, 20)
+	inventory.add(Inventory.STONE, 10)
 	if not structure_requests.place(BuildCosts.BARRACKS, one, 0):
 		return "place was not sent"
 	var builder: int = main.multiplayer.get_unique_id()

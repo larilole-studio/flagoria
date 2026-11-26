@@ -9,7 +9,7 @@ owner. In multiplayer, named footprints and walls go through
 `StructureRequests`; `Interaction` submits plank requests. Both handlers check
 reach before calling `place_for_peer(kind, cells, owner, inventory, turns)`.
 For planks, the host checks only the start cell against normal reach plus slack.
-The host supplies inventory for its own purchase and sends the existing wood
+The host supplies inventory for its own purchase and sends the resource
 charge after a successful remote purchase. A refused writer refunds the
 full charge. Peers apply live named placements through `apply_replica` and
 read the result through `TileMap.placed_structures` or `structures_for_sync`.
@@ -19,7 +19,7 @@ barracks. Planks need a straight water run of up to 10 tiles touching land or a 
 (#684). Walls
 need a straight land run touching a wall or structure. Named buildings take
 an anchor and quarter turns. Refusals describe empty cells, unknown kinds,
-wrong ground, occupancy, straightness, adjacency and insufficient wood.
+wrong ground, occupancy, straightness, adjacency and insufficient resources.
 
 ## Sub-features
 
@@ -80,4 +80,4 @@ wrong ground, occupancy, straightness, adjacency and insufficient wood.
 
 - Never paint planks from a drive to make placement pass; report the missing UI.
 - Use `ConstructionPlacer.place` for local builds and `place_for_peer` for
-  host-validated requests. The writer and the wood charge share one transaction.
+  host-validated requests. The writer and the resource charge share one transaction.

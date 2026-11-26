@@ -4,8 +4,8 @@ Drive: drives/build_barracks.gd
 Source: Scripts/mechanics/building/build_placement.gd
 Source: Scripts/mechanics/building/construction_placer.gd
 
-Interact-mode Barracks tool places `structures/barracks.txt` for 30 wood (#556).
-The preview greens the full rotated footprint and charges 30 wood when `commit`
+Interact-mode Barracks tool places `structures/barracks.txt` for 20 wood and 10 stone (#556).
+The preview greens the full rotated footprint and charges 20 wood and 10 stone when `commit`
 will place. On release, placement goes through `ConstructionPlacer`
 (`BuildCosts.BARRACKS` → `StructurePlacer`). The builder owns the barracks. It
 is not a flag tower: `StructurePlacer.towers()` does not list it. Land only; no
@@ -18,15 +18,15 @@ and world saves. Soldier training is #553.
 - `build-barracks-picker` Barracks button appears in the build picker with
   Plank, Tower, Castle, Guard and Wall, stays visible while multiplayer is on,
   and switches `BuildPlacement.tool` to Barracks.
-- `build-barracks-place` release spends 30 wood and writes `barracks` owned by
-  the local peer; refused water, overlap or short wood spends nothing.
+- `build-barracks-place` release spends 20 wood and 10 stone and writes `barracks` owned by
+  the local peer; water, overlap, and resource shortages leave balances intact.
 - `build-barracks-sync` a client request syncs owner, anchor and rotation to the
   host, connected peers and a late joiner.
 - `build-barracks-save` a placed barracks with rotation survives save and reload.
 
 ## How to get to it (user POV)
 
-1. Host alone or two-player with at least 30 wood.
+1. Host alone or two-player with at least 20 wood and 10 stone.
 2. Open Buildings, tap Barracks, rotate if needed, then drag the centered preview to clear land (anchor
    on the gate cell).
 3. Lift to place.

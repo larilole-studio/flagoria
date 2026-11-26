@@ -11,7 +11,10 @@ const _FootprintOrientation := preload("res://Scripts/mechanics/building/footpri
 var tool := Tool.CUT
 var cells: Array[Vector2i] = []  ## snapped run or footprint
 var cell_ok: Array[bool] = []  ## parallel to cells: green iff commit will place
-var cost := 0
+var price := Vector2i.ZERO
+var cost: int:
+	get:
+		return price.x
 var reasons: Array[String] = []
 var cost_viewport := Vector2.ZERO  ## viewport position of the snapped target
 
@@ -29,7 +32,7 @@ var _snap_valid := false
 var _snap_frame := 0
 var _wall_tip := Vector2i.ZERO
 var _has_wall_tip := false
-var _snap_wood := -1
+var _snap_balance := Vector2i(-1, -1)
 var _snap_player_pos := Vector2(INF, INF)
 var _snap_map_rev := -1
 var _snap_rotation := -1
@@ -88,7 +91,7 @@ func set_tool(value: Tool) -> void:
 func clear_preview() -> void:
 	cells.clear()
 	cell_ok.clear()
-	cost = 0
+	price = Vector2i.ZERO
 	reasons.clear()
 	cost_viewport = Vector2.ZERO
 	_pointer_origin = Vector2.INF
@@ -213,9 +216,10 @@ func draw_preview(ci: Node2D) -> void:
 		_FootprintOrientation.draw_at(ci, mark, _rotate.quarter_turns)
 	var label := ", ".join(PackedStringArray(reasons))
 	if tool == Tool.DEMOLISH and reasons.is_empty():
-		label = "+%d wood" % cost
-	elif cost > 0:
-		label = "%d wood" % cost if reasons.is_empty() else "%d wood — %s" % [cost, label]
+		label = BuildCosts.label(price, "+")
+	elif price != Vector2i.ZERO:
+		var quote := BuildCosts.label(price)
+		label = quote if reasons.is_empty() else "%s — %s" % [quote, label]
 	var label_at := _interaction.to_world(cost_viewport)
 	if tool == Tool.DEMOLISH:
 		label_at.y -= 18.0
@@ -254,7 +258,7 @@ func _update_demolish_preview(viewport_pos: Vector2) -> void:
 		why = "out of reach"
 	if why != "":
 		reasons.append(why)
-	cost = target["refund"] if why == "" else 0
+	price = target["refund"] if why == "" else Vector2i.ZERO
 
 
 func _update_plank_preview(
@@ -275,10 +279,10 @@ func _update_plank_preview(
 	for cell in cells:
 		cell_ok.append(placeable_set.has(cell))
 	if placeable.is_empty():
-		cost = 0
+		price = Vector2i.ZERO
 		reasons = _placer.can_place(BuildCosts.PLANK, anchored_run, inventory)
 	else:
-		cost = _placer.cost(BuildCosts.PLANK, placeable)
+		price = _placer.price(BuildCosts.PLANK, placeable)
 		reasons = []
 
 
@@ -292,24 +296,17 @@ func _update_footprint_preview(
 	cells = _placer.footprint_of(kind, anchor, _rotate.quarter_turns)
 	cell_ok.clear()
 	var one: Array[Vector2i] = [anchor]
-	var placeable := false
-	reasons.clear()
-	if cells.is_empty():
-		reasons.append(ConstructionPlacer.EMPTY_CELLS)
-	elif not _interaction.in_reach(anchor):
-		var why := _placer.can_place(kind, one, inventory, _rotate.quarter_turns)
-		if why.is_empty():
-			reasons.append("out of reach")
-		else:
-			reasons = why
-	else:
-		var why := _placer.can_place(kind, one, inventory, _rotate.quarter_turns)
-		placeable = why.is_empty()
-		if not placeable:
-			reasons = why
-	for _i in cells.size():
-		cell_ok.append(placeable)
-	cost = _placer.cost(kind, one) if placeable else 0
+	reasons = _placer.can_place_geometry(kind, one, _rotate.quarter_turns)
+	var clear := reasons.is_empty() and _interaction.in_reach(anchor)
+	var amount := _placer.price(kind, one)
+	var why := BuildCosts.shortage(BuildCosts.balance(inventory), amount)
+	if not why.is_empty():
+		reasons.append(why)
+	elif reasons.is_empty() and not clear:
+		reasons.append("out of reach")
+	cell_ok.resize(cells.size())
+	cell_ok.fill(reasons.is_empty())
+	price = amount if reasons.is_empty() or (clear and amount.y > 0) else Vector2i.ZERO
 
 
 func _plank_run_from_reachable_start() -> Array[Vector2i]:
@@ -422,7 +419,7 @@ func _update_wall_preview(
 	cells = wall_segment(_wall_tip, _has_wall_tip, from_cell, to_cell)
 	cell_ok.clear()
 	if cells.is_empty():
-		cost = 0
+		price = Vector2i.ZERO
 		reasons.clear()
 		if _has_wall_tip:
 			reasons.append("not adjacent")
@@ -436,7 +433,7 @@ func _update_wall_preview(
 	var placeable := reasons.is_empty()
 	for cell in cells:
 		cell_ok.append(placeable and cell in in_reach)
-	cost = _placer.cost(BuildCosts.WALL_BLOCK, in_reach) if placeable else 0
+	price = _placer.price(BuildCosts.WALL_BLOCK, in_reach) if placeable else Vector2i.ZERO
 
 
 func _reachable_wall_run() -> Array[Vector2i]:
@@ -484,7 +481,7 @@ func _preview_inputs_unchanged(
 		return false
 	if _rotate.quarter_turns != _snap_rotation:
 		return false
-	if inventory.count_of(Inventory.WOOD) != _snap_wood:
+	if BuildCosts.balance(inventory) != _snap_balance:
 		return false
 	# Other actors can enter a footprint without changing any tiles.
 	if Engine.get_process_frames() - _snap_frame >= _interaction.world_map.chunk_refresh_frames:
@@ -501,7 +498,7 @@ func _remember_preview_inputs(from_cell: Vector2i, to_cell: Vector2i, inventory:
 	_snap_valid = true
 	_snap_frame = Engine.get_process_frames()
 	_snap_rotation = _rotate.quarter_turns
-	_snap_wood = inventory.count_of(Inventory.WOOD)
+	_snap_balance = BuildCosts.balance(inventory)
 	_snap_player_pos = (
 		_interaction.player.global_position if _interaction.player else Vector2(INF, INF)
 	)

@@ -83,23 +83,31 @@ static func populate_picker(
 		button.set_meta(&"picker_slot", i)
 		button.toggle_mode = true
 		button.theme = theme
-		button.tooltip_text = tip(t)
+		var caption := "Guard" if t == BuildPlacement.Tool.GUARD else tip(t)
+		var kind := footprint_kind(t)
+		if BuildCosts.STONE.has(kind):
+			var amount := BuildCosts.price(kind)
+			var quote := BuildCosts.label(amount)
+			caption += "\n%d wood\n%d stone" % [amount.x, amount.y]
+			button.tooltip_text = tip(t) + " — " + quote
+		else:
+			button.tooltip_text = tip(t)
 		var sprite := "guard" if t == BuildPlacement.Tool.GUARD else tip(t).to_lower()
 		RoundHudStyle.apply_disc(
 			button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, true
 		)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
-		_add_picker_label(button, "Guard" if t == BuildPlacement.Tool.GUARD else tip(t))
+		_add_picker_label(button, caption, 8 if BuildCosts.STONE.has(kind) else 10)
 		picker.add_child(button)
 		buttons[t] = button
 	picker.reset_size()
 
 
-static func _add_picker_label(button: Button, caption: String) -> void:
+static func _add_picker_label(button: Button, caption: String, font_size: int) -> void:
 	var label := Label.new()
 	label.name = "Caption"
-	RoundHudStyle.apply_label(label, 10)
+	RoundHudStyle.apply_label(label, font_size)
 	label.text = caption
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(label)
