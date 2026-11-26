@@ -12,6 +12,7 @@ The in-game menu button (three bars, top right) or Esc opens a Pause panel with 
 - `menu-scores` Scores closes the menu and opens the [points scoreboard](./points-scoreboard.md).
 - `menu-save` Save writes this match's world save (see [Map save files](./map-save.md)) and the status shows `Saved: MM-DD HH:MM`. Saving again replaces that file. A new match gets a new file.
 - `menu-music-volume` The Music volume slider shows the current setting and applies and saves changes immediately for this player. The main menu shares the setting.
+- Admin players see **+100 wood** and **Max resources**. See [Admin resource grants](./admin-grant-resources.md).
 - `menu-leave` Main menu leaves the session and goes back to the main menu.
 - `quit-prompt` `Scripts/shell/quit_prompt.gd`: back or close shows the confirm dialog; nothing is paused.
 

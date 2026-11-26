@@ -45,6 +45,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 
 #### `building/`
 
+- `Scripts/mechanics/building/admin_resource_grants.gd`
 - `Scripts/mechanics/building/build_costs.gd`
 - `Scripts/mechanics/building/build_placement.gd`
 - `Scripts/mechanics/building/build_placement_rotate.gd`

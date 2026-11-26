@@ -15,6 +15,8 @@ const MenuVolume = preload("res://Scripts/shell/menu_volume.gd")
 ## enough to tap, small enough to keep the corner clear.
 const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 
+@export var resource_grants: AdminResourceGrants
+
 @onready var menu_button: Button = $MenuButton
 @onready var panel: Control = $Pause
 @onready var resume_button: Button = $Pause/Panel/Margin/VBox/Resume
@@ -23,6 +25,7 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var scores_button: Button = $Pause/Panel/Margin/VBox/Scores
 @onready var customize_hud_button: Button = $Pause/Panel/Margin/VBox/CustomizeHud
 @onready var map_settings_button: Button = $Pause/Panel/Margin/VBox/MapSettings
+@onready var grant_buttons: HBoxContainer = $Pause/Panel/Margin/VBox/ResourceGrants
 @onready var main_menu_button: Button = $Pause/Panel/Margin/VBox/MainMenu
 @onready var music_volume: HSlider = $Pause/Panel/Margin/VBox/MusicVolumeRow/MusicVolume
 @onready var music_value: Label = $Pause/Panel/Margin/VBox/MusicVolumeRow/MusicValue
@@ -40,6 +43,9 @@ func _ready() -> void:
 	scores_button.pressed.connect(_on_scores_pressed)
 	customize_hud_button.pressed.connect(_on_customize_hud_pressed)
 	map_settings_button.pressed.connect(_on_map_settings_pressed)
+	if resource_grants != null:
+		grant_buttons.get_node("AddWood").pressed.connect(resource_grants.grant.bind(false))
+		grant_buttons.get_node("MaxResources").pressed.connect(resource_grants.grant.bind(true))
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 	MenuVolume.bind_slider(music_volume, music_value, "Music")
 
@@ -61,6 +67,7 @@ func open() -> void:
 	if scoreboard != null and scoreboard.is_open():
 		scoreboard.close()
 	MenuVolume.refresh_slider(music_volume, music_value, "Music")
+	grant_buttons.visible = resource_grants != null and resource_grants.can_grant()
 	panel.show()
 	menu_button.hide()
 	map_settings_button.visible = multiplayer.is_server()
