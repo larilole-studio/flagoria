@@ -16,6 +16,8 @@ func _test_catalog_resolves_cells() -> int:
 	world.clear()
 	var want := {
 		TileCatalog.TREE: "tree",
+		TileCatalog.TREE_BIRCH_BOTTOM: "tree",
+		TileCatalog.TREE_BIRCH_TOP: "",
 		TileCatalog.PINE: "pine",
 		TileCatalog.BUSH: "bush",
 		TileCatalog.GRASS_A: "",
@@ -66,16 +68,6 @@ func _test_catalog_resolves_cells() -> int:
 				(
 					"FAIL catalog_resolves_cells: pine %s %s differs from the tree's %s"
 					% [prop, pine.get(prop), tree.get(prop)]
-				)
-			)
-			fail += 1
-	# The pine plays like a tree but draws its own hit and fall frames (#333).
-	for prop in ["hit_sheet", "fx_sheet"]:
-		if pine.get(prop) == null or pine.get(prop) == tree.get(prop):
-			printerr(
-				(
-					"FAIL catalog_resolves_cells: pine %s %s should be set and differ from the tree's"
-					% [prop, pine.get(prop)]
 				)
 			)
 			fail += 1

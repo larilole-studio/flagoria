@@ -5,13 +5,20 @@
 [ext_resource type="AudioStream" path="res://art/audio/sfx/world/bushes/bush_hit_02.wav" id="3_hit2"]
 [ext_resource type="AudioStream" path="res://art/audio/sfx/world/bushes/bush_hit_03.wav" id="4_hit3"]
 [ext_resource type="AudioStream" path="res://art/audio/sfx/world/bushes/bush_break_01.wav" id="5_break"]
-[ext_resource type="Texture2D" path="res://art/flagoria/fx/bush_hit.png" id="6_hit"]
-[ext_resource type="Texture2D" path="res://art/flagoria/fx/fx_leaves.png" id="7_leaves"]
+[ext_resource type="Script" path="res://Scripts/mechanics/interactables/chop_sprites.gd" id="sprites"]
+[ext_resource type="Texture2D" path="res://art/flagoria/fx/bush_hit.png" id="bush_hit"]
+[ext_resource type="Texture2D" path="res://art/flagoria/fx/fx_leaves.png" id="fx_leaves"]
+
+[sub_resource type="Resource" id="bush_sprites"]
+script = ExtResource("sprites")
+idle_tiles = Array[String](["BUSH"])
+hit_sheet = ExtResource("bush_hit")
+fx_sheet = ExtResource("fx_leaves")
 
 [resource]
 script = ExtResource("1_type")
 id = "bush"
-tiles = Array[String](["BUSH"])
+variants = Array[ExtResource("sprites")]([SubResource("bush_sprites")])
 hits = 2
 yields = Dictionary[StringName, int]({
 &"wood": 1
@@ -20,5 +27,3 @@ leaves = "BUSH_STUMP"
 save_key = "bush"
 hit_sounds = Array[AudioStream]([ExtResource("2_hit1"), ExtResource("3_hit2"), ExtResource("4_hit3")])
 fell_sounds = Array[AudioStream]([ExtResource("5_break")])
-hit_sheet = ExtResource("6_hit")
-fx_sheet = ExtResource("7_leaves")
