@@ -10,7 +10,8 @@ Customize HUD opens the same editor from [main-menu Settings](./settings-client.
 
 - `hud-customize-entry` Customize HUD sits in the in-game menu and opens edit mode (the drive opens the menu; headless saves use `-- test_hud_layout_round_trip`).
 - `hud-customize-save` Save and load round-trip in user settings (`-- test_hud_layout_round_trip` in `tests/ui/test_hud_layout.gd`).
-- `hud-customize-clamp` Off-screen positions clamp; overlaps are rejected (`-- test_hud_layout_clamp_overlap`). The edit bar stays inside the viewport on phone and desktop sizes (`-- test_hud_edit_bar_viewport_sizes`). While controls move, the bar never flashes to the top inset (`-- test_hud_edit_bar_stable_during_drag`).
+- `hud-customize-clamp` Off-screen positions clamp; overlaps are rejected (`-- test_hud_layout_clamp_overlap`). The edit bar stays inside the viewport on phone and desktop sizes (`-- test_hud_edit_bar_viewport_sizes`). The top-inset regression remains covered by `-- test_hud_edit_bar_stable_during_drag`.
+- `hud-customize-toolbar` The toolbar stays visible and holds its position and size while dragging or resizing. From each entry point, the live drive samples the toolbar's visibility and global rect on 24 held drag frames and 12 slider resize frames. After each release, it checks that the toolbar is fully on screen and clear of the control visuals.
 - `hud-customize-reset` Reset clears the saved file and brings back HudToolRow defaults (`-- test_hud_layout_reset`).
 - `hud-customize-wheel` The wheel button moves and resizes, saves, and reloads the same place and scale. Reset puts it back inward of Attack, below Run. A save that has `mode` and no wheel id loads, and the arc from the moved button stays on screen (`-- test_hud_layout_wheel_slot` and `-- test_hud_layout_legacy_mode`).
 - `hud-customize-edit-guard` In edit mode HUD buttons do not open map, buildings, mode, attack, run, or move the stick (`-- test_hud_layout_edit_blocks_map` and the drive tap on Map).
@@ -26,7 +27,7 @@ Preconditions: `doctor.sh` exits `0`. Time cost: the `tests/ui/test_hud_layout.g
 
 - **Run.** `./tools/verify.sh`, or `godot --headless --path . --script res://tests/run_tests.gd -- --only=hud_layout_round_trip,hud_layout_clamp_overlap,hud_layout_reset,hud_layout_edit_blocks_map`.
 - **Proof.** Headers for the four `test_hud_layout_*` cases with no `FAIL` after them.
-- **Drive (live).** `bin/launch.sh drives/hud_customize.gd --seed 49 --display`. Snapshots: `default-layout`, `edit-mode`, `moved-control` (attack and Map moved; edit bar clear of every control visual rect), `moved-wheel` (wheel button moved and resized), `no-overlap`, `after-save-restart`, `wheel-open` (half-moon on screen from the saved spot), `reset-layout`.
+- **Drive (live).** `bin/launch.sh drives/hud_customize.gd --seed 49 --display`. The `settings-toolbar-drag` and `match-toolbar-drag` screenshots show the toolbar and slider while Attack is held. Their `-toolbar-released` counterparts show the toolbar clear of the controls. Other snapshots: `default-layout`, `edit-mode`, `moved-control` (attack and Map moved; edit bar clear of every control visual rect), `moved-wheel` (wheel button moved and resized), `no-overlap`, `after-save-restart`, `wheel-open` (half-moon on screen from the saved spot), `reset-layout`.
 
 ## Gotchas
 

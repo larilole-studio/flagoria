@@ -19,9 +19,12 @@ var _drag_id := ""
 var _drag_offset := Vector2.ZERO
 var _paused := false
 var _touches: Dictionary = {}
+var _touch_editing := false
+var _slider_dragging := false
 var _pinch_distance := 0.0
 var _pinch_base_scale := 1.0
 var _relayout_bar_queued := false
+var _bar_sizing := false
 
 @onready var _top_bar: PanelContainer = $TopBar
 @onready var _save: Button = $TopBar/Margin/Row/Save
@@ -46,6 +49,8 @@ func _ready() -> void:
 	_size_slider.max_value = SCALE_MAX
 	_size_slider.step = 0.05
 	_size_slider.value_changed.connect(_on_slider)
+	_size_slider.drag_started.connect(func() -> void: _slider_dragging = true)
+	_size_slider.drag_ended.connect(func(_value_changed: bool) -> void: _slider_dragging = false)
 	_size_slider.editable = false
 
 
@@ -68,13 +73,19 @@ func open(preview := false) -> void:
 	var menu := get_parent()
 	menu.get_node("Pause").hide()
 	menu.menu_button.hide()
-	await _relayout_edit_bar(layer)
+	await relayout_bar()
 
 
 func relayout_bar() -> void:
 	var layer := _layer()
-	if layer != null:
-		await _relayout_edit_bar(layer)
+	if layer == null or _bar_sizing:
+		return
+	if _touch_editing or _slider_dragging:
+		_queue_bar_relayout()
+		return
+	_bar_sizing = true
+	await _relayout_edit_bar(layer)
+	_bar_sizing = false
 
 
 func close_editor() -> void:
@@ -94,6 +105,8 @@ func close_editor() -> void:
 	var menu := get_parent()
 	menu.close()
 	_touches.clear()
+	_touch_editing = false
+	_slider_dragging = false
 	_drag_id = ""
 	_pinch_distance = 0.0
 	_relayout_bar_queued = false
@@ -156,11 +169,18 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 	var view := get_viewport().get_visible_rect().size
 	var max_w := view.x - BAR_EDGE_INSET * 2.0
 	while true:
-		var sz := _bar_measured_size()
-		if sz.x <= max_w or not _shrink_bar_for_width(max_w, sz):
+		var sz := _top_bar.get_combined_minimum_size()
+		if sz.x <= max_w or not _shrink_bar_for_width():
 			_top_bar.size = sz
 			break
 		await get_tree().process_frame
+	if visible:
+		_dock_edit_bar(layer)
+
+
+func _dock_edit_bar(layer: CanvasLayer) -> void:
+	# Keep sizing separate from docking so a completed gesture can settle in one frame.
+	var view := get_viewport().get_visible_rect().size
 	var sz := _top_bar.size
 	var floor_y := view.y * 0.55
 	var status_rect := _status_row_rect(layer)
@@ -170,6 +190,7 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 	)
 	var joy: Rect2 = _hl().control_visual_rect("joystick", layer)
 	var atk: Rect2 = _hl().control_visual_rect("attack", layer)
+	var map: Rect2 = _hl().control_visual_rect("map", layer)
 	var slot_left: float = (
 		joy.end.x + BAR_EDGE_INSET if joy.size != Vector2.ZERO else BAR_EDGE_INSET
 	)
@@ -178,19 +199,6 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 	)
 	var slot_w := maxf(0.0, slot_right - slot_left)
 	var bar_w := sz.x
-	if slot_w > 0.0 and slot_w < bar_w:
-		bar_w = maxf(slot_w, 140.0)
-		if bar_w < sz.x:
-			_top_bar.custom_minimum_size = Vector2(bar_w, 0.0)
-			if bar_w < 200.0:
-				_size_label.visible = false
-				_size_slider.visible = false
-			await get_tree().process_frame
-			sz = _top_bar.get_combined_minimum_size()
-			sz.x = bar_w
-			_top_bar.size = sz
-	bar_w = _top_bar.size.x
-	sz = _top_bar.size
 	var bottom_y := view.y - sz.y - BAR_EDGE_INSET
 	var candidates: Array[Vector2] = []
 	if slot_w >= bar_w * 0.85:
@@ -203,6 +211,7 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 				Vector2(view.x - bar_w - BAR_EDGE_INSET, bottom_y),
 				Vector2(BAR_EDGE_INSET, maxf(floor_y, bottom_y)),
 				Vector2(BAR_EDGE_INSET, below_status_y),
+				Vector2(BAR_EDGE_INSET, maxf(below_status_y, map.end.y + BAR_EDGE_INSET)),
 			]
 		)
 	)
@@ -213,20 +222,16 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 	var bar_size := _top_bar.size
 	var best_pos := _clamp_bar_position(candidates[0], bar_size, view)
 	var best_score := INF
-	var zero_pos: Variant = null
 	for pos in candidates:
 		var clamped := _clamp_bar_position(pos, bar_size, view)
+		if clamped.y == BAR_EDGE_INSET and below_status_y > BAR_EDGE_INSET:
+			continue
 		var score := _bar_overlap_score(layer, Rect2(clamped, bar_size))
-		if score == 0.0:
-			zero_pos = clamped
-			break
 		if score < best_score:
 			best_score = score
 			best_pos = clamped
-	if zero_pos != null:
-		best_pos = zero_pos
-	# Keep the same fallback as before the scores disc was removed: a zero-overlap
-	# candidate at the top inset is still replaced so the bar sits below the status row.
+			if score == 0.0:
+				break
 	if best_score > 0.0:
 		var clear_y := BAR_EDGE_INSET
 		if status_rect.size != Vector2.ZERO:
@@ -239,12 +244,11 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 			and Rect2(clear_x, clear_y, bar_size.x, bar_size.y).intersects(status_rect)
 		):
 			clear_x = status_rect.end.x + BAR_EDGE_INSET
-		best_pos = _clamp_bar_position(Vector2(clear_x, clear_y), bar_size, view)
-		best_score = _bar_overlap_score(layer, Rect2(best_pos, bar_size))
-	_top_bar.global_position = _clamp_bar_position(best_pos, bar_size, view)
-	await get_tree().process_frame
-	if visible:
-		_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
+		var fallback := _clamp_bar_position(Vector2(clear_x, clear_y), bar_size, view)
+		if _bar_overlap_score(layer, Rect2(fallback, bar_size)) < best_score:
+			best_pos = fallback
+	_top_bar.global_position = best_pos
+	_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
 
 
 func _status_row_rect(layer: CanvasLayer) -> Rect2:
@@ -265,32 +269,18 @@ func _status_row_rect(layer: CanvasLayer) -> Rect2:
 	return row
 
 
-func _bar_measured_size() -> Vector2:
-	var sz := _top_bar.get_combined_minimum_size()
-	if _top_bar.size.y > 0.0:
-		sz.y = maxf(sz.y, _top_bar.size.y)
-	if _top_bar.size.x > 0.0:
-		sz.x = maxf(sz.x, _top_bar.size.x)
-	return sz
-
-
-func _shrink_bar_for_width(max_w: float, sz: Vector2) -> bool:
-	if sz.x <= max_w:
-		return false
+func _shrink_bar_for_width() -> bool:
+	if _selected_label.custom_minimum_size.x > SELECTED_LABEL_MIN_NARROW:
+		_selected_label.custom_minimum_size.x = SELECTED_LABEL_MIN_NARROW
+		return true
 	if _size_slider.visible:
 		_size_label.visible = false
 		_size_slider.visible = false
 		return true
-	if _selected_label.custom_minimum_size.x > SELECTED_LABEL_MIN_NARROW:
-		_top_bar.custom_minimum_size = Vector2(max_w, 0.0)
-		_selected_label.custom_minimum_size.x = SELECTED_LABEL_MIN_NARROW
-		return true
 	if _selected_label.custom_minimum_size.x > 0.0:
 		_selected_label.custom_minimum_size.x = 0.0
-		_top_bar.custom_minimum_size = Vector2(max_w, 0.0)
 		return true
-	_top_bar.custom_minimum_size = Vector2(max_w, 0.0)
-	return _top_bar.get_combined_minimum_size().x > max_w
+	return false
 
 
 func _clamp_bar_position(pos: Vector2, bar_size: Vector2, view: Vector2) -> Vector2:
@@ -317,7 +307,7 @@ func _bar_overlap_score(layer: CanvasLayer, bar: Rect2) -> float:
 
 
 func _input(event: InputEvent) -> void:
-	if not visible:
+	if not visible or _bar_sizing:
 		return
 	var layer := _layer()
 	if layer == null:
@@ -338,8 +328,11 @@ func _input(event: InputEvent) -> void:
 			_touches.erase(touch.index)
 			if touch.index == 0 or _touches.is_empty():
 				_drag_id = ""
+			if _touches.is_empty():
+				_touch_editing = false
 			_pinch_distance = 0.0
 		if _touches.size() == 2 and _selected != "":
+			_touch_editing = true
 			var pts: Array = _touches.values()
 			_pinch_distance = (pts[0] as Vector2).distance_to(pts[1] as Vector2)
 			var entry: Dictionary = _hl().get_entry(_selected)
@@ -368,6 +361,7 @@ func _begin_drag(pos: Vector2, layer: CanvasLayer) -> void:
 		return
 	_selected = id
 	_drag_id = id
+	_touch_editing = true
 	var rect: Rect2 = _hl().control_hit_rect(id, layer)
 	_drag_offset = pos - rect.position
 	var entry: Dictionary = _hl().get_entry(id)
@@ -432,7 +426,7 @@ func _on_reset() -> void:
 	_drag_id = ""
 	_size_slider.editable = false
 	_selected_label.text = "Default layout restored · tap a control"
-	call_deferred("relayout_bar")
+	_queue_bar_relayout()
 
 
 func _on_done() -> void:
@@ -458,11 +452,11 @@ func _pick_control(pos: Vector2, layer: CanvasLayer) -> String:
 func _process(_delta: float) -> void:
 	if visible and DisplayServer.get_name() != "headless":
 		queue_redraw()
-	if _relayout_bar_queued and visible and DisplayServer.get_name() != "headless":
+	if _relayout_bar_queued and visible and not (_touch_editing or _slider_dragging or _bar_sizing):
 		_relayout_bar_queued = false
 		var layer := _layer()
 		if layer != null:
-			_relayout_edit_bar(layer)
+			_dock_edit_bar(layer)
 
 
 func _draw() -> void:
