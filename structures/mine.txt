@@ -8,11 +8,10 @@ legend:
   R = WALL_H
   T = TOWER_WOOD_POST
   W = TOWER_WOOD_WALL
-  s = SAND
 ground:
-  sss
-  sss
-  sss
+  ...
+  ...
+  ...
 object:
   RRR
   TWT
