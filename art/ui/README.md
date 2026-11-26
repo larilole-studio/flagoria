@@ -3,33 +3,27 @@
 `main_menu_theme.tres` styles the main menu: pixel font, button, line-edit and
 slider styles, and a banded backdrop, all in the game palette.
 
-## Candy Glass HUD
+## Match HUD
+
+The generator and `RoundHudStyle` share `DENSITY = 4` texture pixels per
+logical HUD unit. Godot draws the HUD at device resolution through the
+existing fractional `canvas_items` stretch. HUD sprites and Lilita One
+labels use linear filtering with mipmaps. The map panel and pixel-art world
+retain nearest filtering.
+
+The floating status row uses Candy Glass stickers for hearts, resources, and
+scores. The two heart loss-flash frames last about 60 ms each. The flash is
+separate from the player's invulnerability blink.
+
+### Sage soft-shadow HUD discs
+
+In-match buttons and the joystick use flat discs with a soft drop shadow.
+The main-menu palette supplies the sage face (`#5F7160`), pressed face
+(`#345A52`), ink edge (`#141B1B`), and off-white icons (`#F2EAF1`).
 
 Run `python3 tools/ui/gen_hud_e4.py` with CairoSVG and Pillow to regenerate
-the transparent sprites in `hud_e4/`. The generator and `RoundHudStyle` share
-`DENSITY = 4` texture pixels per logical HUD unit. Godot draws the HUD at
-device resolution through the existing fractional `canvas_items` stretch.
-HUD sprites and Lilita One labels use linear filtering with mipmaps. The map
-panel and pixel-art world retain nearest filtering.
-
-The floating status row aligns half-step hearts, star and points, log and
-wood count, and a trophy sticker. The two loss-flash frames last about
-60 ms each. The flash is separate from the player's invulnerability blink.
-
-### HUD button style exploration
-
-Candy Glass (`current`, `hud_e4/`) is the default in
-`RoundHudStyle.SELECTED`. Set `FLAGORIA_HUD_STYLE` before launch to preview
-`sage`, `sage-light`, `deep`, `role`, `shadow`, or `ghost`. Sage, Sage
-light, Deep teal, and Role colours use the main menu palette on the
-Soft-shadow sand disc. Ghost uses a transparent center and a gold and ink
-ring. Empty and unknown values use Candy Glass. Buttons and joystick use
-linear filtering with mipmaps. Hearts and resource stickers keep their
-Candy Glass sprites.
-
-Run `python3 tools/ui/gen_hud_styles.py` with CairoSVG and Pillow to regenerate
-the [variant sprites](hud_styles/). Run `python3 tools/ui/compare_hud_styles.py`
-to generate the [match, state, and main-menu comparisons](../../docs/evidence/hud-button-styles/).
+the discs and stickers in `hud_e4/`. The standalone stone sticker is kept
+as a source PNG in the same folder.
 
 ## Map panel
 
@@ -45,7 +39,7 @@ recentres on the hero, and X closes the sheet.
 
 ## Touch controls
 
-The frosted move stick uses a 56-unit base and a 24-unit pink knob. The
+The sage move stick uses a 56-unit base and a 24-unit knob. The
 40-unit Attack sprite is scaled to the joystick's diameter and switches
 between idle, pressed, aim and disabled frames. `RoundHudStyle` supplies both
 controls' textures. The aim cone is drawn with the `AimConeStyle` resource
@@ -59,7 +53,7 @@ controls' textures. The aim cone is drawn with the `AimConeStyle` resource
   non-antialiased, unhinted rendering so glyphs stay crisp at integer scale.
 - Everything else in the theme (style boxes, gradients) is defined directly in
   the `.tres` file and is original to this project.
-- Candy Glass HUD sprites are original project art under `LICENSE.md`.
+- Match HUD discs and stickers are original project art under `LICENSE.md`.
 - Lilita One is bundled under the SIL Open Font License 1.1. See
   [the font licence](fonts/OFL.txt).
 

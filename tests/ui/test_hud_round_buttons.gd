@@ -196,22 +196,11 @@ func _face(button: Button, state: String) -> Texture2D:
 
 func _test_hud_button_styles() -> int:
 	print("-- test_hud_button_styles")
-	var previous := OS.get_environment("FLAGORIA_HUD_STYLE")
-	var had_previous := OS.has_environment("FLAGORIA_HUD_STYLE")
-	OS.unset_environment("FLAGORIA_HUD_STYLE")
-	var current_dir := "res://art/ui/hud_e4/"
-	var current := RoundHudStyle.texture("build_normal")
-	var heart := RoundHudStyle.texture("heart_full")
-	var log_sticker := RoundHudStyle.texture("log")
+	var directory := "res://art/ui/hud_e4/"
 	var ok := (
-		RoundHudStyle.texture_directory() == current_dir
+		RoundHudStyle.texture_directory() == directory
 		and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		and current.get_image().has_mipmaps()
 	)
-	for value in ["", "current", "unknown", "teal", "leaf", "sand", "flat", "sage_light"]:
-		OS.set_environment("FLAGORIA_HUD_STYLE", value)
-		ok = ok and RoundHudStyle.texture("build_normal") == current
-	var variants_ok := true
 	var stems := [
 		"attack_idle",
 		"build_normal",
@@ -225,50 +214,35 @@ func _test_hud_button_styles() -> int:
 		"pick_plank_selected",
 		"rotate_normal",
 	]
-	var textures := [current]
-	var bases := {
-		"sage": Color("#5F7160"),
-		"sage-light": Color("#8D977F"),
-		"deep": Color("#345A52"),
-		"role": Color("#5F7160"),
-		"shadow": Color("#E7D7B1"),
-		"ghost": Color.TRANSPARENT,
-	}
-	for style: String in bases:
-		OS.set_environment("FLAGORIA_HUD_STYLE", style)
-		var directory := "res://art/ui/hud_styles/%s/" % style
-		var complete := true
-		for stem in stems:
-			complete = ResourceLoader.exists(directory + stem + ".png", "Texture2D") and complete
-		if not complete:
-			printerr("FAIL hud_button_styles: missing sprites for ", style)
-			variants_ok = false
+	var sage := Color("#5F7160")
+	for stem: String in stems:
+		var path := directory + stem + ".png"
+		if not ResourceLoader.exists(path, "Texture2D"):
+			printerr("FAIL hud_button_styles: missing ", path)
+			ok = false
 			continue
-		var chosen := RoundHudStyle.texture("build_normal")
-		var source := load(directory + "build_normal.png") as Texture2D
-		var base := RoundHudStyle.texture("joystick_base_normal").get_image()
-		var center := base.get_pixelv(base.get_size() / 2)
-		var expected: Color = bases[style]
-		var style_ok := (
-			RoundHudStyle.texture_directory() == directory
-			and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-			and chosen.get_image().get_data() == source.get_image().get_data()
-			and chosen.get_image().has_mipmaps()
-			and RoundHudStyle.texture("heart_full") == heart
-			and RoundHudStyle.texture("log") == log_sticker
-			and (center.a == 0.0 if style == "ghost" else center.is_equal_approx(expected))
-			and not textures.has(chosen)
-		)
-		if not style_ok:
-			printerr("FAIL hud_button_styles: incorrect texture or filter for ", style)
-		variants_ok = variants_ok and style_ok
-		textures.append(chosen)
-	if had_previous:
-		OS.set_environment("FLAGORIA_HUD_STYLE", previous)
-	else:
-		OS.unset_environment("FLAGORIA_HUD_STYLE")
+		var image := RoundHudStyle.texture(stem).get_image()
+		if not image.has_mipmaps():
+			printerr("FAIL hud_button_styles: missing mipmaps for ", stem)
+			ok = false
+		var sample := image.get_size() / 2
+		if stem == "build_normal":
+			# Sample above the icon on the vertical centreline.
+			sample.y = image.get_height() / 4
+		if stem in ["build_normal", "joystick_base_normal"]:
+			if not image.get_pixelv(sample).is_equal_approx(sage):
+				printerr("FAIL hud_button_styles: wrong face colour for ", stem)
+				ok = false
+	for stem in ["heart_full", "log"]:
+		var sticker := load(directory + stem + ".png") as Texture2D
+		if (
+			sticker == null
+			or sticker.get_image().get_data() != RoundHudStyle.texture(stem).get_image().get_data()
+		):
+			printerr("FAIL hud_button_styles: wrong sticker for ", stem)
+			ok = false
 	if not ok:
-		printerr("FAIL hud_button_styles: Candy Glass default or fallback changed")
-	if ok and variants_ok:
+		printerr("FAIL hud_button_styles: expected sage HUD textures and linear mipmap filtering")
+	else:
 		print("PASS test_hud_button_styles")
-	return 0 if ok and variants_ok else 1
+	return 0 if ok else 1

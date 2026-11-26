@@ -2,8 +2,6 @@ class_name RoundHudStyle
 extends RefCounted
 ## Disc textures and typography for the in-game HUD.
 
-const SELECTED := "current"
-const STYLES := ["sage", "sage-light", "deep", "role", "shadow", "ghost"]
 const HUD := "res://art/ui/hud_e4/"
 const DENSITY := 4
 const FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
@@ -22,10 +20,7 @@ static var _labels: Dictionary[int, LabelSettings] = {}
 
 
 static func texture_directory() -> String:
-	var style := OS.get_environment("FLAGORIA_HUD_STYLE")
-	if not OS.has_environment("FLAGORIA_HUD_STYLE"):
-		style = SELECTED
-	return "res://art/ui/hud_styles/%s/" % style if style in STYLES else HUD
+	return HUD
 
 
 static func button_filter() -> CanvasItem.TextureFilter:
@@ -33,11 +28,7 @@ static func button_filter() -> CanvasItem.TextureFilter:
 
 
 static func texture(sprite: String) -> Texture2D:
-	# Resource and score stickers keep their original textures with every disc style.
-	var sticker := sprite.begins_with("heart_") or sprite.begins_with("scores_")
-	sticker = sticker or sprite in ["log", "stone", "star"]
-	var directory := HUD if sticker else texture_directory()
-	var path := directory + sprite + ".png"
+	var path := HUD + sprite + ".png"
 	if not _textures.has(path):
 		var image := (load(path) as Texture2D).get_image()
 		if not image.has_mipmaps():

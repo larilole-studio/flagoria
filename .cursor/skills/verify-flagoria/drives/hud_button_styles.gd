@@ -1,15 +1,10 @@
+## fixture
 extends "res://.cursor/skills/verify-flagoria/drives/hud_round_buttons.gd"
 ## launch: --seed 49
+## The final capture temporarily blocks HUD input and disables visible buttons.
 
 const ATTACK := "CanvasLayer1/TouchScreenButton"
 const JOYSTICK := "CanvasLayer1/player_joystick"
-
-
-func host_from_menu() -> void:
-	if "--menu-reference" in OS.get_cmdline_user_args():
-		step("main-menu")
-		await snapshot("main-menu")
-	await super.host_from_menu()
 
 
 func run() -> void:
@@ -19,7 +14,6 @@ func run() -> void:
 	var buildings := current_scene.get_node(BUILDINGS) as Button
 	var attack := current_scene.get_node(ATTACK) as TouchScreenButton
 	var stick := current_scene.get_node(JOYSTICK)
-	var wheel := current_scene.get_node(TOOL_BUTTON).get_parent() as ToolWheel
 	var ok := await wait_until(
 		func() -> bool:
 			return (
@@ -41,6 +35,10 @@ func run() -> void:
 	ok = opened and _picker_ok() and ok
 	await snapshot("build-picker")
 	await click(BUILDINGS)
+	var picker_closed := await wait_until(
+		func() -> bool: return not _plank().is_visible_in_tree(), 2.0
+	)
+	ok = picker_closed and ok
 
 	step("pressed")
 	var touch := InputEventScreenTouch.new()
@@ -56,15 +54,30 @@ func run() -> void:
 	Input.parse_input_event(touch)
 	await process_frame
 
-	step("tool-wheel")
-	var key := InputEventAction.new()
-	key.action = &"tool_wheel"
-	key.pressed = true
-	Input.parse_input_event(key)
-	var fan_open := await wait_until(wheel.is_open, 2.0)
-	ok = fan_open and ok
-	await snapshot("tool-wheel")
-	key.pressed = false
-	Input.parse_input_event(key)
-	await process_frame
+	step("disabled")
+	var layer := current_scene.get_node("CanvasLayer1") as CanvasLayer
+	var layout := root.get_node("HudLayout")
+	layout.edit_begin(layer)
+	RoundHudStyle.apply_attack(attack)
+	RoundHudStyle.apply_joystick(stick)
+
+	var disabled_before: Dictionary[Button, bool] = {}
+	for path in [BUILDINGS, RUN_BUTTON, TOOL_BUTTON, MAP_BUTTON, MENU_BUTTON]:
+		var button := current_scene.get_node(path) as Button
+		disabled_before[button] = button.disabled
+		button.disabled = true
+		ok = button.get_draw_mode() == BaseButton.DRAW_DISABLED and ok
+	ok = (
+		attack.texture_normal == RoundHudStyle.texture("attack_disabled")
+		and stick.joystick.texture == RoundHudStyle.texture("joystick_base_disabled")
+		and stick.touch.texture_normal == RoundHudStyle.texture("joystick_knob_disabled")
+		and ok
+	)
+	await snapshot("disabled")
+
+	for button in disabled_before:
+		button.disabled = disabled_before[button]
+	layout.edit_end()
+	RoundHudStyle.apply_attack(attack)
+	RoundHudStyle.apply_joystick(stick)
 	done(ok)

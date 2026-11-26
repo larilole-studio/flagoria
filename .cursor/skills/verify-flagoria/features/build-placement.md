@@ -30,7 +30,7 @@ when a peer connects; every picker tool stays available in multiplayer (#297,
 #497, #498, #527, #528, #556). `update_preview` skips the snap / `can_place` work
 only when the snapped cells, resource balances, player position and map revision are
 unchanged, so a spend, a walk out of reach, or a map change cannot leave a
-stale green preview. The tool wheel and the lilac picker discs use Candy Glass sprites from `art/ui/hud_e4/`.
+stale green preview. The tool wheel and picker use sage discs from `art/ui/hud_e4/`.
 
 For a center-origin Plank drag, leading shore and existing deck stay red.
 Preview and commit use up to 10 consecutive cells from the first reachable
