@@ -1,11 +1,16 @@
 class_name ObjectRemovals
 extends RefCounted
-## Picked-up flowers and destroyed stones on the world map (#198). The map
+## Picked-up flowers and depleted rocks on the world map (#198). The map
 ## keeps wrappers with the same names; TreeCuts.restore skips these entries.
 
 const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 
+## Two hits deplete a rock, yielding two stone once. Removals never respawn.
+const ROCK_HITS := 2
+const ROCK_YIELD := 2
+
 var _removed: Dictionary = {}
+var _rock_hits: Dictionary[Vector2i, int] = {}
 var _map: _WorldMap
 
 
@@ -19,6 +24,7 @@ func has_removed(cell: Vector2i) -> bool:
 
 func clear() -> void:
 	_removed.clear()
+	_rock_hits.clear()
 
 
 func is_empty() -> bool:
@@ -48,9 +54,75 @@ func pick(cell: Vector2i) -> bool:
 	return true
 
 
+func mineable_rock(cell: Vector2i) -> bool:
+	if has_removed(cell):
+		return false
+	if _map.is_drawn(cell):
+		return (
+			_map.get_cell_atlas_coords(_WorldMap.GROUND_DECOR_LAYER, cell) == TileCatalog.STONES
+			and _map.get_cell_source_id(1, cell) == -1
+			and _map.is_walkable_land(cell)
+		)
+	return _map.predict_cell(cell)[1] == TileCatalog.STONES
+
+
+func resolve_mine_hit(interaction: Interaction, cell: Vector2i, miner: Node2D, peer: int) -> void:
+	var reach := Interaction.CHOP_REACH
+	if peer != 1:
+		reach += Interaction.REACH_SLACK
+	if (
+		miner == null
+		or Interaction.player_dead(miner)
+		or not miner.global_position.distance_to(interaction.cell_center(cell)) <= reach
+		or not mineable_rock(cell)
+	):
+		return
+	var depleted := _hit_rock(cell)
+	_rock_impact(cell)
+	if Interaction.multiplayer_on(_map.multiplayer):
+		_map.apply_mine_hit.rpc(cell, depleted)
+	if depleted:
+		var yields := {Inventory.STONE: ROCK_YIELD}
+		if peer == 1:
+			interaction.receive_yields(cell, yields)
+		else:
+			interaction.receive_yields.rpc_id(peer, cell, yields)
+
+
+func apply_mine_hit(cell: Vector2i, depleted: bool) -> void:
+	if depleted:
+		destroy(cell)
+	_rock_impact(cell)
+
+
+func _rock_impact(cell: Vector2i) -> void:
+	var puff := Sprite2D.new()
+	puff.texture = preload(MobCatalog.PUFF_SHEET)
+	puff.hframes = MobCatalog.PUFF_FRAMES
+	puff.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	puff.position = _map.map_to_local(cell)
+	puff.z_index = _map.get_layer_z_index(1) + 2
+	_map.add_child(puff)
+	var effect := puff.create_tween()
+	for frame in MobCatalog.PUFF_FRAMES:
+		effect.tween_callback(puff.set_frame.bind(frame))
+		effect.tween_interval(ChopAction.HIT_FRAME_TIME)
+	effect.tween_callback(puff.queue_free)
+
+
+func _hit_rock(cell: Vector2i) -> bool:
+	## The caller checks that the rock is present; true means this hit depleted it.
+	var hits: int = _rock_hits.get(cell, 0) + 1
+	if hits < ROCK_HITS:
+		_rock_hits[cell] = hits
+		return false
+	_mark_removed(cell)
+	return true
+
+
 func destroy(cell: Vector2i) -> bool:
 	## Destroy the stones on `cell`. False when it holds none or is already gone.
-	if decor_at(cell) != TileCatalog.STONES:
+	if not mineable_rock(cell):
 		return false
 	_mark_removed(cell)
 	return true
@@ -67,6 +139,7 @@ func remove_any(cell: Vector2i) -> bool:
 
 func _mark_removed(cell: Vector2i) -> void:
 	_removed[cell] = true
+	_rock_hits.erase(cell)
 	_map._predict_cache.erase(cell)
 	_map.tree_sprouts().touch(cell)
 	if _map.is_drawn(cell):
@@ -126,12 +199,7 @@ func restore(changes: Dictionary) -> int:
 			var cell = WorldSave.parse_cell(str(key))
 			if cell == null or _removed.has(cell) or not _would_remove(cell):
 				continue
-			_removed[cell] = true
-			_map._predict_cache.erase(cell)
-			_map.tree_sprouts().touch(cell)
-			if _map.is_drawn(cell):
-				_map.erase_cell(1, cell)
-				_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
+			_mark_removed(cell)
 			added += 1
 	return added
 
@@ -180,12 +248,7 @@ func replace_with(cuts: TreeCuts, changes: Dictionary) -> int:
 	return cuts.replace(changes) + replace(changes)
 
 
-func cells_in_arc(
-	origin: Vector2, direction: float, reach: float, arc: float, pick_stones: bool
-) -> Array[Vector2i]:
-	## Walkable cells whose centre lies in the aim arc; stones only when
-	## `pick_stones`, flowers when not.
-	var out: Array[Vector2i] = []
+func pick_flowers_in_arc(origin: Vector2, direction: float, reach: float, arc: float) -> void:
 	var half := arc * 0.5
 	var cell_px: float = float(_map.tile_set.tile_size.x) * _map.global_scale.x
 	var radius := int(ceil(reach / cell_px)) + 1
@@ -198,9 +261,4 @@ func cells_in_arc(
 				continue
 			if absf(angle_difference(direction, offset.angle())) > half:
 				continue
-			if pick_stones:
-				if destroy(cell):
-					out.append(cell)
-			elif pick(cell):
-				out.append(cell)
-	return out
+			pick(cell)

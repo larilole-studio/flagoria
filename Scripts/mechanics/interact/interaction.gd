@@ -3,8 +3,8 @@ extends Node2D
 ## Combat or interact mode. Combat leaves the map to AttackAim.
 ## Interact Cut aims from the attack button (ChopStick): a drag past
 ## DRAG_START sets the cone's direction and its reach, clamped to CHOP_REACH,
-## and a shorter press chops in the facing direction at full reach. Plants
-## in the cone queue. Build gestures are tracked separately from chop.
+## and a shorter press chops in the facing direction at full reach. Plants and rocks
+## queue in the cone. Build gestures are tracked separately from chop.
 ## The host decides cuts, regrowth and sprouts. Named structure, wall and
 ## demolition requests go through StructureRequests.
 
@@ -234,7 +234,7 @@ func choppables_in_rect(rect: Rect2) -> Array[Vector2i]:
 
 
 func choppables_in_sweep() -> Array[Vector2i]:
-	return _chop.plants_in_sweep()
+	return _chop.targets_in_sweep()
 
 
 func _release_drag() -> void:
@@ -247,7 +247,7 @@ func _release_tap() -> void:
 	## not used: cut mode never writes it, and a build drag may have.
 	var facing := _facing_angle()
 	_pick_flowers_in_arc(facing, CHOP_REACH)
-	_chop.enqueue(_chop.plants_toward(facing, CHOP_REACH))
+	_chop.enqueue(_chop.targets_toward(facing, CHOP_REACH))
 
 
 func _facing_angle() -> float:
@@ -275,8 +275,8 @@ func _pick_flowers_in_sweep() -> void:
 func _pick_flowers_in_arc(direction: float, reach: float) -> void:
 	if player == null or mode != Mode.INTERACT:
 		return
-	world_map._object_removals.cells_in_arc(
-		player.global_position, direction, reach, CHOP_ARC, false
+	world_map._object_removals.pick_flowers_in_arc(
+		player.global_position, direction, reach, CHOP_ARC
 	)
 
 

@@ -139,9 +139,9 @@ the same pass as the cuts; a sprout is dropped on a load when the map no
 longer grows that tree on that cell. Joining peers get them in the same cut
 list.
 
-## Picked flowers and destroyed stones
+## Picked flowers and depleted rocks
 
-A cell where a flower was picked up, or walkable stones were destroyed, is a
+A cell where a flower was picked up, or a walkable rock was depleted, is a
 `world.object_changes` entry:
 
 ```json
@@ -273,7 +273,7 @@ so the player can resume or leave. The file is the version 3 gzip above. It
 holds the generation inputs, this peer's tree and bush cuts, plank bridges,
 placed structures and walls, and this peer's player state (position, health,
 wood, stone, score, charted ground). A second save of that same file keeps `created`
-and refreshes `updated`, and the picked flowers and destroyed stones in
+and refreshes `updated`, and the picked flowers and depleted rocks in
 `world.object_changes`. Defeated mobs are not saved.
 
 The new bytes are not written into the existing file. They go to
