@@ -110,32 +110,6 @@ static func apply_disc(
 	button.reset_size()
 
 
-static func apply_pixel_disc(button: Button, icon: Texture2D) -> void:
-	button.focus_mode = Control.FOCUS_NONE
-	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	button.icon = icon
-	button.expand_icon = true
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", 15)
-	button.custom_minimum_size = Vector2(HIT, HIT)
-	var colors := {
-		"normal": Color("#9a79d3"),
-		"hover": Color("#b59ae5"),
-		"pressed": Color("#674790"),
-		"hover_pressed": Color("#7650a9"),
-		"disabled": Color("#746980"),
-	}
-	for state in colors:
-		var face := StyleBoxFlat.new()
-		face.bg_color = colors[state]
-		face.border_color = _PLUM
-		face.set_border_width_all(1)
-		face.set_corner_radius_all(int(SIZE / 2.0))
-		face.set_expand_margin_all((SIZE - HIT) * 0.5)
-		button.add_theme_stylebox_override(state, face)
-	button.reset_size()
-
-
 static func refresh_toggle(button: Button, highlighted := false) -> void:
 	if not button.has_meta(&"hud_e4_boxes"):
 		return

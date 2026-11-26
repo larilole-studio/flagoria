@@ -93,12 +93,9 @@ static func populate_picker(
 		else:
 			button.tooltip_text = tip(t)
 		var sprite := "guard" if t == BuildPlacement.Tool.GUARD else tip(t).to_lower()
-		if t == BuildPlacement.Tool.MINE:
-			RoundHudStyle.apply_pixel_disc(button, MineCart.parked_texture())
-		else:
-			RoundHudStyle.apply_disc(
-				button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, true
-			)
+		RoundHudStyle.apply_disc(
+			button, "pick_" + sprite, RoundHudStyle.HIT, RoundHudStyle.SIZE, true
+		)
 		var captured: BuildPlacement.Tool = t
 		button.pressed.connect(func() -> void: on_select.call(captured))
 		_add_picker_label(button, caption, 8 if BuildCosts.STONE.has(kind) else 10)
