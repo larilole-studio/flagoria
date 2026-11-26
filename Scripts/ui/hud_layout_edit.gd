@@ -2,6 +2,8 @@ extends Control
 ## Customize HUD: drag and resize the touch controls over the live HUD.
 ## Solo play pauses the tree; in multiplayer only this peer's view changes.
 
+signal closed
+
 const LAYER_PATH := "/root/Flagoria/CanvasLayer1"
 const SCALE_MIN := 1.0
 const SCALE_MAX := 1.75
@@ -11,14 +13,7 @@ const BAR_PAD := 2.0
 const SELECTED_LABEL_MIN_WIDE := 120.0
 const SELECTED_LABEL_MIN_NARROW := 72.0
 
-@onready var _top_bar: PanelContainer = $TopBar
-@onready var _save: Button = $TopBar/Margin/Row/Save
-@onready var _reset: Button = $TopBar/Margin/Row/Reset
-@onready var _done: Button = $TopBar/Margin/Row/Done
-@onready var _size_slider: HSlider = $TopBar/Margin/Row/SizeSlider
-@onready var _size_label: Label = $TopBar/Margin/Row/SizeLabel
-@onready var _selected_label: Label = $TopBar/Margin/Row/Selected
-
+var _preview := false
 var _selected := ""
 var _drag_id := ""
 var _drag_offset := Vector2.ZERO
@@ -27,6 +22,14 @@ var _touches: Dictionary = {}
 var _pinch_distance := 0.0
 var _pinch_base_scale := 1.0
 var _relayout_bar_queued := false
+
+@onready var _top_bar: PanelContainer = $TopBar
+@onready var _save: Button = $TopBar/Margin/Row/Save
+@onready var _reset: Button = $TopBar/Margin/Row/Reset
+@onready var _done: Button = $TopBar/Margin/Row/Done
+@onready var _size_slider: HSlider = $TopBar/Margin/Row/SizeSlider
+@onready var _size_label: Label = $TopBar/Margin/Row/SizeLabel
+@onready var _selected_label: Label = $TopBar/Margin/Row/Selected
 
 
 func _ready() -> void:
@@ -50,14 +53,15 @@ func _hl() -> Node:
 	return get_node("/root/HudLayout")
 
 
-func open() -> void:
+func open(preview := false) -> void:
 	var layer := _layer()
 	if layer == null:
 		return
+	_preview = preview
 	show()
 	_selected = ""
 	_size_slider.editable = false
-	_selected_label.text = "Tap a HUD control · drag · pinch"
+	_selected_label.text = "Drag a HUD control"
 	_hl().edit_begin(layer)
 	_hl().apply(layer)
 	_set_pause(_should_pause_game())
@@ -74,6 +78,8 @@ func relayout_bar() -> void:
 
 
 func close_editor() -> void:
+	if not visible:
+		return
 	var layer := _layer()
 	_hl().edit_end()
 	if layer != null:
@@ -86,7 +92,12 @@ func close_editor() -> void:
 	_set_pause(false)
 	hide()
 	var menu := get_parent()
-	menu.menu_button.show()
+	menu.close()
+	_touches.clear()
+	_drag_id = ""
+	_pinch_distance = 0.0
+	_relayout_bar_queued = false
+	closed.emit()
 
 
 func _set_pause(on: bool) -> void:
@@ -98,7 +109,7 @@ func _set_pause(on: bool) -> void:
 
 func _should_pause_game() -> bool:
 	## Solo play pauses live matches, not headless CI, verify, or feature drives.
-	if DisplayServer.get_name() == "headless":
+	if _preview or DisplayServer.get_name() == "headless":
 		return false
 	if OS.get_environment("FLAGORIA_VERIFY_RUN") != "":
 		return false
@@ -232,7 +243,8 @@ func _relayout_edit_bar(layer: CanvasLayer) -> void:
 		best_score = _bar_overlap_score(layer, Rect2(best_pos, bar_size))
 	_top_bar.global_position = _clamp_bar_position(best_pos, bar_size, view)
 	await get_tree().process_frame
-	_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
+	if visible:
+		_hl().set_edit_exclusion(_top_bar.get_global_rect().grow(BAR_PAD))
 
 
 func _status_row_rect(layer: CanvasLayer) -> Rect2:
@@ -425,7 +437,6 @@ func _on_reset() -> void:
 
 func _on_done() -> void:
 	close_editor()
-	get_parent().close()
 
 
 func _pick_control(pos: Vector2, layer: CanvasLayer) -> String:

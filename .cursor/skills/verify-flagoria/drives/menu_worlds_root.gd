@@ -51,6 +51,15 @@ func visit(button: String, view: String, label := "") -> bool:
 		var control := current_scene.get_node_or_null(path) as Control
 		if (control != null and control.is_visible_in_tree()) != (path == view):
 			return _fail("expected only %s after pressing %s" % [view, button])
+	if (
+		view == SETTINGS_VIEW
+		and not (
+			current_scene
+			. get_node(SETTINGS_VIEW + "/Scroll/SettingsRows/CustomizeHud")
+			. is_visible_in_tree()
+		)
+	):
+		return _fail("Settings did not show Customize HUD")
 	if not label.is_empty():
 		await snapshot(label)
 	return true

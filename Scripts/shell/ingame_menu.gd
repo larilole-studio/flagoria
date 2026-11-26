@@ -87,9 +87,13 @@ func close() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Only during a match: the HUD layer is hidden on the main menu.
 	if is_visible_in_tree() and event.is_action_pressed("ui_cancel"):
-		close() if is_open() else open()
+		if hud_layout_edit.visible:
+			hud_layout_edit.close_editor()
+		elif is_open():
+			close()
+		else:
+			open()
 		get_viewport().set_input_as_handled()
 
 

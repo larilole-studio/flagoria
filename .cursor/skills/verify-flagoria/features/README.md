@@ -87,7 +87,8 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Walls and bridges](./walls-and-bridges.md) — wall solver and plank bridges, live via the build picker.
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).
 - [Audio](./audio.md) — buses, music, combat, UI and mob SFX, footsteps, `audio_check` gate.
-- [Main menu](./main-menu.md) — menu theme, volume and gameplay settings, letter keyboard.
+- [Main menu](./main-menu.md) — menu theme, menu navigation and letter keyboard.
+- [Client settings](./settings-client.md) — audio and HUD preview in Settings, host gameplay options in Worlds.
 - [Main menu navigation](./menu-worlds-root.md) — Worlds, Multiplayer, Settings and Back (#708).
 - [Saved servers](./saved-servers.md) — reuse and remove addresses from successful multiplayer connections.
 - [Saved worlds](./saved-worlds.md) — main-menu list of every save, load, a new world in its own file, delete with a confirm.
@@ -98,7 +99,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Touch controls](./touch-controls.md) — joystick hold, Candy Glass attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
 - [Round HUD buttons](./hud-round-buttons.md) — Map beside Menu opens parchment, Attack mirrored from the joystick, Run and the tool wheel around Attack, Buildings beside the cluster with two picker rings over a dimmed playfield, map panel clear of the controls (#480).
-- [Customize HUD layout](./hud-customize.md) — in-game menu edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
+- [Customize HUD layout](./hud-customize.md) — Settings preview and in-game edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.
 - [Structure placement](./structure-placement.md) — place `castle.txt`, `tower_wood.txt`, `guard_post.txt` or `barracks.txt` at an anchor cell; refusal reasons, kept on redraw, a placed stump does not regrow; the host places the starting castle directly, clients use `StructureRequests`, joiners receive the host list.
 - [Starting castle](./start-castle.md) — each player's castle next to the spawn, player starts outside the gate; placed by the host while alone, sent to joining peers.
