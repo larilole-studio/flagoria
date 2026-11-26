@@ -120,6 +120,9 @@ func _worlds_panel() -> PanelContainer:
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(status)
+	# Confirm, rename and status sit under the title, not under the list, so
+	# the letter keyboard does not cover Yes/Confirm.
+	box.move_child(body, box.get_child_count() - 1)
 	menu.get_parent().add_child(panel)
 	return panel
 

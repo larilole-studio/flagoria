@@ -5,8 +5,8 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 const WORLDS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton"
 const MAIN_MENU_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MainMenu"
 const STATUS := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/Status"
-const LIST := "CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List"
-const LOAD := "CanvasLayer2/WorldsPanel/Margin/VBox/Buttons/Load"
+const LIST := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List"
+const LOAD := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Actions/Load"
 const ATTACK := "CanvasLayer1/TouchScreenButton"
 const DECOR := 2
 const PHONE_W := 854

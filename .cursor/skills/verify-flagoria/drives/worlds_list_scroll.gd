@@ -3,10 +3,10 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Worlds list scroll evidence at 1280x720 and 2400x1080 with touch drag.
 
 const WORLDS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton"
-const SCROLL := "CanvasLayer2/WorldsPanel/Margin/VBox/Scroll"
+const SCROLL := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll"
 const LIST := SCROLL + "/List"
 const SAVE_COUNT := 14
-const WORLDS_BACK := "CanvasLayer2/WorldsPanel/Margin/VBox/Back"
+const WORLDS_BACK := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Actions/Back"
 
 
 func run() -> void:
