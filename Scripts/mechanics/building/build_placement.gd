@@ -6,8 +6,6 @@ enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS, DEMOLISH, MINE }
 
 const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 
-const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
-
 var tool := Tool.CUT
 var cells: Array[Vector2i] = []  ## snapped run or footprint
 var cell_ok: Array[bool] = []  ## parallel to cells: green iff commit will place
@@ -212,8 +210,9 @@ func draw_preview(ci: Node2D) -> void:
 		return
 	BuildPreview.draw_cells(ci, _interaction, cells, cell_ok)
 	if is_footprint_tool(tool) and _snap_valid and cells.size() > 0:
-		var mark: Vector2 = ci.to_local(_interaction.cell_center(_snap_from))
-		_FootprintOrientation.draw_at(ci, mark, _rotate.quarter_turns)
+		BuildPreview.draw_footprint(
+			ci, _interaction, cells[0], _snap_from, tool, _rotate.quarter_turns
+		)
 	var label := ", ".join(PackedStringArray(reasons))
 	if tool == Tool.DEMOLISH and reasons.is_empty():
 		label = BuildCosts.label(price, "+")
