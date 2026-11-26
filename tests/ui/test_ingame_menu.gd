@@ -364,6 +364,25 @@ func _test_quit_prompt_on_back() -> int:
 		printerr("FAIL quit_prompt_on_back: Multiplayer back did not return to the root")
 		fail += 1
 
+	top.get_node("SettingsButton").pressed.emit()
+	var settings: Control = scene.get_node("CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout")
+	settings.get_node("Scroll/SettingsRows/CustomizeHud").pressed.emit()
+	var editor: Control = scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
+	var opened := editor.is_visible_in_tree()
+	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	if (
+		not opened
+		or editor.is_visible_in_tree()
+		or not settings.is_visible_in_tree()
+		or prompt.is_open()
+	):
+		printerr("FAIL quit_prompt_on_back: HUD editor back did not return to Settings")
+		fail += 1
+	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	if settings.is_visible_in_tree() or not top.is_visible_in_tree() or prompt.is_open():
+		printerr("FAIL quit_prompt_on_back: Settings back did not return to the root")
+		fail += 1
+
 	# Main menu: back opens the prompt, a second back closes it.
 	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	if not prompt.is_open() or not quits.is_empty():

@@ -4,7 +4,7 @@ Drive: drives/hud_customize.gd
 Source: Scripts/ui/hud_layout.gd
 Source: Scripts/ui/hud_layout_edit.gd
 
-The in-game menu has a Customize HUD entry. It opens an edit mode over the live touch controls: joystick, attack, run, the tool wheel, Buildings and Map. Layout save version 5 resets older layouts to the defaults. Map sits beside Menu, Attack mirrors the joystick, Run and the tool wheel sit around Attack, and Buildings sits beside that cluster. Solo play pauses while editing; in multiplayer only the local layout changes. Drag moves a control; the size slider or a pinch resizes it between today’s size and 1.75×. Controls stay on screen and cannot overlap. The two-ring picker follows Buildings and opens inward. If obstructed, it tries the other side, then increases both radii together. In cramped layouts, all six discs stay visible and captions can be hidden to fit. The open picker dims the playfield during play. Save writes the layout to user settings on this device (not in world saves). Reset restores the default layout, including the thumb-side wheel button. Positions are stored relative to screen size.
+Customize HUD opens the same editor from [main-menu Settings](./settings-client.md) and the in-game menu. Settings previews the controls before a match starts. During a match the editor uses the live touch controls: joystick, attack, run, the tool wheel, Buildings and Map. Layout save version 5 resets older layouts to the defaults. Map sits beside Menu, Attack mirrors the joystick, Run and the tool wheel sit around Attack, and Buildings sits beside that cluster. Solo play pauses while editing; in multiplayer only the local layout changes. Drag moves a control; the size slider or a pinch resizes it between today’s size and 1.75×. Controls stay on screen and cannot overlap. The two-ring picker follows Buildings and opens inward. If obstructed, it tries the other side, then increases both radii together. In cramped layouts, all six discs stay visible and captions can be hidden to fit. The open picker dims the playfield during play. Save writes the layout to user settings on this device (not in world saves). Reset restores the default layout, including the thumb-side wheel button. Positions are stored relative to screen size.
 
 ## Sub-features
 
@@ -17,6 +17,7 @@ The in-game menu has a Customize HUD entry. It opens an edit mode over the live 
 
 ## How to get to it (user POV)
 
+- Open Settings from the main menu and tap Customize HUD. Drag or resize a control, then select Save to keep the layout. Done or Back returns to Settings.
 - Host a world. Open the in-game menu (top-right or Esc). Tap Customize HUD. Drag a control and adjust size. Save layout, then Done. Open the menu again and Reset to restore defaults.
 
 ## Driving it with verify-flagoria helpers

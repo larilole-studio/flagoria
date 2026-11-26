@@ -4,6 +4,9 @@ extends RefCounted
 const WorldsSaveList = preload("res://Scripts/shell/worlds_save_list.gd")
 const WorldSavePreview = preload("res://Scripts/ui/world_save_preview.gd")
 
+const GameplayPanel = preload("res://Scripts/shell/worlds_gameplay_settings.tscn")
+const MenuGameplaySettings = preload("res://Scripts/shell/menu_gameplay_settings.gd")
+
 var menu: PanelContainer
 
 
@@ -71,7 +74,17 @@ func _worlds_panel() -> PanelContainer:
 	list.fixed_icon_size = WorldSavePreview.ICON_SIZE
 	list.icon_mode = ItemList.ICON_MODE_LEFT
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
+	var empty := Label.new()
+	empty.name = "Empty"
+	empty.text = "No saved worlds"
+	empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	empty.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	empty.offset_top = 12.0
+	list.add_child(empty)
+	var gameplay := GameplayPanel.instantiate()
+	body.add_child(gameplay)
 	# Slim column on the right, bottom-aligned for a landscape thumb.
 	var actions := VBoxContainer.new()
 	actions.name = "Actions"
@@ -89,6 +102,8 @@ func _worlds_panel() -> PanelContainer:
 	_world_button(actions, "Back", _on_worlds_back_pressed).add_to_group("ui_back")
 	for button: Button in actions.get_children():
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size.y = 28
+		button.add_theme_font_size_override("font_size", 14)
 	var confirm := HBoxContainer.new()
 	confirm.name = "Confirm"
 	confirm.visible = false
@@ -124,6 +139,7 @@ func _worlds_panel() -> PanelContainer:
 	# the letter keyboard does not cover Yes/Confirm.
 	box.move_child(body, box.get_child_count() - 1)
 	menu.get_parent().add_child(panel)
+	MenuGameplaySettings.bind_controls(gameplay.get_node("Rows"))
 	return panel
 
 
@@ -152,6 +168,7 @@ func _refresh_worlds() -> void:
 			i, WorldSavePreview.icon_for(menu.get_tree(), str(row["path"]), str(row["name"]))
 		)
 		list.set_item_metadata(i, row["name"])
+	list.get_node("Empty").visible = list.item_count == 0
 
 
 func _selected_world() -> String:

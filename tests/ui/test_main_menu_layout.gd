@@ -6,6 +6,17 @@ const WORLDS := "CanvasLayer2/WorldsPanel/Margin/VBox"
 const MAP_SETTINGS := "CanvasLayer2/MapAdminPanel"
 const MULTIPLAYER := MENU + "/MultiplayerPanel/VBoxContainer"
 const SETTINGS := MENU + "/SettingsPanel/SettingsLayout"
+const EDITOR := "CanvasLayer1/InGameMenu/HudLayoutEdit"
+const GAMEPLAY_ROWS := [
+	"MobRateRow",
+	"TowerRangeRow",
+	"TowerDamageRow",
+	"TowerCooldownRow",
+	"RaidsRow",
+	"RaidIntervalRow",
+	"RaidGroupRow",
+	"RaidRadiusRow",
+]
 
 
 func _test_main_menu_landscape_layout() -> int:
@@ -52,6 +63,11 @@ func check_menu_navigation(scene: Node) -> int:
 		printerr("FAIL main_menu_landscape_layout: Multiplayer Back did not return to the root")
 		return fail + 1
 
+	return fail + await check_settings_navigation(scene, top)
+
+
+func check_settings_navigation(scene: Node, top: Control) -> int:
+	var fail := 0
 	await click_menu_button(top.get_node("SettingsButton"))
 	var settings: Control = scene.get_node(SETTINGS)
 	if (
@@ -63,10 +79,30 @@ func check_menu_navigation(scene: Node) -> int:
 		return fail + 1
 	fail += check_menu_bounds(settings)
 	var scroll: ScrollContainer = settings.get_node("Scroll")
-	var first: Control = scroll.get_node("SettingsRows/MusicVolumeRow")
-	if not scroll.get_global_rect().encloses(first.get_global_rect()):
-		printerr("FAIL main_menu_landscape_layout: scroll does not start at Music")
-		fail += 1
+	var rows: VBoxContainer = scroll.get_node("SettingsRows")
+	for child_name in ["MusicVolumeRow", "SFXVolumeRow", "CustomizeHud"]:
+		var child := rows.get_node_or_null(child_name) as Control
+		if child == null or not scroll.get_global_rect().encloses(child.get_global_rect()):
+			printerr("FAIL main_menu_landscape_layout: Settings does not show %s" % child_name)
+			return fail + 1
+	for row in GAMEPLAY_ROWS:
+		if settings.find_child(row, true, false) != null:
+			printerr("FAIL main_menu_landscape_layout: %s is still in Settings" % row)
+			fail += 1
+	await click_menu_button(rows.get_node("CustomizeHud"))
+	var editor: Control = scene.get_node(EDITOR)
+	if not editor.is_visible_in_tree() or settings.is_visible_in_tree():
+		printerr("FAIL main_menu_landscape_layout: HUD preview did not open")
+		return fail + 1
+	for frame in 5:
+		await process_frame
+	if not editor.bar_fits_viewport():
+		printerr("FAIL main_menu_landscape_layout: HUD toolbar exceeded the viewport")
+		return fail + 1
+	await click_menu_button(editor.get_node("TopBar/Margin/Row/Done"))
+	if editor.is_visible_in_tree() or not settings.is_visible_in_tree():
+		printerr("FAIL main_menu_landscape_layout: HUD Done did not return to Settings")
+		return fail + 1
 	await click_menu_button(settings.get_node("BackButton"))
 	if settings.is_visible_in_tree() or not top.is_visible_in_tree():
 		printerr("FAIL main_menu_landscape_layout: Settings Back did not return to the root")
@@ -88,8 +124,16 @@ func check_worlds_navigation(scene: Node, top: Control) -> int:
 		printerr("FAIL main_menu_landscape_layout: Worlds actions are hidden")
 		fail += 1
 	var scroll: Control = worlds.get_node("Body/Scroll")
-	if scroll.get_global_rect().size.x <= actions.get_global_rect().size.x:
-		printerr("FAIL main_menu_landscape_layout: Worlds list is not wider than the actions")
+	var gameplay: ScrollContainer = worlds.get_node("Body/GameplayScroll")
+	for row in GAMEPLAY_ROWS:
+		if not gameplay.has_node("Rows/" + row):
+			printerr("FAIL main_menu_landscape_layout: Worlds is missing %s" % row)
+			fail += 1
+	if scroll.size.x <= maxf(actions.size.x, gameplay.size.x):
+		printerr("FAIL main_menu_landscape_layout: Worlds list is not the widest column")
+		fail += 1
+	if root.size.x == 2400 and scroll.size.x <= actions.size.x + gameplay.size.x:
+		printerr("FAIL main_menu_landscape_layout: saved worlds use less than half the body")
 		fail += 1
 	if scroll.get_global_rect().size.y < actions.get_global_rect().size.y * 0.8:
 		printerr("FAIL main_menu_landscape_layout: Worlds list is shorter than the actions")

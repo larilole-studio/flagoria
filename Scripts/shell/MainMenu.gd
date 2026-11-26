@@ -1,11 +1,18 @@
 extends PanelContainer
 
+signal new_server_created
+signal new_player_added
+signal new_player_joined(port: int)
+
 const MenuVolume = preload("res://Scripts/shell/menu_volume.gd")
-const MenuGameplaySettings = preload("res://Scripts/shell/menu_gameplay_settings.gd")
 const MenuJoinFlow = preload("res://Scripts/shell/menu_join_flow.gd")
 const MenuWorlds = preload("res://Scripts/shell/menu_worlds.gd")
 
 var letter_keyboard: NumberPad
+var admin_panel: PanelContainer
+var _previewing_hud := false
+var _settings_over_match := false
+var _worlds := MenuWorlds.new(self)
 
 @onready var main_menu = $"."
 @onready var address_entry: LineEdit = %AddressEntry
@@ -18,36 +25,14 @@ var letter_keyboard: NumberPad
 @onready var sfx_volume: HSlider = %SettingsRows/SFXVolumeRow/SFXVolume
 @onready var music_value: Label = %SettingsRows/MusicVolumeRow/MusicValue
 @onready var sfx_value: Label = %SettingsRows/SFXVolumeRow/SFXValue
-@onready var mob_rate: HSlider = %SettingsRows/MobRateRow/MobRate
-@onready var mob_rate_value: Label = %SettingsRows/MobRateRow/MobRateValue
-@onready var tower_range: HSlider = %SettingsRows/TowerRangeRow/TowerRange
-@onready var tower_range_value: Label = %SettingsRows/TowerRangeRow/TowerRangeValue
-@onready var tower_damage: HSlider = %SettingsRows/TowerDamageRow/TowerDamage
-@onready var tower_damage_value: Label = %SettingsRows/TowerDamageRow/TowerDamageValue
-@onready var tower_cooldown: HSlider = %SettingsRows/TowerCooldownRow/TowerCooldown
-@onready var tower_cooldown_value: Label = %SettingsRows/TowerCooldownRow/TowerCooldownValue
-@onready var raids_enabled: CheckButton = %SettingsRows/RaidsRow/RaidsEnabled
-@onready var raid_interval: HSlider = %SettingsRows/RaidIntervalRow/RaidInterval
-@onready var raid_interval_value: Label = %SettingsRows/RaidIntervalRow/RaidIntervalValue
-@onready var raid_group: HSlider = %SettingsRows/RaidGroupRow/RaidGroup
-@onready var raid_group_value: Label = %SettingsRows/RaidGroupRow/RaidGroupValue
-@onready var raid_radius: HSlider = %SettingsRows/RaidRadiusRow/RaidRadius
-@onready var raid_radius_value: Label = %SettingsRows/RaidRadiusRow/RaidRadiusValue
-
-var admin_panel: PanelContainer
-var _settings_over_match := false
-var _worlds := MenuWorlds.new(self)
-
-signal new_server_created
-signal new_player_added
-signal new_player_joined(port: int)
+@onready var hud_editor: Control = ux_layer.get_node("InGameMenu/HudLayoutEdit")
 
 
 func _ready() -> void:
 	var music = get_node("/root/MusicPlayer")
 	music.play(music.MENU_TRACK)
 	MenuVolume.bind_controls(self)
-	MenuGameplaySettings.bind_controls(self)
+	hud_editor.closed.connect(_on_hud_preview_closed)
 	# The join address is typed on the in-game letter keyboard, not the OS one.
 	letter_keyboard = preload("res://Scripts/ui/number_pad.tscn").instantiate()
 	letter_keyboard.name = "LetterKeyboard"
@@ -144,6 +129,23 @@ func _on_settings_back_pressed() -> void:
 	play_panel.show()
 
 
+func _on_customize_hud_pressed() -> void:
+	settings_panel.hide()
+	_previewing_hud = true
+	ux_layer.layer = get_parent().layer + 1
+	hud_editor.open(true)
+	ux_layer.show()
+
+
+func _on_hud_preview_closed() -> void:
+	if not _previewing_hud:
+		return
+	ux_layer.hide()
+	ux_layer.layer = get_parent().layer
+	_previewing_hud = false
+	settings_panel.show()
+
+
 func show_multiplayer() -> void:
 	play_panel.hide()
 	settings_panel.hide()
@@ -160,6 +162,9 @@ func _on_multiplayer_back_pressed() -> void:
 
 
 func navigate_back() -> bool:
+	if _previewing_hud:
+		hud_editor.close_editor()
+		return true
 	if ux_layer.visible:
 		return false
 	var worlds := get_parent().get_node_or_null("WorldsPanel") as Control
