@@ -3,7 +3,7 @@
 Drive: drives/menu_worlds_root.gd
 Source: Scripts/shell/MainMenu.gd
 
-The main menu opens with **Worlds**, **Multiplayer** and **Settings**. Worlds lists saves and offers Host and [Map Settings](./map-settings-panel.md). Multiplayer contains the join address, Join and any connection status. Settings opens the Music and Sound effects sliders, Mob spawns, tower range, damage and cooldown, and raid controls. See [Main menu navigation](./menu-worlds-root.md) for the player path and screenshots. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
+The main menu opens with **Worlds**, **Multiplayer** and **Settings**. Worlds lists saves and offers Host and [Map Settings](./map-settings-panel.md). Multiplayer contains the [saved-server list](./saved-servers.md), join address, Join and any connection status. Settings opens the Music and Sound effects sliders, Mob spawns, tower range, damage and cooldown, and raid controls. See [Main menu navigation](./menu-worlds-root.md) for the player path and screenshots. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
 
 ## Sub-features
 

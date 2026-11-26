@@ -27,7 +27,9 @@ func _run() -> void:
 	var main = current_scene
 	main.host_port = port
 	main.address_entry.text = "localhost"
-	var join := main.get_node("CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/JoinButton")
+	var join := main.get_node(
+		"CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/Actions/JoinButton"
+	)
 	(
 		main
 		. get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MultiplayerButton")

@@ -8,7 +8,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## local MapGen fixture. World snapshots wait for those params, then for
 ## nearby ground cells drawn after that apply.
 
-const ADDRESS := MULTIPLAYER_VIEW + "/AddressEntry"
+const ADDRESS := MULTIPLAYER_VIEW + "/Actions/AddressEntry"
 const STATUS := MULTIPLAYER_VIEW + "/JoinStatus"
 const MENU := "CanvasLayer2/MainMenu"
 const MAIN_MENU_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MainMenu"

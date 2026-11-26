@@ -2,9 +2,11 @@ extends "res://tests/helpers/test_helpers.gd"
 ## Main Menu Join accepts a hostname or IPv4 address with an optional port.
 
 const JoinAddress = preload("res://Scripts/net/join_address.gd")
-const ADDRESS := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/AddressEntry"
+const SavedServers = preload("res://Scripts/shell/saved_servers.gd")
+const LIST := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/SavedScroll/SavedServers"
+const ADDRESS := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/Actions/AddressEntry"
 const STATUS := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/JoinStatus"
-const JOIN := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/JoinButton"
+const JOIN := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/Actions/JoinButton"
 
 
 func _test_join_port_button() -> int:
@@ -24,6 +26,7 @@ func _test_join_port_button() -> int:
 	var address: LineEdit = scene.get_node(ADDRESS)
 	var status: Label = scene.get_node(STATUS)
 	var join: Button = scene.get_node(JOIN)
+	var saved_before := SavedServers.addresses()
 	var requested := []
 	menu.new_player_joined.connect(func(port: int) -> void: requested.append(port))
 
@@ -96,6 +99,10 @@ func _test_join_port_button() -> int:
 			)
 			fail += 1
 
+	if SavedServers.addresses() != saved_before:
+		printerr("FAIL join_port_button: an unsuccessful Join changed saved servers")
+		fail += 1
+
 	address.text = "localhost"
 	join.pressed.emit()
 	if (
@@ -162,10 +169,25 @@ func _test_join_port_dedicated() -> int:
 		return 1
 	var fail := 0
 	fail += await _button_join(pid, "host:abc", JoinAddress.ERROR_ADDRESS, false)
+	var ip_address := "127.0.0.1:%d" % port
+	var hostname := "localhost:%d" % port
 	if fail == 0:
-		fail += await _button_join(pid, "127.0.0.1:%d" % port, "", true)
+		fail += await _button_join(pid, "  %s  " % ip_address, "", true)
 	if fail == 0:
-		fail += await _button_join(pid, "localhost:%d" % port, "", true)
+		fail += await _button_join(pid, hostname, "", true)
+	if fail == 0:
+		fail += await _button_join(pid, ip_address, "", true, true)
+	var saved := SavedServers.addresses()
+	if (
+		saved.size() < 2
+		or saved[0] != ip_address
+		or saved[1] != hostname
+		or saved.count(ip_address) != 1
+	):
+		printerr(
+			"FAIL join_port_dedicated: expected both successful addresses in most recent order"
+		)
+		fail += 1
 	if OS.is_process_running(pid):
 		OS.kill(pid)
 	if fail == 0:
@@ -173,7 +195,9 @@ func _test_join_port_dedicated() -> int:
 	return fail
 
 
-func _button_join(pid: int, typed: String, error_text: String, want_player: bool) -> int:
+func _button_join(
+	pid: int, typed: String, error_text: String, want_player: bool, use_saved := false
+) -> int:
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
 	await process_frame
@@ -186,7 +210,19 @@ func _button_join(pid: int, typed: String, error_text: String, want_player: bool
 	)
 	var hud: CanvasLayer = scene.get_node("CanvasLayer1")
 	var status: Label = scene.get_node(STATUS)
-	scene.get_node(ADDRESS).text = typed
+	var field: LineEdit = scene.get_node(ADDRESS)
+	if use_saved:
+		for row: Button in scene.get_node(LIST).get_children():
+			if row.text == typed:
+				row.pressed.emit()
+				break
+		if field.text != typed:
+			printerr("FAIL join_port_dedicated: saved row did not fill the address field")
+			_drop_scene(scene)
+			await process_frame
+			return 1
+	else:
+		field.text = typed
 	scene.get_node(JOIN).pressed.emit()
 	var fail := 0
 	if not want_player:

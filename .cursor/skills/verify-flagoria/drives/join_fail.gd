@@ -21,7 +21,7 @@ func run() -> void:
 	var menu: Control = current_scene.get_node(MULTIPLAYER_VIEW)
 	var hud: CanvasLayer = current_scene.get_node("CanvasLayer1")
 	var status: Label = menu.get_node("JoinStatus")
-	var address: LineEdit = menu.get_node("AddressEntry")
+	var address: LineEdit = menu.get_node("Actions/AddressEntry")
 	# Pick a free port so create_client is OK but nothing answers.
 	var port := _free_port()
 	if port == 0:
