@@ -4,7 +4,7 @@ extends "res://tests/helpers/test_helpers.gd"
 
 func _removal_scene(need_stones: bool) -> Array:
 	## Stones need biomes on (PlantPicker.structure_tile). Seed 0 usually has
-	## both flower and stones near spawn; seed 7 often has flowers with biomes off.
+	## both flowers and stones near spawn; seed 7 often has flowers with biomes off.
 	var biome := 1.0 if need_stones else 0.0
 	var seeds: Array = [0, 7, 11, 42, 49] if need_stones else [7, 11, 42, 49]
 	for alt_seed in seeds:
@@ -18,7 +18,7 @@ func _removal_scene(need_stones: bool) -> Array:
 		scene.world_params = params
 		scene._apply_params_to_world(params)
 		var flower := Vector2i.MAX
-		var stones := Vector2i.MAX
+		var rocks: Array[Vector2i] = []
 		var spawn: Vector2i = world.resolve_player_spawn()
 		for r in range(0, 80):
 			for dy in range(-r, r + 1):
@@ -27,16 +27,17 @@ func _removal_scene(need_stones: bool) -> Array:
 					var top: Vector2i = world.predict_cell(cell)[1]
 					if flower == Vector2i.MAX and top == TileCatalog.FLOWER:
 						flower = cell
-					if need_stones and stones == Vector2i.MAX and top == TileCatalog.STONES:
-						stones = cell
-					if flower != Vector2i.MAX and (not need_stones or stones != Vector2i.MAX):
+					if need_stones and rocks.size() < 2 and top == TileCatalog.STONES:
+						if not rocks.has(cell):
+							rocks.append(cell)
+					if flower != Vector2i.MAX and (not need_stones or rocks.size() == 2):
 						world.generate_chunk(world.map_to_local(flower))
-						if need_stones:
-							world.generate_chunk(world.map_to_local(stones))
-						return [scene, world, params, flower, stones]
+						for rock in rocks:
+							world.generate_chunk(world.map_to_local(rock))
+						return [scene, world, params, flower, rocks]
 		scene.queue_free()
 		await process_frame
-	return [null, null, null, Vector2i.MAX, Vector2i.MAX]
+	return [null, null, null, Vector2i.MAX, []]
 
 
 func _decor_gone(world, cell: Vector2i) -> bool:
@@ -48,7 +49,7 @@ func _decor_gone(world, cell: Vector2i) -> bool:
 
 
 func _test_object_removals_round_trip() -> int:
-	## A picked flower and destroyed stones are written as {"removed": true},
+	## A picked flower and a mined rock are written as {"removed": true},
 	## stay gone when the chunk is drawn again, and survive save and load.
 	print("-- test_object_removals_round_trip")
 	var fail := 0
@@ -57,23 +58,27 @@ func _test_object_removals_round_trip() -> int:
 	var world = setup[1]
 	var params: MapGenParams = setup[2]
 	var flower: Vector2i = setup[3]
-	var stones: Vector2i = setup[4]
-	if scene == null or flower == Vector2i.MAX or stones == Vector2i.MAX:
-		printerr("FAIL object_removals_round_trip: no flower %s or stones %s" % [flower, stones])
+	var rocks: Array = setup[4]
+	if scene == null or flower == Vector2i.MAX or rocks.size() != 2:
+		printerr("FAIL object_removals_round_trip: no flower %s or rocks %s" % [flower, rocks])
 		if scene:
 			scene.queue_free()
 		return 1
-	if not world.pick_decor(flower) or not world.destroy_decor(stones):
-		printerr(
-			(
-				"FAIL object_removals_round_trip: could not remove flower %s stones %s"
-				% [flower, stones]
-			)
-		)
+	var mined: Vector2i = rocks[0]
+	var legacy: Vector2i = rocks[1]
+	var it := scene.get_node("World/Interaction") as Interaction
+	var miner := Node2D.new()
+	it.get_parent().add_child(miner)
+	miner.global_position = it.cell_center(mined)
+	it.bind(miner)
+	it.set_mode(Interaction.Mode.INTERACT)
+	if not world.pick_decor(flower) or not it.start_chop(mined):
+		printerr("FAIL object_removals_round_trip: could not pick flower or start mining")
 		scene.queue_free()
 		return 1
+	it.step_chop(0.65)
 	var want: Dictionary = {}
-	for cell in [flower, stones]:
+	for cell in [flower, mined]:
 		var chunk := WorldSave.chunk_key(cell)
 		want.get_or_add(chunk, {})[WorldSave.cell_key(cell)] = {"removed": true}
 	if world.object_changes() != want:
@@ -82,11 +87,15 @@ func _test_object_removals_round_trip() -> int:
 		)
 		fail += 1
 	world.generate_chunk(world.map_to_local(flower + Vector2i(32, 0)))
-	if not _decor_gone(world, flower) or not _decor_gone(world, stones):
+	if not _decor_gone(world, flower) or not _decor_gone(world, mined):
 		printerr("FAIL object_removals_round_trip: redrew flower or stones")
 		fail += 1
 	var saved_world := WorldSave.new(params)
 	saved_world.object_changes = world.object_changes()
+	var legacy_chunk := WorldSave.chunk_key(legacy)
+	var legacy_key := WorldSave.cell_key(legacy)
+	saved_world.object_changes.get_or_add(legacy_chunk, {})[legacy_key] = {"removed": true}
+	want.get_or_add(legacy_chunk, {})[legacy_key] = {"removed": true}
 	var saved := MapSave.save_world(saved_world, "test_object_removals_round_trip")
 	var loaded := MapSave.load_world(saved["path"])
 	DirAccess.remove_absolute(saved["path"])
@@ -98,21 +107,23 @@ func _test_object_removals_round_trip() -> int:
 		return fail + 1
 	scene._apply_params_to_world(params)
 	var restored: int = world.restore_object_changes(loaded["world"].object_changes)
-	if restored != 2 or world.object_changes() != want:
+	if restored != 3 or world.object_changes() != want:
 		printerr(
 			(
-				"FAIL object_removals_round_trip: restored %d entries %s want 2 and %s"
+				"FAIL object_removals_round_trip: restored %d entries %s want 3 and %s"
 				% [restored, world.object_changes(), want]
 			)
 		)
 		fail += 1
-	if not _decor_gone(world, flower) or not _decor_gone(world, stones):
-		printerr("FAIL object_removals_round_trip: after load flower or stones came back")
+	for cell in [flower, mined, legacy]:
+		if _decor_gone(world, cell):
+			continue
+		printerr("FAIL object_removals_round_trip: removed decor came back at %s" % cell)
 		fail += 1
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
-		print("PASS test_object_removals_round_trip (flower %s, stones %s)" % [flower, stones])
+		print("PASS test_object_removals_round_trip (flower %s, stones %s)" % [flower, mined])
 	return fail
 
 

@@ -1,6 +1,6 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 7
-## Pick a flower and destroy stones, save, reload; evidence zooms on the hero.
+## Pick a flower and mine stones, save, reload; evidence zooms on the hero.
 
 const WORLDS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton"
 const MAIN_MENU_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/MainMenu"
@@ -33,7 +33,7 @@ func run() -> void:
 	if not await _pick_flower(map, flower):
 		done(false)
 		return
-	if not await _destroy_stone(map, stone):
+	if not await _mine_stone(map, stone):
 		done(false)
 		return
 	if map.get_cell_source_id(DECOR, flower) != -1 or map.get_cell_source_id(DECOR, stone) != -1:
@@ -119,11 +119,8 @@ func _pick_flower(map: TileMap, flower: Vector2i) -> bool:
 	if not await wait_until(func() -> bool: return it.mode == 1, 2.0):
 		printerr("object removals: interact mode did not activate")
 		return false
-	var delta := _button_drag_toward(it, flower, 80.0)
-	if delta == Vector2.ZERO:
-		printerr("object removals: no chop drag toward flower %s" % flower)
-		return false
-	await _drag_from_button(delta, "")
+	var offset: Vector2 = it.cell_center(flower) - hero().global_position
+	await _drag_from_button(_window_delta(offset + offset.normalized() * 4.0), "")
 	var ok := await wait_until(
 		func() -> bool: return map.get_cell_source_id(DECOR, flower) == -1, 3.0
 	)
@@ -132,29 +129,18 @@ func _pick_flower(map: TileMap, flower: Vector2i) -> bool:
 	return ok
 
 
-func _destroy_stone(map: TileMap, stone: Vector2i) -> bool:
-	await toggle_mode()
-	var it: Node = current_scene.get_node("World/Interaction")
-	if not await wait_until(func() -> bool: return it.mode == 0, 2.0):
-		printerr("object removals: combat mode did not activate")
+func _mine_stone(map: TileMap, stone: Vector2i) -> bool:
+	var it := current_scene.get_node("World/Interaction") as Interaction
+	if not await wait_until(func() -> bool: return not it.chopping(), 8.0):
+		printerr("object removals: flower sweep did not finish")
 		return false
-	var hero_cell := map.local_to_map(map.to_local(hero().global_position))
-	if stone.x > hero_cell.x:
-		await hold("ui_right", 10)
-	elif stone.x < hero_cell.x:
-		await hold("ui_left", 10)
-	elif stone.y < hero_cell.y:
-		await hold("ui_up", 10)
-	else:
-		await hold("ui_down", 10)
-	await tap("attack")
-	if not await wait_until(func() -> bool: return hero().isAttacking, 1.0):
-		printerr("object removals: combat swing did not start at %s" % stone)
-		return false
-	await wait_until(func() -> bool: return not hero().isAttacking, 2.0)
-	var ok := map.get_cell_source_id(DECOR, stone) == -1
+	var offset := it.cell_center(stone) - hero().global_position
+	await _drag_from_button(_window_delta(offset + offset.normalized() * 4.0), "")
+	var ok := await wait_until(
+		func() -> bool: return map.get_cell_source_id(DECOR, stone) == -1, 3.0
+	)
 	if not ok:
-		printerr("object removals: stone at %s not destroyed" % stone)
+		printerr("object removals: stone at %s not mined" % stone)
 	return ok
 
 
@@ -230,24 +216,6 @@ func _window_delta(world_delta: Vector2) -> Vector2:
 	var here := to_window(hero(), Vector2.ZERO)
 	var there := to_window(hero(), hero().to_local(hero().global_position + world_delta))
 	return there - here
-
-
-func _button_drag_toward(it: Node, cell: Vector2i, min_px: float) -> Vector2:
-	var origin := hero().global_position
-	var to_cell: Vector2 = it.cell_center(cell) - origin
-	if to_cell.length() < 4.0:
-		printerr("object removals: cell %s too close" % cell)
-		return Vector2.ZERO
-	var end_world: Vector2 = (
-		origin + to_cell.normalized() * minf(to_cell.length() + 20.0, Interaction.CHOP_REACH - 4.0)
-	)
-	var map: TileMap = current_scene.get_node(WORLD_MAP)
-	var start := _button_window()
-	var end := to_window(map, map.to_local(end_world))
-	var delta := end - start
-	if delta.length() < maxf(min_px, Interaction.DRAG_START + 2.0):
-		delta = delta.normalized() * maxf(min_px, Interaction.DRAG_START + 8.0)
-	return delta
 
 
 func _drag_from_button(window_delta: Vector2, aim_shot: String) -> void:

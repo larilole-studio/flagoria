@@ -50,7 +50,7 @@ static func swing(player, direction: String, angle: float) -> void:
 	player.isAttacking = true
 	player.weapon.visible = true
 	player.sword_shape.set_deferred("disabled", false)  # the sword only hits during a swing
-	_swing_world_decor(player, direction, angle)
+	_swing_at_wall(player, direction, angle)
 	await player.animations.animation_finished
 	player.weapon.visible = false
 	player.sword_shape.set_deferred("disabled", true)
@@ -68,8 +68,8 @@ static func turn_swing(weapon: Node2D, animations: AnimationPlayer, swing_turn: 
 	weapon.rotation += swing_turn
 
 
-static func _swing_world_decor(player, direction: String, angle: float) -> void:
-	## Combat swing: destroy walkable stones in the aim arc (#198).
+static func _swing_at_wall(player, direction: String, angle: float) -> void:
+	## The host resolves wall damage from a sword swing.
 	var map: Node = player.get_node_or_null(MAP_PATH)
 	if map == null or player.health.is_dead():
 		return
@@ -81,9 +81,6 @@ static func _swing_world_decor(player, direction: String, angle: float) -> void:
 		var turn := AttackAimScript.turn_to(facing, angle)
 		if not is_nan(turn):
 			swing += turn
-	map._object_removals.cells_in_arc(
-		player.global_position, swing, AimConeStyle.SWORD_REACH, AttackAimScript.ARC, true
-	)
 	if not player.multiplayer.is_server():
 		return
 	var requests: StructureRequests = (

@@ -229,6 +229,35 @@ func pick_decor(cell: Vector2i) -> bool:
 	return _object_removals.pick(cell)
 
 
+func mineable_rock(cell: Vector2i) -> bool:
+	return _object_removals.mineable_rock(cell)
+
+
+func mine_impact(cell: Vector2i, interaction: Interaction) -> void:
+	if multiplayer.is_server():
+		_object_removals.resolve_mine_hit(interaction, cell, interaction.player, 1)
+	elif (
+		multiplayer.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED
+	):
+		request_mine_hit.rpc_id(1, cell)
+
+
+@rpc("any_peer", "reliable", "call_remote")
+func request_mine_hit(cell: Vector2i) -> void:
+	if not multiplayer.is_server():
+		return
+	var peer := multiplayer.get_remote_sender_id()
+	var interaction := get_node("../Interaction") as Interaction
+	if interaction.cut_limit.allow(peer):
+		var miner := get_node_or_null("../" + str(peer)) as Node2D
+		_object_removals.resolve_mine_hit(interaction, cell, miner, peer)
+
+
+@rpc("authority", "reliable", "call_remote")
+func apply_mine_hit(cell: Vector2i, depleted: bool) -> void:
+	_object_removals.apply_mine_hit(cell, depleted)
+
+
 func destroy_decor(cell: Vector2i) -> bool:
 	return _object_removals.destroy(cell)
 

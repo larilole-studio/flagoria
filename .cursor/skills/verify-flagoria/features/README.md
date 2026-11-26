@@ -54,9 +54,10 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Day and night](./day-night.md) — shared 10 minute clock, world tint, Map Settings switch, save and host sync (#558).
 - [Night lights](./night-lights.md) — gold pools on players, castles, towers and guard posts, fading with the clock, capped at 16, drawn locally (#560).
 - [Map save files](./map-save.md) — versioned world saves (inputs plus cuts and plank bridges), v1 migration, Save from the in-game menu, saved-maps API.
-- [Object removals save](./object-removals-save.md) — picked flowers and destroyed stones in `world.object_changes` (#198).
+- [Object removals save](./object-removals-save.md) — picked flowers and depleted rocks in `world.object_changes` (#198).
 - [Player save](./player-save.md) — save and load position, health, wood, score and charted ground (#197).
 - [Stone resource](./stone-resource.md) — per-player stone balance, status counter, save/load and targeted charges.
+- [Mine walkable rocks](./hand-mine-stone.md) — hit generated walkable rocks with Chop to gather stone.
 - [Map zoom](./map-zoom.md) — local pinch, wheel and Ctrl +/- zoom.
 - [Chopping trees and bushes](./chop-trees-and-bushes.md) — interact-mode chop, broadleaf trees, birch, pine and bushes, their hit and fall frames, per-type wood and regrow delay, stumps, regrowth (held while a player or mob stands on the stump, one mob-cell set per pass), wood HUD, type checklist.
 - [Chop trees (live drive)](./chop-trees.md) — chop tool, aimed attack-button sweeps, two hits per tree, stumps and wood.

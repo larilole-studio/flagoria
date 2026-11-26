@@ -40,6 +40,8 @@ var _hold_origin := false
 var _chop_from := Vector2.ZERO  ## player position when the chop started
 var _chop_facing := "Down"
 var _felled := false
+var _mining := false
+var _target_hits := 0
 var _puff: Sprite2D  ## the cloud over a tree that just fell
 var _puff_time := -1.0
 var _hit: Sprite2D  ## the variant's hit_sheet, drawn in place of the hit tile
@@ -95,18 +97,24 @@ func chopping() -> bool:
 
 
 func start_chop(cell: Vector2i) -> bool:
-	## Start chopping the tree or bush at `cell`; false while another chop
+	## Start chopping the plant or mining the rock at `cell`; false while another chop
 	## runs, or when there is nothing to chop in reach there.
-	if chopping() or not _i.world_map.choppable(cell) or not _i.chop_in_reach(cell):
+	if chopping() or not _i.chop_in_reach(cell):
+		return false
+	var plant: InteractableType = _i.world_map.choppable(cell)
+	var rock: bool = plant == null and _i.world_map.mineable_rock(cell)
+	if plant == null and not rock:
 		return false
 	if not _hold_origin:
 		_chop_from = _i.player.global_position
 	_hold_origin = true
 	_stop = Stop.NONE
 	chop_cell = cell
-	chop_type = _i.world_map.choppable(cell)
+	chop_type = plant
+	_mining = rock
+	_target_hits = ObjectRemovals.ROCK_HITS if rock else plant.hits
 	_chop_atlas = _i.world_map.get_cell_atlas_coords(1, cell)
-	_sprites = InteractableCatalog.sprites_at(_chop_atlas)
+	_sprites = null if rock else InteractableCatalog.sprites_at(_chop_atlas)
 	chop_time = 0.0
 	chop_hits = 0
 	_felled = false
@@ -147,30 +155,37 @@ func step_chop(delta: float) -> void:
 		_hold_origin = false
 		cancel_chop()
 		return
-	if (
-		not _felled
-		and (
-			_i.world_map.choppable(chop_cell) != chop_type
-			or _i.world_map.get_cell_atlas_coords(1, chop_cell) != _chop_atlas
-		)
-	):
+	if not _felled and not _target_present():
 		cancel_chop()
 		_start_queued()
 		return
 	chop_time += delta
-	while chop_hits < chop_type.hits and chop_time >= chop_hits * CHOP_TIME + IMPACT_AT:
+	while chop_hits < _target_hits and chop_time >= chop_hits * CHOP_TIME + IMPACT_AT:
 		chop_hits += 1
 		chop_hit.emit(chop_cell, chop_hits)
-		_on_hit()
-	if not _felled and chop_time >= fell_at(chop_type.hits):
+		if _mining:
+			_i.world_map.mine_impact(chop_cell, _i)
+			_felled = chop_hits == _target_hits
+		else:
+			_on_hit()
+	if not _mining and not _felled and chop_time >= fell_at(_target_hits):
 		_felled = true
 		if _i._cut(chop_cell):
 			_on_fell()
-	if chop_time >= chop_type.hits * CHOP_TIME:
+	if chop_time >= _target_hits * CHOP_TIME:
 		cancel_chop()
 		_start_queued()
 	else:
 		_pose()
+
+
+func _target_present() -> bool:
+	if _mining:
+		return _i.world_map.mineable_rock(chop_cell)
+	return (
+		_i.world_map.choppable(chop_cell) == chop_type
+		and _i.world_map.get_cell_atlas_coords(1, chop_cell) == _chop_atlas
+	)
 
 
 func _gesture_cancelled() -> bool:
@@ -181,15 +196,15 @@ func _gesture_cancelled() -> bool:
 	return _i.player.global_position.distance_to(_chop_from) > MOVE_CANCEL
 
 
-func plants_in_sweep() -> Array[Vector2i]:
-	return _plants_in(_i.chop_sweep())
+func targets_in_sweep() -> Array[Vector2i]:
+	return _targets_in(_i.chop_sweep())
 
 
-func plants_toward(direction: float, reach: float) -> Array[Vector2i]:
-	return _plants_in({"direction": direction, "reach": minf(reach, Interaction.CHOP_REACH)})
+func targets_toward(direction: float, reach: float) -> Array[Vector2i]:
+	return _targets_in({"direction": direction, "reach": minf(reach, Interaction.CHOP_REACH)})
 
 
-func _plants_in(sweep: Dictionary) -> Array[Vector2i]:
+func _targets_in(sweep: Dictionary) -> Array[Vector2i]:
 	if sweep.is_empty() or _i.player == null:
 		return []
 	var map := _i.world_map
@@ -200,7 +215,10 @@ func _plants_in(sweep: Dictionary) -> Array[Vector2i]:
 	for y in range(center.y - span, center.y + span + 1):
 		for x in range(center.x - span, center.x + span + 1):
 			var cell := Vector2i(x, y)
-			if map.choppable(cell) and _i.cell_in_chop_sweep(cell, sweep):
+			if (
+				_i.cell_in_chop_sweep(cell, sweep)
+				and (map.choppable(cell) or map.mineable_rock(cell))
+			):
 				found.append(cell)
 	var origin := _i.player.global_position
 	found.sort_custom(
