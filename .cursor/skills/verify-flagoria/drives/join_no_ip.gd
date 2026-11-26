@@ -19,7 +19,7 @@ func run() -> void:
 	var menu: Control = main.get_node(MULTIPLAYER_VIEW)
 	var hud: CanvasLayer = main.get_node("CanvasLayer1")
 	var status: Label = menu.get_node("JoinStatus")
-	var address: LineEdit = menu.get_node("AddressEntry")
+	var address: LineEdit = menu.get_node("Actions/AddressEntry")
 	if not address.text.is_empty():
 		_fail("expected a blank address on launch")
 		return

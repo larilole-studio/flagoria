@@ -8,7 +8,7 @@ const MenuWorlds = preload("res://Scripts/shell/menu_worlds.gd")
 var letter_keyboard: NumberPad
 
 @onready var main_menu = $"."
-@onready var address_entry: LineEdit = $MultiplayerPanel/VBoxContainer/AddressEntry
+@onready var address_entry: LineEdit = %AddressEntry
 @onready var join_status: Label = $MultiplayerPanel/VBoxContainer/JoinStatus
 @onready var ux_layer = $/root/Flagoria/CanvasLayer1
 @onready var play_panel: MarginContainer = $MarginContainer
@@ -147,6 +147,8 @@ func _on_settings_back_pressed() -> void:
 func show_multiplayer() -> void:
 	play_panel.hide()
 	settings_panel.hide()
+	join_status.hide()
+	multiplayer_panel.refresh_servers()
 	multiplayer_panel.show()
 	show()
 

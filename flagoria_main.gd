@@ -2,6 +2,7 @@ extends Node2D
 
 const JoinAddress = preload("res://Scripts/net/join_address.gd")
 const JoinDial = preload("res://Scripts/net/join_dial.gd")
+const SavedServers = preload("res://Scripts/shell/saved_servers.gd")
 const PORT = 9786
 ## Most cuts in one join message (#354); see _sync_map_params_to_peer.
 const JOIN_CUTS_PER_MESSAGE := 500
@@ -9,7 +10,7 @@ var enet_peer = ENetMultiplayerPeer.new()
 ## UDP port the main menu's Host button listens on.
 var host_port := PORT
 const Player = preload("res://Scripts/player/character_body_2d.tscn")
-@onready var address_entry = $CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/AddressEntry
+@onready var address_entry: LineEdit = %AddressEntry
 var world_params: MapGenParams
 ## The world save this match writes. Empty until Host or Load chooses one.
 var save_name := ""
@@ -437,10 +438,8 @@ func add_player_joined(port: int = PORT):
 	if not parsed["ok"]:
 		_fail_join_address(str(parsed["error"]))
 		return
-	# A host:port in the field is the address Join dials. Callers that pass a
-	# port and a host-only field (the join-fail drive, headless tests) keep
-	# that port. An explicit port in the text wins, so the typed endpoint and
-	# the socket agree.
+	# A port in the field takes precedence. With a host-only field, keep
+	# the port supplied by the caller.
 	var host := str(parsed["host"])
 	if parsed["explicit"]:
 		port = int(parsed["port"])
@@ -452,6 +451,7 @@ func add_player_joined(port: int = PORT):
 
 func _on_join_connected() -> void:
 	_join_dial.on_connected()
+	SavedServers.remember(address_entry.text)
 
 
 func _on_connection_failed() -> void:

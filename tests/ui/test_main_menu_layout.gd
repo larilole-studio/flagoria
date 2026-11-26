@@ -41,13 +41,13 @@ func check_menu_navigation(scene: Node) -> int:
 	var multiplayer: Control = scene.get_node(MULTIPLAYER)
 	if (
 		top.is_visible_in_tree()
-		or not multiplayer.get_node("AddressEntry").is_visible_in_tree()
-		or not multiplayer.get_node("JoinButton").is_visible_in_tree()
+		or not multiplayer.get_node("Actions/AddressEntry").is_visible_in_tree()
+		or not multiplayer.get_node("Actions/JoinButton").is_visible_in_tree()
 	):
 		printerr("FAIL main_menu_landscape_layout: Multiplayer did not show the address and Join")
 		return fail + 1
 	fail += check_menu_bounds(multiplayer)
-	await click_menu_button(multiplayer.get_node("BackButton"))
+	await click_menu_button(multiplayer.get_node("Actions/BackButton"))
 	if multiplayer.is_visible_in_tree() or not top.is_visible_in_tree():
 		printerr("FAIL main_menu_landscape_layout: Multiplayer Back did not return to the root")
 		return fail + 1

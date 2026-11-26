@@ -124,7 +124,7 @@ func _test_ui_sfx_presses() -> int:
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Back"), "back"],
 		[worlds.get_node("Body/Actions/Back"), "back"],
 		[top.get_node("MultiplayerButton"), "click"],
-		[multiplayer.get_node("BackButton"), "back"],
+		[multiplayer.get_node("Actions/BackButton"), "back"],
 		[top.get_node("SettingsButton"), "click"],
 		[settings.get_node("BackButton"), "back"],
 	]

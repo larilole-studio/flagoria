@@ -4,7 +4,7 @@ Drive: drives/join_no_ip.gd
 Source: Scripts/shell/menu_join_flow.gd
 Source: Scripts/net/join_address.gd
 
-Assertion owner for blank-address UI and offline state is `drives/join_no_ip.gd`. The existing `test_join_port_button` checks that blank and whitespace-only retries emit no join request and that an explicit `localhost` retry requests port `9786`.
+Assertion owner for blank-address UI and offline state is `drives/join_no_ip.gd`. The existing `test_join_port_button` checks that blank and whitespace-only retries emit no join request and that an explicit `localhost` retry requests port `9786`. A blank or whitespace-only Join leaves [saved servers](./saved-servers.md) untouched.
 
 ## How to get to it (user POV)
 

@@ -169,9 +169,11 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/shell/ingame_menu.gd`
 - `Scripts/shell/menu_gameplay_settings.gd`
 - `Scripts/shell/menu_join_flow.gd`
+- `Scripts/shell/menu_saved_servers.gd`
 - `Scripts/shell/menu_volume.gd`
 - `Scripts/shell/menu_worlds.gd`
 - `Scripts/shell/quit_prompt.gd`
+- `Scripts/shell/saved_servers.gd`
 - `Scripts/shell/worlds_save_list.gd`
 
 ### `Scripts/ui/`
