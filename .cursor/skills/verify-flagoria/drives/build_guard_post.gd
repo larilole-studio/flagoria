@@ -71,9 +71,7 @@ func run() -> void:
 		done(false)
 		return
 	await click(MAIN_MENU_BUTTON)
-	await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON), 10.0
-	)
+	await wait_until(menu_root_visible, 10.0)
 	var err: String = root.get_node("MapGen").load_map_inputs(saved[0])
 	if err != "" or not await start_game():
 		printerr("build_guard_post: load %s" % err)

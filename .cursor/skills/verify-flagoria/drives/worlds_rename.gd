@@ -3,8 +3,8 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Opens Worlds, shows the rename field, and renames one seeded save.
 
 const WORLDS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton"
-const LIST := "CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List"
-const RENAME := "CanvasLayer2/WorldsPanel/Margin/VBox/Buttons/Rename"
+const LIST := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List"
+const RENAME := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Actions/Rename"
 const RENAME_FIELD := "CanvasLayer2/WorldsPanel/Margin/VBox/Rename/Name"
 const RENAME_CONFIRM := "CanvasLayer2/WorldsPanel/Margin/VBox/Rename/Confirm"
 

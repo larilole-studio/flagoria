@@ -8,6 +8,8 @@ extends Control
 
 signal quit_confirmed
 
+var navigate_back := Callable()
+
 @onready var panel: Control = $Dim
 @onready var quit_button: Button = $Dim/Panel/Margin/VBox/Buttons/Quit
 @onready var cancel_button: Button = $Dim/Panel/Margin/VBox/Buttons/Cancel
@@ -23,7 +25,14 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST or what == NOTIFICATION_WM_CLOSE_REQUEST:
-		close() if is_open() else open()
+		if is_open():
+			close()
+		elif (
+			what != NOTIFICATION_WM_GO_BACK_REQUEST
+			or not navigate_back.is_valid()
+			or not navigate_back.call()
+		):
+			open()
 
 
 func is_open() -> bool:

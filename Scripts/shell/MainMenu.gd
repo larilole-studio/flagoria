@@ -5,11 +5,14 @@ const MenuGameplaySettings = preload("res://Scripts/shell/menu_gameplay_settings
 const MenuJoinFlow = preload("res://Scripts/shell/menu_join_flow.gd")
 const MenuWorlds = preload("res://Scripts/shell/menu_worlds.gd")
 
+var letter_keyboard: NumberPad
+
 @onready var main_menu = $"."
-@onready var address_entry = $MarginContainer/VBoxContainer/AddressEntry
-@onready var join_status: Label = $MarginContainer/VBoxContainer/JoinStatus
+@onready var address_entry: LineEdit = $MultiplayerPanel/VBoxContainer/AddressEntry
+@onready var join_status: Label = $MultiplayerPanel/VBoxContainer/JoinStatus
 @onready var ux_layer = $/root/Flagoria/CanvasLayer1
 @onready var play_panel: MarginContainer = $MarginContainer
+@onready var multiplayer_panel: MarginContainer = $MultiplayerPanel
 @onready var settings_panel: MarginContainer = $SettingsPanel
 @onready var music_volume: HSlider = %SettingsRows/MusicVolumeRow/MusicVolume
 @onready var sfx_volume: HSlider = %SettingsRows/SFXVolumeRow/SFXVolume
@@ -46,11 +49,11 @@ func _ready() -> void:
 	MenuVolume.bind_controls(self)
 	MenuGameplaySettings.bind_controls(self)
 	# The join address is typed on the in-game letter keyboard, not the OS one.
-	var keyboard: NumberPad = preload("res://Scripts/ui/number_pad.tscn").instantiate()
-	keyboard.name = "LetterKeyboard"
-	add_child(keyboard)
-	keyboard.attach_text(address_entry)
-	visibility_changed.connect(keyboard.close)
+	letter_keyboard = preload("res://Scripts/ui/number_pad.tscn").instantiate()
+	letter_keyboard.name = "LetterKeyboard"
+	add_child(letter_keyboard)
+	letter_keyboard.attach_text(address_entry)
+	visibility_changed.connect(letter_keyboard.close)
 	admin_panel = preload("res://Scripts/ui/map_admin_panel.tscn").instantiate()
 	admin_panel.visible = false
 	admin_panel.closed.connect(_on_admin_closed)
@@ -132,7 +135,6 @@ func open_settings_over_match() -> void:
 
 
 func _on_settings_pressed() -> void:
-	($LetterKeyboard as NumberPad).close()
 	play_panel.hide()
 	settings_panel.show()
 
@@ -142,11 +144,45 @@ func _on_settings_back_pressed() -> void:
 	play_panel.show()
 
 
+func show_multiplayer() -> void:
+	play_panel.hide()
+	settings_panel.hide()
+	multiplayer_panel.show()
+	show()
+
+
+func _on_multiplayer_back_pressed() -> void:
+	letter_keyboard.close()
+	multiplayer_panel.hide()
+	play_panel.show()
+
+
+func navigate_back() -> bool:
+	if ux_layer.visible:
+		return false
+	var worlds := get_parent().get_node_or_null("WorldsPanel") as Control
+	if letter_keyboard.is_visible_in_tree():
+		letter_keyboard.close()
+	elif admin_panel.is_visible_in_tree():
+		var pad := admin_panel.get_node("NumberPad") as NumberPad
+		if pad.is_visible_in_tree():
+			pad.close()
+		else:
+			admin_panel._on_back_pressed()
+	elif worlds != null and worlds.is_visible_in_tree():
+		_on_worlds_back_pressed()
+	elif multiplayer_panel.is_visible_in_tree():
+		_on_multiplayer_back_pressed()
+	elif settings_panel.is_visible_in_tree():
+		_on_settings_back_pressed()
+	else:
+		return false
+	return true
+
+
 func _on_map_settings_pressed() -> void:
-	# Keep Settings selected while the map panel is open so Back reveals it.
-	main_menu.hide()
-	if admin_panel == null:
-		return
+	letter_keyboard.close()
+	_worlds._worlds_panel().hide()
 	# Panel may still be deferred-added on the very first frame.
 	if not admin_panel.is_inside_tree():
 		await admin_panel.ready
@@ -155,7 +191,7 @@ func _on_map_settings_pressed() -> void:
 
 
 func _on_admin_host_requested() -> void:
-	# Hosting leaves Settings behind: the menu comes back at the top level.
+	# Keep the root selected for the next time the menu is shown.
 	settings_panel.hide()
 	play_panel.show()
 	_on_host_button_pressed()
@@ -170,7 +206,7 @@ func _on_admin_closed() -> void:
 	if _settings_over_match:
 		_settings_over_match = false
 		return
-	main_menu.show()
+	_worlds._worlds_panel().show()
 
 
 func show_join_failed(address: String) -> void:

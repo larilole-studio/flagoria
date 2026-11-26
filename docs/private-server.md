@@ -34,7 +34,7 @@ godot --headless --path . -- --server --port 9799
 
 On the server machine, allow that UDP port only on the VPN interface, and do not allow it on the public interface. Do not add a port forward on the router.
 
-Each VPN client uses Main Menu Join:
+Each VPN client uses Main Menu → Multiplayer → Join:
 
 - `<server-vpn-ipv4>` when the server is on port 9786
 - `<server-vpn-ipv4>:9799` when the server was started with `--port 9799`

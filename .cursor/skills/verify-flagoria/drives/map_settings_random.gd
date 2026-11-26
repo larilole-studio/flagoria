@@ -2,9 +2,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 42
 ## Check the common and Advanced views, then host with the displayed settings.
 
-const MENU := "CanvasLayer2/MainMenu"
-const SETTINGS_BUTTON := MENU + "/MarginContainer/VBoxContainer/SettingsButton"
-const MAP_SETTINGS := MENU + "/SettingsPanel/SettingsLayout/MapSettingsButton"
 const PANEL := "CanvasLayer2/MapAdminPanel"
 const ADVANCED := PANEL + "/Margin/VBox/Advanced"
 const COMMON := PANEL + "/Margin/VBox/Simple"
@@ -26,11 +23,8 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		_fail("cannot load " + MAIN)
 		return
-	if not await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(SETTINGS_BUTTON),
-		START_TIMEOUT_S
-	):
-		_fail("no Settings button")
+	if not await wait_until(menu_root_visible, START_TIMEOUT_S):
+		_fail("main menu did not open")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 	var landscape := Vector2i(854, 480)
@@ -40,11 +34,11 @@ func run() -> void:
 	var actual := await _resize(landscape.x, landscape.y)
 	var layout_ok := DisplayServer.get_name() == "headless" or actual == landscape
 	await snapshot("main-menu")
-	step("open-settings")
-	await click(SETTINGS_BUTTON)
-	await snapshot("settings")
+	step("open-worlds")
+	await click(WORLDS_BUTTON)
+	await snapshot("worlds")
 	step("open-map-settings")
-	await click(MAP_SETTINGS)
+	await click(MAP_SETTINGS_BUTTON)
 	if not await wait_until(
 		func() -> bool:
 			var p = current_scene.get_node_or_null(PANEL)
@@ -70,16 +64,16 @@ func run() -> void:
 
 	step("back")
 	await click(BACK)
-	var settings_back := await wait_until(
+	var worlds_back := await wait_until(
 		func() -> bool:
-			var map_button: Button = current_scene.get_node(MAP_SETTINGS)
+			var map_button: Button = current_scene.get_node(MAP_SETTINGS_BUTTON)
 			return map_button.is_visible_in_tree() and not panel.visible,
 		5.0
 	)
-	if not settings_back:
-		_fail("Back did not return to Settings")
+	if not worlds_back:
+		_fail("Back did not return to Worlds")
 		return
-	await click(MAP_SETTINGS)
+	await click(MAP_SETTINGS_BUTTON)
 	step("host-with-these")
 	await click(START)
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):

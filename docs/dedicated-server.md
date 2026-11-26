@@ -8,7 +8,7 @@ Time-boxed findings for a headless dedicated server, plus the dedicated-server b
 
 **Conditional go** on the engine. **No-go** on shipping a dedicated server from product code alone.
 
-Godot 4.7.2 can run headless, bind ENet on UDP, and accept peers. At spike time Flagoria was a listen-server only: Main Menu Host always spawns a local player. The `-- --server` boot path now hosts headless without a local player. There is still no dedicated-server export preset. Two GUI clients moving and fighting on a headless host have still not been proven. Headless movement of two joiners is a different check: `test_two_player_smoke` (below).
+Godot 4.7.2 can run headless, bind ENet on UDP, and accept peers. At spike time Flagoria was a listen-server only: Main Menu → Worlds → Host always spawns a local player. The `-- --server` boot path now hosts headless without a local player. There is still no dedicated-server export preset. Two GUI clients moving and fighting on a headless host have still not been proven. Headless movement of two joiners is a different check: `test_two_player_smoke` (below).
 
 ## Environment
 
@@ -28,7 +28,7 @@ timeout 15 "$GODOT" --headless --path .
 
 Result: exit `124`. The project does not quit on its own, so `timeout` stops it after 15 seconds and reports 124. Output is the engine banner only. The main scene loads (main menu). No window or GPU (`--headless` uses the headless display driver and dummy audio).
 
-Without `-- --server`, a headless launch does not call `create_server`. GUI hosting goes through Main Menu Host (`setup_server`, then `enet_peer.create_server(PORT)`), which adds the host as a player.
+Without `-- --server`, a headless launch does not call `create_server`. GUI hosting goes through Main Menu → Worlds → Host (`setup_server`, then `enet_peer.create_server(PORT)`), which adds the host as a player.
 
 Without a prior import, the first headless open can fail to load `flagoria_main.tscn` until resources are imported. That matches the CI import step.
 
@@ -87,7 +87,7 @@ A minimal throwaway project outside the game repo showed:
 
 Headless ENet listen and peer connect work on 4.7.2 without a GPU. Re-run on a free port when 9786 is already taken by another local server.
 
-Headless movement of two joiners is `test_two_player_smoke` in `tests/net/test_two_player_smoke.gd`, run by `./tools/verify.sh`. It starts one `--dedicated` process and two headless clients (`tests/late_join_probe.gd`). Client A holds an input action (`ui_right`, `ui_left`, `ui_down`, or `ui_up`) until it has moved at least 4 px. The server and client B then see A within 1 px of where A has itself. The test does not click Main Menu Host or Join. Two humans at two GUI windows, a cut seen by the other client, and a sword hit seen by the other client are not this test. The menu Host/Join pair `drives/two_player/` clicks those buttons and is not this CI test. The Join-port drive `drives/join_port.gd` clicks Join only, against a dedicated server, and checks that server's map seeds and nearby ground; it is one client, not two humans.
+Headless movement of two joiners is `test_two_player_smoke` in `tests/net/test_two_player_smoke.gd`, run by `./tools/verify.sh`. It starts one `--dedicated` process and two headless clients (`tests/late_join_probe.gd`). Client A holds an input action (`ui_right`, `ui_left`, `ui_down`, or `ui_up`) until it has moved at least 4 px. The server and client B then see A within 1 px of where A has itself. The test does not click Main Menu → Worlds → Host or Join. Two humans at two GUI windows, a cut seen by the other client, and a sword hit seen by the other client are not this test. The menu Host/Join pair `drives/two_player/` clicks those buttons and is not this CI test. The Join-port drive `drives/join_port.gd` clicks Join only, against a dedicated server, and checks that server's map seeds and nearby ground; it is one client, not two humans.
 
 ## Dedicated server boot
 
@@ -113,7 +113,7 @@ Dedicated server listening on UDP port 9786
 What the boot does (`start_dedicated_server` in `flagoria_main.gd`):
 
 - Hides the main menu and spawns no local player (no node `1` under `World`).
-- Calls `setup_server` with the `--params` map save, or else the current `MapGen.params`, the same path as Main Menu Host. Seeds left at 0 are randomized.
+- Calls `setup_server` with the `--params` map save, or else the current `MapGen.params`, the same path as Main Menu → Worlds → Host. Seeds left at 0 are randomized.
 - Generates the origin chunk. `with_castle` is false, so this boot does not place a starting castle. That is intentional: a dedicated host has no local player.
 - Joining clients get a player and the full map params through the existing Join path (`receive_map_params`).
 
@@ -129,7 +129,7 @@ Current limits of this boot, not open bugs to fix in this note:
 - Chunk refresh on a peer follows `World/<that peer's unique id>` (`TileMap._process`). The dedicated server is peer 1 and has no player node, so it does not move its chunk center after someone joins. A listen host refreshes around peer 1 only, not around remote players.
 - Cities do nothing while `Interaction.multiplayer_on` is true. Tower capture and flags-held points run on the host and replicate to peers (#497). A client does not advance either.
 
-Clients join with Main Menu Join. Enter `localhost` to join a server on the same machine on UDP `9786`. A blank address shows `Enter the host's IP address` and keeps the main menu open. A hostname or an IPv4 address may include `:port` (`127.0.0.1:9799`, `localhost:9799`); a bare host keeps port `9786`. The typed text stays in the address field and in `Could not join …`. A missing host, a non-numeric port, or a port outside 1 to 65535 is rejected on the menu before any connection attempt. An address with more than one colon (such as `::1`) is rejected instead of being read as a host and a port.
+Clients join from Multiplayer in the main menu. Enter `localhost` to join a server on the same machine on UDP `9786`. A blank address shows `Enter the host's IP address` and keeps Multiplayer open. A hostname or an IPv4 address may include `:port` (`127.0.0.1:9799`, `localhost:9799`); a bare host keeps port `9786`. The typed text stays in the address field and in `Could not join …`. A missing host, a non-numeric port, or a port outside 1 to 65535 is rejected on the menu before any connection attempt. An address with more than one colon (such as `::1`) is rejected instead of being read as a host and a port.
 
 `drives/join_port.gd` clicks that Join button. After entering `localhost` it waits until `world_params` are the dedicated server's seeds (not the client's local map fixture) and 81 of 81 nearby layer-0 cells are drawn (`ground=81/81`). It then returns to the menu and does the same for `127.0.0.1:9799` against a server on 9799. That drive is one client. It does not press Host, and it does not show a second human, a synced cut, or a synced sword hit.
 

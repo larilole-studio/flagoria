@@ -21,6 +21,7 @@ func _run() -> void:
 		quit(1)
 		return
 	var menu: Node = flagoria.get_node("CanvasLayer2/MainMenu")
+	menu.show_multiplayer()
 	var field: LineEdit = menu.address_entry
 	field.text = "my-host.local"
 	field.grab_focus()

@@ -3,7 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## listen host: nothing here clicks Host. The three drives live under
 ## drives/dedicated_play/ so verify-drive does not start one of them alone.
 
-const JOIN_BUTTON := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
 const PORT := 9786
 const JOIN_TIMEOUT_S := 45.0
 
@@ -37,6 +36,7 @@ func join_dedicated(who: String) -> bool:
 	):
 		return _fail("no " + JOIN_BUTTON)
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
+	await click(MULTIPLAYER_BUTTON)
 	step("join")
 	current_scene.address_entry.text = "localhost"
 	await click(JOIN_BUTTON)

@@ -32,8 +32,8 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Map characterization](./map-characterization.md) — pinned map-output / golden atlas check, `tools/cli.gd` map render and stats.
 - [Map Settings panel](./map-settings-panel.md) — map parameters before Host, five seeds and a noise selector, numeric and toggle rows, number pad, Generate building, and five pinned actions.
 - [Two-player Host/Join](./two-player-host-join.md) — multiplayer boot (headless peers scripted; two-launch menu drive; GUI checklist manual).
-- [Join failure returns to the main menu](./join-fail.md) — failed Join shows `Could not join …` on the main menu; host quit reloads to the menu (#348).
-- [Join requires a host address](./join-no-ip.md) — a blank address keeps the main menu open and prompts for the host's IP address.
+- [Join failure returns to the main menu](./join-fail.md) — failed Join shows `Could not join …` on Multiplayer; host quit reloads to the menu (#348).
+- [Join requires a host address](./join-no-ip.md) — a blank address keeps Multiplayer open and prompts for the host's IP address.
 - [Join an address with an optional port](./join-port.md) — hostname or IPv4, optional `:port`, default UDP 9786; bad addresses rejected on the menu (#434).
 - [Dedicated server](./dedicated-server.md) — `-- --server` headless host, `--params` generation params only, SIGTERM quit, a client joining it, `test_two_player_smoke` (two headless clients, input walk, server and the other client see the move), optional Docker image.
 - [Dedicated cut-and-hit round](./dedicated-play-round.md) — two Join clients on a dedicated host with no player `1`: one plant cut, one mob killed (#436). Not the listen Host/Join pair.
@@ -87,7 +87,8 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Walls and bridges](./walls-and-bridges.md) — wall solver and plank bridges, live via the build picker.
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).
 - [Audio](./audio.md) — buses, music, combat, UI and mob SFX, footsteps, `audio_check` gate.
-- [Main menu](./main-menu.md) — menu theme, Host/Join, volume and mob spawn sliders, letter keyboard.
+- [Main menu](./main-menu.md) — menu theme, volume and gameplay settings, letter keyboard.
+- [Main menu navigation](./menu-worlds-root.md) — Worlds, Multiplayer, Settings and Back (#708).
 - [Saved worlds](./saved-worlds.md) — main-menu list of every save, load, a new world in its own file, delete with a confirm.
 - [In-game menu and quit prompt](./ingame-menu.md) — menu button, Pause panel (Resume, Save, Main menu), quit confirm.
 - [Interact mode](./interact-mode.md) — chop on the tool wheel; Space still swings the sword in interact mode; aimed attacks stay combat-only (#351).

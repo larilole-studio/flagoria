@@ -16,13 +16,13 @@ func _on_worlds_pressed() -> void:
 	menu.main_menu.hide()
 	panel.show()
 	_refresh_worlds()
-	var scroll := panel.get_node_or_null("Margin/VBox/Scroll") as ScrollContainer
+	var scroll := panel.get_node_or_null("Margin/VBox/Body/Scroll") as ScrollContainer
 	if scroll:
 		scroll.scroll_vertical = 0
 
 
 func _worlds_list() -> ItemList:
-	return _worlds_panel().get_node("Margin/VBox/Scroll/List") as ItemList
+	return _worlds_panel().get_node("Margin/VBox/Body/Scroll/List") as ItemList
 
 
 func _worlds_panel() -> PanelContainer:
@@ -48,14 +48,23 @@ func _worlds_panel() -> PanelContainer:
 	margin.add_child(box)
 	var title := Label.new()
 	title.text = "Worlds"
+	title.theme_type_variation = &"TitleLabel"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
+	var body := HBoxContainer.new()
+	body.name = "Body"
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_theme_constant_override("separation", 4)
+	box.add_child(body)
 	var scroll := ScrollContainer.new()
 	scroll.name = "Scroll"
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 96)
-	box.add_child(scroll)
+	scroll.size_flags_stretch_ratio = 3.0
+	scroll.custom_minimum_size = Vector2(0, 48)
+	body.add_child(scroll)
 	var list := WorldsSaveList.new()
 	list.name = "List"
 	list.auto_height = true
@@ -63,13 +72,23 @@ func _worlds_panel() -> PanelContainer:
 	list.icon_mode = ItemList.ICON_MODE_LEFT
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
-	var buttons := HBoxContainer.new()
-	buttons.name = "Buttons"
-	box.add_child(buttons)
-	_world_button(buttons, "Load", _on_load_world_pressed)
-	_world_button(buttons, "Delete", _on_delete_world_pressed)
-	_world_button(buttons, "Rename", _on_rename_world_pressed)
-	_world_button(buttons, "NewWorld", menu._on_new_world_pressed).text = "New world"
+	# Slim column on the right, bottom-aligned for a landscape thumb.
+	var actions := VBoxContainer.new()
+	actions.name = "Actions"
+	actions.alignment = BoxContainer.ALIGNMENT_END
+	actions.size_flags_horizontal = Control.SIZE_SHRINK_END
+	actions.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	actions.add_theme_constant_override("separation", 2)
+	body.add_child(actions)
+	_world_button(actions, "Load", _on_load_world_pressed)
+	_world_button(actions, "Delete", _on_delete_world_pressed)
+	_world_button(actions, "Rename", _on_rename_world_pressed)
+	_world_button(actions, "NewWorld", menu._on_new_world_pressed).text = "New world"
+	_world_button(actions, "HostButton", menu._on_host_button_pressed).text = "Host"
+	_world_button(actions, "MapSettingsButton", menu._on_map_settings_pressed).text = "Map Settings"
+	_world_button(actions, "Back", _on_worlds_back_pressed).add_to_group("ui_back")
+	for button: Button in actions.get_children():
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var confirm := HBoxContainer.new()
 	confirm.name = "Confirm"
 	confirm.visible = false
@@ -97,10 +116,13 @@ func _worlds_panel() -> PanelContainer:
 	_world_button(rename, "Cancel", _on_rename_no_pressed)
 	var status := Label.new()
 	status.name = "Status"
+	status.visible = false
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(status)
-	_world_button(box, "Back", _on_worlds_back_pressed)
+	# Confirm, rename and status sit under the title, not under the list, so
+	# the letter keyboard does not cover Yes/Confirm.
+	box.move_child(body, box.get_child_count() - 1)
 	menu.get_parent().add_child(panel)
 	return panel
 
@@ -143,6 +165,7 @@ func _selected_world() -> String:
 func _world_status(text: String) -> void:
 	var status := _worlds_panel().get_node("Margin/VBox/Status") as Label
 	status.text = text
+	status.visible = text != ""
 
 
 func _on_load_world_pressed() -> void:
@@ -164,7 +187,6 @@ func _on_delete_world_pressed() -> void:
 		return
 	_on_rename_no_pressed()
 	var panel := _worlds_panel()
-	panel.get_node("Margin/VBox/Buttons").hide()
 	panel.get_node("Margin/VBox/Confirm").show()
 	_world_status("")
 
@@ -176,7 +198,6 @@ func _on_rename_world_pressed() -> void:
 		return
 	_on_delete_no_pressed()
 	var panel := _worlds_panel()
-	panel.get_node("Margin/VBox/Buttons").hide()
 	var rename := panel.get_node("Margin/VBox/Rename")
 	rename.show()
 	var field := rename.get_node("Name") as LineEdit
@@ -208,7 +229,6 @@ func _on_rename_no_pressed() -> void:
 	var rename := panel.get_node_or_null("Margin/VBox/Rename")
 	if rename:
 		rename.hide()
-	panel.get_node("Margin/VBox/Buttons").show()
 
 
 func _select_world_named(save_name: String) -> void:
@@ -233,7 +253,6 @@ func _on_delete_yes_pressed() -> void:
 func _on_delete_no_pressed() -> void:
 	var panel := _worlds_panel()
 	panel.get_node("Margin/VBox/Confirm").hide()
-	panel.get_node("Margin/VBox/Buttons").show()
 
 
 func _on_worlds_back_pressed() -> void:

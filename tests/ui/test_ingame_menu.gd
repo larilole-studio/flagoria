@@ -337,6 +337,33 @@ func _test_quit_prompt_on_back() -> int:
 	var quits := []
 	scene.quit_hook = func() -> void: quits.append(true)
 
+	var top: Control = scene.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer")
+	top.get_node("WorldsButton").pressed.emit()
+	var worlds: Control = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox")
+	worlds.get_node("Body/Actions/MapSettingsButton").pressed.emit()
+	var map_panel: Control = scene.get_node("CanvasLayer2/MapAdminPanel")
+	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	if map_panel.is_visible_in_tree() or not worlds.is_visible_in_tree() or prompt.is_open():
+		printerr("FAIL quit_prompt_on_back: Map Settings back did not return to Worlds")
+		fail += 1
+	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	if worlds.is_visible_in_tree() or not top.is_visible_in_tree() or prompt.is_open():
+		printerr("FAIL quit_prompt_on_back: Worlds back did not return to the root")
+		fail += 1
+	top.get_node("MultiplayerButton").pressed.emit()
+	var field: LineEdit = scene.get_node("CanvasLayer2/MainMenu").address_entry
+	field.grab_focus()
+	var keyboard: NumberPad = scene.get_node("CanvasLayer2/MainMenu/LetterKeyboard")
+	var keyboard_open := keyboard.is_visible_in_tree()
+	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	if not keyboard_open or keyboard.is_visible_in_tree() or not field.is_visible_in_tree():
+		printerr("FAIL quit_prompt_on_back: first Multiplayer back did not close the keyboard")
+		fail += 1
+	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
+	if field.is_visible_in_tree() or not top.is_visible_in_tree() or prompt.is_open():
+		printerr("FAIL quit_prompt_on_back: Multiplayer back did not return to the root")
+		fail += 1
+
 	# Main menu: back opens the prompt, a second back closes it.
 	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	if not prompt.is_open() or not quits.is_empty():

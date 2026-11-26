@@ -6,11 +6,11 @@ Source: Scripts/shell/menu_join_flow.gd
 
 Assertion owner for failed-join UI: `drives/join_fail.gd` checks the returned menu, hidden HUD, and exact visible status.
 
-A Join that never connects (wrong address, host not running, port blocked) returns to the main menu with a visible `Could not join <address>` message instead of leaving the player on an empty game screen (#348). A client whose host quits mid-game also lands back on the main menu. A [blank address](./join-no-ip.md) shows `Enter the host's IP address` before any connection attempt.
+A Join that never connects (wrong address, host not running, port blocked) returns to Multiplayer with a visible `Could not join <address>` message instead of leaving the player on an empty game screen (#348). A client whose host quits mid-game also lands back on the main menu. A [blank address](./join-no-ip.md) shows `Enter the host's IP address` before any connection attempt.
 
 ## Sub-features
 
-- `join-fail-no-host` `multiplayer.connection_failed` and a non-`OK` `create_client` close the peer, hide the HUD, show the main menu, restore menu music, and set `JoinStatus` to `Could not join <address>` (`flagoria_main.gd` `_on_join_failed`). `MainMenu.gd` `show_join_failed` delegates the menu feedback to `Scripts/shell/menu_join_flow.gd`.
+- `join-fail-no-host` `multiplayer.connection_failed` and a non-`OK` `create_client` close the peer, hide the HUD, show Multiplayer, restore menu music, and set `JoinStatus` to `Could not join <address>` (`flagoria_main.gd` `_on_join_failed`). `MainMenu.gd` `show_join_failed` delegates the menu feedback to `Scripts/shell/menu_join_flow.gd`.
 - `join-fail-host-quits` `multiplayer.server_disconnected` calls `leave_to_main_menu()` (scene reload), same as the in-game Main menu button.
 
 ## How to get to it (user POV)
@@ -23,7 +23,7 @@ A Join that never connects (wrong address, host not running, port blocked) retur
 Preconditions: `doctor.sh` exits `0`. Time cost: `join_fail_host_quits` ~6–8 s (probe); live drive ~8 s.
 
 - **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=join_fail_host_quits`, or full `tools/verify.sh`.
-- **Drive (live).** `bin/launch.sh drives/join_fail.gd --display` (## launch: --seed 42). Steps `menu`, `join`: open the main scene, enter `127.0.0.1:<free UDP port>`, click Join, and check recovery within 8 s. Snapshots: `before-join` and `join-failed`.
+- **Drive (live).** `bin/launch.sh drives/join_fail.gd --display` (## launch: --seed 42). Steps `menu`, `join`: open the main scene, open Multiplayer, enter `127.0.0.1:<free UDP port>`, click Join, and check recovery within 8 s. Snapshots: `before-join` and `join-failed`.
 - **Proof.** Headless prints `PASS test_join_fail_host_quits`. The live drive prints `VERIFY_DONE ok` and captures the menu with `Could not join 127.0.0.1:<port>` under the address field.
 
 ## Gotchas

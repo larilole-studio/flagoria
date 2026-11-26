@@ -12,7 +12,7 @@ Every owned flag tower pays points on a timer (#275) when land score is off. `Fl
 
 ## How to get to it (user POV)
 
-- Main menu → Host, own at least one flag tower (the starting castle, or a built/captured one). With land score on, the score is the covered city land, not this timer. With land score off, every 5 s the top-left score grows by one point per owned tower.
+- Main menu → Worlds → Host, own at least one flag tower (the starting castle, or a built/captured one). With land score on, the score is the covered city land, not this timer. With land score off, every 5 s the top-left score grows by one point per owned tower.
 
 ## Driving it with verify-flagoria helpers
 

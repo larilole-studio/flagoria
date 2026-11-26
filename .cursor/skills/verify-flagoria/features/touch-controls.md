@@ -12,12 +12,12 @@ On touch screens the hero moves with an on-screen joystick and attacks with a ro
 - `touch-joystick` a finger held still keeps the hero moving at top speed every physics frame; letting go stops it (#201).
 - `touch-look` the attack button shows idle, pressed and aim art; the joystick shows its active knob only while dragged; the aim cone pulses 0.40 -> 0.55 -> 0.40 alpha every 0.8 s with one-pixel lines at any zoom.
 - `number-pad` `Scripts/ui/number_pad.gd` (`attach`, `attach_spin_box`): the first digit or `.` replaces the selected value, but the first `Del` removes one character and the first `-` negates it (#292); a field left as `-0` commits as 0 (#356); keycaps use the menu theme. Used by [Map Settings](./map-settings-panel.md).
-- `letter-keyboard` `NumberPad.attach_text`: the join address field on the [Main menu](./main-menu.md); letters, digits, `.`, `:` and `-` (so `my-host.local` can be typed, #292). The third row is 11 keys (`a`–`l`, `Colon`, `Minus`) and still fits the 480×270 viewport (#356). A first `-` on a selected address replaces it with `-`.
+- `letter-keyboard` `NumberPad.attach_text`: the join address field in Multiplayer on the [main menu](./main-menu.md); letters, digits, `.`, `:` and `-` (so `my-host.local` can be typed, #292). The third row is 11 keys (`a`–`l`, `Colon`, `Minus`) and still fits the 480×270 viewport (#356). A first `-` on a selected address replaces it with `-`.
 
 ## How to get to it (user POV)
 
 - Run on Android, or desktop with touch emulation, host a game and drag the joystick; tap a seed field in Map Settings.
-- Touch play test for #292: tap the join address and type `my-host.local`; in Map Settings tap a value that allows a sign and press `-` first (it negates), then reopen it and press `Del` first (it removes one digit).
+- Touch play test for #292: open Multiplayer, tap the join address and type `my-host.local`; in Map Settings tap a value that allows a sign and press `-` first (it negates), then reopen it and press `Del` first (it removes one digit).
 
 ## Driving it with verify-flagoria helpers
 

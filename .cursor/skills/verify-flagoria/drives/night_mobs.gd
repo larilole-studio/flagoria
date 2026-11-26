@@ -11,16 +11,13 @@ func run() -> void:
 	if change_scene_to_file(MAIN) != OK:
 		_fail("cannot load " + MAIN)
 		return
-	if not await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON),
-		START_TIMEOUT_S
-	):
-		_fail("no " + HOST_BUTTON)
+	if not await wait_until(menu_root_visible, START_TIMEOUT_S):
+		_fail("main menu did not open")
 		return
 	step("rate")
 	var slider: HSlider = current_scene.get_node("CanvasLayer2/MainMenu").mob_rate
 	slider.value = RATE
-	await click(HOST_BUTTON)
+	await host_from_menu()
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
 		_fail("no local hero under World after clicking Host")
 		return

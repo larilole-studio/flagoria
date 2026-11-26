@@ -1,8 +1,9 @@
 # Main menu
 
-Drive: not player-facing
+Drive: drives/menu_worlds_root.gd
+Source: Scripts/shell/MainMenu.gd
 
-The main menu keeps Host, Worlds, Join, the join address and Settings in one view. Settings opens the Music and Sound effects sliders, Mob spawns, tower range, damage and cooldown, and raid controls. [Map Settings](./map-settings-panel.md) and Back stay below the scrolling list. Back from Map Settings returns to Settings, and Back from Settings returns to the main menu. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
+The main menu opens with **Worlds**, **Multiplayer** and **Settings**. Worlds lists saves and offers Host and [Map Settings](./map-settings-panel.md). Multiplayer contains the join address, Join and any connection status. Settings opens the Music and Sound effects sliders, Mob spawns, tower range, damage and cooldown, and raid controls. See [Main menu navigation](./menu-worlds-root.md) for the player path and screenshots. The tower rows are the host's TowerGuns settings ([Defense towers](./defense-towers.md)).
 
 ## Sub-features
 
@@ -13,7 +14,7 @@ The main menu keeps Host, Worlds, Join, the join address and Settings in one vie
 - `menu-raids` Rows under that slider: raids on or off (off by default), interval, group size and radius. See [Mob raids](./mob-raid.md).
 - `menu-sfx` every button plays the UI click, Back plays back (see `audio.md`).
 - `menu-quiet-log` unhandled input on the menu logs no InputMap errors.
-- `menu-quit` back or window close asks before quitting (see [In-game menu and quit prompt](./ingame-menu.md)).
+- `menu-quit` Android back closes the keyboard or steps out of a submenu. On the root or during a match, back asks before quitting. Window close also asks before quitting (see [In-game menu and quit prompt](./ingame-menu.md)).
 
 ## How to get to it (user POV)
 
@@ -24,9 +25,9 @@ The main menu keeps Host, Worlds, Join, the join address and Settings in one vie
 Preconditions: `doctor.sh` exits `0`.
 
 - **Run.** Run `./.cursor/skills/verify-flagoria/bin/drive-verify.sh` (or `./tools/verify.sh`) and read `artifacts/verify.log`.
-- **Layout test.** `test_main_menu_landscape_layout` checks the single Settings entry and menu bounds at 2400×1080 and 480×270. It clicks Settings, opens Map Settings, and uses both Back buttons to return to the main menu.
+- **Layout test.** `test_main_menu_landscape_layout` checks the three root buttons, each submenu and the Back buttons at 2400×1080 and 480×270.
 - **Proof.** Each header `-- test_audio_settings`, `-- test_dedicated_server_join`, `-- test_mob_spawn_rate`, `-- test_main_menu_letter_keyboard`, `-- test_main_menu_input_no_log_spam` (runs a separate headless process, ~2 s) appears in the log, no `FAIL` line follows it, and the run ends with `All tests passed.` and `Verification passed.`
 
 ## Gotchas
 
-- The theme's Button styles are checked by `verify-generators` (`PASS menu theme (5 Button styles) used by the main menu`). For visual review, launch under xvfb with `--resolution 2400x1080 --rendering-driver opengl3`, then click Settings and Back. The [landscape captures](../../../../docs/evidence/main-menu-662/) show each view.
+- The theme's Button styles are checked by `verify-generators` (`PASS menu theme (5 Button styles) used by the main menu`). For visual review, use the [main menu navigation drive](./menu-worlds-root.md).

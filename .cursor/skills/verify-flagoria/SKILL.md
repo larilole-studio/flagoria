@@ -49,7 +49,7 @@ The drive path is relative to the skill dir, to the repo, or a `res://` path. Ea
 
 | Line | Printed by | Meaning |
 |---|---|---|
-| `VERIFY_READY pid=<pid> scene=res://flagoria_main.tscn` | `start_game()` | The main scene is loaded, a game is started through the main menu's Host button and the local hero exists under `World`. A running process is not ready; a usable game is. |
+| `VERIFY_READY pid=<pid> scene=res://flagoria_main.tscn` | `start_game()` | The main scene is loaded, a game is started through Worlds → Host and the local hero exists under `World`. A running process is not ready; a usable game is. |
 | `VERIFY_STEP <name>` | `step(name)` | A drive step begins. |
 | `VERIFY_DONE ok` or `VERIFY_DONE fail` | `done(ok)` | The drive finished; the game quits with `0` or `1`. |
 | `VERIFY_IDLE pid=<pid>` | `idle()` | The drive stays up for an agent; stop it with Cleanup. It quits on its own after 10 minutes. |
@@ -132,7 +132,7 @@ Start it with `bin/launch.sh drives/<feature>.gd` and read its result from the e
 
 | Helper | What it does |
 |---|---|
-| `start_game()` | Loads the main scene, clicks Host with a pointer click on the button, prints `VERIFY_READY` once the hero exists. `false` (after `done(false)`) if it does not. |
+| `start_game()` | Loads the main scene and clicks Worlds, then Host, prints `VERIFY_READY` once the hero exists. `false` (after `done(false)`) if it does not. |
 | `hero()` | The local hero under `World`, to read its state. |
 | `hold(action, frames)`, `tap(action)` | Press an input action (`ui_left`, `ui_right`, `ui_up`, `ui_down`, `attack`) for some physics frames, or for one. |
 | `toggle_mode()` | Presses 3 to arm chop, or 1 to arm sword when chop is already armed. |

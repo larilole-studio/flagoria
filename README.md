@@ -3,8 +3,8 @@ Flagoria - A Captivating Island Adventure!
 
 
 Features:
-- procedurally generated island world with biomes (oceanic, temperate, continental, dense archipelago), beaches, swamps, trees, bushes, flowers and stones; seeds and generation settings under **Settings → Map Settings**
-- multiplayer over ENet (UDP `9786`) with UPnP port mapping; Host/Join from the main menu (Join takes a hostname or an IPv4 address and an optional `:port`), or a headless dedicated server (`-- --server`, see [docs/dedicated-server.md](docs/dedicated-server.md))
+- procedurally generated island world with biomes (oceanic, temperate, continental, dense archipelago), beaches, swamps, trees, bushes, flowers and stones; seeds and generation settings under **Worlds → Map Settings**
+- multiplayer over ENet (UDP `9786`) with UPnP port mapping; host from **Worlds** and join from **Multiplayer** (Join takes a hostname or an IPv4 address and an optional `:port`), or a headless dedicated server (`-- --server`, see [docs/dedicated-server.md](docs/dedicated-server.md))
 - PVP with hearts: 3 hearts in half-heart steps, a short blink of invulnerability after each hit, respawn on death (half a heart back every 5 s)
 - mobs (slimes, crabs, piglets) that wander, chase, hurt on contact and can be fought with the sword
 - music, combat sound effects and footsteps, with Music volume in both menus and Sound effects volume in the main menu ([docs/audio.md](docs/audio.md))
@@ -54,10 +54,10 @@ Debug APKs are published as pre-releases on the Releases page. See [docs/android
 
 ## Two-player play-test checklist
 
-Use two instances on one machine. A blank Join address shows `Enter the host's IP address` and keeps the main menu open.
+Use two instances on one machine. A blank Join address shows `Enter the host's IP address` and keeps Multiplayer open.
 
-1. **Host** — Instance A: Main Menu → Host. Confirm the world loads and a local player spawns.
-2. **Join** — Instance B: Enter `localhost` for the same machine or enter the host address, then press Join. Confirm the second player appears for both.
+1. **Host** — Instance A: Main Menu → Worlds → Host. Confirm the world loads and a local player spawns.
+2. **Join** — Instance B: Open Multiplayer, enter `localhost` for the same machine or enter the host address, then press Join. Confirm the second player appears for both.
 3. **Move** — Move both players with keyboard or on-screen joystick; each should see the other move.
 4. **Attack** — Attack (space / attack button) near the other player; confirm the hit player loses half a heart in the top-left hearts on their own screen and blinks on both screens.
 5. **Regen** — After taking damage, wait for the regen timer; confirm half a heart comes back (unless dead).

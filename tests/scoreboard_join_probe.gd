@@ -27,9 +27,13 @@ func _run() -> void:
 	var main = current_scene
 	main.host_port = port
 	main.address_entry.text = "localhost"
-	var join := main.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton")
-	main.get_node("CanvasLayer2/MainMenu").hide()
-	main.get_node("CanvasLayer1").show()
+	var join := main.get_node("CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer/JoinButton")
+	(
+		main
+		. get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/MultiplayerButton")
+		. pressed
+		. emit()
+	)
 	join.pressed.emit()
 	var until := Time.get_ticks_msec() + 30000
 	while Time.get_ticks_msec() < until:

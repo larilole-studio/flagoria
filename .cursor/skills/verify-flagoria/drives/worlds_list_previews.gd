@@ -3,7 +3,7 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Three saves with different seeds; the Worlds list at the phone viewport.
 
 const WORLDS := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton"
-const LIST := "CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List"
+const LIST := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List"
 const NAMES := ["preview-a", "preview-b", "preview-c"]
 const SEEDS := [50701, 50702, 50703]
 

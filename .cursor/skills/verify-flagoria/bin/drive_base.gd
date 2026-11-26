@@ -18,7 +18,14 @@ extends SceneTree
 ## sets to artifacts/out/runs/<run-id>/ (see SKILL.md, Evidence).
 
 const MAIN := "res://flagoria_main.tscn"
-const HOST_BUTTON := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/HostButton"
+const MENU_ROOT := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer"
+const WORLDS_BUTTON := MENU_ROOT + "/WorldsButton"
+const WORLDS_VIEW := "CanvasLayer2/WorldsPanel/Margin/VBox"
+const HOST_BUTTON := WORLDS_VIEW + "/Body/Actions/HostButton"
+const MAP_SETTINGS_BUTTON := WORLDS_VIEW + "/Body/Actions/MapSettingsButton"
+const MULTIPLAYER_BUTTON := MENU_ROOT + "/MultiplayerButton"
+const MULTIPLAYER_VIEW := "CanvasLayer2/MainMenu/MultiplayerPanel/VBoxContainer"
+const JOIN_BUTTON := MULTIPLAYER_VIEW + "/JoinButton"
 const TOOL_BUTTON := "CanvasLayer1/ToolWheel/ToolButton"
 const MENU_BUTTON := "CanvasLayer1/InGameMenu/MenuButton"
 const MENU_PANEL := "CanvasLayer1/InGameMenu/Pause"
@@ -26,7 +33,7 @@ const SAVE_BUTTON := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/Save"
 const WORLD_MAP := "World/worldMap"
 ## Movement (Scripts/player/player.gd) and attack, as named in project.godot.
 const ACTIONS := ["ui_left", "ui_right", "ui_up", "ui_down", "attack"]
-## How long start_game() waits for each of the Host button and the hero.
+## How long start_game() waits for the menu and the hero.
 const START_TIMEOUT_S := 30.0
 ## idle() quits on its own after this long, in case cleanup is never run.
 const MAX_IDLE_S := 600.0
@@ -59,22 +66,29 @@ func run() -> void:
 	pass
 
 
-## Loads the main scene, clicks Host, and prints the ready line once the local
+## Loads the main scene, clicks Worlds and Host, and prints the ready line once the local
 ## hero exists under World. On failure it prints why, calls done(false) and
 ## returns false.
 func start_game() -> bool:
 	if change_scene_to_file(MAIN) != OK:
 		return _fail("cannot load " + MAIN)
-	if not await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(HOST_BUTTON),
-		START_TIMEOUT_S
-	):
-		return _fail("no " + HOST_BUTTON)
-	await click(HOST_BUTTON)
+	if not await wait_until(menu_root_visible, START_TIMEOUT_S):
+		return _fail("main menu did not open")
+	await host_from_menu()
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
 		return _fail("no local hero under World after clicking Host")
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
 	return true
+
+
+func menu_root_visible() -> bool:
+	var view := current_scene.get_node_or_null(MENU_ROOT) as Control if current_scene else null
+	return view != null and view.is_visible_in_tree()
+
+
+func host_from_menu() -> void:
+	await click(WORLDS_BUTTON)
+	await click(HOST_BUTTON)
 
 
 ## The local player's hero, or null before it spawns.

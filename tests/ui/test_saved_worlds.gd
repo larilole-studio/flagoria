@@ -23,7 +23,7 @@ func _test_saved_world_round_trip() -> int:
 	await process_frame
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	menu._on_worlds_pressed()
-	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List")
+	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List")
 	var row := _row_named(list, "round-trip")
 	if row < 0 or not list.get_item_text(row).contains("round-trip"):
 		printerr("FAIL saved_world_round_trip: list %s" % _list_text(list))
@@ -103,7 +103,7 @@ func _test_two_worlds_stay_separate() -> int:
 		fail += 1
 	var main_menu = scene.get_node("CanvasLayer2/MainMenu")
 	main_menu._on_worlds_pressed()
-	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List")
+	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List")
 	if _row_named(list, "world-a") < 0 or _row_named(list, "world-b") < 0:
 		printerr("FAIL two_worlds: list %s" % _list_text(list))
 		fail += 1
@@ -144,7 +144,7 @@ func _test_saved_world_rename_panel() -> int:
 	var scene = await mount_ui_scene(preload("res://flagoria_main.tscn"), root.size, 1)
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	menu._on_worlds_pressed()
-	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List")
+	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List")
 	var panel: PanelContainer = scene.get_node("CanvasLayer2/WorldsPanel")
 	var status: Label = panel.get_node("Margin/VBox/Status")
 
@@ -231,7 +231,7 @@ func _test_legacy_save_stays_in_the_list() -> int:
 	await process_frame
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	menu._on_worlds_pressed()
-	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List")
+	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List")
 	var row := _row_named(list, "legacy-v1")
 	if row < 0:
 		printerr("FAIL legacy_save: list %s" % _list_text(list))
@@ -347,7 +347,7 @@ func _test_world_save_preview() -> int:
 	await process_frame
 	var menu = scene.get_node("CanvasLayer2/MainMenu")
 	menu._on_worlds_pressed()
-	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Scroll/List")
+	var list: ItemList = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll/List")
 	var row := _row_named(list, "preview-legacy")
 	if row < 0:
 		printerr("FAIL world_save_preview: legacy missing from %s" % _list_text(list))

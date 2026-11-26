@@ -3,8 +3,6 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## Failed Join returns to the main menu with "Could not join …" (#348).
 ## Joins a free UDP port with nothing listening, then snapshots the menu.
 
-const JOIN := "CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/JoinButton"
-
 
 func run() -> void:
 	step("menu")
@@ -19,10 +17,11 @@ func run() -> void:
 		_fail("no main menu")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
-	var menu: Node = current_scene.get_node("CanvasLayer2/MainMenu")
+	await click(MULTIPLAYER_BUTTON)
+	var menu: Control = current_scene.get_node(MULTIPLAYER_VIEW)
 	var hud: CanvasLayer = current_scene.get_node("CanvasLayer1")
-	var status: Label = menu.get_node("MarginContainer/VBoxContainer/JoinStatus")
-	var address: LineEdit = menu.get_node("MarginContainer/VBoxContainer/AddressEntry")
+	var status: Label = menu.get_node("JoinStatus")
+	var address: LineEdit = menu.get_node("AddressEntry")
 	# Pick a free port so create_client is OK but nothing answers.
 	var port := _free_port()
 	if port == 0:
@@ -33,8 +32,8 @@ func run() -> void:
 	address.text = target
 	await snapshot("before-join")
 	step("join")
-	await click(JOIN)
-	if menu.visible or not hud.visible:
+	await click(JOIN_BUTTON)
+	if menu.is_visible_in_tree() or not hud.visible:
 		_fail("Join did not hide the menu and show the HUD")
 		return
 	var returned := await wait_until(func() -> bool: return menu.is_visible_in_tree(), 8.0)

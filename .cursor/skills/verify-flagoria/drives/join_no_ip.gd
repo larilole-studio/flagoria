@@ -1,9 +1,6 @@
 ## launch: --seed 42
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 
-const MENU := "CanvasLayer2/MainMenu"
-const JOIN := MENU + "/MarginContainer/VBoxContainer/JoinButton"
-
 
 func run() -> void:
 	step("menu")
@@ -11,23 +8,24 @@ func run() -> void:
 		_fail("cannot load " + MAIN)
 		return
 	if not await wait_until(
-		func() -> bool: return current_scene != null and current_scene.has_node(JOIN),
+		func() -> bool: return current_scene != null and current_scene.has_node(JOIN_BUTTON),
 		START_TIMEOUT_S
 	):
 		_fail("no Join button")
 		return
 	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
+	await click(MULTIPLAYER_BUTTON)
 	var main := current_scene
-	var menu: Control = main.get_node(MENU)
+	var menu: Control = main.get_node(MULTIPLAYER_VIEW)
 	var hud: CanvasLayer = main.get_node("CanvasLayer1")
-	var status: Label = menu.get_node("MarginContainer/VBoxContainer/JoinStatus")
-	var address: LineEdit = menu.get_node("MarginContainer/VBoxContainer/AddressEntry")
+	var status: Label = menu.get_node("JoinStatus")
+	var address: LineEdit = menu.get_node("AddressEntry")
 	if not address.text.is_empty():
 		_fail("expected a blank address on launch")
 		return
 	await snapshot("before-join")
 	step("join-without-address")
-	await click(JOIN)
+	await click(JOIN_BUTTON)
 	await create_timer(1.5).timeout
 	await snapshot("join-no-ip")
 	var offline: bool = (
