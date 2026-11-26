@@ -19,6 +19,7 @@ func run() -> void:
 	step("parchment")
 	await click(MAP_BUTTON)
 	var ok := await wait_until(func() -> bool: return parchment.is_open(), 2.0)
+	ok = ok and _toolbar_flush(parchment)
 	await snapshot("parchment-landscape")
 
 	step("pan")
@@ -107,9 +108,11 @@ func run() -> void:
 	await click(MAP_BUTTON)
 	ok = ok and await wait_until(func() -> bool: return parchment.is_open(), 2.0)
 	await _drag(PARCHMENT, Vector2(48, 24))
+	ok = ok and _toolbar_flush(parchment)
 	await snapshot("parchment-phone-landscape")
 	await click(CLOSE)
 	ok = ok and await wait_until(func() -> bool: return not parchment.is_open(), 2.0)
+	ok = ok and not current_scene.get_node(MENU_PANEL).visible
 
 	step("phone-portrait")
 	if not await _resize(360, 640):
@@ -120,9 +123,11 @@ func run() -> void:
 	ok = ok and _inside(parchment.get_node("ZoomInButton"))
 	ok = ok and _inside(parchment.get_node("ZoomOutButton"))
 	ok = ok and _inside(parchment.get_node("RecentreButton"))
+	ok = ok and _toolbar_flush(parchment)
 	await snapshot("parchment-phone-portrait")
 	await click(CLOSE)
 	ok = ok and await wait_until(func() -> bool: return not parchment.is_open(), 2.0)
+	ok = ok and not current_scene.get_node(MENU_PANEL).visible
 	print(
 		(
 			"explored_map: phone portrait window %s ok so far %s"
@@ -184,6 +189,21 @@ func _wheel(parchment: ParchmentMap, at: Vector2, up: bool) -> void:
 	press.position = at
 	parchment._gui_input(press)
 	await process_frame
+
+
+func _toolbar_flush(parchment: ParchmentMap) -> bool:
+	var ok := true
+	for node_name in ["ZoomOutButton", "ZoomInButton", "RecentreButton", "CloseButton"]:
+		var button: Control = parchment.get_node(node_name)
+		if not is_equal_approx(button.position.y, float(parchment.BUTTON_MARGIN)):
+			print(
+				(
+					"explored_map: %s y %s want %s in %s"
+					% [button.name, button.position.y, parchment.BUTTON_MARGIN, parchment.size]
+				)
+			)
+			ok = false
+	return ok
 
 
 func _inside(control: Control) -> bool:

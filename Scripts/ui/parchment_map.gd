@@ -8,7 +8,8 @@ const GROUP := "fullscreen_map"
 const INSET := 8
 const BUTTON_SIZE := Vector2(24, 20)  ## 10% above the original 22×18, in whole pixels
 const BUTTON_GAP := 2
-const BUTTON_MARGIN := 8
+const BUTTON_MARGIN := 8  ## flush to the inner edge of the wood frame (INSET)
+const DISMISS_GUARD_MSEC := 250  ## ignore Map/Menu after Close so the lift cannot open them
 const CELL_PX := 2
 const MIN_CELL_PX := 1  ## most zoomed out; nearest-filter pixel steps
 const DEFAULT_CELL_PX := 2  ## opening zoom; one world cell per two art pixels
@@ -36,6 +37,9 @@ var _touches := {}  ## touch index -> screen position
 var _pinch_span := 0.0
 var _pinch_cell_px := DEFAULT_CELL_PX
 var _magnify_cell_px := 0.0  ## fractional zoom carried between magnify events
+var _dismiss_guard: Control
+var _guard_until_msec := 0
+var _guard_holds := 0
 
 @onready var chart: MapChart = $"../MapChart"
 @onready var _map_button: Button = $"../MapButton"
@@ -80,13 +84,16 @@ func show_map() -> void:
 	_view.queue_redraw()
 
 
-func hide_map() -> void:
+func hide_map(from_pointer := false) -> void:
+	var was_open := visible
 	hide()
 	_unbind_health()
 	_touches.clear()
 	_pinch_span = 0.0
 	_pinch_cell_px = DEFAULT_CELL_PX
 	_magnify_cell_px = 0.0
+	if was_open:
+		_arm_dismiss_guard(from_pointer)
 
 
 func min_cell_px() -> int:
@@ -157,7 +164,7 @@ func _fit() -> void:
 	size = rect.size
 	_view.position = Vector2(INSET, INSET)
 	_view.size = Vector2(maxi(size.x - INSET * 2, 1), maxi(size.y - INSET * 2, 1))
-	# Top-right, below Map and Menu so Close does not land on the menu button.
+	# Flush into the sheet's top-right corner, just inside the wood frame.
 	var origin := _toolbar_origin()
 	var step := Vector2(BUTTON_SIZE.x + BUTTON_GAP, 0)
 	_zoom_out.position = origin
@@ -170,22 +177,13 @@ func _fit() -> void:
 func _toolbar_origin() -> Vector2:
 	var row_width := BUTTON_SIZE.x * 4 + BUTTON_GAP * 3
 	var x := maxf(float(BUTTON_MARGIN), size.x - BUTTON_MARGIN - row_width)
-	var y := float(BUTTON_MARGIN)
-	var row := Rect2(global_position + Vector2(x, y), Vector2(row_width, BUTTON_SIZE.y))
-	for path in ["../MapButton", "../InGameMenu/MenuButton"]:
-		var other := get_node_or_null(path) as Control
-		if other == null:
-			continue
-		var other_rect := other.get_global_rect()
-		if row.intersects(other_rect.grow(BUTTON_GAP)):
-			y = maxf(y, other_rect.end.y - global_position.y + BUTTON_GAP)
-			row.position.y = global_position.y + y
-	return Vector2(x, y)
+	return Vector2(x, BUTTON_MARGIN)
 
 
 func _process(_delta: float) -> void:
 	if visible:
 		_view.queue_redraw()
+	_try_release_guard()
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -261,8 +259,9 @@ func _toggle_map() -> void:
 	if HudLayoutVisual.blocks_hud_actions() or chart.local_player() == null:
 		return
 	if is_open():
-		hide_map()
+		hide_map(true)
 	else:
+		_clear_guard()
 		show_map()
 
 
@@ -275,6 +274,15 @@ func _input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
 		_on_close()
 		get_viewport().set_input_as_handled()
+		return
+	var lift := false
+	if event is InputEventScreenTouch:
+		lift = not event.pressed
+	elif event is InputEventMouseButton:
+		lift = event.button_index == MOUSE_BUTTON_LEFT and not event.pressed
+	if _dismiss_guard != null and lift:
+		_guard_holds = 0
+		_try_release_guard()
 
 
 func _draw() -> void:
@@ -383,7 +391,7 @@ func _pinch_mid() -> Vector2:
 
 
 func _on_close() -> void:
-	hide_map()
+	hide_map(true)
 
 
 func _on_zoom_in() -> void:
@@ -401,7 +409,7 @@ func _on_recentre() -> void:
 
 func _on_damaged(_amount: int) -> void:
 	if visible:
-		_on_close()
+		hide_map()
 
 
 func _bind_health() -> void:
@@ -418,6 +426,66 @@ func _unbind_health() -> void:
 	if _health and _health.damaged.is_connected(_on_damaged):
 		_health.damaged.disconnect(_on_damaged)
 	_health = null
+
+
+func _arm_dismiss_guard(from_pointer: bool) -> void:
+	## Eat Map/Menu input after Close until the pointer is up and a short wait.
+	_clear_guard()
+	var parent := get_parent()
+	if parent == null:
+		return
+	var guard := Control.new()
+	guard.name = "ParchmentDismissGuard"
+	guard.mouse_filter = Control.MOUSE_FILTER_STOP
+	guard.z_index = 30
+	var rect := Rect2()
+	for path in ["../InGameMenu/MenuButton"]:
+		var other := get_node_or_null(path) as Control
+		if other != null:
+			var other_rect := other.get_global_rect().grow(4)
+			rect = other_rect if rect.size == Vector2.ZERO else rect.merge(other_rect)
+	if _close != null:
+		var close_rect := _close.get_global_rect().grow(4)
+		rect = close_rect if rect.size == Vector2.ZERO else rect.merge(close_rect)
+	guard.position = rect.position
+	guard.size = rect.size
+	guard.gui_input.connect(_on_guard_input)
+	parent.add_child(guard)
+	_dismiss_guard = guard
+	_guard_holds = 1 if from_pointer else 0
+	_guard_until_msec = Time.get_ticks_msec() + DISMISS_GUARD_MSEC
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+
+func _on_guard_input(event: InputEvent) -> void:
+	if _dismiss_guard == null:
+		return
+	var pointer := event is InputEventScreenTouch
+	if event is InputEventMouseButton:
+		pointer = event.button_index == MOUSE_BUTTON_LEFT
+	if not pointer:
+		return
+	_dismiss_guard.accept_event()
+	_guard_holds += 1 if event.pressed else -1
+	_guard_holds = maxi(_guard_holds, 0)
+	_try_release_guard()
+
+
+func _try_release_guard() -> void:
+	if _dismiss_guard == null or Time.get_ticks_msec() < _guard_until_msec:
+		return
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) or _guard_holds > 1:
+		return
+	_clear_guard()
+
+
+func _clear_guard() -> void:
+	_guard_holds = 0
+	_guard_until_msec = 0
+	if _dismiss_guard != null and is_instance_valid(_dismiss_guard):
+		_dismiss_guard.queue_free()
+	_dismiss_guard = null
+	process_mode = Node.PROCESS_MODE_INHERIT
 
 
 func _fog_image() -> Image:
