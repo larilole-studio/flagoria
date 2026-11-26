@@ -5,6 +5,13 @@ const ATTACK := "CanvasLayer1/TouchScreenButton"
 const JOYSTICK := "CanvasLayer1/player_joystick"
 
 
+func host_from_menu() -> void:
+	if "--menu-reference" in OS.get_cmdline_user_args():
+		step("main-menu")
+		await snapshot("main-menu")
+	await super.host_from_menu()
+
+
 func run() -> void:
 	if not await start_game():
 		return

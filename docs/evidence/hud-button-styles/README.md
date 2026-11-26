@@ -1,22 +1,25 @@
 # HUD button style comparison
 
-Both sheets use a two-column, four-row grid with A first.
+| Panel | Style | `FLAGORIA_HUD_STYLE` | Idle colours |
+| --- | --- | --- | --- |
+| A | Candy Glass | `current` | Default glass sprites |
+| B | Sage | `sage` | Normal menu sage with off-white marks |
+| C | Sage light | `sage-light` | Hover sage with ink marks |
+| D | Deep teal | `deep` | Pressed menu teal with off-white marks |
+| E | Role colours | `role` | Gold Attack, sage Run and joystick, slider-teal Map, tan Buildings and picker, deep-teal wheel, gold-on-ink Menu |
+| F | Soft-shadow sand | `shadow` | Original paper and ink discs |
+| G | Ghost | `ghost` | Transparent fill, gold and ink ring, off-white marks |
 
-| Panel | Style | Preview value |
-| --- | --- | --- |
-| A | Candy Glass | `current` |
-| B | Sea-teal glass | `teal` |
-| C | Leaf-green glass | `leaf` |
-| D | Sand-gold glass | `sand` |
-| E | Flat | `flat` |
-| F | Soft-shadow | `shadow` |
-| G | Ghost | `ghost` |
-
-- [Match start](match-start.png) crops the HUD zones from live 2400×1080 seed 49
-  matches. The parchment map and Buildings picker are closed.
-- [State strip](state-strip.png) shows Attack, Run, Buildings, Map, Plank and
-  Rotate. A dash marks an unavailable state.
+- [Match start](match-start.png) shows the joystick, Attack, Run, tool wheel,
+  Buildings, Map, and Menu in a two-column grid cropped from live 2400×1080
+  seed 49 matches. The parchment and picker are closed.
+- [State strip](state-strip.png) shows idle, pressed, disabled, and supported
+  selected and aim states for Attack, Run, Buildings, Map, Plank, and Rotate.
+  A dash marks an unavailable state.
+- [Main-menu reference](menu-reference.png) crops the Worlds, Multiplayer, and
+  Settings buttons from the live 2400×1080 main menu. The crop also appears on
+  the match sheet.
 
 Set `FLAGORIA_HUD_STYLE` before launch to preview a style. Run
-`python3 tools/ui/compare_hud_styles.py` with Godot, Xvfb, CairoSVG and Pillow
-to regenerate both sheets. A is the shipped default.
+`python3 tools/ui/compare_hud_styles.py` with Godot, Xvfb, CairoSVG, and Pillow
+to regenerate the evidence.

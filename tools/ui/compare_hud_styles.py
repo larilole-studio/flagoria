@@ -16,15 +16,15 @@ DRIVE = "res://.cursor/skills/verify-flagoria/drives/hud_button_styles.gd"
 RESOLUTION = (2400, 1080)
 STYLES = {
     "current": "A · Candy Glass",
-    "teal": "B · Sea-teal glass",
-    "leaf": "C · Leaf-green glass",
-    "sand": "D · Sand-gold glass",
-    "flat": "E · Flat",
-    "shadow": "F · Soft-shadow",
+    "sage": "B · Sage",
+    "sage-light": "C · Sage light",
+    "deep": "D · Deep teal",
+    "role": "E · Role colours",
+    "shadow": "F · Soft-shadow sand",
     "ghost": "G · Ghost",
 }
 FONT = ROOT / "art/ui/fonts/LilitaOne-Regular.ttf"
-BG, PANEL, TEXT = "#2a2238", "#24604a", "#e7d7b1"
+BG, PANEL, TEXT = "#141B1B", "#345A52", "#F2EAF1"
 
 
 def godot(scratch, args, *, display=False, env=None):
@@ -53,6 +53,8 @@ def capture(scratch, style):
     config = "[map_gen]\n" + "".join(f"{key}_seed={seed}\n" for seed, key in enumerate(keys, 49))
     (user / "map_gen_params.cfg").write_text(config)
     args = ["--rendering-driver", "opengl3", "--resolution", "2400x1080", "--script", DRIVE]
+    if style == "current":
+        args += ["--", "--menu-reference"]
     log = godot(scratch, args, display=True,
                 env={"FLAGORIA_HUD_STYLE": style, "VERIFY_EVIDENCE_DIR": str(scratch)})
     if "VERIFY_DONE ok" not in log:
@@ -61,8 +63,8 @@ def capture(scratch, style):
 
 
 def sheet(panels, filename):
-    """Arrange A–G in reading order at native panel size."""
-    width, height = panels[0].size
+    """Arrange the variants and optional reference in two columns."""
+    width, height = panels[0][1].size
     gap, header = 12, 36
     columns = 2
     rows = (len(panels) + columns - 1) // columns
@@ -70,11 +72,12 @@ def sheet(panels, filename):
                               rows * (height + header + gap) + gap), BG)
     draw = ImageDraw.Draw(board)
     font = ImageFont.truetype(FONT, 23)
-    for index, (title, panel) in enumerate(zip(STYLES.values(), panels, strict=True)):
+    for index, (title, panel) in enumerate(panels):
         x = gap + index % columns * (width + gap)
         y = gap + index // columns * (height + header + gap)
         draw.text((x + 4, y + 4), title, font=font, fill=TEXT)
-        board.paste(panel, (x, y + header))
+        board.paste(panel, (x + (width - panel.width) // 2,
+                            y + header + (height - panel.height) // 2))
     board.save(OUT / filename, optimize=True)
 
 
@@ -90,14 +93,30 @@ def hud_crop(image):
     return panel
 
 
+def capture_image(path):
+    with Image.open(path) as image:
+        if image.size != RESOLUTION:
+            raise ValueError(f"Unexpected capture size {image.size} for {path.name}")
+        return image.convert("RGB")
+
+
 def match_start(scratch):
     panels = []
-    for style in STYLES:
-        with Image.open(scratch / style / "01-match-start.png") as image:
-            if image.size != RESOLUTION:
-                raise ValueError(f"Unexpected capture size {image.size} for {style}")
-            panels.append(hud_crop(image))
+    for style, title in STYLES.items():
+        number = "02" if style == "current" else "01"
+        image = capture_image(scratch / style / f"{number}-match-start.png")
+        panels.append((title, hud_crop(image)))
+    panels.append(("Main menu · Colour reference", menu_reference(scratch)))
     sheet(panels, "match-start.png")
+
+
+def menu_reference(scratch):
+    menu = capture_image(scratch / "current/01-main-menu.png")
+    # Crop the three stacked buttons from the 2400×1080 main-menu capture.
+    menu = menu.crop((778, 456, 1622, 815))
+    menu.thumbnail((740, 410), Image.Resampling.LANCZOS)
+    menu.save(OUT / "menu-reference.png", optimize=True)
+    return menu
 
 
 def state_strip():
@@ -115,7 +134,7 @@ def state_strip():
     cell, label, header = 92, 92, 30
     font = ImageFont.truetype(FONT, 13)
     panels = []
-    for style in STYLES:
+    for style, name in STYLES.items():
         sprites = ROOT / "art/ui/hud_e4" if style == "current" else VARIANT_SPRITES / style
         panel = Image.new("RGB", (label + cell * len(columns), header + cell * len(buttons)),
                           PANEL)
@@ -137,7 +156,7 @@ def state_strip():
                     sprite = source.convert("RGBA").resize((size, size), Image.Resampling.LANCZOS)
                     inset = (cell - size) // 2
                     panel.paste(sprite, (x + inset, y + inset), sprite)
-        panels.append(panel)
+        panels.append((name, panel))
     sheet(panels, "state-strip.png")
 
 

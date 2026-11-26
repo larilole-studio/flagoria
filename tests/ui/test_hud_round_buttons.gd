@@ -202,12 +202,13 @@ func _test_hud_button_styles() -> int:
 	var current_dir := "res://art/ui/hud_e4/"
 	var current := RoundHudStyle.texture("build_normal")
 	var heart := RoundHudStyle.texture("heart_full")
+	var log_sticker := RoundHudStyle.texture("log")
 	var ok := (
 		RoundHudStyle.texture_directory() == current_dir
 		and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		and current.get_image().has_mipmaps()
 	)
-	for value in ["", "current", "unknown", "wood", "parchment", "stone", "pixel", "banner"]:
+	for value in ["", "current", "unknown", "teal", "leaf", "sand", "flat", "sage_light"]:
 		OS.set_environment("FLAGORIA_HUD_STYLE", value)
 		ok = ok and RoundHudStyle.texture("build_normal") == current
 	var variants_ok := true
@@ -225,7 +226,15 @@ func _test_hud_button_styles() -> int:
 		"rotate_normal",
 	]
 	var textures := [current]
-	for style in ["teal", "leaf", "sand", "flat", "shadow", "ghost"]:
+	var bases := {
+		"sage": Color("#5F7160"),
+		"sage-light": Color("#8D977F"),
+		"deep": Color("#345A52"),
+		"role": Color("#5F7160"),
+		"shadow": Color("#E7D7B1"),
+		"ghost": Color.TRANSPARENT,
+	}
+	for style: String in bases:
 		OS.set_environment("FLAGORIA_HUD_STYLE", style)
 		var directory := "res://art/ui/hud_styles/%s/" % style
 		var complete := true
@@ -237,12 +246,17 @@ func _test_hud_button_styles() -> int:
 			continue
 		var chosen := RoundHudStyle.texture("build_normal")
 		var source := load(directory + "build_normal.png") as Texture2D
+		var base := RoundHudStyle.texture("joystick_base_normal").get_image()
+		var center := base.get_pixelv(base.get_size() / 2)
+		var expected: Color = bases[style]
 		var style_ok := (
 			RoundHudStyle.texture_directory() == directory
 			and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 			and chosen.get_image().get_data() == source.get_image().get_data()
 			and chosen.get_image().has_mipmaps()
 			and RoundHudStyle.texture("heart_full") == heart
+			and RoundHudStyle.texture("log") == log_sticker
+			and (center.a == 0.0 if style == "ghost" else center.is_equal_approx(expected))
 			and not textures.has(chosen)
 		)
 		if not style_ok:

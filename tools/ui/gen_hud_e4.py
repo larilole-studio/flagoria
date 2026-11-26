@@ -166,7 +166,7 @@ def icon_svg(doc, name, cx, cy, size, ic, ow=7.0):
     s = size / 100.0
     def col(k):
         if k.startswith('#'):
-            return k
+            return ic.get(k, k)
         return ic['wood' if k == 'plank' else k]
     out = ic['out']
     parts = [f'<g transform="translate({cx - 50*s:.2f},{cy - 50*s:.2f}) scale({s:.4f})" stroke-linejoin="round" stroke-linecap="round">']
@@ -184,7 +184,7 @@ def icon_svg(doc, name, cx, cy, size, ic, ow=7.0):
         elif e[0] == 's':
             parts.append(f'<path d="{e[1]}" fill="none" stroke="{col(e[2])}" stroke-width="{e[3]}"/>')
         elif e[0] == 'd':
-            c = e[2] if e[2].startswith('#') else col(e[2])
+            c = col(e[2])
             parts.append(f'<g fill="none" stroke="{c}" stroke-width="{e[3]}">{e[1]}</g>')
     parts.append('</g>')
     doc.add(''.join(parts))
@@ -269,10 +269,12 @@ def disc(name, units, face, icon, scale, states, *, style, out, draw_button):
         ring = state.startswith('selected') and not close
         charge = (.88 if state == 'aim' else .68) if name == 'attack' else None
         radius = 41 if charge is not None else (42 if ring else 45)
-        draw_button(doc, style, 50, 47, radius, 'close' if close else face,
+        disabled = state == 'disabled'
+        draw_style = style.get('disabled_style', style) if disabled else style
+        draw_button(doc, draw_style, 50, 47, radius, 'close' if close else face,
                     'close' if close else icon, icon_scale=1.2 if close else scale,
                     pressed='pressed' in state, selected=ring, charge=charge)
-        save(doc, f'{name}_{state}', units, state == 'disabled', out=out)
+        save(doc, f'{name}_{state}', units, disabled and draw_style is style, out=out)
 
 
 def sticker(name, icon, state='normal'):
@@ -311,9 +313,11 @@ def render_discs(out=OUT, style=E4, draw_button=button, draw_joystick=joystick):
     for part, states in [('base', ('normal', 'disabled')), ('knob', ('normal', 'active', 'disabled'))]:
         for state in states:
             doc = Doc()
-            draw_joystick(doc, knob=part == 'knob', active=state == 'active', style=style)
+            disabled = state == 'disabled'
+            draw_style = style.get('disabled_style', style) if disabled else style
+            draw_joystick(doc, knob=part == 'knob', active=state == 'active', style=draw_style)
             units = 56 if part == 'base' else 24
-            save(doc, f'joystick_{part}_{state}', units, state == 'disabled', out=out)
+            save(doc, f'joystick_{part}_{state}', units, disabled and draw_style is style, out=out)
 
 
 def main():

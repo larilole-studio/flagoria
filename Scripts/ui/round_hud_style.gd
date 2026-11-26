@@ -3,7 +3,7 @@ extends RefCounted
 ## Disc textures and typography for the in-game HUD.
 
 const SELECTED := "current"
-const STYLES := ["teal", "leaf", "sand", "flat", "shadow", "ghost"]
+const STYLES := ["sage", "sage-light", "deep", "role", "shadow", "ghost"]
 const HUD := "res://art/ui/hud_e4/"
 const DENSITY := 4
 const FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS

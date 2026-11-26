@@ -20,13 +20,16 @@ wood count, and a trophy sticker. The two loss-flash frames last about
 
 Candy Glass (`current`, `hud_e4/`) is the default in
 `RoundHudStyle.SELECTED`. Set `FLAGORIA_HUD_STYLE` before launch to preview
-`teal`, `leaf`, `sand`, `flat`, `shadow`, or `ghost`. Empty and unknown
-values use Candy Glass. The buttons and joystick use linear filtering with
-mipmaps. Hearts and resource stickers keep their Candy Glass sprites.
+`sage`, `sage-light`, `deep`, `role`, `shadow`, or `ghost`. Sage, Sage
+light, Deep teal, and Role colours use the main menu palette on the
+Soft-shadow sand disc. Ghost uses a transparent center and a gold and ink
+ring. Empty and unknown values use Candy Glass. Buttons and joystick use
+linear filtering with mipmaps. Hearts and resource stickers keep their
+Candy Glass sprites.
 
 Run `python3 tools/ui/gen_hud_styles.py` with CairoSVG and Pillow to regenerate
 the [variant sprites](hud_styles/). Run `python3 tools/ui/compare_hud_styles.py`
-to generate the [match capture and state strip](../../docs/evidence/hud-button-styles/).
+to generate the [match, state, and main-menu comparisons](../../docs/evidence/hud-button-styles/).
 
 ## Map panel
 
