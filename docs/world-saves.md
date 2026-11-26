@@ -231,6 +231,7 @@ way they do in a live match. Held items are not stored; there are none yet.
   "position": [120.0, 340.5],
   "health": 4,
   "wood": 3,
+  "stone": 7,
   "score": 2,
   "charted": {"0,0": "<base64 of 128 bytes>"},
   "discovered": {"0,0": 1}
@@ -241,12 +242,13 @@ way they do in a live match. Held items are not stored; there are none yet.
 | --- | --- |
 | `position` | World pixels `[x, y]`. Missing, or not a pair of numbers: the map's spawn. |
 | `health` | Half-hearts, from 0 up to the player's maximum. Missing, or not a whole number in that range: full health. |
-| `wood` | Wood in the inventory. Missing, or negative: 0. |
+| `wood` | Wood in the inventory. Missing, or not a nonnegative whole number: 0. |
+| `stone` | Stone in the inventory. Missing, or not a nonnegative whole number: 0. |
 | `score` | This peer's point total. Missing, or negative: 0. |
 | `charted` | Explored ground (#247). Chunk key -> base64 of that chunk's 128-byte bitset, the same 32-cell grid as the chart. A bad chunk is dropped. Missing: nothing charted. |
 | `discovered` | Chunks that already paid discovery points, `"cx,cy"` -> peer id. Kept so the saved score is not paid again for the same chunk. A bad entry is dropped. Missing: no chunk has paid. |
 
-An older save has no `player` object, or `{}`. Both load as the default player: spawn, full health, no wood, no score, nothing charted. The file meaning of an empty section is unchanged, so the version stays 3.
+An older player section with `wood` and no `stone` loads the saved wood and resets stone to 0. An absent or empty player section loads the default player at spawn with full health, empty inventory, no score and nothing charted. The format stays at version 3.
 
 ## Day and night
 
@@ -270,7 +272,7 @@ date and time (`2026-10-27 22-15-03`; a second save in the same second gets
 so the player can resume or leave. The file is the version 3 gzip above. It
 holds the generation inputs, this peer's tree and bush cuts, plank bridges,
 placed structures and walls, and this peer's player state (position, health,
-wood, score, charted ground). A second save of that same file keeps `created`
+wood, stone, score, charted ground). A second save of that same file keeps `created`
 and refreshes `updated`, and the picked flowers and destroyed stones in
 `world.object_changes`. Defeated mobs are not saved.
 

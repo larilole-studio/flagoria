@@ -1,11 +1,11 @@
 class_name PlayerSave
 extends RefCounted
 ## The player section of a world save (#197): where this peer is, their
-## health, wood, score, charted ground and the chunks that already paid
+## health, wood, stone, score, charted ground and the chunks that already paid
 ## discovery points. Held items are not stored; there are none yet.
 ##
 ## An empty section, or a section a file does not have, is the default
-## player: the map's spawn, full health, no wood, no score, nothing charted.
+## player: the map's spawn, full health, no resources, no score, nothing charted.
 ## A bad value on one key falls back to that default and the rest still load.
 ## docs/world-saves.md describes the keys. The container (MapSave) stores the
 ## object as it was written.
@@ -16,7 +16,8 @@ static func capture(game: Node) -> Dictionary:
 	var body := _body(game)
 	var who := _who(body)
 	var out := {
-		"wood": _wood_of(game),
+		"wood": _resource_count(game, Inventory.WOOD),
+		"stone": _resource_count(game, Inventory.STONE),
 		"score": _score_of(game, who),
 		"charted": _chart_to_dict(_chart(game)),
 		"discovered": _found(game),
@@ -39,11 +40,12 @@ static func position_of(data: Dictionary) -> Variant:
 
 
 static func apply(game: Node, body: Node, data: Dictionary) -> void:
-	## Puts `data` onto `body` and the scene-level wood, score, chart and
+	## Puts `data` onto `body` and the scene-level resources, score, chart and
 	## discovery set. Missing and bad keys become the default player.
 	var who := _who(body)
 	_apply_chart(game, data.get("charted", {}))
-	_apply_wood(game, data.get("wood", 0))
+	_apply_resource(game, Inventory.WOOD, data.get("wood", 0))
+	_apply_resource(game, Inventory.STONE, data.get("stone", 0))
 	_apply_score(game, who, data.get("score", 0))
 	_apply_found(game, data.get("discovered", {}))
 	if body is Node2D:
@@ -115,21 +117,21 @@ static func _apply_chart(game: Node, data) -> void:
 		panel.restore_chart(_chart_from_dict(data))
 
 
-static func _wood_of(game: Node) -> int:
-	var inventory := game.get_node_or_null("Inventory")
-	return int(inventory.count_of(Inventory.WOOD)) if inventory else 0
+static func _resource_count(game: Node, resource: StringName) -> int:
+	var inventory := game.get_node_or_null("Inventory") as Inventory
+	return inventory.count_of(resource) if inventory else 0
 
 
-static func _apply_wood(game: Node, value) -> void:
-	var inventory := game.get_node_or_null("Inventory")
+static func _apply_resource(game: Node, resource: StringName, value: Variant) -> void:
+	var inventory := game.get_node_or_null("Inventory") as Inventory
 	if inventory == null:
 		return
 	var want := maxi(_whole(value, 0), 0)
-	var have: int = inventory.count_of(Inventory.WOOD)
+	var have := inventory.count_of(resource)
 	if want > have:
-		inventory.add(Inventory.WOOD, want - have)
+		inventory.add(resource, want - have)
 	elif have > want:
-		inventory.spend(Inventory.WOOD, have - want)
+		inventory.spend(resource, have - want)
 
 
 static func _score_of(game: Node, who: int) -> int:
