@@ -150,6 +150,10 @@ def icon_shapes(name):
               ('f', '<path d="M6 86 L50 26 L94 86 Z"/>', 'acc2'),
               ('f', '<path d="M50 26 L94 86 L64 86 Z"/>', 'wood'),
               ('f', '<path d="M38 86 L50 56 L62 86 Z"/>', 'wood2')]
+    elif name == 'mine':
+        E += [('f', '<path d="M7 84 L17 43 L35 22 L63 17 L83 38 L94 84 Z"/>', 'shade'),
+              ('f', '<path d="M29 84 L29 50 L71 50 L71 84 Z"/>', 'out'),
+              ('s', 'M27 83 L33 49 L67 49 L73 83', 'wood', 10)]
     elif name == 'tower':
         E += [('f', '<path d="M24 92 L28 38 L72 38 L76 92 Z"/>', 'main'),
               ('f', '<path d="M18 40 L18 12 L30 12 L30 22 L44 22 L44 12 L56 12 L56 22 L70 22 L70 12 L82 12 L82 40 Z"/>', 'main'),
@@ -299,7 +303,7 @@ def main():
     disc('rotate', 24, 'build', 'rotate', 1.42, basic)
     for icon in ('sword', 'chop', 'bow'):
         disc(f'wheel_{icon}', 24, 'wheel', icon, 1.4, toggle)
-    for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'demolish'):
+    for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'mine', 'demolish'):
         disc(f'pick_{icon}', 24, 'pick', icon, 1.72, toggle)
     disc('run', 32, 'run', 'run', 1.45, basic)
     disc('attack', 40, 'attack', 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))

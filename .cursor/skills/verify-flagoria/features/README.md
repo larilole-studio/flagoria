@@ -78,6 +78,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Build guard post](./build-guard-post.md) — `guard_post.txt` for 20 wood from the build picker, save/reload and multiplayer sync (#528).
 - [Demolish construction](./demolish-construction.md)
 - [Build barracks](./build-barracks.md) — `barracks.txt` for 30 wood from the build picker, save/reload and multiplayer sync (#556).
+- [Place a mine](./place-mine.md) — a 3×3 mine costs 15 wood and needs an orthogonally adjacent live rock (#722).
 - [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
 - [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bow hits from other peers land; multiplayer hp sync (#554).
 - [Soldier vs peer](./soldier-vs-peer.md) — trained soldiers on Follow or Hold strike living enemy players; owner is never a target; health sync (#555).

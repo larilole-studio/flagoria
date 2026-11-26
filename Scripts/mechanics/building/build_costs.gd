@@ -14,6 +14,7 @@ const TOWER := &"tower"
 const CASTLE := &"castle"
 const GUARD_POST := &"guard_post"
 const BARRACKS := &"barracks"
+const MINE := &"mine"
 const START_CASTLE := &"start_castle"
 
 ## Requestable named structures take one anchor cell.
@@ -22,6 +23,7 @@ const NAMED_STRUCTURES := {
 	CASTLE: "castle",
 	GUARD_POST: "guard_post",
 	BARRACKS: "barracks",
+	MINE: "mine",
 }
 
 const CITY_KINDS := {
@@ -44,6 +46,7 @@ const WOOD := {
 	CASTLE: 50,
 	GUARD_POST: 20,
 	BARRACKS: 30,
+	MINE: 15,
 	START_CASTLE: 0,
 }
 ## Share of a build’s cost given back when Demolish removes it.

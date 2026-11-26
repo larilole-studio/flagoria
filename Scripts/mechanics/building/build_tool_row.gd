@@ -11,6 +11,7 @@ const FOOTPRINT_KIND := {
 	BuildPlacement.Tool.CASTLE: BuildCosts.CASTLE,
 	BuildPlacement.Tool.GUARD: BuildCosts.GUARD_POST,
 	BuildPlacement.Tool.BARRACKS: BuildCosts.BARRACKS,
+	BuildPlacement.Tool.MINE: BuildCosts.MINE,
 }
 const TOOL_TIPS := {
 	BuildPlacement.Tool.CUT: "Cut",
@@ -19,6 +20,7 @@ const TOOL_TIPS := {
 	BuildPlacement.Tool.CASTLE: "Castle",
 	BuildPlacement.Tool.GUARD: "Guard post",
 	BuildPlacement.Tool.BARRACKS: "Barracks",
+	BuildPlacement.Tool.MINE: "Mine",
 	BuildPlacement.Tool.WALL: "Wall",
 	BuildPlacement.Tool.DEMOLISH: "Demolish",
 }
@@ -28,6 +30,7 @@ const BUTTON_NAMES := {
 	BuildPlacement.Tool.CASTLE: "CastleButton",
 	BuildPlacement.Tool.GUARD: "GuardButton",
 	BuildPlacement.Tool.BARRACKS: "BarracksButton",
+	BuildPlacement.Tool.MINE: "MineButton",
 	BuildPlacement.Tool.WALL: "WallButton",
 	BuildPlacement.Tool.DEMOLISH: "DemolishButton",
 }
@@ -41,6 +44,7 @@ static func picker_tools() -> Array:
 		BuildPlacement.Tool.CASTLE,
 		BuildPlacement.Tool.GUARD,
 		BuildPlacement.Tool.BARRACKS,
+		BuildPlacement.Tool.MINE,
 		BuildPlacement.Tool.DEMOLISH,
 	]
 

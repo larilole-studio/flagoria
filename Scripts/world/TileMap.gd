@@ -233,6 +233,10 @@ func destroy_decor(cell: Vector2i) -> bool:
 	return _object_removals.destroy(cell)
 
 
+func has_live_rock(cell: Vector2i) -> bool:
+	return _object_removals.decor_at(cell) == TileCatalog.STONES
+
+
 func cut_grown(cell: Vector2i) -> InteractableType:
 	return _tree_cuts.cut_grown(cell)
 
