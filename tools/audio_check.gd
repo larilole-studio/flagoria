@@ -403,7 +403,7 @@ func _begin_step(i: int, t: float) -> void:
 			# Set up Worlds before measuring the Map Settings click.
 			menu._on_worlds_pressed()
 			var button := _scene.get_node(
-				"CanvasLayer2/WorldsPanel/Margin/VBox/Actions/MapSettingsButton"
+				"CanvasLayer2/WorldsPanel/Margin/VBox/Body/Actions/MapSettingsButton"
 			)
 			button.pressed.emit()
 		"ui_back":

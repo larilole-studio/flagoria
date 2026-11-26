@@ -340,7 +340,7 @@ func _test_quit_prompt_on_back() -> int:
 	var top: Control = scene.get_node("CanvasLayer2/MainMenu/MarginContainer/VBoxContainer")
 	top.get_node("WorldsButton").pressed.emit()
 	var worlds: Control = scene.get_node("CanvasLayer2/WorldsPanel/Margin/VBox")
-	worlds.get_node("Actions/MapSettingsButton").pressed.emit()
+	worlds.get_node("Body/Actions/MapSettingsButton").pressed.emit()
 	var map_panel: Control = scene.get_node("CanvasLayer2/MapAdminPanel")
 	root.propagate_notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	if map_panel.is_visible_in_tree() or not worlds.is_visible_in_tree() or prompt.is_open():

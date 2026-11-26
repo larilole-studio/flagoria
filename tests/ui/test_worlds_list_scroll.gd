@@ -2,7 +2,7 @@ extends "res://tests/helpers/test_helpers.gd"
 ## The Worlds list scrolls when more saves exist than fit; touch drag and wheel
 ## move it without loading a world.
 
-const SCROLL := "CanvasLayer2/WorldsPanel/Margin/VBox/Scroll"
+const SCROLL := "CanvasLayer2/WorldsPanel/Margin/VBox/Body/Scroll"
 const LIST := SCROLL + "/List"
 const VIEWPORTS := [Vector2i(1280, 720), Vector2i(2400, 1080)]
 const SAVE_COUNT := 14

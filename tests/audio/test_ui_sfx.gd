@@ -117,12 +117,12 @@ func _test_ui_sfx_presses() -> int:
 	var top: Control = menu.get_node("MarginContainer/VBoxContainer")
 	var multiplayer: Control = menu.get_node("MultiplayerPanel/VBoxContainer")
 	var presses := [
-		[worlds.get_node("Actions/MapSettingsButton"), "click"],
+		[worlds.get_node("Body/Actions/MapSettingsButton"), "click"],
 		[panel.get_node("Margin/VBox/Buttons/RandomSeed"), "click"],
 		[panel.get_node("Margin/VBox/Buttons/RandomSpecs"), "click"],
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Reset"), "click"],
 		[panel.get_node("Margin/VBox/ButtonsDefaults/Back"), "back"],
-		[worlds.get_node("Back"), "back"],
+		[worlds.get_node("Body/Actions/Back"), "back"],
 		[top.get_node("MultiplayerButton"), "click"],
 		[multiplayer.get_node("BackButton"), "back"],
 		[top.get_node("SettingsButton"), "click"],

@@ -81,11 +81,18 @@ func check_worlds_navigation(scene: Node, top: Control) -> int:
 	if worlds == null or not worlds.is_visible_in_tree() or top.is_visible_in_tree():
 		printerr("FAIL main_menu_landscape_layout: Worlds did not open")
 		return fail + 1
-	var actions: HBoxContainer = worlds.get_node("Actions")
+	var actions: VBoxContainer = worlds.get_node("Body/Actions")
 	var host: Button = actions.get_node("HostButton")
 	var map_button: Button = actions.get_node("MapSettingsButton")
 	if not host.is_visible_in_tree() or not map_button.is_visible_in_tree():
 		printerr("FAIL main_menu_landscape_layout: Worlds actions are hidden")
+		fail += 1
+	var scroll: Control = worlds.get_node("Body/Scroll")
+	if scroll.get_global_rect().size.x <= actions.get_global_rect().size.x:
+		printerr("FAIL main_menu_landscape_layout: Worlds list is not wider than the actions")
+		fail += 1
+	if scroll.get_global_rect().size.y < actions.get_global_rect().size.y * 0.8:
+		printerr("FAIL main_menu_landscape_layout: Worlds list is shorter than the actions")
 		fail += 1
 	fail += check_menu_bounds(worlds) + check_menu_bounds(actions)
 	var admin: Control = scene.get_node(MAP_SETTINGS)
@@ -97,7 +104,7 @@ func check_worlds_navigation(scene: Node, top: Control) -> int:
 	if admin.is_visible_in_tree() or top.is_visible_in_tree() or not worlds.is_visible_in_tree():
 		printerr("FAIL main_menu_landscape_layout: Map Settings Back did not return to Worlds")
 		return fail + 1
-	await click_menu_button(worlds.get_node("Back"))
+	await click_menu_button(worlds.get_node("Body/Actions/Back"))
 	if worlds.is_visible_in_tree() or not top.is_visible_in_tree():
 		printerr("FAIL main_menu_landscape_layout: Worlds Back did not return to the root")
 		return fail + 1

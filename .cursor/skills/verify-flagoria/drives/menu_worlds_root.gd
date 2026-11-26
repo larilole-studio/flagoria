@@ -32,7 +32,7 @@ func run() -> void:
 		[WORLDS_BUTTON, WORLDS_VIEW, "worlds"],
 		[MAP_SETTINGS_BUTTON, MAP_PANEL, "map-settings"],
 		[MAP_PANEL + "/Margin/VBox/ButtonsDefaults/Back", WORLDS_VIEW, ""],
-		[WORLDS_VIEW + "/Back", MENU_ROOT, ""],
+		[WORLDS_VIEW + "/Body/Actions/Back", MENU_ROOT, ""],
 		[MULTIPLAYER_BUTTON, MULTIPLAYER_VIEW, "multiplayer"],
 		[MULTIPLAYER_VIEW + "/BackButton", MENU_ROOT, ""],
 		[MENU_ROOT + "/SettingsButton", SETTINGS_VIEW, "settings"],
