@@ -5,6 +5,8 @@ extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## bin/launch.sh drives/hud_customize.gd --display --seed 49
 
 const CUSTOMIZE_BTN := "CanvasLayer1/InGameMenu/Pause/Panel/Margin/VBox/CustomizeHud"
+const SETTINGS := "CanvasLayer2/MainMenu/SettingsPanel/SettingsLayout"
+const SETTINGS_CUSTOMIZE := SETTINGS + "/Scroll/SettingsRows/CustomizeHud"
 const ATTACK := "CanvasLayer1/TouchScreenButton"
 const MAP := "CanvasLayer1/MapButton"
 const EDIT_BAR := "CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar"
@@ -76,7 +78,18 @@ func _tap_control(layer: CanvasLayer, id: String) -> void:
 
 
 func run() -> void:
-	if not await start_game():
+	if change_scene_to_file(MAIN) != OK or not await wait_until(menu_root_visible, START_TIMEOUT_S):
+		_fail("main menu did not open")
+		return
+	print("VERIFY_READY pid=%d scene=%s" % [OS.get_process_id(), MAIN])
+	await click(MENU_ROOT + "/SettingsButton")
+	await click(SETTINGS_CUSTOMIZE)
+	var preview_stable := await _check_toolbar_during_drag("settings")
+	await click(DONE)
+	await click(SETTINGS + "/BackButton")
+	await host_from_menu()
+	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
+		_fail("no local hero under World after clicking Host")
 		return
 	var layer := current_scene.get_node("CanvasLayer1") as CanvasLayer
 	var attack := current_scene.get_node(ATTACK) as TouchScreenButton
@@ -116,6 +129,11 @@ func run() -> void:
 	step("edit-mode")
 	await click(MENU_BUTTON)
 	await click(CUSTOMIZE_BTN)
+	var match_stable := await _check_toolbar_during_drag("match")
+	if not preview_stable or not match_stable:
+		done(false)
+		return
+	await click(RESET)
 	var editor := current_scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit")
 	if editor.has_method("relayout_bar"):
 		await editor.relayout_bar()
@@ -300,6 +318,99 @@ func run() -> void:
 	ok = ok and current_scene.get_node_or_null("CanvasLayer1/ModeButton") == null
 	ok = ok and current_scene.get_node_or_null("CanvasLayer1/BowButton") == null
 	done(ok)
+
+
+func _check_toolbar_during_drag(entry: String) -> bool:
+	step(entry + "-toolbar-drag")
+	var layer := current_scene.get_node("CanvasLayer1") as CanvasLayer
+	var bar := current_scene.get_node(EDIT_BAR) as Control
+	var slider := current_scene.get_node(SIZE_SLIDER) as HSlider
+	if not await wait_until(
+		func() -> bool: return bar.is_visible_in_tree() and _bar_inside_viewport(), 3.0
+	):
+		printerr("hud customize: %s editor did not open" % entry)
+		return false
+	for i in 8:
+		await process_frame
+	var initial := bar.get_global_rect()
+	var attack: Rect2 = _hud_layout().control_hit_rect("attack", layer)
+	var view := root.get_visible_rect()
+	var start := to_window(bar, attack.get_center() - initial.position)
+	var target := to_window(bar, view.size * Vector2(0.56, 0.62) - initial.position)
+	var press := InputEventScreenTouch.new()
+	press.position = start
+	press.pressed = true
+	Input.parse_input_event(press)
+	var stable := true
+	for i in 24:
+		var motion := InputEventScreenDrag.new()
+		motion.position = start.lerp(target, float(i + 1) / 24.0)
+		Input.parse_input_event(motion)
+		await process_frame
+		if (
+			not bar.is_visible_in_tree()
+			or not slider.is_visible_in_tree()
+			or bar.get_global_rect() != initial
+		):
+			if stable:
+				printerr(
+					(
+						"hud customize: %s toolbar changed on drag frame %d: %s -> %s"
+						% [entry, i, initial, bar.get_global_rect()]
+					)
+				)
+			stable = false
+	await snapshot(entry + "-toolbar-drag")
+	await _release(target)
+	for i in 8:
+		await process_frame
+	await snapshot(entry + "-toolbar-released")
+	var moved: Rect2 = _hud_layout().control_hit_rect("attack", layer)
+	var drag_ok := (
+		stable
+		and moved.position.distance_to(attack.position) > 12.0
+		and _bar_inside_viewport()
+		and _controls_clear_of_bar(layer)
+	)
+	return drag_ok and await _check_toolbar_during_resize(entry, bar, slider, layer, moved.size.x)
+
+
+func _check_toolbar_during_resize(
+	entry: String, bar: Control, slider: HSlider, layer: CanvasLayer, old_width: float
+) -> bool:
+	var initial := bar.get_global_rect()
+	var start := to_window(slider, slider.size * Vector2(0.12, 0.5))
+	var target := to_window(slider, slider.size * Vector2(0.68, 0.5))
+	var button := InputEventMouseButton.new()
+	button.button_index = MOUSE_BUTTON_LEFT
+	button.position = start
+	button.pressed = true
+	Input.parse_input_event(button)
+	await process_frame
+	var stable := true
+	for i in 12:
+		var motion := InputEventMouseMotion.new()
+		motion.position = start.lerp(target, float(i + 1) / 12.0)
+		motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+		Input.parse_input_event(motion)
+		await process_frame
+		stable = stable and slider.is_visible_in_tree() and bar.get_global_rect() == initial
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.position = target
+	Input.parse_input_event(release)
+	await process_frame
+	await process_frame
+	var resized: Rect2 = _hud_layout().control_hit_rect("attack", layer)
+	if not stable or resized.size.x <= old_width:
+		printerr(
+			(
+				"hud customize: %s slider gesture failed, stable=%s width=%s -> %s"
+				% [entry, stable, old_width, resized.size.x]
+			)
+		)
+		return false
+	return _bar_inside_viewport() and _controls_clear_of_bar(layer)
 
 
 func _hold(at: Vector2) -> void:
