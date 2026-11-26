@@ -4,7 +4,7 @@ Source: Scripts/mechanics/building/admin_resource_grants.gd
 # Admin resource grants (#717)
 
 During a match, open Menu and tap **+100 wood** to add 100 wood or **Max resources** to
-bring wood up to 999. The existing HUD updates as soon as the grant arrives. All
+bring every current build resource (wood and stone) up to 999. +100 wood still grants only wood. The existing HUD updates as soon as the grant arrives. All
 players currently pass the shared admin check. In multiplayer the host checks the
 requesting peer and returns a grant only to that peer.
 

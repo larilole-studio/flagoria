@@ -22,3 +22,4 @@ loads as zero, including when replacing a session with an existing balance.
 - **Two-peer test.** `test_resource_rpc_isolation` checks the joiner's named
   yields, stone charge and existing wood-only RPC, along with independent host
   inventory changes.
+- **Admin grant.** `Max resources` fills stone to 999 along with wood. `+100 wood` still grants only wood.
