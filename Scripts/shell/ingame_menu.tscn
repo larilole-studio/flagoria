@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://ingamemenu01"]
+[gd_scene load_steps=5 format=3 uid="uid://ingamemenu01"]
 
 [ext_resource type="Script" path="res://Scripts/shell/ingame_menu.gd" id="1_menu"]
 [ext_resource type="Theme" path="res://art/ui/main_menu_theme.tres" id="2_theme"]
 [ext_resource type="PackedScene" path="res://Scripts/ui/hud_layout_edit.tscn" id="4_hud_edit"]
+[ext_resource type="PackedScene" path="res://Scripts/ui/tuning_panel.tscn" id="5_tuning"]
 
 [node name="InGameMenu" type="Control"]
 z_index = 10
@@ -98,6 +99,14 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
 text = "Max resources"
 
+[node name="Tuning" type="Button" parent="Pause/Panel/Margin/VBox/ResourceGrants"]
+visible = false
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 12
+text = "Tuning"
+
 [node name="MusicVolumeRow" type="HBoxContainer" parent="Pause/Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
@@ -132,3 +141,5 @@ horizontal_alignment = 1
 autowrap_mode = 3
 
 [node name="HudLayoutEdit" parent="." instance=ExtResource("4_hud_edit")]
+
+[node name="TuningPanel" parent="." instance=ExtResource("5_tuning")]

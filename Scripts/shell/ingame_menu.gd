@@ -26,6 +26,8 @@ const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 @onready var customize_hud_button: Button = $Pause/Panel/Margin/VBox/CustomizeHud
 @onready var map_settings_button: Button = $Pause/Panel/Margin/VBox/MapSettings
 @onready var grant_buttons: HBoxContainer = $Pause/Panel/Margin/VBox/ResourceGrants
+@onready var tuning_button: Button = $Pause/Panel/Margin/VBox/ResourceGrants/Tuning
+@onready var tuning_panel: TuningPanel = $TuningPanel
 @onready var main_menu_button: Button = $Pause/Panel/Margin/VBox/MainMenu
 @onready var music_volume: HSlider = $Pause/Panel/Margin/VBox/MusicVolumeRow/MusicVolume
 @onready var music_value: Label = $Pause/Panel/Margin/VBox/MusicVolumeRow/MusicValue
@@ -46,6 +48,8 @@ func _ready() -> void:
 	if resource_grants != null:
 		grant_buttons.get_node("AddWood").pressed.connect(resource_grants.grant.bind(false))
 		grant_buttons.get_node("MaxResources").pressed.connect(resource_grants.grant.bind(true))
+	tuning_button.pressed.connect(_open_tuning)
+	tuning_panel.close_requested.connect(close_tuning)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
 	MenuVolume.bind_slider(music_volume, music_value, "Music")
 
@@ -60,7 +64,7 @@ static func fit_icon_button(button: Button) -> void:
 
 
 func is_open() -> bool:
-	return panel.visible
+	return panel.visible or tuning_panel.visible
 
 
 func open() -> void:
@@ -68,10 +72,26 @@ func open() -> void:
 		scoreboard.close()
 	MenuVolume.refresh_slider(music_volume, music_value, "Music")
 	grant_buttons.visible = resource_grants != null and resource_grants.can_grant()
+	tuning_button.visible = grant_buttons.visible and multiplayer.is_server()
 	panel.show()
 	menu_button.hide()
 	map_settings_button.visible = multiplayer.is_server()
 	resume_button.grab_focus()
+
+
+func _open_tuning() -> void:
+	if resource_grants != null and resource_grants.can_grant() and multiplayer.is_server():
+		panel.hide()
+		tuning_panel.open()
+
+
+func close_tuning() -> bool:
+	if not tuning_panel.is_visible_in_tree():
+		return false
+	tuning_panel.hide()
+	open()
+	tuning_button.grab_focus()
+	return true
 
 
 func _on_scores_pressed() -> void:
@@ -88,6 +108,7 @@ func _on_map_settings_pressed() -> void:
 
 
 func close() -> void:
+	tuning_panel.hide()
 	panel.hide()
 	status_label.text = ""
 	menu_button.show()
@@ -97,10 +118,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if is_visible_in_tree() and event.is_action_pressed("ui_cancel"):
 		if hud_layout_edit.visible:
 			hud_layout_edit.close_editor()
-		elif is_open():
-			close()
-		else:
-			open()
+		elif not close_tuning():
+			if panel.visible:
+				close()
+			else:
+				open()
 		get_viewport().set_input_as_handled()
 
 
