@@ -1,5 +1,5 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
-## Candy Glass HUD at 1280x720 and 1920x1080 with the floating status row.
+## Match HUD at 1280x720 and 1920x1080 with the floating status row.
 ## bin/launch.sh drives/hud_direction_c.gd --display --seed 49
 
 const WHEEL := "CanvasLayer1/ToolWheel"

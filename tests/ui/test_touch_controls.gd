@@ -3,7 +3,7 @@ extends "res://tests/helpers/test_helpers.gd"
 
 
 func _test_touch_controls_look() -> int:
-	## Candy Glass touch controls (#231): the attack button shows its idle,
+	## Touch controls (#231): the attack button shows its idle,
 	## pressed and aim art as the finger lands, leaves the dead zone and comes
 	## back; the move stick shows its active knob only while dragged. The cone
 	## fill pulses 0.40 -> 0.55 -> 0.40 alpha every 0.8 s, and its lines are

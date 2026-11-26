@@ -1,6 +1,6 @@
 class_name RoundHudStyle
 extends RefCounted
-## Candy Glass textures and typography for the in-game HUD.
+## Disc textures and typography for the in-game HUD.
 
 const HUD := "res://art/ui/hud_e4/"
 const DENSITY := 4
@@ -19,15 +19,24 @@ static var _textures: Dictionary[String, Texture2D] = {}
 static var _labels: Dictionary[int, LabelSettings] = {}
 
 
+static func texture_directory() -> String:
+	return HUD
+
+
+static func button_filter() -> CanvasItem.TextureFilter:
+	return FILTER
+
+
 static func texture(sprite: String) -> Texture2D:
-	if not _textures.has(sprite):
-		var image := (load(HUD + sprite + ".png") as Texture2D).get_image()
+	var path := HUD + sprite + ".png"
+	if not _textures.has(path):
+		var image := (load(path) as Texture2D).get_image()
 		if not image.has_mipmaps():
 			image.generate_mipmaps()
 		var art := ImageTexture.create_from_image(image)
 		art.set_size_override(image.get_size() / DENSITY)
-		_textures[sprite] = art
-	return _textures[sprite]
+		_textures[path] = art
+	return _textures[path]
 
 
 static func apply_label(label: Label, size_px: int) -> void:
@@ -47,7 +56,7 @@ static func apply_label(label: Label, size_px: int) -> void:
 
 
 static func apply_joystick(stick: Node2D) -> void:
-	stick.texture_filter = FILTER
+	stick.texture_filter = button_filter()
 	stick.border_disabled = texture("joystick_base_disabled")
 	stick.stick_active = texture("joystick_knob_active")
 	stick.stick_disabled = texture("joystick_knob_disabled")
@@ -56,7 +65,7 @@ static func apply_joystick(stick: Node2D) -> void:
 
 
 static func apply_attack(button: TouchScreenButton) -> void:
-	button.texture_filter = FILTER
+	button.texture_filter = button_filter()
 	button.texture_idle = texture("attack_idle")
 	button.texture_down = texture("attack_pressed")
 	button.texture_aim = texture("attack_aim")
@@ -94,7 +103,7 @@ static func apply_disc(
 	button.focus_mode = Control.FOCUS_NONE
 	button.icon = null
 	button.text = ""
-	button.texture_filter = FILTER
+	button.texture_filter = button_filter()
 	var normal := _box(prefix + "_normal", hit, art)
 	var pressed := _box(prefix + "_pressed", hit, art)
 	var disabled := _box(prefix + "_disabled", hit, art)

@@ -37,7 +37,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Join an address with an optional port](./join-port.md) — hostname or IPv4, optional `:port`, default UDP 9786; bad addresses rejected on the menu (#434).
 - [Dedicated server](./dedicated-server.md) — `-- --server` headless host, `--params` generation params only, SIGTERM quit, a client joining it, `test_two_player_smoke` (two headless clients, input walk, server and the other client see the move), optional Docker image.
 - [Dedicated cut-and-hit round](./dedicated-play-round.md) — two Join clients on a dedicated host with no player `1`: one plant cut, one mob killed (#436). Not the listen Host/Join pair.
-- [Candy Glass HUD](./hud-direction-c.md) — pastel discs, frosted joystick and floating status row.
+- [Match HUD](./hud-direction-c.md) — thumb control layout and floating status row.
 - [Player health](./player-health.md) — hearts, HUD, regen, death, respawn hold, rejoin, health sync.
 - [Combat and aiming](./combat-and-aiming.md) — swing, 30 px reach, mid-swing hitbox, mouse and touch aim, exact-angle swing, cone, cancel, wall line-of-sight; live `combat_hud` drive.
 - [Ranged bow](./ranged-bow.md) — one bow shot on that aim, host-decided hit, short line; live `ranged_bow` drive.
@@ -105,9 +105,10 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Interact mode](./interact-mode.md) — chop on the tool wheel; Space still swings the sword in interact mode; aimed attacks stay combat-only (#351).
 - [Points](./points.md) — discovery and mob-kill points, host-owned totals, score HUD.
 - [Points scoreboard](./points-scoreboard.md) — every connected player's total, highest first, from Menu → Scores (#573).
-- [Touch controls](./touch-controls.md) — joystick hold, Candy Glass attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
+- [Touch controls](./touch-controls.md) — joystick hold, sage attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
 - [Round HUD buttons](./hud-round-buttons.md) — Map beside Menu opens parchment, Attack mirrored from the joystick, Run and the tool wheel around Attack, Buildings beside the cluster with two picker rings over a dimmed playfield, map panel clear of the controls (#480).
+- [Sage HUD discs](./hud-button-styles.md) — idle, picker, pressed and disabled views in a live match.
 - [Customize HUD layout](./hud-customize.md) — Settings preview and in-game edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
 - [Gameplay tuning](./gameplay-tuning.md) — gameplay defaults and runtime overrides (#736).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.

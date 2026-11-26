@@ -1,13 +1,13 @@
-# Candy Glass HUD
+# Match HUD
 
 Drive: drives/hud_direction_c.gd
 Source: Scripts/ui/hud_tool_row.gd
 
-In-match HUD uses `art/ui/hud_e4/` Candy Glass sprites with linear filtering on the fractional 480×270 layout. `Scripts/ui/hud_tool_row.gd` positions the current controls against the visible viewport, with Attack mirrored across from the joystick.
+In-match HUD uses `art/ui/hud_e4/` sage discs and Candy Glass stickers with linear filtering on the fractional 480×270 layout. `Scripts/ui/hud_tool_row.gd` positions the current controls against the visible viewport, with Attack mirrored across from the joystick.
 
 ## How to get to it (user POV)
 
-- Host a match. The hearts and counters float on one top-left line, Map and Menu sit top-right, and the lower thumb controls use smooth glass art. Buildings opens two rings over the dimmed playfield.
+- Host a match. The hearts and counters float on one top-left line, Map and Menu sit top-right, and the lower thumb controls use sage soft-shadow discs. Buildings opens two rings over the dimmed playfield.
 
 ## Driving it with verify-flagoria helpers
 

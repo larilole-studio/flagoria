@@ -192,3 +192,57 @@ func _is_selected(button: Button) -> bool:
 func _face(button: Button, state: String) -> Texture2D:
 	var box := button.get_theme_stylebox(state) as StyleBoxTexture
 	return box.texture if box != null else null
+
+
+func _test_hud_button_styles() -> int:
+	print("-- test_hud_button_styles")
+	var directory := "res://art/ui/hud_e4/"
+	var ok := (
+		RoundHudStyle.texture_directory() == directory
+		and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	)
+	var stems := [
+		"attack_idle",
+		"build_normal",
+		"map_normal",
+		"menu_normal",
+		"run_normal",
+		"wheel_sword_normal",
+		"joystick_base_normal",
+		"joystick_knob_active",
+		"attack_aim",
+		"pick_plank_selected",
+		"rotate_normal",
+	]
+	var sage := Color("#5F7160")
+	for stem: String in stems:
+		var path := directory + stem + ".png"
+		if not ResourceLoader.exists(path, "Texture2D"):
+			printerr("FAIL hud_button_styles: missing ", path)
+			ok = false
+			continue
+		var image := RoundHudStyle.texture(stem).get_image()
+		if not image.has_mipmaps():
+			printerr("FAIL hud_button_styles: missing mipmaps for ", stem)
+			ok = false
+		var sample := image.get_size() / 2
+		if stem == "build_normal":
+			# Sample above the icon on the vertical centreline.
+			sample.y = image.get_height() / 4
+		if stem in ["build_normal", "joystick_base_normal"]:
+			if not image.get_pixelv(sample).is_equal_approx(sage):
+				printerr("FAIL hud_button_styles: wrong face colour for ", stem)
+				ok = false
+	for stem in ["heart_full", "log"]:
+		var sticker := load(directory + stem + ".png") as Texture2D
+		if (
+			sticker == null
+			or sticker.get_image().get_data() != RoundHudStyle.texture(stem).get_image().get_data()
+		):
+			printerr("FAIL hud_button_styles: wrong sticker for ", stem)
+			ok = false
+	if not ok:
+		printerr("FAIL hud_button_styles: expected sage HUD textures and linear mipmap filtering")
+	else:
+		print("PASS test_hud_button_styles")
+	return 0 if ok else 1

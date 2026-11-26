@@ -1,31 +1,26 @@
 #!/usr/bin/env python3
-"""Render the Candy Glass HUD sprites with CairoSVG and Pillow."""
+"""Render the sage HUD discs and Candy Glass stickers with CairoSVG and Pillow."""
 
 import io
 import math
 from pathlib import Path
 
 import cairosvg
-from PIL import Image, ImageEnhance
+from PIL import Image
 
 # Texture pixels per HUD unit. Keep in sync with RoundHudStyle.DENSITY.
 DENSITY = 4
 OUT = Path(__file__).resolve().parents[2] / "art" / "ui" / "hud_e4"
 
-E4 = dict(out='#3B1748', depth=0.09, ow=0.06,
-   faces=dict(attack=('#FFB3D1', '#FF5C9A', '#E0357A', '#8E1A4E'),
-              run=('#B8FFE4', '#4ADBB0', '#25B38D', '#1B6E5A'),
-              wheel=('#FFE9A8', '#FFC24D', '#E89A1F', '#94580E'),
-              build=('#D9C8FF', '#9A7BFF', '#7556E0', '#3E2A8C'),
-              map=('#BFE6FF', '#6AB8FF', '#3D8DEB', '#1F4F96'),
-              menu=('#D9C8FF', '#9A7BFF', '#7556E0', '#3E2A8C'),
-              pick=('#D9C8FF', '#9A7BFF', '#7556E0', '#3E2A8C'),
-              close=('#FFB3D1', '#FF5C9A', '#E0357A', '#8E1A4E')),
-   face_a=0.88, gloss=0.55, rimlight='#FFFFFF', rimlight_a=0.8,
-   ic=dict(main='#FFFFFF', shade='#F1E6FF', acc='#FFE27A', acc2='#FF8FB8', wood='#E8A66A', wood2='#B8733A', red='#FF6FA0', out='#3B1748'),
-   ring=('#3B1748', '#FFFFFF'), sel='#FFF4B8',
-   joy=dict(base='#FFFFFF', base_a=0.22, ring='#FFFFFF', ring_a=0.85, edge='#3B1748', knob=('#FFD6E8', '#FF8FB8', '#E0357A', '#8E1A4E'), mode='glassdot'),
-)
+STICKER_COLORS = dict(main='#FFFFFF', shade='#F1E6FF', acc='#FFE27A', acc2='#FF8FB8', wood='#E8A66A', wood2='#B8733A', red='#FF6FA0', out='#3B1748')
+
+INK = "#141B1B"
+OFF_WHITE = "#F2EAF1"
+GOLD = "#FFE18D"
+SAGE_FACE = "#5F7160"
+PRESSED_FACE = "#345A52"
+DISABLED_FACE = "#4E484A"
+DISABLED_MARK = "#8D977F"
 
 # ---------- SVG helpers ----------
 class Doc:
@@ -36,10 +31,6 @@ class Doc:
         i = f'lg{len(self.defs)}'
         s = ''.join(f'<stop offset="{o}" stop-color="{c}" stop-opacity="{a}"/>' for o, c, a in stops)
         self.defs.append(f'<linearGradient id="{i}" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}">{s}</linearGradient>')
-        return f'url(#{i})'
-    def clip_circle(self, cx, cy, r):
-        i = f'cp{len(self.defs)}'
-        self.defs.append(f'<clipPath id="{i}"><circle cx="{cx}" cy="{cy}" r="{r}"/></clipPath>')
         return f'url(#{i})'
     def add(self, shape):
         self.body.append(shape)
@@ -166,7 +157,7 @@ def icon_svg(doc, name, cx, cy, size, ic, ow=7.0):
     s = size / 100.0
     def col(k):
         if k.startswith('#'):
-            return k
+            return ic.get(k, k)
         return ic['wood' if k == 'plank' else k]
     out = ic['out']
     parts = [f'<g transform="translate({cx - 50*s:.2f},{cy - 50*s:.2f}) scale({s:.4f})" stroke-linejoin="round" stroke-linecap="round">']
@@ -184,100 +175,94 @@ def icon_svg(doc, name, cx, cy, size, ic, ow=7.0):
         elif e[0] == 's':
             parts.append(f'<path d="{e[1]}" fill="none" stroke="{col(e[2])}" stroke-width="{e[3]}"/>')
         elif e[0] == 'd':
-            c = e[2] if e[2].startswith('#') else col(e[2])
+            c = col(e[2])
             parts.append(f'<g fill="none" stroke="{c}" stroke-width="{e[3]}">{e[1]}</g>')
     parts.append('</g>')
     doc.add(''.join(parts))
 
-def button(doc, st, cx, cy, r, face_key, icon, icon_scale=1.25, pressed=False, selected=False, charge=None):
-    top, mid, low, lip = st['faces'][face_key]
-    out = st['out']
-    d = r * st['depth']
-    ow = r * st['ow']
-    if pressed:
-        cy += d * 0.6
-        d *= 0.4
-    # hard drop shadow
-    doc.add(f'<ellipse cx="{cx}" cy="{cy + d + r*0.10:.1f}" rx="{r*0.98:.1f}" ry="{r*0.92:.1f}" fill="#000" opacity="0.28"/>')
+def circle(doc, x, y, radius, fill, *, stroke="none", width=0):
+    doc.add(f'<circle cx="{x}" cy="{y}" r="{radius}" fill="{fill}"'
+            f' stroke="{stroke}" stroke-width="{width}"/>')
+
+
+def minimal_disc(doc, cx, cy, radius, *, pressed, disabled):
+    shadow_radius = radius + 6
+    doc.defs.append(
+        f'<radialGradient id="shadow">'
+        f'<stop offset="{(radius - 4) / shadow_radius}" stop-color="{INK}" stop-opacity=".48"/>'
+        f'<stop offset="1" stop-color="{INK}" stop-opacity="0"/>'
+        f'</radialGradient>'
+    )
+    circle(doc, cx, cy + (2 if pressed else 5), shadow_radius, "url(#shadow)")
+    face = DISABLED_FACE if disabled else (PRESSED_FACE if pressed else SAGE_FACE)
+    circle(doc, cx, cy, radius, face, stroke=INK, width=4.5)
+    if not pressed:
+        light = doc.grad([(0, OFF_WHITE, 0.42), (0.6, OFF_WHITE, 0)])
+        circle(doc, cx, cy, radius - 3.8, "none", stroke=light, width=1.6)
+
+
+def minimal_button(doc, cx, cy, radius, icon, scale, *, pressed, disabled,
+                   selected, charge):
+    cy += 2 if pressed else 0
+    minimal_disc(doc, cx, cy, radius - 3, pressed=pressed, disabled=disabled)
     if charge is not None:
-        rr = r + ow * 1.25
-        doc.add(f'<circle cx="{cx}" cy="{cy}" r="{rr:.1f}" fill="none" stroke="{out}" stroke-width="{ow*1.8:.1f}"/>')
-        doc.add(f'<circle cx="{cx}" cy="{cy}" r="{rr:.1f}" fill="none" stroke="{st["ring"][0]}" stroke-width="{ow*1.2:.1f}"/>')
-        a0 = -90
-        a1 = a0 + 360 * charge
-        x0, y0 = cx + rr*math.cos(math.radians(a0)), cy + rr*math.sin(math.radians(a0))
-        x1, y1 = cx + rr*math.cos(math.radians(a1)), cy + rr*math.sin(math.radians(a1))
-        doc.add(f'<path d="M{x0:.1f} {y0:.1f} A{rr:.1f} {rr:.1f} 0 {1 if charge > .5 else 0} 1 {x1:.1f} {y1:.1f}" fill="none" stroke="{st["ring"][1]}" stroke-width="{ow*1.2:.1f}" stroke-linecap="round"/>')
-    if selected:
-        doc.add(f'<circle cx="{cx}" cy="{cy + d/2:.1f}" r="{r + ow*1.15:.1f}" fill="none" stroke="{out}" stroke-width="{ow*1.5:.1f}"/>')
-        doc.add(f'<circle cx="{cx}" cy="{cy + d/2:.1f}" r="{r + ow*1.15:.1f}" fill="none" stroke="{st["sel"]}" stroke-width="{ow*1.2:.1f}"/>')
-    # Two crescents form the lip without filling behind the translucent face.
-    rf = r - ow
-    for radius, color in ((r, out), (rf, lip)):
-        half_chord = math.sqrt(radius * radius - (d / 2) ** 2)
-        y = cy + d / 2
-        doc.add(f'<path d="M{cx-half_chord},{y} A{radius},{radius} 0 1 0 {cx+half_chord},{y}'
-                f' A{radius},{radius} 0 0 1 {cx-half_chord},{y}Z" fill="{color}"/>')
-    fill = doc.grad([(0, top, st['face_a']), (0.55, mid, st['face_a']), (1, low, st['face_a'])])
-    doc.add(f'<circle cx="{cx}" cy="{cy}" r="{r-ow/2}" fill="{fill}" stroke="{out}" stroke-width="{ow}"/>')
-    clip = doc.clip_circle(cx, cy, rf)
-    # bottom inner shade
-    doc.add(f'<g clip-path="{clip}"><circle cx="{cx}" cy="{cy - rf*0.18:.1f}" r="{rf*1.12:.1f}" fill="none" stroke="{low}" stroke-opacity="0.55" stroke-width="{rf*0.36:.1f}"/></g>')
-    # inner light rim (top)
-    if st['rimlight_a'] > 0:
-        rl = doc.grad([(0, st['rimlight'], st['rimlight_a']), (0.45, st['rimlight'], 0), (1, st['rimlight'], 0)])
-        doc.add(f'<circle cx="{cx}" cy="{cy:.1f}" r="{rf - max(2, rf*0.05):.1f}" fill="none" stroke="{rl}" stroke-width="{max(3, rf*0.08):.1f}"/>')
-    gl = doc.grad([(0, '#FFFFFF', st['gloss']), (1, '#FFFFFF', 0.0)])
-    doc.add(f'<g clip-path="{clip}"><ellipse cx="{cx}" cy="{cy - rf*0.42:.1f}" rx="{rf*0.80:.1f}" ry="{rf*0.48:.1f}" fill="{gl}"/></g>')
-    doc.add(f'<circle cx="{cx + rf*0.52:.1f}" cy="{cy + rf*0.42:.1f}" r="{rf*0.10:.1f}" fill="#fff" opacity="0.65"/>')
-    if icon:
-        icon_svg(doc, icon, cx, cy + rf*0.02, rf * icon_scale, st['ic'], ow=7.5 if rf > 30 else 8.5)
+        # The outer arc gives Attack its charge and aim cues.
+        angle = math.tau * charge
+        x = cx + (radius + 3) * math.sin(angle)
+        y = cy - (radius + 3) * math.cos(angle)
+        arc = (f"M{cx} {cy - radius - 3} A{radius + 3} {radius + 3}"
+               f" 0 {int(charge > 0.5)} 1 {x} {y}")
+        for color, width in ((INK, 4), (GOLD if charge > 0.8 else OFF_WHITE, 2)):
+            doc.add(f'<path d="{arc}" fill="none" stroke="{color}"'
+                    f' stroke-width="{width}" stroke-linecap="round"/>')
+    elif selected or icon == "close":
+        circle(doc, cx, cy, radius - 3, "none", stroke=GOLD, width=2.4)
 
-def joystick(doc, knob=False, active=False):
-    j = E4['joy']
-    out = j['edge']
+    mark = DISABLED_MARK if disabled else OFF_WHITE
+    shade = DISABLED_MARK if disabled else GOLD
+    colors = dict(main=mark, shade=shade, acc=mark, acc2=mark, wood=mark,
+                  wood2=INK, red=mark, out=INK)
+    colors["#FFFFFF"] = OFF_WHITE
+    if icon == "map":
+        colors.update(acc2=INK, red=INK)
+    if icon == "build":
+        colors.update(wood=INK, shade=mark)
+    icon_svg(doc, icon, cx, cy, (radius - 4) * scale, colors, ow=4.5)
+
+
+def minimal_joystick(doc, *, knob, active, disabled):
+    minimal_disc(doc, 50, 49, 42 if knob else 45, pressed=active, disabled=disabled)
+    mark = DISABLED_MARK if disabled else OFF_WHITE
     if knob:
-        style = dict(E4, faces={'knob': j['knob']})
-        button(doc, style, 50, 47, 45, 'knob', None, pressed=active)
-        y = 49.5 if active else 47
-        doc.add(f'<circle cx="50" cy="{y}" r="12" fill="white" opacity=".7"/>')
-        return
-    doc.add('<circle cx="50" cy="52" r="46" fill="black" opacity=".18"/>')
-    doc.add(f'<circle cx="50" cy="49" r="46" fill="{j["base"]}" fill-opacity="{j["base_a"]}" stroke="{out}" stroke-opacity=".85" stroke-width="2.6"/>')
-    doc.add(f'<circle cx="50" cy="49" r="42.5" fill="none" stroke="{j["ring"]}" stroke-opacity="{j["ring_a"]}" stroke-width="3"/>')
-    doc.add(f'<circle cx="50" cy="49" r="40" fill="none" stroke="{out}" stroke-opacity=".35" stroke-width="1.1"/>')
-    for angle in (0, 90, 180, 270):
-        doc.add(f'<path transform="rotate({angle} 50 49)" d="M50 11 L46.5 16 L53.5 16 Z" fill="white" fill-opacity=".9" stroke="{out}" stroke-width="1.3" stroke-linejoin="round"/>')
+        circle(doc, 50, 49, 8, mark, stroke=INK, width=2)
+    else:
+        for x, y in ((50, 12), (87, 49), (50, 86), (13, 49)):
+            circle(doc, x, y, 2.2, mark, stroke=INK, width=1.4)
 
 
-def save(doc, name, units, disabled=False):
+def save(doc, name, units):
     pixels = units * DENSITY
     png = cairosvg.svg2png(bytestring=doc.svg().encode(), output_width=pixels, output_height=pixels)
     image = Image.open(io.BytesIO(png)).convert('RGBA')
-    if disabled:
-        alpha = image.getchannel('A').point(lambda value: round(value * .65))
-        image = ImageEnhance.Color(image).enhance(.18)
-        image = ImageEnhance.Brightness(image).enhance(.77)
-        image.putalpha(alpha)
     image.save(OUT / f'{name}.png')
 
 
-def disc(name, units, face, icon, scale, states):
+def disc(name, units, icon, scale, states):
     for state in states:
         doc = Doc()
         close = name == 'build' and state.startswith('selected')
         ring = state.startswith('selected') and not close
         charge = (.88 if state == 'aim' else .68) if name == 'attack' else None
         radius = 41 if charge is not None else (42 if ring else 45)
-        button(doc, E4, 50, 47, radius, 'close' if close else face, 'close' if close else icon,
-               icon_scale=1.2 if close else scale, pressed='pressed' in state,
-               selected=ring, charge=charge)
-        save(doc, f'{name}_{state}', units, state == 'disabled')
+        minimal_button(doc, 50, 47, radius, 'close' if close else icon, 1.2 if close else scale,
+                       pressed='pressed' in state, disabled=state == 'disabled',
+                       selected=ring, charge=charge)
+        save(doc, f'{name}_{state}', units)
 
 
 def sticker(name, icon, state='normal'):
     doc = Doc()
-    colors = E4['ic']
+    colors = STICKER_COLORS
     if state in ('empty', 'half'):
         colors = dict(colors, red='#67465E')
     elif state.startswith('flash'):
@@ -288,30 +273,36 @@ def sticker(name, icon, state='normal'):
     icon_svg(doc, icon, 50, y, 94, colors, ow=7.5)
     if state == 'half':
         doc.add('<clipPath id="half"><rect width="50" height="100"/></clipPath><g clip-path="url(#half)">')
-        icon_svg(doc, icon, 50, y, 94, E4['ic'], ow=7.5)
+        icon_svg(doc, icon, 50, y, 94, STICKER_COLORS, ow=7.5)
         doc.add('</g>')
     save(doc, name, 11)
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+def render_discs():
     basic = ('normal', 'pressed', 'disabled')
     toggle = basic + ('selected', 'selected_pressed')
-    disc('map', 24, 'map', 'map', 1.42, toggle)
-    disc('menu', 24, 'menu', 'menu', 1.20, basic)
-    disc('build', 24, 'build', 'build', 1.50, toggle)
-    disc('rotate', 24, 'build', 'rotate', 1.42, basic)
+    disc('map', 24, 'map', 1.42, toggle)
+    disc('menu', 24, 'menu', 1.20, basic)
+    disc('build', 24, 'build', 1.50, toggle)
+    disc('rotate', 24, 'rotate', 1.42, basic)
     for icon in ('sword', 'chop', 'bow'):
-        disc(f'wheel_{icon}', 24, 'wheel', icon, 1.4, toggle)
+        disc(f'wheel_{icon}', 24, icon, 1.4, toggle)
     for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'mine', 'demolish'):
-        disc(f'pick_{icon}', 24, 'pick', icon, 1.72, toggle)
-    disc('run', 32, 'run', 'run', 1.45, basic)
-    disc('attack', 40, 'attack', 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))
+        disc(f'pick_{icon}', 24, icon, 1.72, toggle)
+    disc('run', 32, 'run', 1.45, basic)
+    disc('attack', 40, 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))
     for part, states in [('base', ('normal', 'disabled')), ('knob', ('normal', 'active', 'disabled'))]:
         for state in states:
             doc = Doc()
-            joystick(doc, knob=part == 'knob', active=state == 'active')
-            save(doc, f'joystick_{part}_{state}', 56 if part == 'base' else 24, state == 'disabled')
+            minimal_joystick(doc, knob=part == 'knob', active=state == 'active',
+                             disabled=state == 'disabled')
+            units = 56 if part == 'base' else 24
+            save(doc, f'joystick_{part}_{state}', units)
+
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    render_discs()
     for state in ('full', 'half', 'empty', 'flash_0', 'flash_1'):
         sticker(f'heart_{state}', 'heart', state)
     for icon in ('star', 'log'):
