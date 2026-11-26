@@ -471,11 +471,15 @@ func apply_bridge_removed(cells: Array[Vector2i]) -> void:
 
 
 @rpc("authority", "reliable", "call_remote")
-func receive_charge(wood: int) -> void:
-	## Take `wood` from the local inventory after the host accepted a place.
+func receive_charge(wood: int, stone: int = 0) -> void:
+	## Apply the host's charge to the receiving player's inventory.
 	var inventory := get_node_or_null(INVENTORY_PATH) as Inventory
-	if inventory and wood > 0:
+	if inventory == null:
+		return
+	if wood > 0:
 		inventory.spend(Inventory.WOOD, wood)
+	if stone > 0:
+		inventory.spend(Inventory.STONE, stone)
 
 
 @rpc("authority", "reliable", "call_remote")
@@ -486,7 +490,7 @@ func refuse_cut(cell: Vector2i) -> void:
 
 @rpc("authority", "reliable", "call_remote")
 func receive_yields(cell: Vector2i, yields: Dictionary) -> void:
-	## Wood from a cut the host accepted. The fall plays on this reply (#350).
+	## Add the named yields locally. This reply also confirms any pending cut (#350).
 	var inventory := get_node_or_null(INVENTORY_PATH) as Inventory
 	if inventory:
 		for resource in yields:

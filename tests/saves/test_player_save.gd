@@ -1,11 +1,11 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Player section of a world save (#197): position, health, wood, score,
+## Player section of a world save (#197): position, health, wood, stone, score,
 ## charted ground. An older save with no player section loads as a new player.
 
 
 func _test_player_save_round_trip() -> int:
 	## Walk-away state saved from the in-game menu comes back when that file
-	## is hosted: same spot, health, wood, score, charted cell and paid chunk.
+	## is hosted: same spot, health, resources, score, charted cell and paid chunk.
 	## The file stays version 3.
 	print("-- test_player_save_round_trip")
 	var fail := 0
@@ -18,6 +18,7 @@ func _test_player_save_round_trip() -> int:
 	body.position = spot
 	body.health.set_health_now(4)
 	scene.get_node("Inventory").add(Inventory.WOOD, 3)
+	scene.get_node("Inventory").add(Inventory.STONE, 7)
 	scene.get_node("Points").award(1, 8, "test")
 	scene.get_node("Discovery").restore_found({"3,-1": 1})
 	var far := Vector2i(80, 40)
@@ -38,6 +39,7 @@ func _test_player_save_round_trip() -> int:
 		or not section is Dictionary
 		or int(section.get("health", -1)) != 4
 		or int(section.get("wood", -1)) != 3
+		or int(section.get("stone", -1)) != 7
 		or int(section.get("score", -1)) != 8
 		or section.get("discovered", {}).get("3,-1", 0) != 1
 		or not section.get("charted", {}) is Dictionary
@@ -77,6 +79,7 @@ func _test_player_save_round_trip() -> int:
 		if (
 			loaded.health.health != 4
 			or again.get_node("Inventory").count_of(Inventory.WOOD) != 3
+			or again.get_node("Inventory").count_of(Inventory.STONE) != 7
 			or again.get_node("Points").total_of(1) != 8
 			or again.get_node("Discovery").discoverer_of(Vector2i(3, -1)) != 1
 			or not chart.is_explored(far)
@@ -84,10 +87,11 @@ func _test_player_save_round_trip() -> int:
 		):
 			printerr(
 				(
-					"FAIL player_save_round_trip: health %s wood %s score %s found %s chart %s"
+					"FAIL player_save_round_trip: health %s wood %s stone %s score %s found %s chart %s"
 					% [
 						loaded.health.health,
 						again.get_node("Inventory").count_of(Inventory.WOOD),
+						again.get_node("Inventory").count_of(Inventory.STONE),
 						again.get_node("Points").total_of(1),
 						again.get_node("Discovery").discoverer_of(Vector2i(3, -1)),
 						chart.is_explored(far)
@@ -123,6 +127,7 @@ func _test_player_save_legacy_defaults() -> int:
 	body.position = Vector2(10, 20)
 	body.health.set_health_now(2)
 	scene.get_node("Inventory").add(Inventory.WOOD, 5)
+	scene.get_node("Inventory").add(Inventory.STONE, 7)
 	scene.get_node("Points").restore_total(1, 3)
 	(
 		PlayerSave
@@ -133,6 +138,7 @@ func _test_player_save_legacy_defaults() -> int:
 				"health": "nope",
 				"position": [1],
 				"wood": -3,
+				"stone": 1.5,
 				"score": 1.5,
 				"charted": {"nope": "!!"},
 				"discovered": {"z": "a"},
@@ -143,15 +149,17 @@ func _test_player_save_legacy_defaults() -> int:
 		body.health.health != body.health.max_health
 		or body.position != Vector2(10, 20)
 		or scene.get_node("Inventory").count_of(Inventory.WOOD) != 0
+		or scene.get_node("Inventory").count_of(Inventory.STONE) != 0
 		or scene.get_node("Points").total_of(1) != 0
 	):
 		printerr(
 			(
-				"FAIL player_save_legacy_defaults: bad section health %s at %s wood %s score %s"
+				"FAIL player_save_legacy_defaults: bad section health %s at %s wood %s stone %s score %s"
 				% [
 					body.health.health,
 					body.position,
 					scene.get_node("Inventory").count_of(Inventory.WOOD),
+					scene.get_node("Inventory").count_of(Inventory.STONE),
 					scene.get_node("Points").total_of(1)
 				]
 			)
@@ -160,12 +168,24 @@ func _test_player_save_legacy_defaults() -> int:
 	body.queue_free()
 	await process_frame
 
+	var legacy := WorldSave.new(_spawn_params(7, 0.0))
+	legacy.params.ensure_seeds()
+	legacy.player = {"wood": 6}
+	var saved := MapSave.save_world(legacy, "legacy-wood-only")
+	if saved["error"] != "":
+		printerr("FAIL player_save_legacy_defaults: %s" % saved["error"])
+		fail += 1
+	var legacy_path: String = saved["path"]
 	for fixture in [
 		"res://tests/fixtures/world_save_v1.json",
 		"res://tests/fixtures/world_save_v2.json",
-		"res://tests/fixtures/world_save_v3.json"
+		"res://tests/fixtures/world_save_v3.json",
+		legacy_path
 	]:
+		if fixture.is_empty():
+			continue
 		_dirt(scene, null)
+		var expected_wood := 6 if fixture == legacy_path else 0
 		var err: String = map_gen.load_map_inputs(fixture)
 		scene.world_params = map_gen.params.duplicate_params()
 		scene._apply_params_to_world(scene.world_params)
@@ -176,7 +196,7 @@ func _test_player_save_legacy_defaults() -> int:
 		if (
 			err != ""
 			or host.position.distance_to(spawn) > 1.0
-			or not _is_default(scene, host, fixture)
+			or not _is_default(scene, host, fixture, expected_wood)
 		):
 			printerr(
 				(
@@ -187,6 +207,8 @@ func _test_player_save_legacy_defaults() -> int:
 			fail += 1
 		host.queue_free()
 		await process_frame
+	if not legacy_path.is_empty():
+		DirAccess.remove_absolute(legacy_path)
 	map_gen.params = before
 	map_gen.clear_loaded_world()
 	scene.queue_free()
@@ -220,6 +242,7 @@ func _dirt(scene: Node, body: Node) -> void:
 	var have: int = inventory.count_of(Inventory.WOOD)
 	if have < 9:
 		inventory.add(Inventory.WOOD, 9 - have)
+	inventory.add(Inventory.STONE, 7)
 	scene.get_node("Points").restore_total(1, 4)
 	scene.get_node("Discovery").restore_found({"1,1": 1})
 	scene.get_node("CanvasLayer1/MapChart").explored.reveal_cells(Vector2i(80, 40), 0)
@@ -227,11 +250,12 @@ func _dirt(scene: Node, body: Node) -> void:
 		body.health.set_health_now(2)
 
 
-func _is_default(scene: Node, body: Node, label: String) -> bool:
+func _is_default(scene: Node, body: Node, label: String, expected_wood := 0) -> bool:
 	var chart: ExploredMap = scene.get_node("CanvasLayer1/MapChart").explored
 	var ok: bool = (
 		body.health.health == body.health.max_health
-		and scene.get_node("Inventory").count_of(Inventory.WOOD) == 0
+		and scene.get_node("Inventory").count_of(Inventory.WOOD) == expected_wood
+		and scene.get_node("Inventory").count_of(Inventory.STONE) == 0
 		and scene.get_node("Points").total_of(1) == 0
 		and scene.get_node("Discovery").discoverer_of(Vector2i(1, 1)) == 0
 		and chart.explored_count() == 0
@@ -239,11 +263,12 @@ func _is_default(scene: Node, body: Node, label: String) -> bool:
 	if not ok:
 		printerr(
 			(
-				"FAIL player_save_legacy_defaults: %s health %s wood %s score %s chart %s"
+				"FAIL player_save_legacy_defaults: %s health %s wood %s stone %s score %s chart %s"
 				% [
 					label,
 					body.health.health,
 					scene.get_node("Inventory").count_of(Inventory.WOOD),
+					scene.get_node("Inventory").count_of(Inventory.STONE),
 					scene.get_node("Points").total_of(1),
 					chart.explored_count()
 				]

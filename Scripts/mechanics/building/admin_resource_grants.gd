@@ -4,7 +4,7 @@ extends Node
 
 const WOOD_GRANT := 100
 const RESOURCE_TARGET := 999
-const BUILD_RESOURCES: Array[StringName] = [Inventory.WOOD]
+const BUILD_RESOURCES: Array[StringName] = [Inventory.WOOD, Inventory.STONE]
 
 @export var inventory: Inventory
 

@@ -35,17 +35,17 @@ func _test_admin_resource_menu() -> int:
 		var add_wood: Button = row.get_node("AddWood")
 		var max_resources: Button = row.get_node("MaxResources")
 		add_wood.pressed.emit()
-		if wood.label.text != "100":
-			printerr("FAIL admin_resource_menu: +100 wood did not update the HUD")
+		if wood.label.text != "100" or wood.stone_label.text != "0":
+			printerr("FAIL admin_resource_menu: +100 wood did not update only the wood HUD")
 			fail += 1
 		max_resources.pressed.emit()
-		if wood.label.text != "999":
-			printerr("FAIL admin_resource_menu: Max resources did not update the HUD")
+		if wood.label.text != "999" or wood.stone_label.text != "999":
+			printerr("FAIL admin_resource_menu: Max resources did not fill wood and stone")
 			fail += 1
 		add_wood.pressed.emit()
 		max_resources.pressed.emit()
-		if wood.label.text != "1099":
-			printerr("FAIL admin_resource_menu: Max resources took already earned wood")
+		if wood.label.text != "1099" or wood.stone_label.text != "999":
+			printerr("FAIL admin_resource_menu: Max resources took already earned resources")
 			fail += 1
 		menu.close()
 		grants.allowed = false
@@ -124,5 +124,7 @@ func _check_host_grant(
 		before_host == 0
 		and server.checked_peer == peer_id
 		and joiner.inventory.count_of(Inventory.WOOD) == 100
+		and joiner.inventory.count_of(Inventory.STONE) == 0
 		and server.inventory.count_of(Inventory.WOOD) == 0
+		and server.inventory.count_of(Inventory.STONE) == 0
 	)
