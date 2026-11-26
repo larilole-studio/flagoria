@@ -135,6 +135,12 @@ func receive_refund(wood: int) -> void:
 		inventory.add(Inventory.WOOD, wood)
 
 
+@rpc("authority", "reliable", "call_remote")
+func receive_mine_stone(stone: int) -> void:
+	if multiplayer.get_remote_sender_id() == 1 and inventory != null and stone > 0:
+		inventory.add(Inventory.STONE, stone)
+
+
 func host_damage_wall(cell: Vector2i) -> bool:
 	## Host applies one sword hit to a free-form wall (#35). At 0 hp the cell
 	## is removed through host_erase_wall so cities stay in sync.

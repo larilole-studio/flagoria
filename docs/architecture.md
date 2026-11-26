@@ -122,6 +122,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 
 #### `structures/`
 
+- `Scripts/mechanics/structures/mine_production.gd`
 - `Scripts/mechanics/structures/structure.gd`
 - `Scripts/mechanics/structures/structure_placer.gd`
 - `Scripts/mechanics/structures/structure_saves.gd`
