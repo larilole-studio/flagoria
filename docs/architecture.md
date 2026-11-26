@@ -150,6 +150,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/net/join_address.gd`
 - `Scripts/net/join_dial.gd`
 - `Scripts/net/join_enet_timeout.gd`
+- `Scripts/net/tuning_sync.gd`
 
 ### `Scripts/player/`
 

@@ -177,6 +177,8 @@ func setup_server(params: MapGenParams, port: int = PORT, with_castle := true) -
 
 	var err := enet_peer.create_server(port)
 	multiplayer.multiplayer_peer = enet_peer
+	# Send tuning on the reliable channel before the joining player's spawn.
+	multiplayer.peer_connected.connect($TuningSync.sync_to_peer)
 	multiplayer.peer_connected.connect(add_player)
 	multiplayer.peer_connected.connect(_sync_map_params_to_peer)
 	multiplayer.peer_disconnected.connect(remove_player)

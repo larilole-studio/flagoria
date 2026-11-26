@@ -9,13 +9,13 @@ Source: Scripts/world/map_gen.gd
 # Tuning panel (#737)
 
 In a match, open **Menu → Tuning** beside the resource grants. The button is
-available to local admins in a solo match or on the host. A joining client still
-has the resource grants. Close or Android back returns to Menu.
+available to admins in solo and multiplayer matches. In a multiplayer match,
+the host applies edits and shares the resulting values with the joiners. Close or Android back returns to Menu.
 
 The panel opens on **Building costs**. The tabs also show Mine, Hand mining,
 Chopping, Soldiers, Movement and Visuals. Drag the rows to scroll, and tap
-**−** or **+** to step a value within its registry bounds. Changes apply in
-the current game immediately.
+**−** or **+** to step a value within its registry bounds. Solo changes apply immediately, and a client panel updates when the host
+returns the new value.
 
 Changed rows show a **Reset to** button with that row's default value.
 **Reset all** asks for confirmation and restores defaults across every tab.

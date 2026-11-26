@@ -7,4 +7,4 @@ Scripts/mechanics/building/build_placement.gd 528 gdformat baseline line wrappin
 Scripts/mechanics/interact/interaction.gd 517 gdformat baseline line wrapping
 Scripts/mechanics/mobs/mob_spawner.gd 535 gdformat baseline line wrapping
 Scripts/mechanics/trees/tree_sprouts.gd 526 gdformat baseline line wrapping
-flagoria_main.gd 536 gdformat baseline line wrapping
+flagoria_main.gd 538 gdformat baseline line wrapping and join tuning order
