@@ -201,6 +201,7 @@ free-form palisade wall cell (#276) is an entry on its cell:
 | `order` | Placement order used when rebuilding the map. |
 | `start_castle` | For castles, whether this placement is a protected starting castle. Older saves infer it from each owner’s first castle. |
 | `rotation` | Optional quarter turns clockwise (0–3) for a footprint structure placed in a rotated orientation (#493). Omitted when zero. |
+| `production_elapsed` | For a mine, host game seconds elapsed in the current 60-second cycle (#723). A missing field starts a fresh cycle. |
 | `wall` | `palisade`: a free-form wall cell. Its piece is solved again on load. |
 | `hp` | Optional remaining hits on a free-form wall (1 or 2). Omitted means full health (#35). |
 

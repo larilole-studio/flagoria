@@ -22,6 +22,8 @@ static func to_changes(map: _WorldMap) -> Dictionary[String, Dictionary]:
 			cell_data["rotation"] = int(entry[3])
 		if entry[0] == BuildCosts.NAMED_STRUCTURES[BuildCosts.CASTLE]:
 			cell_data["start_castle"] = entry[5]
+		if entry[0] == MineProduction.STRUCTURE_NAME:
+			cell_data["production_elapsed"] = map.mine_production.elapsed(entry[4])
 		_put(out, entry[2], cell_data)
 		order += 1
 	for cell: Vector2i in map._walls._wall_cells:
@@ -63,7 +65,8 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 						int(entry.get("owner", 0)),
 						cell,
 						turns,
-						entry.get("start_castle")
+						entry.get("start_castle"),
+						entry.get("production_elapsed")
 					]
 				)
 			elif (
@@ -83,6 +86,10 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 			castle_owners[p[2]] = true
 		list.append([p[1], p[2], p[3], p[4], 0, starting])
 	var count: int = map.replace_structures(list) if not list.is_empty() else 0
+	for p: Array in placed:
+		if p[1] == MineProduction.STRUCTURE_NAME:
+			var mine := map.structure_placement_at(p[3])
+			map.mine_production.restore_elapsed(mine["id"], p[6])
 	if not walls.is_empty() and map.place_wall_cells(walls):
 		for cell: Vector2i in walls:
 			if hp_by_cell.has(cell):

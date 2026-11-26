@@ -99,6 +99,7 @@ func remove(id: int) -> bool:
 		return false
 	var cells: Array[Vector2i] = _footprints[id]
 	_placed.erase(id)
+	_map.mine_production.remove_mine(id)
 	_footprints.erase(id)
 	_flags.erase(id)
 	var marker := _markers.get(id) as Sprite2D
@@ -127,6 +128,7 @@ func clear() -> void:
 	_cells.clear()
 	_auto.clear()
 	_placed.clear()
+	_map.mine_production.clear()
 	_footprints.clear()
 	_flags.clear()
 	_next_id = 1
@@ -372,6 +374,8 @@ func _write(
 	if turns != 0:
 		meta["rotation"] = turns
 	_placed[id] = meta
+	if structure.name == MineProduction.STRUCTURE_NAME:
+		_map.mine_production.register_mine(id)
 	if not flags.is_empty():
 		_flags[id] = flags
 	_FootprintOrientation.sync_sprite(_map, _markers, id, anchor_cell, turns)
