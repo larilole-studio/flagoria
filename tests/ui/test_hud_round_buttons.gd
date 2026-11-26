@@ -201,12 +201,13 @@ func _test_hud_button_styles() -> int:
 	OS.unset_environment("FLAGORIA_HUD_STYLE")
 	var current_dir := "res://art/ui/hud_e4/"
 	var current := RoundHudStyle.texture("build_normal")
+	var heart := RoundHudStyle.texture("heart_full")
 	var ok := (
 		RoundHudStyle.texture_directory() == current_dir
 		and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		and current.get_image().has_mipmaps()
 	)
-	for value in ["", "current", "unknown"]:
+	for value in ["", "current", "unknown", "wood", "parchment", "stone", "pixel", "banner"]:
 		OS.set_environment("FLAGORIA_HUD_STYLE", value)
 		ok = ok and RoundHudStyle.texture("build_normal") == current
 	var variants_ok := true
@@ -218,10 +219,13 @@ func _test_hud_button_styles() -> int:
 		"run_normal",
 		"wheel_sword_normal",
 		"joystick_base_normal",
+		"joystick_knob_active",
+		"attack_aim",
+		"pick_plank_selected",
 		"rotate_normal",
 	]
 	var textures := [current]
-	for style in ["wood", "parchment", "stone", "pixel", "banner"]:
+	for style in ["teal", "leaf", "sand", "flat", "shadow", "ghost"]:
 		OS.set_environment("FLAGORIA_HUD_STYLE", style)
 		var directory := "res://art/ui/hud_styles/%s/" % style
 		var complete := true
@@ -235,9 +239,10 @@ func _test_hud_button_styles() -> int:
 		var source := load(directory + "build_normal.png") as Texture2D
 		var style_ok := (
 			RoundHudStyle.texture_directory() == directory
-			and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_NEAREST
+			and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 			and chosen.get_image().get_data() == source.get_image().get_data()
-			and not chosen.get_image().has_mipmaps()
+			and chosen.get_image().has_mipmaps()
+			and RoundHudStyle.texture("heart_full") == heart
 			and not textures.has(chosen)
 		)
 		if not style_ok:

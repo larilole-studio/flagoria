@@ -108,7 +108,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Touch controls](./touch-controls.md) — joystick hold, Candy Glass attack button and stick, number pad and letter keyboard (`-` key; `Del` and `-` edit a selected value).
 - [Run control](./run-control.md) — hold or tap Run (or hold Shift) to walk faster; chop reach, the sword and the joystick direction stay put (#449).
 - [Round HUD buttons](./hud-round-buttons.md) — Map beside Menu opens parchment, Attack mirrored from the joystick, Run and the tool wheel around Attack, Buildings beside the cluster with two picker rings over a dimmed playfield, map panel clear of the controls (#480).
-- [HUD button styles](./hud-button-styles.md) — opt-in material studies and side-by-side match captures.
+- [HUD button styles](./hud-button-styles.md) — opt-in glass recolors and minimal discs with side-by-side match captures.
 - [Customize HUD layout](./hud-customize.md) — Settings preview and in-game edit mode; drag and resize touch controls, including the tool wheel; per-device user settings (#492, #575).
 - [Gameplay tuning](./gameplay-tuning.md) — gameplay defaults and runtime overrides (#736).
 - [Structures (data format)](./structures.md) — `flagoria-structure 1` text files.

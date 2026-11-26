@@ -18,14 +18,15 @@ wood count, and a trophy sticker. The two loss-flash frames last about
 
 ### HUD button style exploration
 
-Candy Glass (`current`, `hud_e4/`) stays the default in
+Candy Glass (`current`, `hud_e4/`) is the default in
 `RoundHudStyle.SELECTED`. Set `FLAGORIA_HUD_STYLE` before launch to preview
-`wood`, `parchment`, `stone`, `pixel`, or `banner`. Each uses sprites in its
-own [style folder](hud_styles/) with nearest filtering and mipmaps disabled.
+`teal`, `leaf`, `sand`, `flat`, `shadow`, or `ghost`. Empty and unknown
+values use Candy Glass. The buttons and joystick use linear filtering with
+mipmaps. Hearts and resource stickers keep their Candy Glass sprites.
 
-Run `python3 tools/ui/gen_hud_styles.py` to regenerate the pixel art.
-Run `python3 tools/ui/compare_hud_styles.py` to generate the
-[match comparisons](../../docs/evidence/hud-button-styles/).
+Run `python3 tools/ui/gen_hud_styles.py` with CairoSVG and Pillow to regenerate
+the [variant sprites](hud_styles/). Run `python3 tools/ui/compare_hud_styles.py`
+to generate the [match capture and state strip](../../docs/evidence/hud-button-styles/).
 
 ## Map panel
 

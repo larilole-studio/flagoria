@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 from PIL import Image, ImageDraw, ImageFont
 
-from gen_hud_styles import OUT as PIXEL_SPRITES, main as generate_sprites
+from gen_hud_styles import OUT as VARIANT_SPRITES, main as generate_sprites
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "docs/evidence/hud-button-styles"
@@ -16,15 +16,15 @@ DRIVE = "res://.cursor/skills/verify-flagoria/drives/hud_button_styles.gd"
 RESOLUTION = (2400, 1080)
 STYLES = {
     "current": "A · Candy Glass",
-    "wood": "B · Carved Wood",
-    "parchment": "C · Parchment",
-    "stone": "D · Chiseled Stone",
-    "pixel": "E · Flat Pixel",
-    "banner": "F · Stitched Banner",
+    "teal": "B · Sea-teal glass",
+    "leaf": "C · Leaf-green glass",
+    "sand": "D · Sand-gold glass",
+    "flat": "E · Flat",
+    "shadow": "F · Soft-shadow",
+    "ghost": "G · Ghost",
 }
 FONT = ROOT / "art/ui/fonts/LilitaOne-Regular.ttf"
-SCREENS = ("match-start", "build-picker", "pressed", "tool-wheel")
-BG, PANEL, TEXT = "#2a2238", "#3b1748", "#e7d7b1"
+BG, PANEL, TEXT = "#2a2238", "#24604a", "#e7d7b1"
 
 
 def godot(scratch, args, *, display=False, env=None):
@@ -61,25 +61,24 @@ def capture(scratch, style):
 
 
 def sheet(panels, filename):
-    """Arrange A–F in reading order with the same framing at native image size."""
+    """Arrange A–G in reading order at native panel size."""
     width, height = panels[0].size
     gap, header = 12, 36
-    board = Image.new("RGB", (3 * width + 4 * gap, 2 * (height + header) + 3 * gap), BG)
+    columns = 2
+    rows = (len(panels) + columns - 1) // columns
+    board = Image.new("RGB", (columns * (width + gap) + gap,
+                              rows * (height + header + gap) + gap), BG)
     draw = ImageDraw.Draw(board)
     font = ImageFont.truetype(FONT, 23)
     for index, (title, panel) in enumerate(zip(STYLES.values(), panels, strict=True)):
-        x = gap + index % 3 * (width + gap)
-        y = gap + index // 3 * (height + header + gap)
+        x = gap + index % columns * (width + gap)
+        y = gap + index // columns * (height + header + gap)
         draw.text((x + 4, y + 4), title, font=font, fill=TEXT)
         board.paste(panel, (x, y + header))
     board.save(OUT / filename, optimize=True)
 
 
-def hud_crop(image, screen):
-    if screen == "build-picker":
-        return image.crop((1666, 36, 2360, 1044))
-    if screen == "tool-wheel":
-        return image.crop((1706, 536, 2290, 1068))
+def hud_crop(image):
     # Keep the separate touch zones at full size and remove the empty world between them.
     menu = image.crop((2084, 36, 2360, 148))
     stick = image.crop((190, 682, 466, 938))
@@ -91,48 +90,53 @@ def hud_crop(image, screen):
     return panel
 
 
-def compare(scratch, step, screen):
+def match_start(scratch):
     panels = []
     for style in STYLES:
-        with Image.open(scratch / style / f"{step:02d}-{screen}.png") as image:
+        with Image.open(scratch / style / "01-match-start.png") as image:
             if image.size != RESOLUTION:
-                raise ValueError(f"Unexpected capture size {image.size} for {style}/{screen}")
-            panels.append(hud_crop(image, screen))
-    sheet(panels, f"{screen}.png")
+                raise ValueError(f"Unexpected capture size {image.size} for {style}")
+            panels.append(hud_crop(image))
+    sheet(panels, "match-start.png")
 
 
 def state_strip():
-    buttons = {"Attack": "attack", "Run": "run", "Buildings": "build", "Map": "map",
-               "Plank": "pick_plank", "Rotate": "rotate"}
-    columns = ("Idle", "Pressed", "Disabled", "Selected/Aim", "Sel. + Held")
-    cell, label, header = 88, 94, 26
-    font = ImageFont.truetype(FONT, 14)
+    basic = ("normal", "pressed", "disabled")
+    toggle = basic + ("selected", "selected_pressed")
+    buttons = (
+        ("Attack", "attack", ("idle", "pressed", "disabled", "aim")),
+        ("Run", "run", basic),
+        ("Buildings", "build", toggle),
+        ("Map", "map", toggle),
+        ("Plank", "pick_plank", toggle),
+        ("Rotate", "rotate", basic),
+    )
+    columns = ("Idle", "Pressed", "Disabled", "Selected/Aim", "Selected + Held")
+    cell, label, header = 92, 92, 30
+    font = ImageFont.truetype(FONT, 13)
     panels = []
     for style in STYLES:
-        sprites = ROOT / "art/ui/hud_e4" if style == "current" else PIXEL_SPRITES / style
+        sprites = ROOT / "art/ui/hud_e4" if style == "current" else VARIANT_SPRITES / style
         panel = Image.new("RGB", (label + cell * len(columns), header + cell * len(buttons)),
                           PANEL)
         draw = ImageDraw.Draw(panel)
         for col, title in enumerate(columns):
             draw.text((label + col * cell + cell // 2, header // 2), title,
                       anchor="mm", font=font, fill=TEXT)
-        for row, (title, stem) in enumerate(buttons.items()):
+        for row, (title, stem, states) in enumerate(buttons):
             y = header + row * cell
             draw.text((10, y + cell // 2), title, anchor="lm", font=font, fill=TEXT)
-            states = ("idle", "pressed", "disabled", "aim", "selected_pressed") if stem == "attack" else (
-                "normal", "pressed", "disabled", "selected", "selected_pressed"
-            )
-            for col, state in enumerate(states):
-                path = sprites / f"{stem}_{state}.png"
+            for col in range(len(columns)):
                 x = label + cell * col
                 draw.rectangle((x + 1, y + 1, x + cell - 2, y + cell - 2), fill="#8e97a3")
-                if not path.is_file():
+                if col >= len(states):
                     draw.text((x + cell // 2, y + cell // 2), "—", anchor="mm", font=font, fill=BG)
                     continue
-                with Image.open(path) as source:
-                    resampling = Image.Resampling.LANCZOS if style == "current" else Image.Resampling.NEAREST
-                    sprite = source.convert("RGBA").resize((72, 72), resampling)
-                    panel.paste(sprite, (x + 8, y + 8), sprite)
+                with Image.open(sprites / f"{stem}_{states[col]}.png") as source:
+                    size = source.width // 2
+                    sprite = source.convert("RGBA").resize((size, size), Image.Resampling.LANCZOS)
+                    inset = (cell - size) // 2
+                    panel.paste(sprite, (x + inset, y + inset), sprite)
         panels.append(panel)
     sheet(panels, "state-strip.png")
 
@@ -140,13 +144,12 @@ def state_strip():
 def main():
     generate_sprites()
     OUT.mkdir(parents=True, exist_ok=True)
-    with TemporaryDirectory(prefix="flagoria-hud-") as run:
+    with TemporaryDirectory(prefix="flagoria-hud-", dir="/tmp") as run:
         scratch = Path(run)
         godot(scratch / "import", ["--headless", "--import"])
         for style in STYLES:
             capture(scratch / style, style)
-        for step, screen in enumerate(SCREENS, 1):
-            compare(scratch, step, screen)
+        match_start(scratch)
     state_strip()
 
 

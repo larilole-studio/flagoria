@@ -233,12 +233,12 @@ def button(doc, st, cx, cy, r, face_key, icon, icon_scale=1.25, pressed=False, s
     if icon:
         icon_svg(doc, icon, cx, cy + rf*0.02, rf * icon_scale, st['ic'], ow=7.5 if rf > 30 else 8.5)
 
-def joystick(doc, knob=False, active=False):
-    j = E4['joy']
+def joystick(doc, knob=False, active=False, style=E4):
+    j = style['joy']
     out = j['edge']
     if knob:
-        style = dict(E4, faces={'knob': j['knob']})
-        button(doc, style, 50, 47, 45, 'knob', None, pressed=active)
+        knob_style = dict(style, faces={'knob': j['knob']})
+        button(doc, knob_style, 50, 47, 45, 'knob', None, pressed=active)
         y = 49.5 if active else 47
         doc.add(f'<circle cx="50" cy="{y}" r="12" fill="white" opacity=".7"/>')
         return
@@ -250,7 +250,7 @@ def joystick(doc, knob=False, active=False):
         doc.add(f'<path transform="rotate({angle} 50 49)" d="M50 11 L46.5 16 L53.5 16 Z" fill="white" fill-opacity=".9" stroke="{out}" stroke-width="1.3" stroke-linejoin="round"/>')
 
 
-def save(doc, name, units, disabled=False):
+def save(doc, name, units, disabled=False, out=OUT):
     pixels = units * DENSITY
     png = cairosvg.svg2png(bytestring=doc.svg().encode(), output_width=pixels, output_height=pixels)
     image = Image.open(io.BytesIO(png)).convert('RGBA')
@@ -259,20 +259,20 @@ def save(doc, name, units, disabled=False):
         image = ImageEnhance.Color(image).enhance(.18)
         image = ImageEnhance.Brightness(image).enhance(.77)
         image.putalpha(alpha)
-    image.save(OUT / f'{name}.png')
+    image.save(out / f'{name}.png')
 
 
-def disc(name, units, face, icon, scale, states):
+def disc(name, units, face, icon, scale, states, *, style, out, draw_button):
     for state in states:
         doc = Doc()
         close = name == 'build' and state.startswith('selected')
         ring = state.startswith('selected') and not close
         charge = (.88 if state == 'aim' else .68) if name == 'attack' else None
         radius = 41 if charge is not None else (42 if ring else 45)
-        button(doc, E4, 50, 47, radius, 'close' if close else face, 'close' if close else icon,
-               icon_scale=1.2 if close else scale, pressed='pressed' in state,
-               selected=ring, charge=charge)
-        save(doc, f'{name}_{state}', units, state == 'disabled')
+        draw_button(doc, style, 50, 47, radius, 'close' if close else face,
+                    'close' if close else icon, icon_scale=1.2 if close else scale,
+                    pressed='pressed' in state, selected=ring, charge=charge)
+        save(doc, f'{name}_{state}', units, state == 'disabled', out=out)
 
 
 def sticker(name, icon, state='normal'):
@@ -293,25 +293,31 @@ def sticker(name, icon, state='normal'):
     save(doc, name, 11)
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+def render_discs(out=OUT, style=E4, draw_button=button, draw_joystick=joystick):
+    out.mkdir(parents=True, exist_ok=True)
+    options = dict(style=style, out=out, draw_button=draw_button)
     basic = ('normal', 'pressed', 'disabled')
     toggle = basic + ('selected', 'selected_pressed')
-    disc('map', 24, 'map', 'map', 1.42, toggle)
-    disc('menu', 24, 'menu', 'menu', 1.20, basic)
-    disc('build', 24, 'build', 'build', 1.50, toggle)
-    disc('rotate', 24, 'build', 'rotate', 1.42, basic)
+    disc('map', 24, 'map', 'map', 1.42, toggle, **options)
+    disc('menu', 24, 'menu', 'menu', 1.20, basic, **options)
+    disc('build', 24, 'build', 'build', 1.50, toggle, **options)
+    disc('rotate', 24, 'build', 'rotate', 1.42, basic, **options)
     for icon in ('sword', 'chop', 'bow'):
-        disc(f'wheel_{icon}', 24, 'wheel', icon, 1.4, toggle)
+        disc(f'wheel_{icon}', 24, 'wheel', icon, 1.4, toggle, **options)
     for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'mine', 'demolish'):
-        disc(f'pick_{icon}', 24, 'pick', icon, 1.72, toggle)
-    disc('run', 32, 'run', 'run', 1.45, basic)
-    disc('attack', 40, 'attack', 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))
+        disc(f'pick_{icon}', 24, 'pick', icon, 1.72, toggle, **options)
+    disc('run', 32, 'run', 'run', 1.45, basic, **options)
+    disc('attack', 40, 'attack', 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'), **options)
     for part, states in [('base', ('normal', 'disabled')), ('knob', ('normal', 'active', 'disabled'))]:
         for state in states:
             doc = Doc()
-            joystick(doc, knob=part == 'knob', active=state == 'active')
-            save(doc, f'joystick_{part}_{state}', 56 if part == 'base' else 24, state == 'disabled')
+            draw_joystick(doc, knob=part == 'knob', active=state == 'active', style=style)
+            units = 56 if part == 'base' else 24
+            save(doc, f'joystick_{part}_{state}', units, state == 'disabled', out=out)
+
+
+def main():
+    render_discs()
     for state in ('full', 'half', 'empty', 'flash_0', 'flash_1'):
         sticker(f'heart_{state}', 'heart', state)
     for icon in ('star', 'log'):

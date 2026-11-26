@@ -3,7 +3,7 @@ extends RefCounted
 ## Disc textures and typography for the in-game HUD.
 
 const SELECTED := "current"
-const PIXEL_STYLES := ["wood", "parchment", "stone", "pixel", "banner"]
+const STYLES := ["teal", "leaf", "sand", "flat", "shadow", "ghost"]
 const HUD := "res://art/ui/hud_e4/"
 const DENSITY := 4
 const FILTER := CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
@@ -23,13 +23,13 @@ static var _labels: Dictionary[int, LabelSettings] = {}
 
 static func texture_directory() -> String:
 	var style := OS.get_environment("FLAGORIA_HUD_STYLE")
-	if style.is_empty():
+	if not OS.has_environment("FLAGORIA_HUD_STYLE"):
 		style = SELECTED
-	return "res://art/ui/hud_styles/%s/" % style if style in PIXEL_STYLES else HUD
+	return "res://art/ui/hud_styles/%s/" % style if style in STYLES else HUD
 
 
 static func button_filter() -> CanvasItem.TextureFilter:
-	return FILTER if texture_directory() == HUD else CanvasItem.TEXTURE_FILTER_NEAREST
+	return FILTER
 
 
 static func texture(sprite: String) -> Texture2D:
@@ -40,7 +40,7 @@ static func texture(sprite: String) -> Texture2D:
 	var path := directory + sprite + ".png"
 	if not _textures.has(path):
 		var image := (load(path) as Texture2D).get_image()
-		if directory == HUD and not image.has_mipmaps():
+		if not image.has_mipmaps():
 			image.generate_mipmaps()
 		var art := ImageTexture.create_from_image(image)
 		art.set_size_override(image.get_size() / DENSITY)
