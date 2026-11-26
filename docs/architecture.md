@@ -96,6 +96,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 
 #### `interactables/`
 
+- `Scripts/mechanics/interactables/chop_sprites.gd`
 - `Scripts/mechanics/interactables/interactable_catalog.gd`
 - `Scripts/mechanics/interactables/interactable_type.gd`
 
