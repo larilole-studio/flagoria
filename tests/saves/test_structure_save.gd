@@ -238,7 +238,10 @@ func _test_mine_save_and_demolish() -> int:
 	world.apply_map_params(params)
 	inventory.add(Inventory.WOOD, 15)
 	var anchor := Vector2i(19, -59)
+	world.generate_chunk(world.map_to_local(anchor))
+	var ground_before := _mine_ground_atlases(world, anchor)
 	var placed := ConstructionPlacer.new(world).place(BuildCosts.MINE, [anchor], inventory)
+	var ground_after_place := _mine_ground_atlases(world, anchor)
 	var starting_castle: bool = world.place_start_castle(1)
 	var rock_removed: bool = world.destroy_decor(anchor + Vector2i.DOWN)
 	var saved := (
@@ -249,6 +252,8 @@ func _test_mine_save_and_demolish() -> int:
 		world.apply_map_params(saved.params)
 		world.restore_object_changes(saved.object_changes)
 		StructureSaves.restore(saved.structures, world)
+		world.generate_chunk(world.map_to_local(anchor))
+		var ground_after_reload := _mine_ground_atlases(world, anchor)
 		var placement: Dictionary = world.structure_placement_at(anchor)
 		var adopted := StructureSaves.adopt_start_castle(world, 1)
 		var castle: Vector2i = world.spawn_point - StartCastle.GATE_FRONT
@@ -265,10 +270,30 @@ func _test_mine_save_and_demolish() -> int:
 			and world.structure_placement_at(anchor).is_empty()
 			and inventory.count_of(Inventory.WOOD) == 7
 		)
+		var ground_after_demolish := _mine_ground_atlases(world, anchor)
+		if (
+			ground_after_place != ground_before
+			or ground_after_reload != ground_before
+			or ground_after_demolish != ground_before
+		):
+			printerr(
+				"FAIL mine_save_and_demolish: ground changed after placement, reload or demolition"
+			)
+			ok = false
 	scene.queue_free()
 	await process_frame
 	if ok:
 		print("PASS test_mine_save_and_demolish")
 	else:
-		printerr("FAIL mine_save_and_demolish: saved anchor, owner, demolition or refund")
+		printerr("FAIL mine_save_and_demolish: ground, saved anchor, owner, demolition or refund")
 	return 0 if ok else 1
+
+
+func _mine_ground_atlases(world: TileMap, anchor: Vector2i) -> Array[Vector2i]:
+	# The anchor is on the bottom row of the 3×3 footprint. Include the ring
+	# around it, which also covers the track apron beyond the entrance.
+	var atlases: Array[Vector2i] = []
+	for y in range(-3, 2):
+		for x in range(-2, 3):
+			atlases.append(world.get_cell_atlas_coords(0, anchor + Vector2i(x, y)))
+	return atlases

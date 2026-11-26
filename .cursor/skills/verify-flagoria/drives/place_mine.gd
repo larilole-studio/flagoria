@@ -85,6 +85,7 @@ func run() -> void:
 			priced[0] = (
 				build.cost == 15 and build.reasons.is_empty() and not build.cell_ok.has(false)
 			)
+			await snapshot("mine-ready-preview")
 	)
 	var mine: Dictionary = map.structure_placement_at(sites.good)
 	var placed: bool = (
