@@ -15,9 +15,12 @@ func run() -> void:
 		_fail("main menu did not open")
 		return
 	step("rate")
-	var slider: HSlider = current_scene.get_node("CanvasLayer2/MainMenu").mob_rate
+	await click(WORLDS_BUTTON)
+	var slider: HSlider = current_scene.get_node(
+		WORLDS_VIEW + "/Body/GameplayScroll/Rows/MobRateRow/MobRate"
+	)
 	slider.value = RATE
-	await host_from_menu()
+	await click(HOST_BUTTON)
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
 		_fail("no local hero under World after clicking Host")
 		return

@@ -19,7 +19,7 @@ Range, damage and cooldown are host `GameSettings`, with menu rows under the mob
 
 ## How to get to it (user POV)
 
-1. On the main menu, the tower range, damage and cooldown rows sit under Mob spawns. They are saved with the other gameplay settings. Only the host's values are used.
+1. In Worlds, the tower range, damage and cooldown rows sit under Mob spawns. They are saved with the other gameplay settings. Only the host's values are used.
 2. Host a match. The starting castle is a flag tower you own, so it does not shoot you. Another player inside its range, with a clear line out of the ring, loses health and sees a short line from the tower.
 3. Build a wooden tower from the build picker. It shoots for you. After someone captures it, it shoots for them.
 

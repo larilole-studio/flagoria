@@ -136,13 +136,6 @@ Scripts/player/player.gd	unused-argument	unused function argument 'anim_name'
 Scripts/player/player.gd	unused-argument	unused function argument 'event'
 Scripts/player/player_health.gd	class-definitions-order	Definition out of order in global scope	8baced8ad6c55b7e
 Scripts/saves/map_save.gd	max-line-length	Max allowed line length (100) exceeded	37ce007bf24ee323
-Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	119a99ea93a1f164
-Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	636543a2d5cee751
-Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	7e0ec035ca751a21
-Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	9c60f253e81cd453
-Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	d1ab74b1c5aabbed
-Scripts/shell/MainMenu.gd	class-definitions-order	Definition out of order in global scope	e9fcd6d243d41faa
-Scripts/shell/ingame_menu.gd	expression-not-assigned	expression is not asigned, and hence it can be removed
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	26db0f4b0eae23d1
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	39f8f92fb63ce1ea
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	7605f8b426b54630
@@ -157,14 +150,6 @@ Scripts/ui/hud_layout.gd	class-definitions-order	Definition out of order in glob
 Scripts/ui/hud_layout.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
 Scripts/ui/hud_layout.gd	max-returns	Function "_hit_size" has more than 6 return statements
 Scripts/ui/hud_layout.gd	unused-argument	unused function argument 'id'
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	0d85b61bd13a169d
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	1c2b7c1e034d316b
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	4955ab3a235333be
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	5bf9545a2b4a7d68
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	86d674515ec41fa7
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	a8bc5ee62e57d1d1
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	c0fa4b2298dbf485
-Scripts/ui/hud_layout_edit.gd	class-definitions-order	Definition out of order in global scope	d3dc6f31a363eb7d
 Scripts/ui/map_chart.gd	class-definitions-order	Definition out of order in global scope	4315ca7c7146cc78
 Scripts/ui/map_chart.gd	max-line-length	Max allowed line length (100) exceeded	b58b0e95a1313026
 Scripts/ui/tool_wheel.gd	max-returns	Function "_keys" has more than 6 return statements
