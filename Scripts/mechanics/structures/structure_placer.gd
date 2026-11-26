@@ -459,13 +459,14 @@ func set_owner(id: int, owner: int) -> void:
 
 static func footprint(structure: Structure, anchor_cell: Vector2i) -> Dictionary:
 	## Map cell -> [ground legend entry, object legend entry] ({} for '.')
-	## for every grid cell with something on either layer.
+	## The mine also reserves its open entrance, which has no tile on either layer.
+	var is_mine := structure.name == MineProduction.STRUCTURE_NAME
 	var out := {}
 	for y in structure.size.y:
 		for x in structure.size.x:
 			var g: String = structure.layers["ground"][y][x]
 			var o: String = structure.layers["object"][y][x]
-			if g == Structure.EMPTY and o == Structure.EMPTY:
+			if g == Structure.EMPTY and o == Structure.EMPTY and not is_mine:
 				continue
 			out[anchor_cell + Vector2i(x, y) - structure.anchor] = [
 				structure.legend.get(g, {}), structure.legend.get(o, {})
