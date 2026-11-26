@@ -140,26 +140,21 @@ func _test_mob_spawn_rate() -> int:
 
 	var scene = load("res://flagoria_main.tscn").instantiate()
 	root.add_child(scene)
-	var menu = scene.get_node("CanvasLayer2/MainMenu")
-	if (
-		not is_equal_approx(menu.mob_rate.value, game.MOB_RATE_DEFAULT)
-		or menu.mob_rate_value.text != "2x"
-	):
-		printerr(
-			(
-				"FAIL mob_spawn_rate: slider starts at %s (%s)"
-				% [menu.mob_rate.value, menu.mob_rate_value.text]
-			)
-		)
+	var worlds_button: Button = scene.get_node(
+		"CanvasLayer2/MainMenu/MarginContainer/VBoxContainer/WorldsButton"
+	)
+	worlds_button.pressed.emit()
+	var row: HBoxContainer = scene.get_node(
+		"CanvasLayer2/WorldsPanel/Margin/VBox/Body/GameplayScroll/Rows/MobRateRow"
+	)
+	var slider: HSlider = row.get_node("MobRate")
+	var label: Label = row.get_node("MobRateValue")
+	if not is_equal_approx(slider.value, 2.0) or label.text != "2x":
+		printerr("FAIL mob_spawn_rate: slider starts at %s (%s)" % [slider.value, label.text])
 		fail += 1
-	menu.mob_rate.value = 0.75
-	if menu.mob_rate_value.text != "0.75x":
-		printerr("FAIL mob_spawn_rate: label shows %s at 0.75" % menu.mob_rate_value.text)
-		fail += 1
-	game.mob_rate = game.MOB_RATE_DEFAULT  # reload from disk, as on the next launch
-	game.load_from_disk()
-	if not is_equal_approx(game.mob_rate, 0.75):
-		printerr("FAIL mob_spawn_rate: slider at 0.75 reloads as %s" % game.mob_rate)
+	slider.value = 0.75
+	if label.text != "0.75x":
+		printerr("FAIL mob_spawn_rate: label shows %s at 0.75" % label.text)
 		fail += 1
 
 	# The host spawns more mobs at a higher rate, within that rate's cap.

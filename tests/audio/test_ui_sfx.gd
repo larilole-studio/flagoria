@@ -100,6 +100,8 @@ func _test_ui_sfx_presses() -> int:
 		"JoinButton",
 		"MultiplayerButton",
 		"SettingsButton",
+		"CustomizeHud",
+		"RaidsEnabled",
 		"BackButton",
 		"RandomSeed",
 		"RandomSpecs",
@@ -126,6 +128,8 @@ func _test_ui_sfx_presses() -> int:
 		[top.get_node("MultiplayerButton"), "click"],
 		[multiplayer.get_node("Actions/BackButton"), "back"],
 		[top.get_node("SettingsButton"), "click"],
+		[settings.get_node("Scroll/SettingsRows/CustomizeHud"), "click"],
+		[scene.get_node("CanvasLayer1/InGameMenu/HudLayoutEdit/TopBar/Margin/Row/Done"), "back"],
 		[settings.get_node("BackButton"), "back"],
 	]
 	for press in presses:
