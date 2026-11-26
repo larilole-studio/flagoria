@@ -1,0 +1,17 @@
+[gd_resource type="Theme" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/ui/button_variant_theme.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+palette = Dictionary[String, Color]({
+"normal": Color(0.556863, 0.592157, 0.639216, 1),
+"hover": Color(0.905882, 0.843137, 0.694118, 1),
+"pressed": Color(0.54902, 0.54902, 0.6, 1),
+"disabled": Color(0.54902, 0.54902, 0.6, 1),
+"edge": Color(0.164706, 0.133333, 0.219608, 1),
+"highlight": Color(0.905882, 0.843137, 0.694118, 1),
+"ink": Color(0.164706, 0.133333, 0.219608, 1),
+"disabled_ink": Color(0.164706, 0.133333, 0.219608, 1),
+"backdrop": Color(0.255, 0.267, 0.353, 1)
+})

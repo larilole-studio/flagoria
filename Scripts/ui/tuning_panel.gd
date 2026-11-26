@@ -23,6 +23,10 @@ var _defaults: Dictionary[StringName, float] = {}
 @onready var _reset_all: Button = %ResetAll
 
 
+func _enter_tree() -> void:
+	ButtonStyle.apply(self)
+
+
 func _ready() -> void:
 	_categories = Tuning.entries_by_category()
 	for category: String in _categories:

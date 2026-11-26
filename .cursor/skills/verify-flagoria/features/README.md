@@ -95,6 +95,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Audio](./audio.md) — buses, music, combat, UI and mob SFX, footsteps, `audio_check` gate.
 - [Main menu](./main-menu.md) — menu theme, menu navigation and letter keyboard.
 - [Client settings](./settings-client.md) — audio and HUD preview in Settings, host gameplay options in Worlds.
+- [Button style comparison](button-styles.md) — menu, Tuning and parchment comparison at phone size.
 - [Main menu navigation](./menu-worlds-root.md) — Worlds, Multiplayer, Settings and Back (#708).
 - [Saved servers](./saved-servers.md) — reuse and remove addresses from successful multiplayer connections.
 - [Saved worlds](./saved-worlds.md) — main-menu list of every save, load, a new world in its own file, delete with a confirm.

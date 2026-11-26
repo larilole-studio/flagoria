@@ -15,6 +15,10 @@ var navigate_back := Callable()
 @onready var cancel_button: Button = $Dim/Panel/Margin/VBox/Buttons/Cancel
 
 
+func _enter_tree() -> void:
+	ButtonStyle.apply(self)
+
+
 func _ready() -> void:
 	# Back and window close arrive as notifications instead of quitting.
 	get_tree().set_quit_on_go_back(false)

@@ -177,3 +177,47 @@ func _test_number_pad_minus_zero_commits_zero() -> int:
 	if fail == 0:
 		print("PASS test_number_pad_minus_zero_commits_zero")
 	return fail
+
+
+func _test_button_styles() -> int:
+	print("-- test_button_styles")
+	var was_set := OS.has_environment("FLAGORIA_BUTTON_STYLE")
+	var old_style := OS.get_environment("FLAGORIA_BUTTON_STYLE")
+	var faces := {
+		"": "e0a96b",
+		"current": "e0a96b",
+		"wood": "e0a96b",
+		"parchment": "e7d7b1",
+		"stone": "8e97a3",
+		"pixel": "f2b632",
+		"banner": "24604a",
+	}
+	var fail := 0
+	for style: String in faces:
+		OS.set_environment("FLAGORIA_BUTTON_STYLE", style)
+		var theme := ButtonStyle.selected_theme()
+		var expected_path := (
+			"res://art/ui/main_menu_theme.tres"
+			if style in ["", "current"]
+			else "res://art/ui/themes/button_%s.tres" % style
+		)
+		if theme == null or theme.resource_path != expected_path:
+			printerr("FAIL button_styles: expected Theme at %s" % expected_path)
+			fail += 1
+		var button := MapWoodButton.new()
+		root.add_child(button)
+		var face: Color = button.palette.get("face", Color.TRANSPARENT)
+		if (
+			not face.is_equal_approx(Color(faces[style]))
+			or button.palette.has("bevel") != (style not in ["", "current"])
+		):
+			printerr("FAIL button_styles: map button face for %s" % style)
+			fail += 1
+		button.free()
+	if was_set:
+		OS.set_environment("FLAGORIA_BUTTON_STYLE", old_style)
+	else:
+		OS.unset_environment("FLAGORIA_BUTTON_STYLE")
+	if fail == 0:
+		print("PASS test_button_styles")
+	return fail

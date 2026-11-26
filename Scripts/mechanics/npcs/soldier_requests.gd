@@ -343,7 +343,7 @@ func _ensure_buttons() -> void:
 	var hud := get_node_or_null("/root/Flagoria/CanvasLayer1") as CanvasLayer
 	if hud == null:
 		return
-	var theme: Theme = load("res://art/ui/main_menu_theme.tres")
+	var theme: Theme = ButtonStyle.selected_theme()
 	_train_button = hud.get_node_or_null("TrainButton") as Button
 	if _train_button == null:
 		_train_button = Button.new()

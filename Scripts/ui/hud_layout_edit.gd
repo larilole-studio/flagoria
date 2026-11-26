@@ -35,6 +35,10 @@ var _bar_sizing := false
 @onready var _selected_label: Label = $TopBar/Margin/Row/Selected
 
 
+func _enter_tree() -> void:
+	ButtonStyle.apply(self)
+
+
 func _ready() -> void:
 	hide()
 	process_mode = Node.PROCESS_MODE_ALWAYS

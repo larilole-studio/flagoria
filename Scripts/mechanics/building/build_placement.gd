@@ -350,7 +350,7 @@ func _ensure_picker() -> void:
 	var hud := _interaction.get_node_or_null("/root/Flagoria/CanvasLayer1") as CanvasLayer
 	if hud == null:
 		return
-	var theme: Theme = load("res://art/ui/main_menu_theme.tres")
+	var theme: Theme = ButtonStyle.selected_theme()
 	_buildings = hud.get_node_or_null("BuildingsButton") as Button
 	if _buildings == null:
 		_buildings = Button.new()

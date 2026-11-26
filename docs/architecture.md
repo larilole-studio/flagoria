@@ -188,6 +188,8 @@ Where each part of the game lives today, how data moves between the parts, and w
 ### `Scripts/ui/`
 
 - `Scripts/ui/MapAdminPanel.gd`
+- `Scripts/ui/button_style.gd`
+- `Scripts/ui/button_variant_theme.gd`
 - `Scripts/ui/hearts_hud.gd`
 - `Scripts/ui/hud_layout.gd`
 - `Scripts/ui/hud_layout_defaults.gd`

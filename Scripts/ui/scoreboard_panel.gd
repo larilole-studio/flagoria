@@ -33,7 +33,7 @@ func _ready() -> void:
 	var panel := PanelContainer.new()
 	panel.name = "Panel"
 	panel.mouse_filter = MOUSE_FILTER_IGNORE
-	panel.theme = load("res://art/ui/main_menu_theme.tres")
+	panel.theme = ButtonStyle.selected_theme()
 	add_child(panel)
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 6)
