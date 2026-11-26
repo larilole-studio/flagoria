@@ -13,6 +13,7 @@ const TOO_LONG := "too long"
 const WRONG_GROUND := "wrong ground"
 const OCCUPIED := "occupied"
 const NOT_ADJACENT := "not adjacent"
+const NOT_ADJACENT_TO_ROCK := "not adjacent to a rock"
 const NOT_STRAIGHT := "not straight"
 const EMPTY_CELLS := "empty cells"
 const NOT_ENOUGH_WOOD := BuildCosts.NOT_ENOUGH_WOOD
@@ -32,6 +33,7 @@ const _REASON_ORDER := [
 	OCCUPIED,
 	NOT_STRAIGHT,
 	NOT_ADJACENT,
+	NOT_ADJACENT_TO_ROCK,
 	NOT_ENOUGH_WOOD,
 	MULTIPLAYER_ON,
 ]
@@ -297,6 +299,8 @@ func _check_named(
 	if structure == null:
 		found[UNKNOWN_KIND] = true
 		return
+	if kind == BuildCosts.MINE:
+		_check_mine(structure, cells[0], found, quarter_turns)
 	for reason in _map.can_place_structure(structure, cells[0], quarter_turns):
 		if reason == StructurePlacer.MULTIPLAYER_ON:
 			continue  # StructureRequests is the multiplayer gate (#497).
@@ -307,6 +311,18 @@ func _check_named(
 				found[OCCUPIED] = true
 			StructurePlacer.MULTIPLAYER_ON:
 				found[MULTIPLAYER_ON] = true
+
+
+func _check_mine(
+	structure: Structure, anchor: Vector2i, found: Dictionary, quarter_turns: int
+) -> void:
+	if not _neighbours(anchor).any(_map.has_live_rock):
+		found[NOT_ADJACENT_TO_ROCK] = true
+	var rotated := Structure.rotated(structure, quarter_turns)
+	for cell: Vector2i in StructurePlacer.footprint(rotated, anchor):
+		if _map.has_wall(cell):
+			found[OCCUPIED] = true
+			break
 
 
 func _run_touches_wall_or_structure(cells: Array[Vector2i]) -> bool:

@@ -226,3 +226,49 @@ func _place_rotated_structure(world, structure: Structure, owner: int) -> Varian
 				if world.place_structure(structure, anchor, owner, 1) > 0:
 					return anchor
 	return null
+
+
+func _test_mine_save_and_demolish() -> int:
+	print("-- test_mine_save_and_demolish")
+	var scene := _structure_save_scene()
+	var world: TileMap = scene.get_node("World/worldMap")
+	var inventory: Inventory = scene.get_node("Inventory")
+	var params := _spawn_params(11, 0.003)
+	scene.world_params = params
+	world.apply_map_params(params)
+	inventory.add(Inventory.WOOD, 15)
+	var anchor := Vector2i(19, -59)
+	var placed := ConstructionPlacer.new(world).place(BuildCosts.MINE, [anchor], inventory)
+	var starting_castle: bool = world.place_start_castle(1)
+	var rock_removed: bool = world.destroy_decor(anchor + Vector2i.DOWN)
+	var saved := (
+		_save_and_read_world(scene) if placed and starting_castle and rock_removed else null
+	)
+	var ok := false
+	if saved != null:
+		world.apply_map_params(saved.params)
+		world.restore_object_changes(saved.object_changes)
+		StructureSaves.restore(saved.structures, world)
+		var placement: Dictionary = world.structure_placement_at(anchor)
+		var adopted := StructureSaves.adopt_start_castle(world, 1)
+		var castle: Vector2i = world.spawn_point - StartCastle.GATE_FRONT
+		var remover := ConstructionRemover.new(world)
+		ok = (
+			adopted
+			and placement.get("name") == "mine"
+			and placement.get("anchor") == anchor
+			and placement.get("owner") == 1
+			and remover.remove(anchor, 2, inventory).is_empty()
+			and remover.remove(castle, 1, inventory).is_empty()
+			and inventory.count_of(Inventory.WOOD) == 0
+			and not remover.remove(anchor, 1, inventory).is_empty()
+			and world.structure_placement_at(anchor).is_empty()
+			and inventory.count_of(Inventory.WOOD) == 7
+		)
+	scene.queue_free()
+	await process_frame
+	if ok:
+		print("PASS test_mine_save_and_demolish")
+	else:
+		printerr("FAIL mine_save_and_demolish: saved anchor, owner, demolition or refund")
+	return 0 if ok else 1
