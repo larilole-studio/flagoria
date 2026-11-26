@@ -6,7 +6,7 @@ Source: Scripts/ui/parchment_map.gd
 
 Map beside Menu, or M, opens the full parchment sheet directly. The chart reveals cells within 10 cells of the local hero and stores them in 32 × 32 cell chunks. `MapChart` paints newly revealed cells and their coastline neighbours. World saves keep the explored cells in `player.charted`.
 
-Drag to pan. Use +/−, the wheel, a two-finger pinch, or a trackpad magnify gesture to zoom in whole pixels per cell. Small pinch movements accumulate from the start of the pinch, and the sheet zooms at the current midpoint. The four wood buttons (−, +, recentre and close) sit in the top-right, a tenth larger than the first version, and stay clear of Map and Menu so Close does not open the menu. The buttons zoom at the hero, and the wheel and magnify gestures zoom at the pointer. Recentre pans back to the hero while keeping the zoom. Reopening starts at 2 pixels per cell.
+Drag to pan. Use +/−, the wheel, a two-finger pinch, or a trackpad magnify gesture to zoom in whole pixels per cell. Small pinch movements accumulate from the start of the pinch, and the sheet zooms at the current midpoint. The four wood buttons (−, +, recentre and close) sit flush in the sheet's top-right corner, just inside the wood frame. A short dead time after Close ignores Map and Menu so the same lift cannot open the menu. The buttons zoom at the hero, and the wheel and magnify gestures zoom at the pointer. Recentre pans back to the hero while keeping the zoom. Reopening starts at 2 pixels per cell.
 
 The world keeps running while the sheet is open. The local hero cannot move or attack until Close, Esc, M, or a hit dismisses the sheet.
 

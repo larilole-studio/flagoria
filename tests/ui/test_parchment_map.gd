@@ -15,6 +15,9 @@ func _test_parchment_map() -> int:
 	var player: Node2D = scene.get_node("World/%d" % scene.multiplayer.get_unique_id())
 	map_button.pressed.emit()
 	fail += _check_toolbar(parchment, scene)
+	fail += await _check_close_does_not_open_menu(parchment, scene)
+	map_button.pressed.emit()
+	fail += _check_toolbar(parchment, scene)
 	var before := parchment.pan
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
@@ -236,7 +239,7 @@ func _test_parchment_map() -> int:
 	return fail
 
 
-func _check_toolbar(parchment: ParchmentMap, scene: Node) -> int:
+func _check_toolbar(parchment: ParchmentMap, _scene: Node) -> int:
 	var fail := 0
 	var names := ["ZoomOutButton", "ZoomInButton", "RecentreButton", "CloseButton"]
 	var buttons: Array[Control] = []
@@ -259,11 +262,11 @@ func _check_toolbar(parchment: ParchmentMap, scene: Node) -> int:
 				)
 			)
 			fail += 1
-		if button.position.y > parchment.size.y * 0.35:
+		if not is_equal_approx(button.position.y, float(parchment.BUTTON_MARGIN)):
 			printerr(
 				(
-					"FAIL parchment_map %s not near the top (%s in %s)"
-					% [button.name, button.position, parchment.size]
+					"FAIL parchment_map %s not flush to the sheet corner (y %s want %s)"
+					% [button.name, button.position.y, parchment.BUTTON_MARGIN]
 				)
 			)
 			fail += 1
@@ -291,26 +294,56 @@ func _check_toolbar(parchment: ParchmentMap, scene: Node) -> int:
 			)
 		)
 		fail += 1
-	for path in ["CanvasLayer1/MapButton", "CanvasLayer1/InGameMenu/MenuButton"]:
-		var other := scene.get_node_or_null(path) as Control
-		if other == null:
-			continue
-		var other_rect := other.get_global_rect().grow(parchment.BUTTON_GAP)
-		for button in buttons:
-			if button.get_global_rect().intersects(other_rect):
-				printerr(
-					(
-						"FAIL parchment_map %s overlaps %s (%s vs %s)"
-						% [
-							button.name,
-							other.name,
-							button.get_global_rect(),
-							other.get_global_rect()
-						]
-					)
-				)
-				fail += 1
 	return fail
+
+
+func _check_close_does_not_open_menu(parchment: ParchmentMap, scene: Node) -> int:
+	var fail := 0
+	var close: Control = parchment.get_node("CloseButton")
+	var menu: Control = scene.get_node("CanvasLayer1/InGameMenu")
+	var panel: Control = menu.get_node("Pause")
+	var menu_button: Control = menu.get_node("MenuButton")
+	await _click_screen(close)
+	for _i in 4:
+		await process_frame
+	if parchment.is_open():
+		printerr("FAIL parchment_map viewport close left the sheet open")
+		fail += 1
+	if panel.visible:
+		printerr("FAIL parchment_map Close opened the menu")
+		fail += 1
+	var until := Time.get_ticks_msec() + parchment.DISMISS_GUARD_MSEC + 150
+	while Time.get_ticks_msec() < until:
+		await process_frame
+	await _click_screen(menu_button)
+	for _i in 4:
+		await process_frame
+	if not panel.visible:
+		printerr("FAIL parchment_map menu ignored after the dismiss guard")
+		fail += 1
+	if menu.has_method("close"):
+		menu.close()
+	else:
+		panel.hide()
+	return fail
+
+
+func _click_screen(control: Control) -> void:
+	var at := control.get_global_rect().get_center()
+	var move := InputEventMouseMotion.new()
+	move.position = at
+	move.global_position = at
+	root.push_input(move, true)
+	await process_frame
+	for pressed in [true, false]:
+		var ev := InputEventMouseButton.new()
+		ev.button_index = MOUSE_BUTTON_LEFT
+		ev.pressed = pressed
+		ev.position = at
+		ev.global_position = at
+		root.push_input(ev, true)
+		await process_frame
+		await process_frame
 
 
 func _tap(control: Control) -> void:
