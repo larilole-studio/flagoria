@@ -25,7 +25,7 @@ const SPROUTS_PER_MESSAGE := 500
 const DRAG_START := 6.0  ## viewport px a touch moves before it is a range, not a tap
 ## The invisible alternative tile a chop swaps in (kept in ChopAction).
 const HIDDEN_ALT := ChopAction.HIDDEN_ALT
-const INVENTORY_PATH := "/root/Flagoria/Inventory"
+const INVENTORY_PATH := "../../Inventory"
 const LINE_COLOR := Color(0.949, 0.918, 0.945, 0.9)
 const FILL_COLOR := Color(0.949, 0.918, 0.945, 0.18)
 

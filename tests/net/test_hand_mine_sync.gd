@@ -14,6 +14,7 @@ func _test_hand_mine_sync() -> int:
 	):
 		return 1
 	var host := mount_main_scene()
+	host.name = "HandMineHost"
 	host.get_node("World/Interaction").set_process(false)
 	var joiner := mount_main_scene()
 	joiner.get_node("World/Interaction").set_process(false)
@@ -88,7 +89,17 @@ func _mine_with_peers(host: Node, joiner: Node, peer: int) -> bool:
 		or _has_rock(maps[0], rocks[1])
 		or _has_rock(maps[1], rocks[1])
 	):
-		printerr("FAIL mine_sync: joiner award or depletion did not reach both peers")
+		printerr(
+			(
+				"FAIL mine_sync: joiner award or depletion did not reach both peers (joiner stone %s, host stone %s, host rock %s, joiner rock %s)"
+				% [
+					join_inventory.count_of(Inventory.STONE),
+					host_inventory.count_of(Inventory.STONE),
+					_has_rock(maps[0], rocks[1]),
+					_has_rock(maps[1], rocks[1]),
+				]
+			)
+		)
 		return false
 
 	return await _race_rock(
