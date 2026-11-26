@@ -16,6 +16,17 @@ The floating status row aligns half-step hearts, star and points, log and
 wood count, and a trophy sticker. The two loss-flash frames last about
 60 ms each. The flash is separate from the player's invulnerability blink.
 
+### HUD button style exploration
+
+Candy Glass (`current`, `hud_e4/`) stays the default in
+`RoundHudStyle.SELECTED`. Set `FLAGORIA_HUD_STYLE` before launch to preview
+`wood`, `parchment`, `stone`, `pixel`, or `banner`. Each uses sprites in its
+own [style folder](hud_styles/) with nearest filtering and mipmaps disabled.
+
+Run `python3 tools/ui/gen_hud_styles.py` to regenerate the pixel art.
+Run `python3 tools/ui/compare_hud_styles.py` to generate the
+[match comparisons](../../docs/evidence/hud-button-styles/).
+
 ## Map panel
 
 Map or M opens the parchment sheet (`Scripts/ui/parchment_map.gd`). It

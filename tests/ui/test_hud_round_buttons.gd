@@ -192,3 +192,64 @@ func _is_selected(button: Button) -> bool:
 func _face(button: Button, state: String) -> Texture2D:
 	var box := button.get_theme_stylebox(state) as StyleBoxTexture
 	return box.texture if box != null else null
+
+
+func _test_hud_button_styles() -> int:
+	print("-- test_hud_button_styles")
+	var previous := OS.get_environment("FLAGORIA_HUD_STYLE")
+	var had_previous := OS.has_environment("FLAGORIA_HUD_STYLE")
+	OS.unset_environment("FLAGORIA_HUD_STYLE")
+	var current_dir := "res://art/ui/hud_e4/"
+	var current := RoundHudStyle.texture("build_normal")
+	var ok := (
+		RoundHudStyle.texture_directory() == current_dir
+		and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		and current.get_image().has_mipmaps()
+	)
+	for value in ["", "current", "unknown"]:
+		OS.set_environment("FLAGORIA_HUD_STYLE", value)
+		ok = ok and RoundHudStyle.texture("build_normal") == current
+	var variants_ok := true
+	var stems := [
+		"attack_idle",
+		"build_normal",
+		"map_normal",
+		"menu_normal",
+		"run_normal",
+		"wheel_sword_normal",
+		"joystick_base_normal",
+		"rotate_normal",
+	]
+	var textures := [current]
+	for style in ["wood", "parchment", "stone", "pixel", "banner"]:
+		OS.set_environment("FLAGORIA_HUD_STYLE", style)
+		var directory := "res://art/ui/hud_styles/%s/" % style
+		var complete := true
+		for stem in stems:
+			complete = ResourceLoader.exists(directory + stem + ".png", "Texture2D") and complete
+		if not complete:
+			printerr("FAIL hud_button_styles: missing sprites for ", style)
+			variants_ok = false
+			continue
+		var chosen := RoundHudStyle.texture("build_normal")
+		var source := load(directory + "build_normal.png") as Texture2D
+		var style_ok := (
+			RoundHudStyle.texture_directory() == directory
+			and RoundHudStyle.button_filter() == CanvasItem.TEXTURE_FILTER_NEAREST
+			and chosen.get_image().get_data() == source.get_image().get_data()
+			and not chosen.get_image().has_mipmaps()
+			and not textures.has(chosen)
+		)
+		if not style_ok:
+			printerr("FAIL hud_button_styles: incorrect texture or filter for ", style)
+		variants_ok = variants_ok and style_ok
+		textures.append(chosen)
+	if had_previous:
+		OS.set_environment("FLAGORIA_HUD_STYLE", previous)
+	else:
+		OS.unset_environment("FLAGORIA_HUD_STYLE")
+	if not ok:
+		printerr("FAIL hud_button_styles: Candy Glass default or fallback changed")
+	if ok and variants_ok:
+		print("PASS test_hud_button_styles")
+	return 0 if ok and variants_ok else 1
