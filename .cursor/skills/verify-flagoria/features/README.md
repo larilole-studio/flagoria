@@ -100,7 +100,8 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Saved worlds](./saved-worlds.md) — main-menu list of every save, load, a new world in its own file, delete with a confirm.
 - [In-game menu and quit prompt](./ingame-menu.md) — menu button, Pause panel (Resume, Save, Main menu), quit confirm.
 - [Admin resource grants](./admin-grant-resources.md) — +100 wood and Max resources in the in-game menu, with host authorization in multiplayer (#717).
-- [Tuning panel](./tuning-panel.md) — host admin tabs and live touch steppers for the tuning registry (#737).
+- [Tuning panel](./tuning-panel.md) — admin tabs and live touch steppers for the tuning registry (#737).
+- [Multiplayer tuning](./tuning-sync.md) — host costs on join and authorized client tuning requests (#739).
 - [Interact mode](./interact-mode.md) — chop on the tool wheel; Space still swings the sword in interact mode; aimed attacks stay combat-only (#351).
 - [Points](./points.md) — discovery and mob-kill points, host-owned totals, score HUD.
 - [Points scoreboard](./points-scoreboard.md) — every connected player's total, highest first, from Menu → Scores (#573).

@@ -101,6 +101,23 @@ static func restore_overrides(overrides: Dictionary) -> void:
 			reset(key)
 
 
+static func step_value(key: StringName, delta: float) -> void:
+	if _entries.has(key):
+		set_value(key, value(key) + delta)
+
+
+static func overrides() -> Dictionary:
+	return _overrides.duplicate()
+
+
+static func replace_overrides(snapshot: Dictionary) -> void:
+	for key in _overrides.keys():
+		if not snapshot.has(key):
+			reset(key)
+	for key in snapshot:
+		set_value(key, snapshot[key])
+
+
 static func entries_by_category() -> Dictionary:
 	var groups := {}
 	for entry in _entries.values():

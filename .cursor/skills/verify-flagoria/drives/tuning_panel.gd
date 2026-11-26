@@ -259,11 +259,16 @@ func _check_touch_targets(parent: String) -> bool:
 	return true
 
 
-func _show_preview(kind: StringName, price: Vector2i, screen: String) -> bool:
+func _show_preview(
+	kind: StringName,
+	price: Vector2i,
+	screen: String,
+	walk := ["", "ui_up", "ui_right", "ui_up", "ui_right", "ui_down"]
+) -> bool:
 	var interaction: Interaction = current_scene.get_node(INTERACTION)
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var placer := ConstructionPlacer.new(map)
-	for action in ["", "ui_up", "ui_right", "ui_up", "ui_right", "ui_down"]:
+	for action in walk:
 		if not action.is_empty():
 			await hold(action, 30)
 		var center := root.get_visible_rect().get_center()

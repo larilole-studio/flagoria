@@ -77,6 +77,7 @@ GAMEPLAY = [
     "Scripts/ui/resource_hud.gd", "Scripts/ui/score_hud.gd",
     "Scripts/ui/scoreboard_panel.gd",
     "Scripts/shell/ingame_menu.gd", "Scripts/ui/hud_layout.gd", "Scripts/ui/hud_layout_edit.gd",
+    "Scripts/net/tuning_sync.gd",
     "Scripts/shell/quit_prompt.gd", "Scripts/ui/number_pad.gd", "Scripts/ui/hud_layout_edit.tscn",
     "data/interactables/*.tres",  # choppable types: hits, yields, regrowth, art and sounds
 ]
@@ -97,6 +98,7 @@ STRESS_MATRIX = [
 NETCODE = [
     "Scripts/mechanics/mobs/mob_spawner.gd", "Scripts/mechanics/conquest/points.gd", "Scripts/mechanics/conquest/discovery_points.gd",
     "Scripts/world/tilemap_dynamic.tscn",
+    "Scripts/net/tuning_sync.gd",
     *STRESS_MATRIX,
 ]
 # Files that mix netcode with other gameplay. They get the full tier only when

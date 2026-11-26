@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=37 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -35,6 +35,7 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/combat/ranged_shots.gd" id="24_ranged"]
 [ext_resource type="Script" path="res://Scripts/mechanics/mobs/raid_director.gd" id="25_raid"]
 [ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier_requests.gd" id="26_soldiers"]
+[ext_resource type="Script" path="res://Scripts/net/tuning_sync.gd" id="27_tuning_sync"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_bm55c"]
 radius = 24.0
@@ -132,8 +133,9 @@ script = ExtResource("19_run")
 [node name="HudToolRow" type="Node" parent="CanvasLayer1"]
 script = ExtResource("20_hud_row")
 
-[node name="InGameMenu" parent="CanvasLayer1" node_paths=PackedStringArray("resource_grants") instance=ExtResource("9_ingame_menu")]
+[node name="InGameMenu" parent="CanvasLayer1" node_paths=PackedStringArray("resource_grants", "tuning_sync") instance=ExtResource("9_ingame_menu")]
 resource_grants = NodePath("../../AdminResourceGrants")
+tuning_sync = NodePath("../../TuningSync")
 
 [node name="ParchmentMap" type="Control" parent="CanvasLayer1"]
 visible = false
@@ -145,6 +147,10 @@ script = ExtResource("13_inventory")
 [node name="AdminResourceGrants" type="Node" parent="." node_paths=PackedStringArray("inventory")]
 script = ExtResource("22_grants")
 inventory = NodePath("../Inventory")
+
+[node name="TuningSync" type="Node" parent="." node_paths=PackedStringArray("admins")]
+script = ExtResource("27_tuning_sync")
+admins = NodePath("../AdminResourceGrants")
 
 [node name="Points" type="Node" parent="."]
 script = ExtResource("10_points")

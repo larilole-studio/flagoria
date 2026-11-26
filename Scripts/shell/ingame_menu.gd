@@ -16,6 +16,7 @@ const MenuVolume = preload("res://Scripts/shell/menu_volume.gd")
 const ICON_BUTTON_PAD := 2  ## px left and right of the icon at 1x
 
 @export var resource_grants: AdminResourceGrants
+@export var tuning_sync: TuningSync
 
 @onready var menu_button: Button = $MenuButton
 @onready var panel: Control = $Pause
@@ -48,6 +49,7 @@ func _ready() -> void:
 	if resource_grants != null:
 		grant_buttons.get_node("AddWood").pressed.connect(resource_grants.grant.bind(false))
 		grant_buttons.get_node("MaxResources").pressed.connect(resource_grants.grant.bind(true))
+	tuning_panel.tuning_sync = tuning_sync
 	tuning_button.pressed.connect(_open_tuning)
 	tuning_panel.close_requested.connect(close_tuning)
 	main_menu_button.pressed.connect(_on_main_menu_pressed)
@@ -72,7 +74,7 @@ func open() -> void:
 		scoreboard.close()
 	MenuVolume.refresh_slider(music_volume, music_value, "Music")
 	grant_buttons.visible = resource_grants != null and resource_grants.can_grant()
-	tuning_button.visible = grant_buttons.visible and multiplayer.is_server()
+	tuning_button.visible = tuning_sync != null and tuning_sync.can_edit()
 	panel.show()
 	menu_button.hide()
 	map_settings_button.visible = multiplayer.is_server()
@@ -80,7 +82,7 @@ func open() -> void:
 
 
 func _open_tuning() -> void:
-	if resource_grants != null and resource_grants.can_grant() and multiplayer.is_server():
+	if tuning_sync != null and tuning_sync.can_edit():
 		panel.hide()
 		tuning_panel.open()
 

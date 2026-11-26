@@ -6,6 +6,8 @@ signal close_requested
 const TARGET_SIZE := Vector2(32, 28)
 const VALUE_SIZE := Vector2(48, 0)
 
+var tuning_sync: TuningSync
+
 var _categories: Dictionary
 var _tabs := ButtonGroup.new()
 var _values: Dictionary[StringName, Label] = {}
@@ -100,7 +102,7 @@ func _add_row(entry: Dictionary) -> void:
 	reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reset_button.add_theme_font_size_override("font_size", 13)
 	reset_button.mouse_filter = Control.MOUSE_FILTER_PASS
-	reset_button.pressed.connect(Tuning.reset.bind(key))
+	reset_button.pressed.connect(tuning_sync.reset.bind(key))
 	reset_slot.add_child(reset_button)
 	_resets[key] = reset_button
 	_defaults[key] = entry["default"]
@@ -119,7 +121,7 @@ func _stepper(action: String, glyph: String, entry: Dictionary, direction: float
 
 
 func _step_value(key: StringName, delta: float) -> void:
-	Tuning.set_value(key, Tuning.value(key) + delta)
+	tuning_sync.step_value(key, delta)
 
 
 func _refresh_value(key: StringName) -> void:
@@ -139,7 +141,7 @@ func _show_reset_confirmation(confirm: bool) -> void:
 
 
 func _reset_all_values() -> void:
-	Tuning.reset_all()
+	tuning_sync.reset_all()
 	_show_reset_confirmation(false)
 
 
