@@ -17,7 +17,7 @@ func _test_bomb_shot() -> int:
 	var bombs := world.get_node("BombThrows") as BombThrows
 	var landing_cell := Vector2i(15, 8)
 	var landing := map.to_global(map.map_to_local(landing_cell))
-	var origin := landing - Vector2(160, 0)
+	var origin := landing - Vector2(80, 0)
 	var thrower := _spawn(PLAYER, world, origin - AttackAim.ORIGIN, "1")
 	var target := _spawn(PLAYER, world, landing + Vector2(40, 0), "2")
 	var outside := _spawn(MOB, world.get_node("Mobs"), landing + Vector2(0, -25)) as Mob
@@ -31,7 +31,7 @@ func _test_bomb_shot() -> int:
 	ally.owner_peer = 1
 	ally.hp = 5
 
-	var flight_wall := Vector2i(10, 8)
+	var flight_wall := Vector2i(12, 8)
 	var blast_wall := Vector2i(15, 9)
 	var outside_wall := Vector2i(15, 10)
 	var own_tower := Vector2i(13, 8)
@@ -55,11 +55,11 @@ func _test_bomb_shot() -> int:
 	map.archipelago_spacing = 10
 	map.archipelago_world_extent = 14
 	if (
-		bombs.resolve(1, origin, Vector2.RIGHT)
+		bombs.resolve(1, origin, Vector2(80, 0))
 		or bombs.resolve(1, origin + Vector2(32, 0), Vector2.LEFT)
 		or bombs.resolve(1, origin, Vector2(INF, 0))
 	):
-		printerr("FAIL bomb_shot: accepted an invalid landing, origin, or direction")
+		printerr("FAIL bomb_shot: accepted an invalid landing, origin, or reach")
 		fail += 1
 	map.archipelago_world_extent = 32
 	target.health.set_health_now(0)
@@ -69,7 +69,7 @@ func _test_bomb_shot() -> int:
 	target.health.set_health_now(6)
 
 	var launched := Time.get_ticks_msec()
-	if not bombs.resolve(1, origin, Vector2.RIGHT) or bombs.resolve(1, origin, Vector2.RIGHT):
+	if not bombs.resolve(1, origin, Vector2(80, 0)) or bombs.resolve(1, origin, Vector2(80, 0)):
 		printerr("FAIL bomb_shot: valid throw or cooldown rejected incorrectly")
 		fail += 1
 	# The thrower steps into the landing area during flight.
@@ -83,7 +83,7 @@ func _test_bomb_shot() -> int:
 	if not await wait_until(func() -> bool: return target.health.health == 4, 2000):
 		printerr("FAIL bomb_shot: player beyond the flight wall took no damage")
 		fail += 1
-	elif Time.get_ticks_msec() - launched < 1400:
+	elif Time.get_ticks_msec() - launched < 1250:
 		printerr("FAIL bomb_shot: damage landed before flight and the full fuse")
 		fail += 1
 	var health := [thrower.health.health, outside.hp, inside.hp, enemy.hp, ally.hp]
@@ -123,3 +123,41 @@ func _spawn(resource: PackedScene, parent: Node, point: Vector2, name := "") -> 
 	actor.global_position = point
 	actor.set_physics_process(false)
 	return actor
+
+
+func _test_bomb_auto_target() -> int:
+	print("-- test_bomb_auto_target")
+	var scene := mount_main_scene()
+	var world := scene.get_node("World")
+	var bombs := world.get_node("BombThrows") as BombThrows
+	var origin := Vector2(200, 200)
+	var thrower := _spawn(PLAYER, world, origin - AttackAim.ORIGIN, "1")
+	var player := _spawn(PLAYER, world, origin + Vector2(40, 0), "2")
+	var mobs := world.get_node("Mobs")
+	var mob := _spawn(MOB, mobs, origin + Vector2(0, 50)) as Mob
+	var soldiers := world.get_node("Soldiers")
+	var ally := _spawn(SOLDIER, soldiers, origin + Vector2(5, 0)) as Soldier
+	var enemy := _spawn(SOLDIER, soldiers, origin + Vector2(-30, 0)) as Soldier
+	ally.owner_peer = 1
+	enemy.owner_peer = 2
+	var fail := 0
+	if bombs.auto_reach(thrower, origin, Vector2.UP) != Vector2(-30, 0):
+		printerr("FAIL bomb_auto_target: nearest enemy soldier was not picked")
+		fail += 1
+	enemy.global_position = origin + Vector2(-161, 0)
+	if bombs.auto_reach(thrower, origin, Vector2.UP) != Vector2(40, 0):
+		printerr("FAIL bomb_auto_target: nearest enemy player was not picked")
+		fail += 1
+	player.health.set_health_now(0)
+	if bombs.auto_reach(thrower, origin, Vector2.UP) != Vector2(0, 50):
+		printerr("FAIL bomb_auto_target: nearest living mob was not picked")
+		fail += 1
+	mob.global_position = origin + Vector2(0, 161)
+	if bombs.auto_reach(thrower, origin, Vector2.UP) != Vector2(0, -96):
+		printerr("FAIL bomb_auto_target: empty range did not fall back to 96 px along facing")
+		fail += 1
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_bomb_auto_target")
+	return fail

@@ -7,8 +7,8 @@ const FLIGHT_SPEED := 400.0
 const ARC_HEIGHT := 28.0
 
 
-static func landing(origin: Vector2, direction: Vector2, reach: float) -> Vector2:
-	return origin + direction.normalized() * reach
+static func landing(origin: Vector2, reach: Vector2, max_range: float) -> Vector2:
+	return origin + reach.limit_length(max_range)
 
 
 static func travel_seconds(distance: float) -> float:

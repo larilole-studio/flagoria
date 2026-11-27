@@ -29,14 +29,16 @@ extends Node2D
 ## through the player's attack_animation RPC with its direction and angle.
 ## Clicks that start on a HUD control, mouse events the engine
 ## makes from touches, interact mode, an open in-game menu and a dead player
-## never aim, and opening the menu mid-aim cancels the aim. Space still
-## attacks at once in the facing direction.
+## never aim, and opening the menu mid-aim cancels the aim. The bomb tool
+## shows a lob and blast area. Space swings the sword in the facing direction
+## or auto-targets with the bomb.
 
 const DIRECTIONS := ["Up", "Down", "Left", "Right"]
 const ARC := PI * 0.75  ## the swing's sweep, centred on the aim direction
 const ORIGIN := Vector2(0, -3)  ## where the cone starts, in the player's space
 ## Physics layer of TileSet terrain (walls, water, forest plants that block walking).
 const TERRAIN_MASK := 1
+const BOMB_FULL_DRAG_PX := 120.0  ## window px from the button centre for max bomb reach
 
 
 static func clear_shot(
@@ -125,6 +127,15 @@ func aim_vector() -> Vector2:
 		return _touch_offset
 	var target := get_canvas_transform().affine_inverse() * _pointer
 	return target - to_global(ORIGIN)
+
+
+func bomb_reach() -> Vector2:
+	var reach := aim_vector()
+	var max_range: float = Tuning.value(&"bomb.max_range")
+	if _touch_index != -1:
+		var screen_drag := get_viewport().get_final_transform().basis_xform(reach).length()
+		return reach.normalized() * max_range * minf(screen_drag / BOMB_FULL_DRAG_PX, 1.0)
+	return reach.limit_length(max_range)
 
 
 func aim_direction() -> String:
@@ -273,6 +284,7 @@ func _on_touch(event: InputEventScreenTouch) -> void:
 	_touch_offset = _offset_from_button(event.position)
 	var direction := aim_direction() if aiming else ""
 	var angle := aim_angle() if aiming else NAN
+	var reach = bomb_reach() if aiming and player.bomb_armed() else null
 	var tap := not _touch_aimed
 	_touch_index = -1
 	_touch_aimed = false
@@ -282,9 +294,9 @@ func _on_touch(event: InputEventScreenTouch) -> void:
 	if not can_aim():
 		return
 	if direction != "":
-		player.attack_toward(direction, angle)
+		player.attack_toward(direction, angle, reach)
 	elif tap:
-		player.attack_toward("")  # a tap swings the way the hero faces, as before
+		player.attack_toward("")
 
 
 func _process(_delta: float) -> void:
@@ -321,9 +333,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pointer = button.position
 			var direction := aim_direction()
 			var angle := aim_angle()
+			var reach = bomb_reach() if player.bomb_armed() else null
 			cancel()
 			if can_aim():
-				player.attack_toward(direction, angle)
+				player.attack_toward(direction, angle, reach)
 			get_viewport().set_input_as_handled()
 
 
@@ -351,7 +364,12 @@ func screen_px() -> float:
 
 
 func _draw() -> void:
-	if not aiming or aim_direction() == "":
+	if not aiming:
+		return
+	if player.bomb_armed():
+		_draw_bomb_preview()
+		return
+	if aim_direction() == "":
 		return
 	var px := screen_px()
 	var t := (Time.get_ticks_msec() - _aim_started_ms) / 1000.0
@@ -367,3 +385,24 @@ func _draw() -> void:
 	draw_polyline(inner, style.rim_color, style.rim_width * px)
 	outer.append(outer[0])
 	draw_polyline(outer, style.outline_color, style.outline_width * px)
+
+
+func _draw_bomb_preview() -> void:
+	var start := player.to_global(ORIGIN)
+	var reach := bomb_reach()
+	var landing := start + reach
+	var px := screen_px()
+	var dash_count := clampi(ceili((reach.length() + BombShot.ARC_HEIGHT) / (10.0 * px)), 4, 28)
+	for i in dash_count:
+		var from := BombShot.arc_point(start, landing, float(i) / dash_count)
+		var to := BombShot.arc_point(start, landing, (i + 0.55) / dash_count)
+		draw_line(to_local(from), to_local(to), Color(1.0, 1.0, 1.0, 0.24), 2.0 * px, true)
+
+	var radius: float = Tuning.value(&"bomb.blast_radius")
+	var radii := BombShot.radii(radius)
+	var ellipse := PackedVector2Array()
+	for i in 40:
+		ellipse.append(to_local(landing + Vector2.from_angle(TAU * i / 40) * radii))
+	draw_colored_polygon(ellipse, Color(1.0, 0.48, 0.12, 0.20))
+	ellipse.append(ellipse[0])
+	draw_polyline(ellipse, Color(0.72, 0.28, 0.08, 0.65), 2.0 * px, true)
