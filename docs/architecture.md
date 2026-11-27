@@ -218,6 +218,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/world/map_gen.gd`
 - `Scripts/world/object_removals.gd`
 - `Scripts/world/plant_picker.gd`
+- `Scripts/world/sand_fringe.gd`
 - `Scripts/world/sky_islands.gd`
 - `Scripts/world/spawn_finder.gd`
 - `Scripts/world/start_castle.gd`
