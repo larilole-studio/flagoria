@@ -8,12 +8,17 @@ extends RefCounted
 ## coverage and Map Settings do not move. The tile that is drawn, and that
 ## predict_cell reports for a land cell, is an island-edge piece where any
 ## neighbour is sea, and the logical tile inland. Sand and swamp never touch
-## the sky.
+## the sky. Inland sand gets a sand fringe overlay on FRINGE_LAYER where it
+## meets grass, so sand and grass blend instead of meeting on a square seam.
 
 signal clouds_painted(window: Rect2i)
 
 const SEA_LAYER := 8
 const CLOUD_LAYER := 9
+## Same z as the ground (layer 0), later in layer order, so it draws over the
+## ground and under ground decor (z -1). Only the grass edge of a sand cell is
+## on it; layer 0 keeps the logical tile.
+const FRINGE_LAYER := CLOUD_LAYER + 1
 const _SIDES := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
 const _SIDE_BIT := [1, 4, 16, 64]
 const _CORNER := [Vector2i(1, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(-1, -1)]
@@ -176,6 +181,7 @@ func paint_window(map, center: Vector2i, size: Vector2i) -> void:
 			map.items_chance.get_noise_2d(cell.x, cell.y),
 			b
 		)
+		_paint_fringe(map, cell)
 	if painted.has_area():
 		map.ground_changed.emit(painted)
 
@@ -183,6 +189,7 @@ func paint_window(map, center: Vector2i, size: Vector2i) -> void:
 func repaint_cell(map, cell: Vector2i) -> void:
 	_ensure_layers(map)
 	_paint_cell(map, cell)
+	_paint_fringe(map, cell)
 	_invalidate_window_at(cell)
 
 
@@ -217,6 +224,7 @@ func claim(map, cell: Vector2i, atlas: Vector2i) -> void:
 	_ensure_layers(map)
 	_sea.erase(cell)
 	map.erase_cell(SEA_LAYER, cell)
+	map.erase_cell(FRINGE_LAYER, cell)
 	map.set_cell(0, cell, TileCatalog.SOURCE_ID, atlas)
 	_invalidate_window_at(cell)
 
@@ -234,6 +242,52 @@ func _mask(map, cell: Vector2i) -> int:
 		if side_land[_CORNER_SIDES[i * 2]] and side_land[_CORNER_SIDES[i * 2 + 1]]:
 			mask += _CORNER_BIT[i]
 	return mask
+
+
+func fringe_mask(map, cell: Vector2i) -> int:
+	## Inland sand: mask of the neighbours that are not grass, in the island
+	## mask layout (255 = no grass around). -1 for any other cell.
+	if logical_ground(map, cell) != TileCatalog.SAND or touches_sky(map, cell):
+		return -1
+	var side_open: Array[bool] = []
+	var mask := 0
+	for i in _SIDES.size():
+		var open := not _shows_grass(map, cell + _SIDES[i])
+		side_open.append(open)
+		if open:
+			mask += _SIDE_BIT[i]
+	for i in _CORNER.size():
+		if (
+			side_open[_CORNER_SIDES[i * 2]]
+			and side_open[_CORNER_SIDES[i * 2 + 1]]
+			and not _shows_grass(map, cell + _CORNER[i])
+		):
+			mask += _CORNER_BIT[i]
+	return mask
+
+
+func _shows_grass(map, cell: Vector2i) -> bool:
+	## Drawn as grass: a grass cell, or any land cell drawn as an island piece.
+	var logical: Vector2i = logical_ground(map, cell)
+	if logical == TileCatalog.WATER:
+		return false
+	if logical == TileCatalog.SAND:
+		return touches_sky(map, cell)
+	return logical != TileCatalog.SWAMP and logical != TileCatalog.SWAMP_SPECIAL
+
+
+func _paint_fringe(map, cell: Vector2i) -> void:
+	## Only a logical sand cell can carry a fringe; claim() clears a claimed one.
+	if logical_ground(map, cell) != TileCatalog.SAND:
+		return
+	var mask := -1
+	if map.get_cell_atlas_coords(0, cell) == TileCatalog.SAND:
+		mask = fringe_mask(map, cell)
+	var name := "SAND_FRINGE_%03d" % mask
+	if mask >= 0 and TileCatalog.TILES.has(name):
+		map.set_cell(FRINGE_LAYER, cell, TileCatalog.SOURCE_ID, TileCatalog.TILES[name]["atlas"])
+	elif map.get_cell_source_id(FRINGE_LAYER, cell) != -1:
+		map.erase_cell(FRINGE_LAYER, cell)
 
 
 func _edge_atlas(mask: int, cell: Vector2i) -> Vector2i:
@@ -266,6 +320,7 @@ func _paint_sea(map, cell: Vector2i) -> void:
 
 func _paint_bridge(map, cell: Vector2i) -> void:
 	map.set_cell(0, cell, TileCatalog.SOURCE_ID, map._bridges.piece(cell))
+	map.erase_cell(FRINGE_LAYER, cell)
 	map.erase_cell(SEA_LAYER, cell)
 	_sea.erase(cell)
 
@@ -280,7 +335,7 @@ func _spawnable(logical: Vector2i) -> bool:
 
 
 func _ensure_layers(map) -> void:
-	while map.get_layers_count() <= CLOUD_LAYER:
+	while map.get_layers_count() <= FRINGE_LAYER:
 		map.add_layer(map.get_layers_count())
 	map.set_layer_name(SEA_LAYER, "sea_collision")
 	map.set_layer_enabled(SEA_LAYER, true)
@@ -290,6 +345,10 @@ func _ensure_layers(map) -> void:
 		map.set_layer_name(CLOUD_LAYER, "clouds")
 		map.set_layer_enabled(CLOUD_LAYER, true)
 		map.set_layer_z_index(CLOUD_LAYER, -1)
+	if map.get_layer_name(FRINGE_LAYER) != "sand_fringe":
+		map.set_layer_name(FRINGE_LAYER, "sand_fringe")
+		map.set_layer_enabled(FRINGE_LAYER, true)
+		map.set_layer_z_index(FRINGE_LAYER, map.get_layer_z_index(0))
 
 
 func _paint_clouds(map, origin: Vector2i, w: int, h: int) -> void:

@@ -97,7 +97,7 @@ func _make_stamp(cell: Vector2i, atlas_cell: Vector2i, size: Vector2i) -> Stamp:
 		_atlas.get_tile_texture_region(atlas_cell).position, stamp.size
 	)
 	stamp.sprite.centered = false
-	stamp.sprite.z_index = -1 if stamp.near else -2
+	stamp.sprite.z_index = -1 if stamp.near else -3
 	add_child(stamp.sprite)
 	return stamp
 

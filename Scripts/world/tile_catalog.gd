@@ -630,7 +630,7 @@ const _CORE := {
 	"SKY_SKIFF_BLUE": {"source_id": SOURCE_ID, "atlas": SKY_SKIFF_BLUE},
 	"SKY_SKIFF_RED": {"source_id": SOURCE_ID, "atlas": SKY_SKIFF_RED},
 }
-static var TILES := _with_junctions(_CORE)
+static var TILES := SandFringe.with_pieces(_with_junctions(_CORE), SOURCE_ID)
 
 
 static func _with_junctions(core: Dictionary) -> Dictionary:

@@ -2,7 +2,7 @@
 
 The map uses the in-house Flagoria tileset v3.1 (Solaria replacement, #97 / #100). All tiles are 16×16 px. Atlas coordinates are `(column, row)` in 16 px cells.
 
-- Atlas: `art/flagoria/flagoria_tiles_v4.png`, 448×304 px, 28×19 cells (same grid as v3; every v3 cell is pixel-identical). Rows 15-18 hold the wood pieces; the plank bridge cells (columns 8-15) are named, the railed bridge cells (columns 16-23) are not named yet. Rows 3-4 and 6 hold the eight structure finals (#499).
+- Atlas: `art/flagoria/flagoria_tiles_v4.png`, 448×304 px, 28×19 cells (same grid as v3; every v3 cell is pixel-identical). Row 14 and columns 13-15 of rows 8-13 hold the sand fringe pieces (see Sand fringe). Rows 15-18 hold the wood pieces; the plank bridge cells (columns 8-15) are named, the railed bridge cells (columns 16-23) are not named yet. Rows 3-4 and 6 hold the eight structure finals (#499).
 - TileSet: `art/flagoria/flagoria_tiles_v3.tres`, one `TileSetAtlasSource` (source id `0`) with the v4 atlas texture, 296+ named cells, one physics layer, and terrain set `0` (Match Corners and Sides) with terrain `0` "Island".
 - Names: `Scripts/world/tile_catalog.gd` (`TileCatalog`) is the only place that maps names to source id and atlas coords. Credits: `art/flagoria/CREDITS.md`.
 
@@ -12,7 +12,7 @@ The map uses the in-house Flagoria tileset v3.1 (Solaria replacement, #97 / #100
 |---|---|
 | `flagoria_main.tscn` | `World/worldMap` uses `art/flagoria/flagoria_tiles_v3.tres` as its `tile_set`. |
 | `Scripts/world/tilemap_dynamic.tscn` | Uses the same TileSet. No scene or script loads this file. Its embedded script places tiles through `TileCatalog`. |
-| `Scripts/world/TileMap.gd` | Chunk drawing. Ground paint is `Scripts/world/sky_islands.gd`: open sea stays an empty cell, land goes through `set_cells_terrain_connect`, then each land cell is set to its grass, inland sand, inland swamp or island-edge piece. |
+| `Scripts/world/TileMap.gd` | Chunk drawing. Ground paint is `Scripts/world/sky_islands.gd`: open sea stays an empty cell, land goes through `set_cells_terrain_connect`, then each land cell is set to its grass, inland sand, inland swamp or island-edge piece, and inland sand next to grass gets a sand fringe piece on the fringe layer. |
 | `Scripts/audio/footsteps.gd` | Maps the cell under the player to a footstep surface through `TileCatalog.TILES`. |
 | `tools/audio_check.gd`, `tools/render_biomes.gd` | Use `TileCatalog` names. |
 | `tests/world/test_map_characterization.gd` and other tests | Pinned characterization data and a few fixtures compare against the raw coordinates of the map fill tiles below, on purpose: a cell move must fail them. |
@@ -95,6 +95,19 @@ With Solaria, TREE was 3×3 cells and BUSH 1×2. Both are now 1×1, so they draw
 | 247 | - | ISLAND_BLOB_247 (20, 13) | - | GRASS_CORNER_IN_SE |
 | 253 | - | ISLAND_BLOB_253 (21, 13) | - | GRASS_CORNER_IN_NE |
 | 255 | - | ISLAND_BLOB_255 (22, 13) | - | - |
+
+## Sand fringe
+
+`SAND_FRINGE_<mask>` pieces soften the line where inland sand meets grass. They sit on their own TileMap layer, `SkyIslands.FRINGE_LAYER` (10, "sand_fringe"), drawn over the sand cell; layer 0 keeps `SAND`, so `predict_cell`, footsteps, spawning and the pinned map tests see the same ground as before. The fringe layer has the ground's z index (-2) and comes after it in layer order, so it draws over the ground and under ground decor (stones, flowers, stumps at z -1). Far cloud sprites are at z -3, under the ground.
+
+The mask uses the island layout above, counted over the neighbours that are not drawn as grass (sand, swamp): N 1, NE 2, E 4, SE 8, S 16, SW 32, W 64, NW 128, a corner bit only when both of its sides are set. A neighbour drawn as an island-edge piece counts as grass. Mask 255 (no grass around) has no piece, so there are 46. Swamp next to sand keeps the square edge.
+
+Each piece is the inverse of `ISLAND_BLOB_<mask>`: grass (the `GRASS_A` pixels) where the island piece is empty, a darker grass rim where the island piece has its outline, and transparent where the island piece is grass. `tools/art/gen_sand_fringe_tiles.py` draws them into the atlas; `Scripts/world/sand_fringe.gd` (`SandFringe`) lists the masks and adds the names to `TileCatalog.TILES`.
+
+| Masks (ascending) | Cells |
+|---|---|
+| 0, 1, 4, 5, 7, 16, 17, 20, 21, 23, 28, 29, 31, 64, 65, 68, 69, 71, 80, 81, 84, 85, 87, 92, 93, 95, 112, 113 | (0, 14) to (27, 14), left to right |
+| 116, 117, 119, 124, 125, 127, 193, 197, 199, 209, 213, 215, 221, 223, 241, 245, 247, 253 | columns 13-15 of rows 8-13, row by row: (13, 8), (14, 8), (15, 8), (13, 9) ... (15, 13) |
 
 ## Island edges
 

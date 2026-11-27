@@ -4,6 +4,7 @@ Drive: drives/sky_islands.gd
 Source: Scripts/world/world_chunks.gd
 Source: Scripts/world/sky_islands.gd
 Source: Scripts/world/cloud_motion.gd
+Source: Scripts/world/sand_fringe.gd
 
 The map node delegates `predict_cell` to `Scripts/world/world_chunks.gd`.
 
@@ -14,6 +15,7 @@ Open sea is an empty cell, so the clear colour (`#7cc8f2`) is the sky. Land is t
 - `sky-clear` the view at gameplay zoom (camera zoom 0.7) has no grey void.
 - `sky-edge` the coast is an island-edge piece over sky, not a hard grass tile against a water tile.
 - `sky-collision` the hero cannot walk onto the sky.
+- `sand-fringe` inland sand next to grass shows a grass edge reaching into the sand on the fringe layer, not a square seam; the ground tile stays sand (`test_sand_fringe`, unit layer).
 - `cloud-drift` pixel-snapped parallax moves fainter far clouds at 0.5 world px/s and a smaller near layer at 1.0 world px/s, fading at wraps and hiding over land or bridges.
 
 ## How to get to it (user POV)
