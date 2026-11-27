@@ -63,10 +63,10 @@ func think(delta: float) -> void:
 	_fight()
 
 
-func take_hit(by_peer: int = 0) -> bool:
+func take_hit(by_peer: int = 0, damage: int = 1) -> bool:
 	if by_peer == owner_peer and owner_peer != 0:
 		return false
-	return super.take_hit(by_peer)
+	return super.take_hit(by_peer, damage)
 
 
 func _step_move(delta: float) -> void:

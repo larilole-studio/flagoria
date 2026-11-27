@@ -10,6 +10,7 @@ const CHOPPING := "Chopping"
 const SOLDIERS := "Soldiers"
 const DEFAULT_TRAINING_WOOD := 8
 const MOVEMENT := "Movement"
+const BOMB := "Bomb"
 const VISUALS := "Visuals"
 
 # Run doubles both caps. At this ceiling, even running stays within
@@ -56,6 +57,11 @@ static func _static_init() -> void:
 	_add(
 		&"movement.joystick_speed", MOVEMENT, "Joystick speed (px/s)", 60, 1, PLAYER_SPEED_LIMIT, 1
 	)
+	_add(&"bomb.max_range", BOMB, "Throw range (px)", 160, 40, 400, 8)
+	_add(&"bomb.blast_radius", BOMB, "Blast radius (px)", 40, 8, 128, 4)
+	_add(&"bomb.fuse_seconds", BOMB, "Fuse (s)", 1.0, 0.2, 5, 0.1, false)
+	_add(&"bomb.cooldown_seconds", BOMB, "Cooldown (s)", 1.5, 0.2, 10, 0.1, false)
+	_add(&"bomb.damage", BOMB, "Damage (half-hearts)", 2, 1, 10, 1)
 	_add(&"visuals.cloud_far_speed", VISUALS, "Far cloud drift (px/s)", 0.5, 0.1, 5, 0.1, false)
 	_add(&"visuals.cloud_near_speed", VISUALS, "Near cloud drift (px/s)", 1.0, 0.1, 5, 0.1, false)
 	_add(&"visuals.mine_cart_fps", VISUALS, "Mine cart animation (fps)", 5, 1, 30, 0.5, false)

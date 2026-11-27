@@ -40,7 +40,8 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Match HUD](./hud-direction-c.md) — thumb control layout and floating status row.
 - [Player health](./player-health.md) — hearts, HUD, regen, death, respawn hold, rejoin, health sync.
 - [Combat and aiming](./combat-and-aiming.md) — swing, 30 px reach, mid-swing hitbox, mouse and touch aim, exact-angle swing, cone, cancel, wall line-of-sight; live `combat_hud` drive.
-- [Ranged bow](./ranged-bow.md) — one bow shot on that aim, host-decided hit, short line; live `ranged_bow` drive.
+- [Ranged bow](./ranged-bow.md) — bow tool input and legacy bolt tests.
+- [Bomb throw](./bomb-throw.md) — clay pot arc, fuse, and host-resolved blast; live `ranged_bow` drive.
 - [Tool wheel](./tool-wheel.md) — hold the button beside Run to arm sword, bow or chop; a short tap swaps back; Customize HUD can move that button (#574, #575).
 - [Mobs](./mobs.md) — seeded placement, spawn rate, wander, chase, contact damage, sword hits, hidden on ungenerated ground, sounds, sync.
 - [Mob band](./mob-band.md) — server spawn and despawn around players, caps, late joiners see the same names.

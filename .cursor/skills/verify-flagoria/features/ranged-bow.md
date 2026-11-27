@@ -2,34 +2,11 @@
 
 Drive: drives/ranged_bow.gd
 Source: Scripts/ui/tool_wheel.gd
-Source: Scripts/mechanics/combat/ranged_shots.gd
 Source: Scripts/player/player.gd
 Source: Scripts/player/player_combat.gd
-Source: Scripts/mechanics/combat/ranged_shot.gd
 
-One bow on the existing aim (#362). The bow stays off until the tool wheel arms it. An aimed attack then fires one shot along that aim and does not swing the sword. The host decides the hit. Peers draw a short line. A plain sword attack is unchanged while the bow is off.
+The bow on the tool wheel arms the existing aim with key 2. Releasing an aim throws a [clay pot](./bomb-throw.md) in that direction. With the bow off, the combat tool swings the sword.
 
-## Sub-features
+The live drive opens this input path and captures the aim, pot in flight, burning fuse, and explosion. Run it with `bin/launch.sh drives/ranged_bow.gd --display`.
 
-- `bow-toggle` the tool wheel's bow tool (`Scripts/ui/tool_wheel.gd`) arms the shot. It starts off. `World/RangedShots` (`Scripts/mechanics/combat/ranged_shots.gd`) no longer adds a button.
-- `bow-shot` with the toggle on, `attack_toward` in `Scripts/player/player.gd` delegates to `try_bow_shot` in `Scripts/player/player_combat.gd`, which sends `request_shot` and skips `attack_animation`. Interact mode still does not aim.
-- `bow-flight` `RangedShot.fly` (`Scripts/mechanics/combat/ranged_shot.gd`) walks the segment at `SPEED` 180, `RANGE` 120, `STEP` 1/60. A failed `AttackAim.clear_shot` between samples is terrain. The first mob contact box or living player box wins. The shooter is skipped. `DAMAGE` is 1 and `COOLDOWN` is 1.0 s.
-- `bow-host` the host rejects a dead sender, an origin farther than 24 px from the server body, a bad direction, or a live cooldown, then flies from the server body. One `Mob.take_hit` or one `PlayerHealth.take_damage`. `show_shot` draws a 2 px line for 0.2 s. In-flight shots are not in the join snapshot.
-
-## How to get to it (user POV)
-
-- Host a world, arm bow on the tool wheel (key 2), then aim and release the way a sword aim works. The sword does not swing. The line shows where the shot went.
-
-## Driving it with verify-flagoria helpers
-
-Preconditions: `doctor.sh` exits `0`. Time cost: `test_ranged_shot` is about 0.5 s in `tools/verify.sh`. `test_ranged_two_players` is about 8–12 s per stress run.
-
-- **Run (headless).** `godot --headless --path . --script res://tests/run_tests.gd -- --only=ranged_shot`, or the full `tools/verify.sh`. The two-peer case is the stress scenario `ranged_two_players` (`tests/net/test_ranged_sync.gd`, probe `tests/ranged_probe.gd`, seed 11).
-- **Drive (live).** `bin/launch.sh drives/ranged_bow.gd --seed 11 --display`. It hosts, presses 2 to arm the bow, aims, and snapshots `bow-aim` and `bow-hit`.
-- **Proof.** `-- test_ranged_shot` hits a mob in front, misses at `RANGE`, returns terrain for a wall, skips the shooter, and a second apply during HURT or invulnerability returns false. `-- test_ranged_two_players` shows both peers dropping one health, an immediate second shot doing nothing, health at `max_health - 2` after the host cooldown, an away shot leaving that health, and a late joiner seeing it.
-
-## Gotchas
-
-- Calling `attack_animation` as well as `request_shot` would swing and shoot. The bow path returns before the swing.
-- A cooldown under 1 s looks like a missed shot because invulnerability lasts 1 s.
-- The sent origin is not the flight start. Past 24 px from the server body it is rejected.
+The legacy bolt remains under `World/RangedShots` pending #759. The headless `test_ranged_shot` checks the segment's terrain collision, range, shooter exclusion, and host hit/cooldown rules through the bolt module. It takes about 0.5 s in `tools/verify.sh`.

@@ -253,12 +253,12 @@ static func is_alive(player: Node) -> bool:
 	return health == null or not health.is_dead()
 
 
-func take_hit(by_peer: int = 0) -> bool:
-	## Server only: one sword hit by player by_peer (0: unknown). Ignored
+func take_hit(by_peer: int = 0, damage: int = 1) -> bool:
+	## Server only: damage from player by_peer (0: unknown). Ignored
 	## while already hurt or dying, so only the killing hit pays.
 	if state == State.HURT or state == State.DYING:
 		return false
-	hp -= 1
+	hp -= damage
 	direction = Vector2.ZERO
 	if hp <= 0:
 		state = State.DYING
