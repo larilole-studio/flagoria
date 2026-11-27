@@ -104,8 +104,8 @@ func mark_start_castle(id: int) -> void:
 		_placed[id]["start_castle"] = true
 
 
-func remove(id: int, allow_start_castle := false) -> bool:
-	if not _placed.has(id) or (_placed[id].get("start_castle", false) and not allow_start_castle):
+func remove(id: int) -> bool:
+	if not _placed.has(id) or _placed[id].get("start_castle", false):
 		return false
 	var cells: Array[Vector2i] = _footprints[id]
 	_placed.erase(id)

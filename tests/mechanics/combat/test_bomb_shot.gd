@@ -101,9 +101,9 @@ func _test_bomb_shot() -> int:
 		fail += 1
 	if (
 		map.structure_placement_at(own_tower).is_empty()
-		or not map.structure_placement_at(enemy_castle).is_empty()
+		or map.structure_placement_at(enemy_castle).is_empty()
 	):
-		printerr("FAIL bomb_shot: named placement ownership was ignored")
+		printerr("FAIL bomb_shot: a named placement was removed; this slice only damages palisade walls")
 		fail += 1
 
 	scene.queue_free()

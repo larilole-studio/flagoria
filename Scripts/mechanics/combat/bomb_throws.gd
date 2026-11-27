@@ -192,6 +192,5 @@ func _blast_cells(pot: Pot) -> void:
 			var center := _map.to_global(_map.map_to_local(cell))
 			if not BombShot.contains(pot.end, pot.radius, center):
 				continue
-			_structures.host_blast_structure(cell, pot.sender_id)
 			for hit in range(mini(pot.damage, _map.wall_hp(cell))):
 				_structures.host_damage_wall(cell)

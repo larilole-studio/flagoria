@@ -139,12 +139,12 @@ func request_demolish(cell: Vector2i) -> void:
 
 
 @rpc("authority", "reliable", "call_remote")
-func apply_structure_removed(anchor: Vector2i, allow_start_castle := false) -> void:
+func apply_structure_removed(anchor: Vector2i) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	var placement := map.structure_placement_at(anchor)
 	if not placement.is_empty() and placement["anchor"] == anchor:
-		map.remove_structure(placement["id"], allow_start_castle)
+		map.remove_structure(placement["id"])
 
 
 @rpc("authority", "reliable", "call_remote")
@@ -163,21 +163,6 @@ func receive_mine_stone(stone: int) -> void:
 func receive_sawmill_wood(wood: int) -> void:
 	if multiplayer.get_remote_sender_id() == 1 and inventory != null and wood > 0:
 		inventory.add(Inventory.WOOD, wood)
-
-
-func host_blast_structure(cell: Vector2i, attacker: int) -> void:
-	## Named placements have no hit points. An enemy blast removes the
-	## placement and publishes the same removal and wall state as demolition.
-	if not multiplayer.is_server():
-		return
-	var placement := map.structure_placement_at(cell)
-	if placement.is_empty() or placement["owner"] <= 0 or placement["owner"] == attacker:
-		return
-	if not map.remove_structure(placement["id"], true):
-		return
-	if not multiplayer.get_peers().is_empty():
-		apply_structure_removed.rpc(placement["anchor"], true)
-	_publish()
 
 
 func host_damage_wall(cell: Vector2i) -> bool:
