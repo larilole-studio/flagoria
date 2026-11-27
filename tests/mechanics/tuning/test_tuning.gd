@@ -18,6 +18,8 @@ func _test_tuning_defaults_and_live_price() -> int:
 		&"building.refund_share": 0.5,
 		&"mine.cycle_seconds": 60.0,
 		&"mine.stone_per_cycle": 1.0,
+		&"sawmill.cycle_seconds": 60.0,
+		&"sawmill.wood_per_cycle": 1.0,
 		&"hand_mining.rock_hits": 2.0,
 		&"hand_mining.rock_stone": 2.0,
 		&"chopping.tree_hits": 2.0,

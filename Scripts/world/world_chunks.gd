@@ -5,6 +5,7 @@ extends RefCounted
 static func refresh(map, delta):
 	map.play_time += delta
 	map.mine_production.advance(delta)
+	map.sawmill_production.advance(delta)
 	map.count += 1
 	if (map.count % map.chunk_refresh_frames) == 0:
 		map.regrow_due()

@@ -114,6 +114,7 @@ func remove(id: int) -> bool:
 		_mine_carts[id].queue_free()
 		_mine_carts.erase(id)
 	_map.mine_production.remove_mine(id)
+	_map.sawmill_production.remove_sawmill(id)
 	_footprints.erase(id)
 	_flags.erase(id)
 	var marker := _markers.get(id) as Sprite2D
@@ -147,6 +148,7 @@ func clear() -> void:
 	_auto.clear()
 	_placed.clear()
 	_map.mine_production.clear()
+	_map.sawmill_production.clear()
 	_footprints.clear()
 	_flags.clear()
 	_next_id = 1
@@ -399,6 +401,8 @@ func _write(
 		_mine_carts[id] = MineCart.attach(
 			_map, _map.mine_production, id, anchor_cell - placed.anchor, turns
 		)
+	elif structure.name == SawmillProduction.STRUCTURE_NAME:
+		_map.sawmill_production.register_sawmill(id)
 	if not flags.is_empty():
 		_flags[id] = flags
 	if not is_mine:
