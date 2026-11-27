@@ -33,8 +33,8 @@ const OWNER_FLAGS := {
 }
 const OTHER_OWNER_FLAG := "PROP_FLAG_RED"
 const DIR := "res://structures"
-# Invisible atlas alternatives preserve the mine's original collision shapes.
-const MINE_COLLISION_TILE := 1
+# Invisible atlas alternatives preserve the structures' original collision shapes.
+const INVISIBLE_COLLISION_TILE := 1
 
 ## Placed cell -> [layer-0 atlas or NO_PLANT to keep the generated ground,
 ## layer-1 atlas or NO_PLANT for none, placement id]. generate_chunk draws these instead
@@ -52,7 +52,7 @@ var _next_id := 1
 var _map: _WorldMap
 ## Placement id -> facing sprite at the anchor (#493).
 var _markers: Dictionary = {}
-var _mine_carts: Dictionary[int, MineCart] = {}
+var _production_sprites: Dictionary[int, AnimatedSprite2D] = {}
 
 
 func _init(map: _WorldMap) -> void:
@@ -77,7 +77,8 @@ func object_at(cell: Vector2i) -> Vector2i:
 func paint_object(cell: Vector2i) -> void:
 	var atlas := object_at(cell)
 	if atlas != _WorldMap.NO_PLANT:
-		var alternative := MINE_COLLISION_TILE if _mine_carts.has(placement_at(cell)) else 0
+		var has_sprite := _production_sprites.has(placement_at(cell))
+		var alternative := INVISIBLE_COLLISION_TILE if has_sprite else 0
 		_map.set_cell(1, cell, TileCatalog.SOURCE_ID, atlas, alternative)
 
 
@@ -109,10 +110,10 @@ func remove(id: int) -> bool:
 		return false
 	var cells: Array[Vector2i] = _footprints[id]
 	_placed.erase(id)
-	if _mine_carts.has(id):
-		_map.remove_child(_mine_carts[id])
-		_mine_carts[id].queue_free()
-		_mine_carts.erase(id)
+	if _production_sprites.has(id):
+		_map.remove_child(_production_sprites[id])
+		_production_sprites[id].queue_free()
+		_production_sprites.erase(id)
 	_map.mine_production.remove_mine(id)
 	_map.sawmill_production.remove_sawmill(id)
 	_footprints.erase(id)
@@ -140,10 +141,10 @@ func remove(id: int) -> bool:
 
 func clear() -> void:
 	_FootprintOrientation.clear_sprites(_markers)
-	for cart in _mine_carts.values():
-		_map.remove_child(cart)
-		cart.queue_free()
-	_mine_carts.clear()
+	for sprite in _production_sprites.values():
+		_map.remove_child(sprite)
+		sprite.queue_free()
+	_production_sprites.clear()
 	_cells.clear()
 	_auto.clear()
 	_placed.clear()
@@ -360,6 +361,7 @@ func _write(
 	var placed := Structure.rotated(structure, quarter_turns)
 	var foot := footprint(placed, anchor_cell)
 	var is_mine := structure.name == MineProduction.STRUCTURE_NAME
+	var is_sawmill := structure.name == SawmillProduction.STRUCTURE_NAME
 	var occupied: Array[Vector2i] = []
 	var flags: Array[Vector2i] = []
 	for cell: Vector2i in foot:
@@ -388,7 +390,7 @@ func _write(
 		_map.erase_cell(1, cell)
 		_map.erase_cell(_WorldMap.GROUND_DECOR_LAYER, cell)
 		if object != _WorldMap.NO_PLANT:
-			var alternative := MINE_COLLISION_TILE if is_mine else 0
+			var alternative := INVISIBLE_COLLISION_TILE if is_mine or is_sawmill else 0
 			_map.set_cell(1, cell, TileCatalog.SOURCE_ID, object, alternative)
 	_footprints[id] = occupied
 	var meta := {"name": structure.name, "owner": owner, "anchor": anchor_cell}
@@ -398,14 +400,15 @@ func _write(
 	_placed[id] = meta
 	if is_mine:
 		_map.mine_production.register_mine(id)
-		_mine_carts[id] = MineCart.attach(
+		_production_sprites[id] = MineCart.attach(
 			_map, _map.mine_production, id, anchor_cell - placed.anchor, turns
 		)
-	elif structure.name == SawmillProduction.STRUCTURE_NAME:
+	elif is_sawmill:
 		_map.sawmill_production.register_sawmill(id)
+		_production_sprites[id] = SawmillAnim.attach(_map, id, anchor_cell - placed.anchor, turns)
 	if not flags.is_empty():
 		_flags[id] = flags
-	if not is_mine:
+	if not is_mine and not is_sawmill:
 		_FootprintOrientation.sync_sprite(_map, _markers, id, anchor_cell, turns)
 	_map._walls.resolve()
 	_map.ground_changed.emit(Rect2i(anchor_cell - placed.anchor, placed.size))

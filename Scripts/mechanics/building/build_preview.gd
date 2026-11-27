@@ -54,7 +54,8 @@ static func draw_footprint(
 	tool: BuildPlacement.Tool,
 	turns: int
 ) -> void:
-	if tool != BuildPlacement.Tool.MINE:
+	var is_mine := tool == BuildPlacement.Tool.MINE
+	if not is_mine and tool != BuildPlacement.Tool.SAWMILL:
 		var mark := canvas.to_local(interaction.cell_center(anchor))
 		FootprintOrientation.draw_at(canvas, mark, turns)
 		return
@@ -62,5 +63,7 @@ static func draw_footprint(
 	var transform := canvas.global_transform.affine_inverse() * map.global_transform
 	transform = transform.translated_local(map.map_to_local(top_left + Vector2i.ONE))
 	canvas.draw_set_transform_matrix(transform.rotated_local(FootprintOrientation.angle_rad(turns)))
-	canvas.draw_texture(MineCart.parked_texture(), -MineCart.FOOTPRINT_CENTER, Color(1, 1, 1, 0.8))
+	var still := MineCart.parked_texture() if is_mine else SawmillAnim.idle_texture()
+	var center := MineCart.FOOTPRINT_CENTER if is_mine else SawmillAnim.FOOTPRINT_CENTER
+	canvas.draw_texture(still, -center, Color(1, 1, 1, 0.8))
 	canvas.draw_set_transform_matrix(Transform2D.IDENTITY)
