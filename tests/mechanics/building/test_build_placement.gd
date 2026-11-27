@@ -55,7 +55,7 @@ func _test_build_picker_switches_tool() -> int:
 	await process_frame
 	var interaction: Interaction = scene.get_node("World/Interaction")
 	var picker: Control = scene.get_node_or_null("CanvasLayer1/BuildPicker")
-	if picker == null or picker.get_child_count() != 8 or not picker.visible:
+	if picker == null or picker.get_child_count() != 9 or not picker.visible:
 		printerr(
 			(
 				"FAIL build_picker_switches_tool: picker %s children %s"
@@ -721,6 +721,7 @@ func _test_build_picker_buttons() -> int:
 		"GuardButton": BuildPlacement.Tool.GUARD,
 		"BarracksButton": BuildPlacement.Tool.BARRACKS,
 		"MineButton": BuildPlacement.Tool.MINE,
+		"SawmillButton": BuildPlacement.Tool.SAWMILL,
 		"WallButton": BuildPlacement.Tool.WALL,
 		"DemolishButton": BuildPlacement.Tool.DEMOLISH,
 	}

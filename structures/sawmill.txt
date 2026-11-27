@@ -1,0 +1,13 @@
+flagoria-structure 1
+name: sawmill
+version: 1
+size: 3x3
+anchor: 1,2
+tags: buildable
+legend:
+  T = TOWER_WOOD_POST
+  W = TOWER_WOOD_WALL
+object:
+  TWT
+  WWW
+  T.T

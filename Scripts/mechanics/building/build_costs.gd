@@ -9,6 +9,7 @@ const CASTLE := &"castle"
 const GUARD_POST := &"guard_post"
 const BARRACKS := &"barracks"
 const MINE := &"mine"
+const SAWMILL := &"sawmill"
 const START_CASTLE := &"start_castle"
 
 ## Requestable named structures take one anchor cell.
@@ -18,6 +19,7 @@ const NAMED_STRUCTURES := {
 	GUARD_POST: "guard_post",
 	BARRACKS: "barracks",
 	MINE: "mine",
+	SAWMILL: "sawmill",
 }
 
 const CITY_KINDS := {
@@ -38,6 +40,7 @@ const _STONE_KEYS := {
 	CASTLE: &"building.castle_stone",
 	GUARD_POST: &"building.guard_post_stone",
 	BARRACKS: &"building.barracks_stone",
+	SAWMILL: &"building.sawmill_stone",
 }
 
 const NOT_ENOUGH_WOOD := "not enough wood"
@@ -64,7 +67,7 @@ static func is_requestable(kind: StringName) -> bool:
 
 
 static func has_price(kind: StringName) -> bool:
-	return kind == START_CASTLE or _WOOD_KEYS.has(kind)
+	return kind == START_CASTLE or _WOOD_KEYS.has(kind) or has_stone_price(kind)
 
 
 static func has_stone_price(kind: StringName) -> bool:
@@ -73,9 +76,9 @@ static func has_stone_price(kind: StringName) -> bool:
 
 static func cost(kind: StringName, units := 1) -> int:
 	## Wood for `units` of `kind`; -1 for an unknown kind.
-	if kind == START_CASTLE:
-		return 0
-	return int(Tuning.value(_WOOD_KEYS[kind])) * units if _WOOD_KEYS.has(kind) else -1
+	if not _WOOD_KEYS.has(kind):
+		return 0 if has_price(kind) else -1
+	return int(Tuning.value(_WOOD_KEYS[kind])) * units
 
 
 static func price(kind: StringName, units := 1) -> Vector2i:
@@ -96,6 +99,8 @@ static func label(amount: Vector2i, prefix := "") -> String:
 	var wood := "%s%d wood" % [prefix, amount.x]
 	if amount.y == 0:
 		return wood
+	if amount.x == 0:
+		return "%s%d stone" % [prefix, amount.y]
 	return "%s + %d stone" % [wood, amount.y]
 
 

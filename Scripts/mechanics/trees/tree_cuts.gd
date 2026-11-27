@@ -154,8 +154,11 @@ func choppable(cell: Vector2i) -> InteractableType:
 	return InteractableCatalog.type_at(_map.get_cell_atlas_coords(1, cell))
 
 
-func has_tree(cell: Vector2i) -> bool:
+func has_tree(cell: Vector2i, include_unpainted := false) -> bool:
 	var type := choppable(cell)
+	# The host can validate construction outside its own painted area.
+	if type == null and include_unpainted and not _map.is_drawn(cell):
+		type = InteractableCatalog.type_at(_map.predict_cell(cell)[1])
 	return type != null and (type.id == "tree" or type.id == "pine")
 
 

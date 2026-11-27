@@ -183,8 +183,8 @@ func choppable(cell: Vector2i) -> InteractableType:
 	return _tree_cuts.choppable(cell)
 
 
-func has_tree(cell: Vector2i) -> bool:
-	return _tree_cuts.has_tree(cell)
+func has_tree(cell: Vector2i, include_unpainted := false) -> bool:
+	return _tree_cuts.has_tree(cell, include_unpainted)
 
 
 func cut_choppable(cell: Vector2i) -> InteractableType:

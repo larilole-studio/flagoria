@@ -81,6 +81,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Demolish construction](./demolish-construction.md)
 - [Build barracks](./build-barracks.md) — `barracks.txt` for 20 wood and 10 stone from the build picker, save/reload and multiplayer sync (#556).
 - [Place a mine](./place-mine.md) — a 3×3 mine costs 15 wood and needs an orthogonally adjacent live rock (#722).
+- [Place a sawmill](./place-sawmill.md) — a 3×3 sawmill costs 15 stone and needs an orthogonally adjacent live tree or pine (#749).
 - [Produce stone at placed mines](./mine-production.md) — each mine credits its owner one stone per minute (#723).
 - [Mine cart animation](./mine-cart.md) — producing mines animate the cart and idle mines show the parked pose (#725).
 - [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
