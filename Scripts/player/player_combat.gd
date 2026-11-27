@@ -3,7 +3,7 @@ extends RefCounted
 
 const MAP_PATH := "/root/Flagoria/World/worldMap"
 const TOOL_WHEEL_PATH := "/root/Flagoria/CanvasLayer1/ToolWheel"
-const RANGED_PATH := "/root/Flagoria/World/RangedShots"
+const BOMB_PATH := "/root/Flagoria/World/BombThrows"
 const AttackAimScript := preload("res://Scripts/player/attack_aim.gd")
 
 
@@ -11,9 +11,9 @@ static func try_bow_shot(player, direction: String, angle: float) -> bool:
 	var wheel: Node = player.get_node_or_null(TOOL_WHEEL_PATH)
 	if wheel == null or not wheel.has_method("bow_armed") or not bool(wheel.bow_armed()):
 		return false
-	var shots: Node = player.get_node_or_null(RANGED_PATH)
-	if shots != null and shots.has_method("send_shot"):
-		shots.send_shot(
+	var bombs := player.get_node_or_null(BOMB_PATH) as BombThrows
+	if bombs != null:
+		bombs.send_throw(
 			player.global_position + AttackAimScript.ORIGIN,
 			_bow_aim(direction, angle, player.lastAnimDirection)
 		)

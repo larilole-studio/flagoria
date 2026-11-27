@@ -1,23 +1,17 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
-## Bow aim and one shot. Start with `bin/launch.sh drives/ranged_bow.gd --seed 11`.
-
-const WHEEL := "CanvasLayer1/ToolWheel"
+## Bow aim and the three phases of a pot throw.
 
 
 func run() -> void:
 	if not await start_game():
 		return
-	var ok := true
-	var shots: RangedShots = current_scene.get_node("World/RangedShots")
+	var bombs := current_scene.get_node("World/BombThrows") as BombThrows
+	var shots := current_scene.get_node("World/RangedShots") as RangedShots
 	step("bow")
-	var wheel: ToolWheel = current_scene.get_node(WHEEL)
-	var button: BaseButton = wheel.get_node("ToolButton")
-	var placed := await wait_until(func() -> bool: return button.size.y > 1.0, 2.0)
+	var wheel := current_scene.get_node("CanvasLayer1/ToolWheel") as ToolWheel
 	await tap_key(KEY_2)
-	var armed := await wait_until(func() -> bool: return wheel.bow_armed(), 2.0)
-	print("ranged_bow: placed %s armed %s at %s" % [placed, armed, button.position])
-	ok = ok and placed and armed and not hero().isAttacking
+	var ok := await wait_until(wheel.bow_armed, 2.0)
 
 	step("aim")
 	var aim: Node = hero().get_node("AttackAim")
@@ -26,20 +20,35 @@ func run() -> void:
 	_pointer(at)
 	await process_frame
 	_click_at(at, true)
-	var aiming := await wait_until(func() -> bool: return aim.aiming, 2.0)
-	print("ranged_bow: aiming %s toward %s" % [aiming, aim.aim_direction()])
-	ok = ok and aiming
+	ok = await wait_until(func() -> bool: return aim.aiming, 2.0) and ok
 	await snapshot("bow-aim")
 
-	step("shot")
+	step("throw")
 	var before := shots.lines_shown()
 	_click_at(at, false)
-	await process_frame
-	var showed := shots.lines_shown() > before
-	var swung: bool = bool(hero().get("isAttacking"))
-	print("ranged_bow: line %s sword %s" % [showed, swung])
-	ok = ok and showed and not swung
-	await snapshot("bow-hit")
+	var flying := await wait_until(
+		func() -> bool: return bombs.has_phase(BombThrows.Phase.FLIGHT), 2.0
+	)
+	ok = ok and flying and shots.lines_shown() == before and not hero().isAttacking
+	var mid_arc := Time.get_ticks_msec() + 175
+	await wait_until(func() -> bool: return Time.get_ticks_msec() >= mid_arc, 0.4)
+	ok = ok and bombs.has_phase(BombThrows.Phase.FLIGHT)
+	await snapshot("bomb-mid-arc")
+
+	step("land")
+	var landed := await wait_until(
+		func() -> bool: return bombs.has_phase(BombThrows.Phase.FUSE), 2.0
+	)
+	ok = ok and landed
+	await snapshot("bomb-landed-fuse")
+
+	step("explode")
+	var exploded := await wait_until(
+		func() -> bool: return bombs.has_phase(BombThrows.Phase.BLAST), 2.0
+	)
+	await create_timer(0.07).timeout
+	ok = ok and exploded and bombs.has_phase(BombThrows.Phase.BLAST)
+	await snapshot("bomb-explosion")
 	done(ok)
 
 

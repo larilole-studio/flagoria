@@ -370,8 +370,8 @@ func structure_placement_at(cell: Vector2i) -> Dictionary:
 	return _structures.placement_details_at(cell)
 
 
-func remove_structure(id: int) -> bool:
-	return _structures.remove(id)
+func remove_structure(id: int, allow_start_castle := false) -> bool:
+	return _structures.remove(id, allow_start_castle)
 
 
 func place_start_castle(owner: int) -> bool:
