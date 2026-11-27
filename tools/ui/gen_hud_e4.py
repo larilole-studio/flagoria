@@ -240,14 +240,18 @@ def minimal_joystick(doc, *, knob, active, disabled):
             circle(doc, x, y, 2.2, mark, stroke=INK, width=1.4)
 
 
-def save(doc, name, units):
+def save(doc, name, units, overlay=None):
     pixels = units * DENSITY
     png = cairosvg.svg2png(bytestring=doc.svg().encode(), output_width=pixels, output_height=pixels)
     image = Image.open(io.BytesIO(png)).convert('RGBA')
+    if overlay is not None:
+        left = (pixels - overlay.width) // 2
+        top = (pixels - overlay.height) // 2
+        image.alpha_composite(overlay, (left, top))
     image.save(OUT / f'{name}.png')
 
 
-def disc(name, units, icon, scale, states):
+def disc(name, units, icon, scale, states, overlay=None):
     for state in states:
         doc = Doc()
         close = name == 'build' and state.startswith('selected')
@@ -257,7 +261,7 @@ def disc(name, units, icon, scale, states):
         minimal_button(doc, 50, 47, radius, 'close' if close else icon, 1.2 if close else scale,
                        pressed='pressed' in state, disabled=state == 'disabled',
                        selected=ring, charge=charge)
-        save(doc, f'{name}_{state}', units)
+        save(doc, f'{name}_{state}', units, overlay)
 
 
 def sticker(name, icon, state='normal'):
@@ -289,6 +293,11 @@ def render_discs():
         disc(f'wheel_{icon}', 24, icon, 1.4, toggle)
     for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'mine', 'demolish'):
         disc(f'pick_{icon}', 24, icon, 1.72, toggle)
+    sheet = OUT.parent.parent / 'structures' / 'sawmill_sheet.png'
+    with Image.open(sheet) as sheet_image:
+        idle = sheet_image.convert('RGBA').crop((0, 0, 48, 48))
+    disc('pick_sawmill', 24, '', 1.0, toggle,
+         overlay=idle.resize((72, 72), Image.Resampling.NEAREST))
     disc('run', 32, 'run', 1.45, basic)
     disc('attack', 40, 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))
     for part, states in [('base', ('normal', 'disabled')), ('knob', ('normal', 'active', 'disabled'))]:
