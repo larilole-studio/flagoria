@@ -11,6 +11,7 @@ func _test_tuning_defaults_and_live_price() -> int:
 		&"building.guard_post_wood": 14.0,
 		&"building.barracks_wood": 20.0,
 		&"building.mine_wood": 15.0,
+		&"building.sawmill_stone": 15.0,
 		&"building.castle_stone": 15.0,
 		&"building.guard_post_stone": 6.0,
 		&"building.barracks_stone": 10.0,

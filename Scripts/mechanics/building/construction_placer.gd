@@ -14,6 +14,7 @@ const WRONG_GROUND := "wrong ground"
 const OCCUPIED := "occupied"
 const NOT_ADJACENT := "not adjacent"
 const NOT_ADJACENT_TO_ROCK := "not adjacent to a rock"
+const NOT_ADJACENT_TO_TREE := "not adjacent to a tree"
 const NOT_STRAIGHT := "not straight"
 const EMPTY_CELLS := "empty cells"
 const NOT_ENOUGH_WOOD := BuildCosts.NOT_ENOUGH_WOOD
@@ -34,6 +35,7 @@ const _REASON_ORDER := [
 	NOT_STRAIGHT,
 	NOT_ADJACENT,
 	NOT_ADJACENT_TO_ROCK,
+	NOT_ADJACENT_TO_TREE,
 	NOT_ENOUGH_WOOD,
 	MULTIPLAYER_ON,
 ]
@@ -302,6 +304,8 @@ func _check_named(
 		return
 	if kind == BuildCosts.MINE:
 		_check_mine(structure, cells[0], found, quarter_turns)
+	elif kind == BuildCosts.SAWMILL:
+		_check_sawmill(structure, cells[0], found, quarter_turns)
 	for reason in _map.can_place_structure(structure, cells[0], quarter_turns):
 		if reason == StructurePlacer.MULTIPLAYER_ON:
 			continue  # StructureRequests is the multiplayer gate (#497).
@@ -330,6 +334,16 @@ func _check_mine(
 		if _map.has_wall(cell):
 			found[OCCUPIED] = true
 			break
+
+
+func _check_sawmill(
+	structure: Structure, anchor: Vector2i, found: Dictionary, quarter_turns: int
+) -> void:
+	if not _neighbours(anchor).any(func(cell: Vector2i) -> bool: return _map.has_tree(cell, true)):
+		found[NOT_ADJACENT_TO_TREE] = true
+	var rotated := Structure.rotated(structure, quarter_turns)
+	if StructurePlacer.footprint(rotated, anchor).keys().any(_map.has_wall):
+		found[OCCUPIED] = true
 
 
 func _run_touches_wall_or_structure(cells: Array[Vector2i]) -> bool:

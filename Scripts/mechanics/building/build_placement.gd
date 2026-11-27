@@ -2,7 +2,7 @@ class_name BuildPlacement
 extends RefCounted
 ## Tracks Buildings tools, placement previews, wall tips, and demolition taps.
 
-enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS, DEMOLISH, MINE }
+enum Tool { CUT, PLANK, TOWER, CASTLE, GUARD, WALL, BARRACKS, DEMOLISH, MINE, SAWMILL }
 
 const PICKER_PATH := "/root/Flagoria/CanvasLayer1/BuildPicker"
 

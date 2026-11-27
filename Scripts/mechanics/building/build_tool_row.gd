@@ -12,6 +12,7 @@ const FOOTPRINT_KIND := {
 	BuildPlacement.Tool.GUARD: BuildCosts.GUARD_POST,
 	BuildPlacement.Tool.BARRACKS: BuildCosts.BARRACKS,
 	BuildPlacement.Tool.MINE: BuildCosts.MINE,
+	BuildPlacement.Tool.SAWMILL: BuildCosts.SAWMILL,
 }
 const TOOL_TIPS := {
 	BuildPlacement.Tool.CUT: "Cut",
@@ -21,6 +22,7 @@ const TOOL_TIPS := {
 	BuildPlacement.Tool.GUARD: "Guard post",
 	BuildPlacement.Tool.BARRACKS: "Barracks",
 	BuildPlacement.Tool.MINE: "Mine",
+	BuildPlacement.Tool.SAWMILL: "Sawmill",
 	BuildPlacement.Tool.WALL: "Wall",
 	BuildPlacement.Tool.DEMOLISH: "Demolish",
 }
@@ -31,6 +33,7 @@ const BUTTON_NAMES := {
 	BuildPlacement.Tool.GUARD: "GuardButton",
 	BuildPlacement.Tool.BARRACKS: "BarracksButton",
 	BuildPlacement.Tool.MINE: "MineButton",
+	BuildPlacement.Tool.SAWMILL: "SawmillButton",
 	BuildPlacement.Tool.WALL: "WallButton",
 	BuildPlacement.Tool.DEMOLISH: "DemolishButton",
 }
@@ -45,6 +48,7 @@ static func picker_tools() -> Array:
 		BuildPlacement.Tool.GUARD,
 		BuildPlacement.Tool.BARRACKS,
 		BuildPlacement.Tool.MINE,
+		BuildPlacement.Tool.SAWMILL,
 		BuildPlacement.Tool.DEMOLISH,
 	]
 
@@ -108,7 +112,8 @@ static func refresh_picker_prices(buttons: Dictionary) -> void:
 		var label := button.get_node("Caption") as Label
 		var caption := "Guard" if tool == BuildPlacement.Tool.GUARD else tip(tool)
 		var amount := BuildCosts.price(kind)
-		label.text = "%s\n%d wood\n%d stone" % [caption, amount.x, amount.y]
+		var wood := "%d wood\n" % amount.x if amount.x > 0 else ""
+		label.text = "%s\n%s%d stone" % [caption, wood, amount.y]
 		button.tooltip_text = tip(tool) + " — " + BuildCosts.label(amount)
 
 

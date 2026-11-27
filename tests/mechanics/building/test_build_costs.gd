@@ -18,6 +18,7 @@ func _test_build_cost_table() -> int:
 		[BuildCosts.CASTLE, 1]: [Vector2i(35, 15), Vector2i(17, 7)],
 		[BuildCosts.GUARD_POST, 1]: [Vector2i(14, 6), Vector2i(7, 3)],
 		[BuildCosts.BARRACKS, 1]: [Vector2i(20, 10), Vector2i(10, 5)],
+		[BuildCosts.SAWMILL, 1]: [Vector2i(0, 15), Vector2i(0, 7)],
 		[BuildCosts.START_CASTLE, 1]: [Vector2i(0, 0), Vector2i(0, 0)],
 		[&"moat", 1]: [Vector2i(-1, 0), Vector2i(0, 0)],
 	}
@@ -31,6 +32,14 @@ func _test_build_cost_table() -> int:
 				)
 			)
 			fail += 1
+	if (
+		BuildCosts.label(Vector2i(0, 15)) != "15 stone"
+		or BuildCosts.label(Vector2i(0, 7), "+") != "+7 stone"
+		or BuildCosts.label(Vector2i(15, 0)) != "15 wood"
+		or BuildCosts.label(Vector2i(20, 10)) != "20 wood + 10 stone"
+	):
+		printerr("FAIL build_cost_table: wood or stone label")
+		fail += 1
 	if fail == 0:
 		print("PASS test_build_cost_table")
 	return fail
