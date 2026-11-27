@@ -41,3 +41,4 @@ Preconditions: `doctor.sh` exits `0`. Time cost: `test_build_cost_table` and `te
 
 - Never add wood from a drive to make a purchase pass in a live game; a drive that can't reach the feature reports that.
 - `buy` must be the only place that spends resources for a local build, so the check, the spend and the placement stay in one order (spend before write).
+- A placer result other than `true` or a positive int counts as not placed (`false`, `0`, `null`, or any other type): `buy` restores the full price and returns `NOT_PLACED`.
