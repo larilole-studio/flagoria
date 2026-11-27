@@ -38,6 +38,7 @@ var archipelago_island_count: int = 0
 # vars for gdlint; apply_map_params copies it with the other PlantPicker.PARAMS.
 var cay_trees: bool = false
 var mine_production := MineProduction.new(self)
+var sawmill_production := SawmillProduction.new(self)
 # predict_cell results by cell; cleared when the params change.
 var _predict_cache: Dictionary = {}
 var _tree_cuts := TreeCuts.new(self)

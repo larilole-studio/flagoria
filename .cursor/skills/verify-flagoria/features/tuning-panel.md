@@ -12,7 +12,7 @@ In a match, open **Menu → Tuning** beside the resource grants. The button is
 available to admins in solo and multiplayer matches. In a multiplayer match,
 the host applies edits and shares the resulting values with the joiners. Close or Android back returns to Menu.
 
-The panel opens on **Building costs**. The tabs also show Mine, Hand mining,
+The panel opens on **Building costs**. The tabs also show Mine, Sawmill, Hand mining,
 Chopping, Soldiers, Movement and Visuals. Drag the rows to scroll, and tap
 **−** or **+** to step a value within its registry bounds. Solo changes apply immediately, and a client panel updates when the host
 returns the new value.

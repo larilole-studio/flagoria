@@ -18,6 +18,7 @@ const WINDOW_SIZE := Vector2i(2400, 1080)
 const ROW_COUNTS := {
 	"Buildingcosts": 12,
 	"Mine": 2,
+	"Sawmill": 2,
 	"Handmining": 2,
 	"Chopping": 6,
 	"Soldiers": 2,

@@ -4,6 +4,7 @@ extends RefCounted
 
 const BUILDING := "Building costs"
 const MINE := "Mine"
+const SAWMILL := "Sawmill"
 const HAND_MINING := "Hand mining"
 const CHOPPING := "Chopping"
 const SOLDIERS := "Soldiers"
@@ -36,6 +37,8 @@ static func _static_init() -> void:
 	_add(&"building.refund_share", BUILDING, "Demolish refund share", 0.5, 0, 1, 0.05, false)
 	_add(&"mine.cycle_seconds", MINE, "Production cycle (s)", 60, 1, 600, 0.5, false)
 	_add(&"mine.stone_per_cycle", MINE, "Stone per cycle", 1, 1, 100, 1)
+	_add(&"sawmill.cycle_seconds", SAWMILL, "Production cycle (s)", 60, 1, 600, 0.5, false)
+	_add(&"sawmill.wood_per_cycle", SAWMILL, "Wood per cycle", 1, 1, 100, 1)
 	_add(&"hand_mining.rock_hits", HAND_MINING, "Hits per rock", 2, 1, 10, 1)
 	_add(&"hand_mining.rock_stone", HAND_MINING, "Stone per rock", 2, 1, 100, 1)
 	for id in ["tree", "pine", "bush"]:
