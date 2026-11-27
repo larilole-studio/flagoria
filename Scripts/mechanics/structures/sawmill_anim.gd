@@ -4,7 +4,7 @@ extends AnimatedSprite2D
 
 const SHEET := preload("res://art/structures/sawmill_sheet.png")
 const CHOP := preload("res://art/audio/sfx/world/trees/tree_chop_02.wav")
-const FRAME_SIZE := Vector2i(48, 48)
+const FRAME_SIZE := Vector2i(48, 32)
 const FRAME_COUNT := 8
 const FOOTPRINT_CENTER := Vector2(24, 24)
 

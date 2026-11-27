@@ -32,7 +32,7 @@ func _check_sawmill(map: TileMap, inventory: Inventory) -> bool:
 		not mill.is_visible_in_tree()
 		or not mill.is_playing()
 		or not sound.playing
-		or mill.position != map.map_to_local(SITE + Vector2i.UP)
+		or mill.position != map.map_to_local(SITE)
 		or mill.offset != Vector2(-24, -24)
 		or mill.texture_filter != CanvasItem.TEXTURE_FILTER_NEAREST
 		or map.get_cell_alternative_tile(1, SITE + Vector2i.LEFT) != 1

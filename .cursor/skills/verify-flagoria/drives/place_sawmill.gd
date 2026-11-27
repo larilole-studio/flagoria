@@ -34,7 +34,7 @@ func run() -> void:
 	var tile_size := Vector2(map.tile_set.tile_size) * map.global_scale * root.get_camera_2d().zoom
 	if (
 		build.tool != BuildPlacement.Tool.SAWMILL
-		or build.cells.size() != 9
+		or build.cells.size() != 6
 		or build.cost_viewport.distance_to(center) > tile_size.length() * 0.5
 	):
 		printerr("place sawmill: preview did not start at the center cell")

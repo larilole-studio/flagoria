@@ -62,7 +62,7 @@ func _test_place_sawmill() -> int:
 		fail += 1
 	inventory.add(Inventory.STONE, 1)
 	if (
-		placer.footprint_of(BuildCosts.SAWMILL, ANCHOR).size() != 9
+		placer.footprint_of(BuildCosts.SAWMILL, ANCHOR).size() != 6
 		or not placer.place(BuildCosts.SAWMILL, anchor, inventory)
 		or BuildCosts.balance(inventory) != Vector2i(4, 0)
 		or world.structure_placement_at(ANCHOR).get("owner") != 1

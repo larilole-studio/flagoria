@@ -295,9 +295,9 @@ def render_discs():
         disc(f'pick_{icon}', 24, icon, 1.72, toggle)
     sheet = OUT.parent.parent / 'structures' / 'sawmill_sheet.png'
     with Image.open(sheet) as sheet_image:
-        idle = sheet_image.convert('RGBA').crop((0, 0, 48, 48))
+        idle = sheet_image.convert('RGBA').crop((0, 0, 48, 32))
     disc('pick_sawmill', 24, '', 1.0, toggle,
-         overlay=idle.resize((72, 72), Image.Resampling.NEAREST))
+         overlay=idle.resize((72, 48), Image.Resampling.NEAREST))
     disc('run', 32, 'run', 1.45, basic)
     disc('attack', 40, 'sword', 1.40, ('idle', 'pressed', 'aim', 'disabled'))
     for part, states in [('base', ('normal', 'disabled')), ('knob', ('normal', 'active', 'disabled'))]:
