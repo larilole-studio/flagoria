@@ -100,6 +100,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Castle siege](./castle-siege.md) — breach a starting castle and capture its lowered flag (#782).
 - [Building health](./building-health.md) — sword and bomb damage, building destruction, and saved HP (#763).
 - [Wall and tower junctions](./wall-junctions.md) — mask pieces, collar overlays on stone, tower ring with the team flag, far corner flips when a loop closes.
+- [Stone wall fronts](./stone-wall-fronts.md) — thin caps and visible masonry courses on stone and moss walls.
 - [Walls and bridges](./walls-and-bridges.md) — wall solver and plank bridges, live via the build picker.
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).
 - [Audio](./audio.md) — buses, music, combat, UI and mob SFX, footsteps, `audio_check` gate.
