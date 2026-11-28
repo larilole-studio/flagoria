@@ -1,5 +1,5 @@
 # Hit-sheet reference (#357). sha256 of file bytes, then width height.
 # Update with: python3 tools/art/gen_tree_chop_frames.py --update-golden
-art/flagoria/fx/tree_hit.png f9ca53cea07a8bc04b7c033d86232cce9fc8d35fd9c5cc679795ec2f5b3e06af 32 32
-art/flagoria/fx/pine_hit.png e22a5eb975f6eb043c39948bc42ca309c3bd75b8863a6edd4b52c0f68aa2796a 32 16
-art/flagoria/fx/birch_hit.png 961cd81f37bba8a81d44e417397dbb5175c4834ac9e72c071aeeb4d675b4ebd6 32 32
+art/flagoria/fx/tree_hit.png c54d71d1c35152fc6e83fa3b33d1e3933ff7c03feb6a17883f06016f4cf66941 32 32
+art/flagoria/fx/pine_hit.png 6c4ddc29e7fd4529e5a4e98b1a1f3bc261536d87b3b4666882eeeb492a5b94c7 32 16
+art/flagoria/fx/birch_hit.png da3c9c4ced5502f360c7dc7c9eca45c4b13ab2902024f864c8ee3f5725e4777e 32 32
