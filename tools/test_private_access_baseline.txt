@@ -44,7 +44,6 @@
 4 tests/saves/test_object_removals_save.gd
 6 tests/saves/test_player_save.gd
 1 tests/saves/test_world_save.gd
-1 tests/soldier_fight_probe.gd
 1 tests/soldier_player_probe.gd
 3 tests/tower_gun_probe.gd
 1 tests/tower_sync_probe.gd

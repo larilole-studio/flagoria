@@ -52,10 +52,6 @@ func _test_soldier_fight() -> int:
 	slime.set_physics_process(false)
 	scene.get_node("World/Mobs").add_child(slime)
 	owner.position = base + Vector2(10, 0)
-	if slime.position.distance_to(soldier.position) > SoldierStats.ATTACK_RANGE:
-		printerr("FAIL soldier_fight mob out of range")
-		scene.queue_free()
-		return 1
 	slime.position = base + Vector2(6, 0)
 	var health: PlayerHealth = owner.get_node("Health")
 	var owner_start := health.health

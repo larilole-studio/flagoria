@@ -47,6 +47,9 @@ func _run() -> void:
 		if ready and mode == "move" and phase == "idle":
 			if host and main.multiplayer.get_peers().size() == 1:
 				var client: int = main.multiplayer.get_peers()[0]
+				var mobs: MobSpawner = main.get_node("World/Mobs")
+				mobs.clear_mobs()
+				mobs.set_physics_process(false)
 				_place_error = _spawn_move_fixture(world, requests, client)
 				phase = "done"
 			elif not host:
@@ -63,11 +66,21 @@ func _run() -> void:
 
 
 func _spawn_move_fixture(world: TileMap, requests: SoldierRequests, owner: int) -> String:
+	# Command movement is checked away from the spawn fight.
+	var spawn: Vector2i = world.resolve_player_spawn()
+	var health := requests.get_node("../BuildingHealth") as BuildingHealth
+	var sight := Tuning.value(&"soldiers.sight_range")
 	var start: Variant = _search(
 		world,
 		func(cell: Vector2i) -> bool:
+			if cell.distance_to(spawn) < 18.0:
+				return false
 			for i in 5:
-				if not world.predicted_clear(cell + Vector2i(i, 0)):
+				var lane := cell + Vector2i(i, 0)
+				if not world.predicted_clear(lane) or world.has_wall(lane):
+					return false
+				var at := world.to_global(world.map_to_local(lane))
+				if not health.nearest_enemy(at, sight, owner).is_empty():
 					return false
 			return true
 	)

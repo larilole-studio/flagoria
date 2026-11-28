@@ -3,7 +3,6 @@ extends "res://tests/soldier_sync_probe.gd"
 
 var _fight_mob := ""
 var _fight_started := false
-var _fight_spawn_at := -1
 
 
 func _run() -> void:
@@ -47,11 +46,8 @@ func _run() -> void:
 			_place_error = await _do_place(main, world, me, requests)
 			phase = "done"
 		if host and ready and not _fight_started and _soldier_rows(requests).size() > 0:
-			if _fight_spawn_at < 0:
-				_fight_spawn_at = Time.get_ticks_msec() + 3000
-			elif Time.get_ticks_msec() >= _fight_spawn_at:
-				_fight_started = true
-				_spawn_fight_mob(requests, mobs)
+			_fight_started = true
+			_spawn_fight_mob(requests, mobs)
 		if snapshot_due(main):
 			_write_fight(main, world, me, requests, mobs)
 		await process_frame
@@ -90,28 +86,31 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 
 
 func _spawn_fight_mob(requests: SoldierRequests, mobs: MobSpawner) -> void:
-	var soldier: Soldier = null
-	for child in requests.get_children():
-		if child is Soldier and child.state != Soldier.State.DYING:
-			soldier = child
-			break
-	if soldier == null:
-		return
+	# Isolate the duel from hostile castles and players in the live seed.
+	# Freeze mob movement after spawning so a late peer can see the damage.
+	var soldier: Soldier = requests.soldiers()[0]
+	var arena := Vector2(4096, 4096)
+	soldier.position = arena
+	soldier.hp = 100
 	soldier.set_order("hold")
-	soldier._hold_pos = soldier.global_position
 	_fight_mob = "mob_fight_probe"
-	(
-		mobs
-		. get_node("MultiplayerSpawner")
-		. spawn(
-			{
-				"name": _fight_mob,
-				"type": MobCatalog.SLIME,
-				"pos": soldier.global_position + Vector2(6, 0),
-				"seed": 11,
-			}
+	var spawner: MultiplayerSpawner = mobs.get_node("MultiplayerSpawner")
+	var slime := (
+		(
+			spawner
+			. spawn(
+				{
+					"name": _fight_mob,
+					"type": MobCatalog.SLIME,
+					"pos": arena + Vector2(6, 0),
+					"seed": 11,
+				}
+			)
 		)
+		as Mob
 	)
+	if slime != null:
+		slime.set_physics_process(false)
 
 
 func _fight_hp(mobs: MobSpawner) -> Dictionary:

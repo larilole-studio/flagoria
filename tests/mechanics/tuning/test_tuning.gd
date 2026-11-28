@@ -40,6 +40,7 @@ func _test_tuning_defaults_and_live_price() -> int:
 		&"soldiers.training_stone": 4.0,
 		&"soldiers.train_seconds": 4.0,
 		&"soldiers.cap_per_barracks": 20.0,
+		&"soldiers.sight_range": 96.0,
 		&"soldiers.walk_speed": 48.0,
 		&"movement.keyboard_speed": 130.0,
 		&"movement.joystick_speed": 60.0,
