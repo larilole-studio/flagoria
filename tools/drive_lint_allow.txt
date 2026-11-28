@@ -24,8 +24,6 @@ object_removals_save.gd	set_cell	3
 sky_islands.gd	global_position write	1
 soldier_fight.gd	global_position write	3
 tower_capture.gd	global_position write	2
-train_soldier.gd	global_position write	4
-train_soldier.gd	pressed signal	1
 wall_collar_sides.gd	global_position write	1
 wall_health.gd	global_position write	2
 wall_junctions.gd	global_position write	1

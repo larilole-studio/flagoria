@@ -217,7 +217,7 @@ func _restore_loaded_world() -> int:
 		cuts
 		+ bridges
 		+ StructureSaves.restore(loaded.structures, world)
-		+ SoldierSaves.restore(loaded.soldiers, get_node("World/Soldiers"))
+		+ SoldierSaves.restore_world(loaded, get_node("World/Soldiers"))
 	)  # after cuts: a structure clears its cells
 
 

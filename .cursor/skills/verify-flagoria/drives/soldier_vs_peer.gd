@@ -25,7 +25,7 @@ func run() -> void:
 	var requests: SoldierRequests = current_scene.get_node("World/Soldiers")
 	var peer: int = current_scene.multiplayer.get_unique_id()
 	inventory.add(Inventory.WOOD, 20 + SoldierStats.TRAIN_WOOD)
-	inventory.add(Inventory.STONE, 10)
+	inventory.add(Inventory.STONE, 10 + int(Tuning.value(&"soldiers.training_stone")))
 	await toggle_mode()
 	await click("CanvasLayer1/BuildingsButton")
 	it.build.set_tool(BuildPlacement.Tool.BARRACKS)
@@ -51,7 +51,7 @@ func run() -> void:
 	await snapshot("train-ready")
 	requests.host_train(peer, anchor)
 	for _i in 40:
-		requests.advance(SoldierStats.TRAIN_TIME / 40.0)
+		requests.advance(Tuning.value(&"soldiers.train_seconds") / 40.0)
 		await physics_frame
 	var soldier: Soldier = null
 	for _i in 60:

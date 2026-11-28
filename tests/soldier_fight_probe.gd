@@ -41,7 +41,7 @@ func _run() -> void:
 		me = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id())) as Node2D
 		var ready := main.world_params != null and me != null
 		if host and ready and requests.pending_job_count() > 0:
-			requests.advance(SoldierStats.TRAIN_TIME)
+			requests.advance(Tuning.value(&"soldiers.train_seconds"))
 		if not host and mode == "place" and phase == "idle" and ready:
 			phase = "working"
 			_place_error = await _do_place(main, world, me, requests)
@@ -78,15 +78,12 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 	var builder: int = main.multiplayer.get_unique_id()
 	if not await _until(func() -> bool: return _barracks_count(world, builder) >= 1, 8000):
 		return "built barracks was not applied"
-	_train_anchor = land
 	err = await _ready_to_build(main, me, interaction.cell_center(land) + Vector2(0, 48))
 	if err != "":
 		return err
 	inventory.add(Inventory.WOOD, 8)
-	if main.multiplayer.is_server():
-		requests.host_train(builder, land)
-	else:
-		requests.request_train.rpc_id(1, land)
+	inventory.add(Inventory.STONE, 4)
+	requests.train(land)
 	if not await _until(func() -> bool: return _soldier_rows(requests).size() >= 1, 15000):
 		return "soldier did not spawn"
 	return ""

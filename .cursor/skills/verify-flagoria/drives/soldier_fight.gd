@@ -50,7 +50,7 @@ func run() -> void:
 	await snapshot("train-ready")
 	requests.host_train(peer, anchor)
 	for _i in 40:
-		requests.advance(SoldierStats.TRAIN_TIME / 40.0)
+		requests.advance(Tuning.value(&"soldiers.train_seconds") / 40.0)
 		await physics_frame
 	var hero_node := hero()
 	var start := hero_node.global_position

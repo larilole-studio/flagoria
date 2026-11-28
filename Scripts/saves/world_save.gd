@@ -41,6 +41,8 @@ var updated: int = 0
 var clock_elapsed: float = 0.0
 ## Living trained soldiers (#553). Not a WORLD_SECTIONS chunk dict.
 var soldiers: Array = []
+## Paid barracks training jobs captured by the host.
+var soldier_training: Array = []
 ## Gameplay values that differ from the registry defaults (#738).
 var tuning_overrides: Dictionary = {}
 
@@ -54,6 +56,8 @@ func world_to_dict() -> Dictionary:
 	for section in WORLD_SECTIONS:
 		out[section] = get(section)
 	out["soldiers"] = soldiers
+	if not soldier_training.is_empty():
+		out["soldier_training"] = soldier_training
 	if not tuning_overrides.is_empty():
 		out["tuning"] = tuning_overrides
 	return out
@@ -76,6 +80,8 @@ func world_from_dict(data: Dictionary) -> String:
 	if not troops is Array:
 		return "world.soldiers is not an array"
 	soldiers = troops.duplicate(true)
+	var training: Variant = data.get("soldier_training")
+	soldier_training = training.duplicate(true) if training is Array else []
 	var tuning: Variant = data.get("tuning")
 	tuning_overrides = tuning.duplicate() if tuning is Dictionary else {}
 	return ""
