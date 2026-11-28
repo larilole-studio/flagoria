@@ -11,12 +11,12 @@ Source: Scripts/mechanics/tuning/tuning.gd
 Source: Scripts/ui/hud_tool_row.gd
 Source: Scripts/world/TileMap.gd
 
-Open Buildings and select **Sawmill** to start a 3×3 preview at screen centre.
+Open Buildings and select **Sawmill** to start a 3×2 preview at screen centre.
 Drag to a reachable clear site whose anchor touches a live tree or pine
 orthogonally. The ready preview shows **15 stone**. A diagonal tree, bush,
 stump or absent tree turns it red and shows **not adjacent to a tree**.
 A clear site with a live neighbour and too little stone shows **not enough stone**.
-The preview and timber placeholder leave the generated ground visible.
+The preview and hooded mill leave the generated ground visible.
 
 The buyer owns the sawmill and spends stone only. The host checks the current
 tree when processing a request. A placed sawmill survives chopping and returns

@@ -136,7 +136,7 @@ func _send_joiner_requests(
 		not opened
 		or button.get_node("Caption").text != "Sawmill\n15 stone"
 		or build.tool != BuildPlacement.Tool.SAWMILL
-		or build.cells.size() != 9
+		or build.cells.size() != 6
 		or not build.cells.has(center_cell)
 	):
 		printerr("FAIL sawmill_sync: joiner did not get a centered Sawmill preview")

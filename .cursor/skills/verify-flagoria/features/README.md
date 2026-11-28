@@ -82,7 +82,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Demolish construction](./demolish-construction.md)
 - [Build barracks](./build-barracks.md) — `barracks.txt` for 20 wood and 10 stone from the build picker, save/reload and multiplayer sync (#556).
 - [Place a mine](./place-mine.md) — a 3×3 mine costs 15 wood and needs an orthogonally adjacent live rock (#722).
-- [Place a sawmill](./place-sawmill.md) — a 3×3 sawmill costs 15 stone and needs an orthogonally adjacent live tree or pine (#749).
+- [Place a sawmill](./place-sawmill.md) — a 3×2 sawmill costs 15 stone and needs an orthogonally adjacent live tree or pine (#749).
 - [Produce wood at placed sawmills](./sawmill-production.md) — each sawmill credits its owner one wood per minute (#750).
 - [Sawmill animation and sound](./sawmill-animation.md) — the placed sawmill strokes its blade and plays a positional wood-cutting sound while producing (#751).
 - [Produce stone at placed mines](./mine-production.md) — each mine credits its owner one stone per minute (#723).
