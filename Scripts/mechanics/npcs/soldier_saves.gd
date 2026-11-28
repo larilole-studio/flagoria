@@ -21,22 +21,22 @@ static func capture(game: Node) -> Array:
 	if soldiers == null:
 		return []
 	var out: Array = []
-	for child in soldiers.get_children():
-		if child is Soldier and child.state != Soldier.State.DYING:
-			var s := child as Soldier
-			(
-				out
-				. append(
-					{
-						"name": str(s.name),
-						"pos": [s.position.x, s.position.y],
-						"owner": s.owner_peer,
-						"order": "hold" if s.order == "move" else s.order,
-						"hp": s.hp,
-						"barracks_anchor": [s.barracks_anchor.x, s.barracks_anchor.y],
-						"seed": s.spawn_seed,
-					}
-				)
+	for s: Soldier in soldiers.soldiers():
+		if s.is_owned_alive(s.owner_peer):
+			out.append(
+				{
+					"name": str(s.name),
+					"pos": [s.position.x, s.position.y],
+					"owner": s.owner_peer,
+					"order": "hold" if s.order == "move" else s.order,
+					"hp": s.hp,
+					"barracks_anchor": [s.barracks_anchor.x, s.barracks_anchor.y],
+					"members":
+					s.member_anchors.map(
+						func(anchor: Vector2i) -> Array: return [anchor.x, anchor.y]
+					),
+					"seed": s.spawn_seed,
+				}
 			)
 	return out
 
@@ -51,10 +51,12 @@ static func restore(rows: Array, soldiers: SoldierRequests) -> int:
 	for row in rows:
 		if not row is Dictionary:
 			continue
-		if not _barracks_exists(world, row):
+		# Older rows required an existing barracks. New rows retain each
+		# recruit even after its training building has been destroyed.
+		if not row.has("members") and not _barracks_exists(world, row):
 			continue
-		soldiers.spawn_saved(row)
-		count += 1
+		if soldiers.spawn_saved(row) != null:
+			count += 1
 	return count
 
 

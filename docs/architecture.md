@@ -111,6 +111,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 #### `npcs/`
 
 - `Scripts/mechanics/npcs/soldier.gd`
+- `Scripts/mechanics/npcs/soldier_formations.gd`
 - `Scripts/mechanics/npcs/soldier_requests.gd`
 - `Scripts/mechanics/npcs/soldier_saves.gd`
 - `Scripts/mechanics/npcs/soldier_stats.gd`

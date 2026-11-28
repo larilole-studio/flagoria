@@ -6,19 +6,24 @@ const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
 const BUILDING_REACH := 17.0
 const SCAN_INTERVAL := 0.2
 const RETURN_STOP := 1.0
+const COUNT_FONT := preload("res://art/ui/fonts/LilitaOne-Regular.ttf")
+const COUNT_INK := Color("#3d3a5c")
+const COUNT_TEXT := Color("#ffe680")
 
 @export var owner_peer: int = 0
 @export var order: String = "follow"
 @export var move_target := Vector2.ZERO
 @export var barracks_anchor: Vector2i = Vector2i.ZERO
 
+var member_anchors: Array[Vector2i] = []
 var spawn_seed := 0
 
-var _hold_pos := Vector2.ZERO
 var _blocked_seconds := 0.0
+var _hold_pos := Vector2.ZERO
 var _strike_cd := 0.0
 var _hurt_cd := 0.0
 var _scan_cd := 0.0
+var _engaged := false
 var _unit_target: Node2D
 var _building_target := {}
 
@@ -28,7 +33,9 @@ func setup_soldier(data: Dictionary) -> void:
 	setup(String(data.get("type", MobCatalog.SOLDIER)), data["pos"], spawn_seed)
 	owner_peer = int(data.get("owner", 0))
 	order = str(data.get("order", "follow"))
-	barracks_anchor = data.get("barracks_anchor", Vector2i.ZERO)
+	move_target = data.get("move_target", Vector2.ZERO)
+	member_anchors = read_members(data)
+	barracks_anchor = member_anchors[0]
 	if data.has("hp"):
 		hp = int(data["hp"])
 	_hold_pos = position
@@ -45,8 +52,71 @@ func setup_from_save(row: Dictionary) -> void:
 			"owner": int(row.get("owner", 0)),
 			"order": str(row.get("order", "follow")),
 			"barracks_anchor": Vector2i(int(anchor_arr[0]), int(anchor_arr[1])),
+			"members": row.get("members", []),
 			"hp": int(row.get("hp", MobCatalog.stat(MobCatalog.SOLDIER, "hp"))),
 		}
+	)
+
+
+static func read_members(data: Dictionary) -> Array[Vector2i]:
+	var members: Array[Vector2i] = []
+	var source: Variant = data.get("members", [])
+	if source is Array and source.size() in [SoldierFormations.SQUAD, SoldierFormations.COMPANY]:
+		for anchor in source:
+			if anchor is Vector2i or (anchor is Array and anchor.size() == 2):
+				members.append(Vector2i(int(anchor[0]), int(anchor[1])))
+		if members.size() == source.size():
+			return members
+	var anchor: Variant = data.get("barracks_anchor", Vector2i.ZERO)
+	return [Vector2i(int(anchor[0]), int(anchor[1]))]
+
+
+func member_count() -> int:
+	return maxi(1, member_anchors.size())
+
+
+func can_group() -> bool:
+	return is_owned_alive(owner_peer) and state == State.IDLE and order != "move" and not _engaged
+
+
+func strike_damage() -> int:
+	return ceili(float(member_count()) / SoldierFormations.SQUAD)
+
+
+func _process(delta: float) -> void:
+	super._process(delta)
+	if member_count() > 1:
+		sprite.hide()
+		queue_redraw()
+
+
+func _draw() -> void:
+	var count := member_count()
+	if count == 1 or puff.visible or sprite.texture == null:
+		return
+	var frame_size := sprite.texture.get_size() / Vector2(sprite.hframes, sprite.vframes)
+	var frame := Rect2(Vector2(sprite.frame_coords) * frame_size, frame_size)
+	var company := count == SoldierFormations.COMPANY
+	var columns := 5 if company else 3
+	var spacing := 8 if company else 9
+	for member in count:
+		var rank := member / columns
+		var in_rank := mini(columns, count - rank * columns)
+		var x := (member % columns) * spacing - (in_rank - 1) * spacing * 0.5
+		var y := (rank - (count - 1) / columns) * 5
+		var at := Vector2(x - frame_size.x * 0.5, y - frame_size.y)
+		draw_texture_rect_region(sprite.texture, Rect2(at, frame_size), frame)
+	var label := str(count)
+	var width := ceili(COUNT_FONT.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x)
+	draw_rect(Rect2(-ceilf(width * 0.5) - 2, 1, width + 4, 10), COUNT_INK)
+	draw_string(
+		COUNT_FONT,
+		Vector2(-floorf(width * 0.5), 9),
+		label,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1,
+		9,
+		COUNT_TEXT
 	)
 
 
@@ -71,7 +141,8 @@ func think(delta: float) -> void:
 	if _scan_cd <= 0.0:
 		_scan_cd = SCAN_INTERVAL
 		_scan_targets()
-	if not _engage(delta):
+	_engaged = _engage(delta)
+	if not _engaged:
 		_step_move(delta)
 
 
@@ -175,9 +246,9 @@ func _engage(delta: float) -> bool:
 
 func _hit_unit(mob: Mob) -> bool:
 	if mob != null:
-		return mob.take_hit(owner_peer)
+		return mob.take_hit(owner_peer, strike_damage())
 	var health := _unit_target.get_node_or_null("Health") as PlayerHealth
-	return health != null and health.take_damage(1)
+	return health != null and health.take_damage(strike_damage())
 
 
 func _engage_building(delta: float) -> bool:
@@ -191,7 +262,7 @@ func _engage_building(delta: float) -> bool:
 		_walk_toward(target_position, delta, BUILDING_REACH)
 		return true
 	_face_target(target_position)
-	if _strike_cd <= 0.0 and health.host_damage(id, 1, owner_peer):
+	if _strike_cd <= 0.0 and health.host_damage(id, strike_damage(), owner_peer):
 		_strike_cd = SoldierStats.HIT_EVERY
 	return true
 

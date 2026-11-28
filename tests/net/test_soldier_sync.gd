@@ -191,3 +191,34 @@ func _close(session: Dictionary) -> void:
 	await stop_probes(session["probes"], 10000)
 	_remove_dir(session["dir"])
 	DirAccess.remove_absolute(session["saved"])
+
+
+func _test_soldier_formation_two_players() -> int:
+	print("-- test_soldier_formation_two_players")
+	var session := _open("formation")
+	if session.is_empty():
+		return 1
+	var launch: Callable = session["launch"]
+	var read: Callable = session["read"]
+	launch.call(false, "watch")
+	var ok := await wait_until(_formation_agrees.bind(read, 2), 18000)
+	if ok:
+		launch.call(false, "watch")
+		ok = await wait_until(_formation_agrees.bind(read, 3), 18000)
+	if not ok:
+		for i in session["outs"].size():
+			printerr("FAIL soldier_formation_two_players: peer %d %s" % [i, read.call(i)])
+	await _close(session)
+	if ok:
+		print("PASS test_soldier_formation_two_players")
+	return 0 if ok else 1
+
+
+func _formation_agrees(read: Callable, count: int) -> bool:
+	for i in count:
+		var peer: Dictionary = read.call(i)
+		if not peer.get("ready", false) or not peer.get("errors", []).is_empty():
+			return false
+		if peer.get("formation_counts", []) != [5.0]:
+			return false
+	return true

@@ -89,6 +89,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Train soldier](./train-soldier.md) — train at an owned barracks for wood and stone with a tuned timer and cap (#778); Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
 - [Command tool](./command-tool.md) — select owned soldiers with the Attack drag and send them to a map position (#779).
 - [Soldier sight and pursuit](./soldier-sight.md) — soldiers pursue enemy units and buildings, then resume their orders (#780).
+- [Soldier formations](./soldier-formations.md) — five-member squads and twenty-member companies (#781).
 - [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bomb hits from other peers land; multiplayer hp sync (#554).
 - [Soldier vs peer](./soldier-vs-peer.md) — trained soldiers on Follow or Hold strike living enemy players; owner is never a target; health sync (#555).
 - [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
