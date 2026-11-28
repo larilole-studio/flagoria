@@ -27,10 +27,10 @@ const TILE_SIZE := Vector2(16, 16)
 
 ## tower id -> {"walls": Dictionary cell->true, "interior": Dictionary cell->true}
 var cities: Dictionary = {}
-var _frames := 0
-var _stamp := 0
 var _stone_trim_cells := {}
 @onready var _map: TileMap = get_node_or_null("../worldMap")
+var _frames := 0
+var _stamp := 0
 
 
 func _ready() -> void:
