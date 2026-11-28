@@ -17,7 +17,6 @@ var _jobs: Array[Dictionary] = []
 var _next_index := {}
 var _train_button: Button
 var _order_button: Button
-var _ui_peer := -1
 var _headless := false
 
 
@@ -41,16 +40,20 @@ func _process(_delta: float) -> void:
 	if _headless or _train_button == null:
 		return
 	var peer := multiplayer.get_unique_id() if multiplayer != null else 1
-	if peer != _ui_peer:
-		_ui_peer = peer
 	var train_anchor := _train_anchor(peer)
 	_train_button.visible = train_anchor != Vector2i.MAX
 	if _train_button.visible:
-		_train_button.text = "Train %d" % int(Tuning.value(&"soldiers.training_wood"))
+		var cost := _training_cost()
+		var label := "Train %dw %ds" % [cost.x, cost.y]
+		if _train_button.text != label:
+			_train_button.text = label
+			_train_button.reset_size()
 	_order_button.visible = _living_for_owner(peer) > 0
 	if _order_button.visible:
 		var flip := "hold" if _owner_order(peer) == "follow" else "follow"
 		_order_button.text = flip.capitalize()
+	if _train_button.visible or _order_button.visible:
+		_layout_buttons()
 
 
 func pending_job_count() -> int:
@@ -66,13 +69,24 @@ func advance(seconds: float) -> void:
 		job["left"] = float(job["left"]) - seconds
 		if job["left"] <= 0.0:
 			finished.append(i)
-			_spawn_job(job)
+			if not _spawn_job(job):
+				_refund(job["peer_id"], job["cost"])
 	for i in range(finished.size() - 1, -1, -1):
 		_jobs.remove_at(finished[i])
 	set_physics_process(multiplayer.is_server() and not _jobs.is_empty())
 
 
-func host_train(peer_id: int, anchor: Vector2i) -> bool:
+func train(anchor: Vector2i) -> void:
+	if multiplayer.is_server():
+		host_train(multiplayer.get_unique_id(), anchor)
+		return
+	var inventory := get_node_or_null("../../Inventory") as Inventory
+	if inventory != null:
+		var reported := BuildCosts.balance(inventory) + inventory.processed_charges
+		request_train.rpc_id(1, anchor, reported)
+
+
+func host_train(peer_id: int, anchor: Vector2i, reported := Vector2i.ZERO) -> bool:
 	if not multiplayer.is_server():
 		return false
 	var map := _map()
@@ -84,23 +98,31 @@ func host_train(peer_id: int, anchor: Vector2i) -> bool:
 		return false
 	if not _in_reach(body, map, entry):
 		return false
-	if _slots_used(peer_id, anchor) >= SoldierStats.CAP_PER_BARRACKS:
+	if _slots_used(peer_id, anchor) >= int(Tuning.value(&"soldiers.cap_per_barracks")):
 		return false
-	var wood := int(Tuning.value(&"soldiers.training_wood"))
-	if not _charge(peer_id, wood):
+	var cost := _training_cost()
+	if not _charge(peer_id, cost, reported):
 		return false
-	_jobs.append(
-		{"peer_id": peer_id, "anchor": anchor, "left": SoldierStats.TRAIN_TIME, "wood": wood}
+	(
+		_jobs
+		. append(
+			{
+				"peer_id": peer_id,
+				"anchor": anchor,
+				"left": Tuning.value(&"soldiers.train_seconds"),
+				"cost": cost,
+			}
+		)
 	)
 	set_physics_process(true)
 	return true
 
 
 @rpc("any_peer", "reliable", "call_remote")
-func request_train(anchor: Vector2i) -> void:
+func request_train(anchor: Vector2i, reported: Vector2i) -> void:
 	if not multiplayer.is_server():
 		return
-	host_train(multiplayer.get_remote_sender_id(), anchor)
+	host_train(multiplayer.get_remote_sender_id(), anchor, reported)
 
 
 func host_set_order(peer_id: int) -> bool:
@@ -122,6 +144,42 @@ func request_order() -> void:
 	host_set_order(sender)
 
 
+func capture_training() -> Array:
+	var rows := []
+	for job in _jobs:
+		var anchor: Vector2i = job["anchor"]
+		var cost: Vector2i = job["cost"]
+		rows.append([job["peer_id"], anchor.x, anchor.y, job["left"], cost.x, cost.y])
+	return rows
+
+
+func restore_training(rows: Array) -> void:
+	if not multiplayer.is_server():
+		return
+	_jobs.clear()
+	for row in rows:
+		if not row is Array or row.size() != 6 or not row.all(_finite_number):
+			continue
+		if row[0] < 1 or row[3] <= 0 or row[4] < 0 or row[5] < 0:
+			continue
+		(
+			_jobs
+			. append(
+				{
+					"peer_id": int(row[0]),
+					"anchor": Vector2i(row[1], row[2]),
+					"left": float(row[3]),
+					"cost": Vector2i(row[4], row[5]),
+				}
+			)
+		)
+	set_physics_process(not _jobs.is_empty())
+
+
+static func _finite_number(value: Variant) -> bool:
+	return (value is int or value is float) and is_finite(value)
+
+
 func spawn_saved(row: Dictionary) -> void:
 	if not multiplayer.is_server():
 		return
@@ -136,40 +194,31 @@ func soldiers() -> Array:
 	return get_children().filter(func(n: Node) -> bool: return n is Soldier)
 
 
-func _spawn_job(job: Dictionary) -> void:
+func _spawn_job(job: Dictionary) -> bool:
 	var peer_id: int = job["peer_id"]
 	var anchor: Vector2i = job["anchor"]
-	var map := _map()
 	var entry := _barracks_entry(peer_id, anchor)
-	if entry.is_empty():
-		return
-	var rotation := int(entry.get("rotation", 0))
-	var pos := spawn_cell(map, anchor, rotation)
-	if pos == Vector2.INF:
-		_refund(peer_id, job["wood"])
-		return
 	var spawner := get_node_or_null("MultiplayerSpawner") as MultiplayerSpawner
-	if spawner == null:
-		return
+	if entry.is_empty() or spawner == null:
+		return false
+	var pos := spawn_cell(_map(), anchor, int(entry.get("rotation", 0)))
+	if pos == Vector2.INF:
+		return false
 	var index := int(_next_index.get(peer_id, 0))
-	_next_index[peer_id] = index + 1
 	var node_name := "soldier_%d_%d" % [peer_id, index]
-	(
-		spawner
-		. spawn(
-			_spawn_dict(
-				node_name,
-				{
-					"pos": pos,
-					"owner": peer_id,
-					"order": "follow",
-					"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
-					"barracks_anchor": anchor,
-					"seed": hash(Vector2i(peer_id, index)),
-				}
-			)
-		)
-	)
+	while has_node(NodePath(node_name)):
+		index += 1
+		node_name = "soldier_%d_%d" % [peer_id, index]
+	_next_index[peer_id] = index + 1
+	var data := {
+		"pos": pos,
+		"owner": peer_id,
+		"order": "follow",
+		"hp": MobCatalog.stat(MobCatalog.SOLDIER, "hp"),
+		"barracks_anchor": anchor,
+		"seed": hash(Vector2i(peer_id, index)),
+	}
+	return spawner.spawn(_spawn_dict(node_name, data)) != null
 
 
 static func spawn_cell(map: TileMap, anchor: Vector2i, rotation: int) -> Vector2:
@@ -271,35 +320,41 @@ func _slots_used(peer_id: int, anchor: Vector2i) -> int:
 	return count
 
 
-func _charge(peer_id: int, wood: int) -> bool:
-	if wood <= 0:
+static func _training_cost() -> Vector2i:
+	return Vector2i(
+		Tuning.value(&"soldiers.training_wood"), Tuning.value(&"soldiers.training_stone")
+	)
+
+
+func _charge(peer_id: int, cost: Vector2i, reported: Vector2i) -> bool:
+	var inventory := get_node_or_null("../../Inventory") as Inventory
+	if inventory == null:
 		return false
 	if peer_id == multiplayer.get_unique_id():
-		var inventory := get_node_or_null("../../Inventory") as Inventory
-		return inventory != null and inventory.spend(Inventory.WOOD, wood)
+		return BuildCosts.charge(inventory, cost)
 	var interaction := _interaction()
 	if interaction == null:
 		return false
-	interaction.issue_charge(peer_id, Vector2i(wood, 0))
+	# Account for outstanding debits, as in the two-resource build requests.
+	var charged := inventory.issued_charges(peer_id)
+	if not BuildCosts.shortage(reported.max(charged) - charged, cost).is_empty():
+		return false
+	interaction.issue_charge(peer_id, cost)
 	return true
 
 
-func _refund(peer_id: int, wood: int) -> void:
-	if wood <= 0:
-		return
+func _refund(peer_id: int, cost: Vector2i) -> void:
 	if peer_id == multiplayer.get_unique_id():
-		var inventory := get_node_or_null("../../Inventory") as Inventory
-		if inventory:
-			inventory.add(Inventory.WOOD, wood)
-	else:
-		receive_wood.rpc_id(peer_id, wood)
+		receive_training_refund(cost)
+	elif peer_id in multiplayer.get_peers():
+		receive_training_refund.rpc_id(peer_id, cost)
 
 
 @rpc("authority", "reliable", "call_remote")
-func receive_wood(wood: int) -> void:
+func receive_training_refund(cost: Vector2i) -> void:
 	var inventory := get_node_or_null("../../Inventory") as Inventory
-	if inventory and wood > 0:
-		inventory.add(Inventory.WOOD, wood)
+	if inventory != null:
+		BuildCosts.credit(inventory, cost)
 
 
 func _train_anchor(peer_id: int) -> Vector2i:
@@ -313,7 +368,7 @@ func _train_anchor(peer_id: int) -> Vector2i:
 		if str(entry.get("name")) != "barracks" or int(entry.get("owner")) != peer_id:
 			continue
 		var anchor: Vector2i = entry.get("anchor", Vector2i.ZERO)
-		if _slots_used(peer_id, anchor) >= SoldierStats.CAP_PER_BARRACKS:
+		if _slots_used(peer_id, anchor) >= int(Tuning.value(&"soldiers.cap_per_barracks")):
 			continue
 		if not _in_reach(body, map, entry):
 			continue
@@ -349,7 +404,6 @@ func _ensure_buttons() -> void:
 		_train_button = Button.new()
 		_train_button.name = "TrainButton"
 		_train_button.theme = theme
-		_train_button.position = Vector2(4, 196)
 		_train_button.pressed.connect(_on_train_pressed)
 		hud.add_child(_train_button)
 	_order_button = hud.get_node_or_null("SoldierOrderButton") as Button
@@ -357,22 +411,31 @@ func _ensure_buttons() -> void:
 		_order_button = Button.new()
 		_order_button.name = "SoldierOrderButton"
 		_order_button.theme = theme
-		_order_button.position = Vector2(4, 214)
 		_order_button.pressed.connect(_on_order_pressed)
 		hud.add_child(_order_button)
 	_train_button.visible = false
 	_order_button.visible = false
 
 
+func _layout_buttons() -> void:
+	var hud := _train_button.get_parent()
+	var plate := hud.get_node("StatusPlate") as Control
+	var scoreboard := hud.get_node("ScoreboardPanel") as Control
+	var top := plate.get_rect().end.y
+	if scoreboard.visible:
+		top = maxf(top, scoreboard.get_rect().end.y)
+	var start := Vector2(plate.position.x, top + 4.0)
+	_train_button.position = start
+	_order_button.position = start
+	if _train_button.visible:
+		_order_button.position.x += _train_button.size.x + 4.0
+
+
 func _on_train_pressed() -> void:
 	var peer := multiplayer.get_unique_id() if multiplayer != null else 1
 	var anchor := _train_anchor(peer)
-	if anchor == Vector2i.MAX:
-		return
-	if multiplayer.is_server():
-		host_train(peer, anchor)
-	else:
-		request_train.rpc_id(1, anchor)
+	if anchor != Vector2i.MAX:
+		train(anchor)
 
 
 func _on_order_pressed() -> void:
