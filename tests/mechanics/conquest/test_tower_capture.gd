@@ -386,3 +386,35 @@ func _test_tower_capture_off_in_multiplayer() -> int:
 		fail += 1
 	t["scene"].queue_free()
 	return fail
+
+
+func _test_start_castle_requires_breach() -> int:
+	print("-- test_start_castle_requires_breach")
+	var scene := mount_main_scene()
+	var world = scene.get_node("World/worldMap")
+	var capture: TowerCapture = scene.get_node("World/TowerCapture")
+	var health: BuildingHealth = scene.get_node("World/BuildingHealth")
+	var anchor := Vector2i(18, 24)
+	var flag := anchor + Vector2i(0, -2)
+	world.apply_map_params(_spawn_params(11, 0.0))
+	world.replace_structures([["castle", 1, anchor, 0, 1, true]])
+	capture.set_physics_process(false)
+	var attacker := _contact_player(scene.get_node("World"))
+	attacker.name = "2"
+	attacker.position = world.map_to_local(flag)
+	capture.tick(2.0)
+	var ok := capture.progress.is_empty() and health.hp(1) == 60
+	health.host_damage(1, 60, 2)
+	capture.tick(2.0)
+	ok = ok and capture.progress.get(1, {}).get("progress") == 2.0
+	capture.tick(3.0)
+	ok = ok and health.hp(1) == 60 and world.structure_placement_at(flag)["owner"] == 2
+	capture.tick(3.0)
+	ok = ok and capture.progress.is_empty()
+	scene.queue_free()
+	await process_frame
+	if ok:
+		print("PASS test_start_castle_requires_breach")
+	else:
+		printerr("FAIL start_castle_requires_breach: progress, ownership or restored HP mismatch")
+	return 0 if ok else 1
