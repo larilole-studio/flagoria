@@ -3,8 +3,9 @@
 
 Writes, under art/flagoria/fx/:
 - tree_hit.png (32x32): the hit sheet of tree.tres, one row per tile in its
-  `tiles` (TREE, then TREE_BUSHY), 2 frames of 16x16: the canopy sways right
-  on the impact, then its top swings back left. The trunk stays put.
+  `tiles` (TREE, then TREE_BUSHY), 2 frames of 16x16. On impact the canopy
+  shifts 2 px right. On return the top shifts 2 px left of idle and the
+  lower canopy returns to idle. The trunk stays put.
 - pine_hit.png (32x16): the same for TREE_PINE_SMALL.
 - birch_hit.png (32x32): two 16x32 frames of the stacked birch tiles.
 - fx_tree.png, fx_tree_bushy.png, fx_birch.png, fx_pine.png (64x16):
@@ -85,7 +86,7 @@ def hit_sheet(atlas: Image.Image, cells: list) -> Image.Image:
     sheet = Image.new("RGBA", (2 * TILE, TILE * len(cells)))
     for row, cell in enumerate(cells):
         src = tile(atlas, cell)
-        for col, (top, low) in enumerate([(1, 1), (-1, 0)]):
+        for col, (top, low) in enumerate([(2, 2), (-2, 0)]):
             sheet.paste(sway(src, TRUNK_FROM[cell], top, low), (col * TILE, row * TILE))
     return sheet
 
@@ -96,7 +97,7 @@ def birch_hit_sheet(atlas: Image.Image) -> Image.Image:
     src.paste(tile(atlas, BIRCH_BOTTOM), (0, TILE))
     sheet = Image.new("RGBA", (2 * TILE, src.height))
     # The white trunk starts on row 4 of the lower tile.
-    for col, (top, low) in enumerate([(1, 1), (-1, 0)]):
+    for col, (top, low) in enumerate([(2, 2), (-2, 0)]):
         sheet.paste(sway(src, TILE + 4, top, low), (col * TILE, 0))
     return sheet
 
