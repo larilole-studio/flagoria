@@ -1,4 +1,4 @@
-[gd_scene load_steps=39 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=40 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -24,6 +24,7 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/cities.gd" id="17_cities"]
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/flags_held_points.gd" id="18_flags_held"]
 [ext_resource type="Script" path="res://Scripts/ui/map_chart.gd" id="16_chart"]
+[ext_resource type="Script" path="res://Scripts/ui/building_alerts.gd" id="16_alerts"]
 [ext_resource type="Script" path="res://Scripts/ui/parchment_map.gd" id="16_parchment"]
 [ext_resource type="Script" path="res://Scripts/mechanics/run/run_control.gd" id="19_run"]
 [ext_resource type="Script" path="res://Scripts/ui/hud_tool_row.gd" id="20_hud_row"]
@@ -137,6 +138,11 @@ script = ExtResource("20_hud_row")
 [node name="InGameMenu" parent="CanvasLayer1" node_paths=PackedStringArray("resource_grants", "tuning_sync") instance=ExtResource("9_ingame_menu")]
 resource_grants = NodePath("../../AdminResourceGrants")
 tuning_sync = NodePath("../../TuningSync")
+
+[node name="BuildingAlerts" type="Control" parent="CanvasLayer1"]
+mouse_filter = 2
+texture_filter = 1
+script = ExtResource("16_alerts")
 
 [node name="ParchmentMap" type="Control" parent="CanvasLayer1"]
 visible = false

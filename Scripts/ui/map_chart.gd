@@ -274,6 +274,14 @@ static func kind_colour(kind: int, shore: bool, cell: Vector2i, px: int, py: int
 	return GRASS_HI if _hash01(cell) < 0.12 else GRASS
 
 
+func paint_overlays(target: CanvasItem, origin: Vector2, window: Vector2, cell_px: int) -> void:
+	var top_left := Vector2i((origin / float(cell_px)).floor())
+	paint_city_walls(target, top_left, Vector2i(window), cell_px)
+	var alerts := get_node_or_null("../BuildingAlerts") as BuildingAlerts
+	if alerts != null:
+		alerts.draw_markers(target, origin, cell_px, Rect2(Vector2.ZERO, window))
+
+
 func paint_city_walls(
 	target: CanvasItem, top_left: Vector2i, window_size: Vector2i, cell_px: int = CELL_PX
 ) -> void:

@@ -138,3 +138,24 @@ func _test_explored_map() -> int:
 	if fail == 0:
 		print("PASS test_explored_map")
 	return fail
+
+
+func _test_building_alert_refresh() -> int:
+	print("-- test_building_alert_refresh")
+	var scene := mount_main_scene()
+	var alerts: BuildingAlerts = scene.get_node("CanvasLayer1/BuildingAlerts")
+	for hit in 10:
+		alerts.record_alert(7, Vector2i(4, -2), "barracks")
+		alerts.advance(0.25)
+	var ok := alerts.alert_count() == 1
+	alerts.advance(4.5)
+	ok = ok and alerts.alert_count() == 1
+	alerts.advance(0.25)
+	ok = ok and alerts.alert_count() == 0
+	scene.queue_free()
+	await process_frame
+	if ok:
+		print("PASS test_building_alert_refresh")
+	else:
+		printerr("FAIL building_alert_refresh: repeat hits stacked or did not refresh")
+	return 0 if ok else 1

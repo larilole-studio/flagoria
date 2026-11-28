@@ -67,6 +67,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Dead player cuts nothing](./dead-player-cut.md) — interact-mode taps and drags ignored while the hero is dead, host refuses `request_cut` from a dead peer.
 - [Cut request limit](./cut-rate-limit.md) — host-side per-peer bucket on `request_cut` (162 at once, 162.5 a second), drops a flood with no reply, never limits a real drag or walk.
 - [Explored map](./explored-map.md) — parchment full map from Map or M; cells revealed within 10 cells of the hero.
+- [Building attack alerts](./building-alert.md) — owner alerts on the minimap and parchment (#783).
 - [Build costs](./build-costs.md) — the shared price table, affordability checks, and purchase rollback.
 - [Stone building costs](./stone-costs.md) — split prices for castles, guard posts and barracks, targeted multiplayer charges, and split demolish refunds.
 - [Construction placement](./construction-placement.md) — shared `can_place` / `cost` / `place` for six buildable kinds (plank, tower, castle, guard post, barracks, wall block) through `BuildCosts.buy`; live path is the build picker.
