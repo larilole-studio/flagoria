@@ -31,7 +31,12 @@ func _test_bomb_two_players() -> int:
 	var matches := func(host_hp: int, client_hp: int) -> bool:
 		var health := {"1": float(host_hp), client.call(): float(client_hp)}
 		for peer in [read.call(0), read.call(1)]:
-			if peer.get("health") != health or peer.get("phases_seen") != 3:
+			if (
+				peer.get("health") != health
+				or peer.get("phases_seen") != 3
+				or peer.get("warning_seen") != true
+				or not is_equal_approx(float(peer.get("warning_radius", 0.0)), 40.0)
+			):
 				return false
 		return true
 	var fire := func(peer: int) -> bool:
