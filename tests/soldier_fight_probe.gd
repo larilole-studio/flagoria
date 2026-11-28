@@ -124,6 +124,15 @@ func _fight_hp(mobs: MobSpawner) -> Dictionary:
 	return {"hp": best, "start": MobCatalog.stat(MobCatalog.SLIME, "hp")}
 
 
+func _strike_count(requests: SoldierRequests) -> int:
+	if requests == null:
+		return 0
+	var strikes := 0
+	for soldier: Soldier in requests.soldiers():
+		strikes += soldier.attacks
+	return strikes
+
+
 func _write_fight(main, world, me: Node2D, requests: SoldierRequests, mobs: MobSpawner) -> void:
 	if probe_out == "":
 		return
@@ -145,6 +154,7 @@ func _write_fight(main, world, me: Node2D, requests: SoldierRequests, mobs: MobS
 			"soldiers": _soldier_rows(requests),
 			"pending_jobs": requests.pending_job_count() if requests != null else 0,
 			"fight_mob_hp": fight["hp"],
+			"strikes": _strike_count(requests),
 			"fight_mob_start_hp": MobCatalog.stat(MobCatalog.SLIME, "hp"),
 			"mob_count": mobs.mobs().size(),
 			"errors": _errors.snapshot(),

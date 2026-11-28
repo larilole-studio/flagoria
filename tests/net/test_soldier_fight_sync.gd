@@ -89,7 +89,7 @@ func _mob_hurt(read: Callable, peer_count: int) -> bool:
 	for i in peer_count:
 		var snap: Dictionary = read.call(i)
 		var hp: int = int(snap.get("fight_mob_hp", -1))
-		if hp < 0 or hp >= start:
+		if hp < 0 or hp >= start or int(snap.get("strikes", 0)) < 1:
 			return false
 	return true
 

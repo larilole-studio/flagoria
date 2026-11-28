@@ -7,15 +7,21 @@ signal building_damaged(placement_id: int, owner: int, hp: int)
 signal building_zeroed(placement_id: int)
 
 const WorldMap := preload("res://Scripts/world/TileMap.gd")
-const CRACK := Color("#2a2238")
+const CRACKS := preload("res://art/soldiers/cracks_sheet.png")
+const CRACK_CELL := Vector2(16, 16)
 const BAR_SIZE := Vector2(24, 3)
-const NEUTRAL := Color("#b2adb7")
+const BAR_INK := Color("#2a2238")
+const BAR_TRACK := Color("#3d3a5c")
+const BAR_BLUE := Color("#3b6fe0")
+const BAR_RED := Color("#e04a4a")
+const BAR_NEUTRAL := Color("#8e97a3")
 
 @onready var _map: WorldMap = $"../worldMap"
 @onready var _requests: StructureRequests = $"../StructureRequests"
 
 
 func _ready() -> void:
+	texture_filter = TEXTURE_FILTER_NEAREST
 	_map._structures.health_display_changed.connect(queue_redraw)
 	_map.ground_changed.connect(func(_bounds: Rect2i) -> void: queue_redraw())
 	Tuning.events.changed.connect(_on_tuning_changed)
@@ -152,30 +158,27 @@ func _draw_damage(entry: Dictionary, fraction: float) -> void:
 	var cells: Array[Vector2i] = entry["cells"]
 	for cell in cells:
 		bounds = bounds.merge(Rect2i(cell, Vector2i.ONE))
-		var offset := cell - anchor
-		# Leave the anchor's facing marker clear on larger footprints.
-		var cracked := cells.size() <= 2 or (cell != anchor and (offset.x + offset.y) % 2 == 0)
-		if fraction <= 0.5 and cracked and _map.get_cell_source_id(1, cell) != -1:
-			_draw_crack(_centre(cell), fraction <= 0.25, offset.x < 0)
+	if fraction <= 0.5:
+		for cell in cells:
+			if _map.get_cell_source_id(1, cell) != -1:
+				_draw_crack(cell, bounds.position, fraction <= 0.25)
 	var top := _centre(bounds.position) + _centre(Vector2i(bounds.end.x - 1, bounds.position.y))
-	var at := top / 2.0 - Vector2(BAR_SIZE.x / 2.0, 15.0)
+	var at := (top / 2.0 - Vector2(BAR_SIZE.x / 2.0, 12.0)).round()
 	var owner: int = entry["owner"]
-	var colour: Color = TowerCapture.BAR_COLOURS.get(owner, TowerCapture.BAR_OTHER)
-	if owner == StructurePlacer.OWNER_NEUTRAL:
-		colour = NEUTRAL
-	draw_rect(Rect2(at - Vector2.ONE, BAR_SIZE + Vector2(2, 2)), TowerCapture.BAR_BACK)
-	draw_rect(Rect2(at, Vector2(BAR_SIZE.x * fraction, BAR_SIZE.y)), colour)
+	var colour := BAR_BLUE if owner == 1 else BAR_RED
+	if owner <= StructurePlacer.OWNER_NEUTRAL:
+		colour = BAR_NEUTRAL
+	draw_rect(Rect2(at, BAR_SIZE), BAR_INK)
+	draw_rect(Rect2(at + Vector2.ONE, Vector2(22, 1)), BAR_TRACK)
+	draw_rect(Rect2(at + Vector2.ONE, Vector2(floorf(22 * fraction), 1)), colour)
 
 
-func _draw_crack(at: Vector2, heavy: bool, lean_left: bool) -> void:
-	var width := 2.0 if heavy else 1.0
-	var slant := -1.0 if lean_left else 1.0
-	var joint := at + Vector2(slant, 1)
-	draw_line(at + Vector2(-3 * slant, -5), joint, CRACK, width)
-	draw_line(joint, at + Vector2(-slant, 3), CRACK, width)
-	draw_line(at + Vector2(-slant, 3), at + Vector2(2 * slant, 6), CRACK, width)
-	if heavy:
-		draw_line(joint, at + Vector2(5 * slant, -1), CRACK, 1.0)
+func _draw_crack(cell: Vector2i, top_left: Vector2i, heavy: bool) -> void:
+	var offset := cell - top_left
+	var frame_offset := 48.0 if heavy else 0.0
+	var source := Vector2((offset.x % 3) * 16.0 + frame_offset, (offset.y % 2) * 16.0)
+	var at := (_centre(cell) - CRACK_CELL * 0.5).round()
+	draw_texture_rect_region(CRACKS, Rect2(at, CRACK_CELL), Rect2(source, CRACK_CELL))
 
 
 func _centre(cell: Vector2i) -> Vector2:

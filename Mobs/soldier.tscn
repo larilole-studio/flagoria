@@ -25,6 +25,9 @@ properties/4/replication_mode = 2
 properties/5/path = NodePath(".:move_target")
 properties/5/spawn = true
 properties/5/replication_mode = 2
+properties/6/path = NodePath(".:attacks")
+properties/6/spawn = true
+properties/6/replication_mode = 2
 
 [node name="Soldier" type="Node2D"]
 texture_filter = 1

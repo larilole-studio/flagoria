@@ -6,9 +6,18 @@ const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
 const BUILDING_REACH := 17.0
 const SCAN_INTERVAL := 0.2
 const RETURN_STOP := 1.0
-const COUNT_FONT := preload("res://art/ui/fonts/LilitaOne-Regular.ttf")
-const COUNT_INK := Color("#3d3a5c")
-const COUNT_TEXT := Color("#ffe680")
+const FORMATION_BLUE := {
+	1: preload("res://art/soldiers/soldier_sheet.png"),
+	5: preload("res://art/soldiers/squad_5.png"),
+	20: preload("res://art/soldiers/company_20.png"),
+}
+const FORMATION_RED := {
+	1: preload("res://art/soldiers/soldier_sheet_red.png"),
+	5: preload("res://art/soldiers/squad_5_red.png"),
+	20: preload("res://art/soldiers/company_20_red.png"),
+}
+const ANIMATION_FPS := 8.0
+const FACING_ROWS := [0, 2, 3, 1]
 
 @export var owner_peer: int = 0
 @export var order: String = "follow"
@@ -26,6 +35,8 @@ var _scan_cd := 0.0
 var _engaged := false
 var _unit_target: Node2D
 var _building_target := {}
+var _displayed_strikes := 0
+var _strike_started_ms := -10000
 
 
 func setup_soldier(data: Dictionary) -> void:
@@ -83,41 +94,43 @@ func strike_damage() -> int:
 	return ceili(float(member_count()) / SoldierFormations.SQUAD)
 
 
-func _process(delta: float) -> void:
-	super._process(delta)
-	if member_count() > 1:
-		sprite.hide()
-		queue_redraw()
-
-
-func _draw() -> void:
+func _set_sprite_art() -> void:
 	var count := member_count()
-	if count == 1 or puff.visible or sprite.texture == null:
+	var team := FORMATION_BLUE if owner_peer == 1 else FORMATION_RED
+	sprite.texture = team[count]
+	sprite.frame_coords = Vector2i.ZERO
+	sprite.hframes = 9 if count == 1 else 3
+	sprite.vframes = 4 if count == 1 else 1
+	match count:
+		SoldierFormations.SQUAD:
+			sprite.position.y = -2
+		SoldierFormations.COMPANY:
+			sprite.position.y = -8
+		_:
+			sprite.position.y = -7
+	_displayed_strikes = attacks
+
+
+func _set_sprite_frame() -> void:
+	var now := Time.get_ticks_msec()
+	if _displayed_strikes != attacks:
+		_displayed_strikes = attacks
+		_strike_started_ms = now
+	var strike_frame := floori((now - _strike_started_ms) * ANIMATION_FPS / 1000.0)
+	var frame := floori(anim_time * ANIMATION_FPS)
+	var moving := state == State.WALK or state == State.CHASE
+	if state == State.HURT or state == State.DYING:
+		sprite.visible = frame % 2 == 0
+	if member_count() > 1:
+		var active := moving or strike_frame < 3
+		sprite.frame = 1 + frame % 2 if active else 0
 		return
-	var frame_size := sprite.texture.get_size() / Vector2(sprite.hframes, sprite.vframes)
-	var frame := Rect2(Vector2(sprite.frame_coords) * frame_size, frame_size)
-	var company := count == SoldierFormations.COMPANY
-	var columns := 5 if company else 3
-	var spacing := 8 if company else 9
-	for member in count:
-		var rank := member / columns
-		var in_rank := mini(columns, count - rank * columns)
-		var x := (member % columns) * spacing - (in_rank - 1) * spacing * 0.5
-		var y := (rank - (count - 1) / columns) * 5
-		var at := Vector2(x - frame_size.x * 0.5, y - frame_size.y)
-		draw_texture_rect_region(sprite.texture, Rect2(at, frame_size), frame)
-	var label := str(count)
-	var width := ceili(COUNT_FONT.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 9).x)
-	draw_rect(Rect2(-ceilf(width * 0.5) - 2, 1, width + 4, 10), COUNT_INK)
-	draw_string(
-		COUNT_FONT,
-		Vector2(-floorf(width * 0.5), 9),
-		label,
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
-		9,
-		COUNT_TEXT
-	)
+	var column := frame % 2
+	if moving:
+		column = 2 + frame % 4
+	elif strike_frame < 3:
+		column = 6 + strike_frame
+	sprite.frame_coords = Vector2i(column, FACING_ROWS[facing])
 
 
 func think(delta: float) -> void:
@@ -237,7 +250,7 @@ func _engage(delta: float) -> bool:
 		return true
 	_face_target(target_position)
 	if _strike_cd <= 0.0 and _hit_unit(mob):
-		_strike_cd = SoldierStats.HIT_EVERY
+		_mark_strike()
 	if mob != null and not mob is Soldier and mob.state != State.DYING and _hurt_cd <= 0.0:
 		if take_hit():
 			_hurt_cd = SoldierStats.HIT_EVERY
@@ -263,8 +276,13 @@ func _engage_building(delta: float) -> bool:
 		return true
 	_face_target(target_position)
 	if _strike_cd <= 0.0 and health.host_damage(id, strike_damage(), owner_peer):
-		_strike_cd = SoldierStats.HIT_EVERY
+		_mark_strike()
 	return true
+
+
+func _mark_strike() -> void:
+	_strike_cd = SoldierStats.HIT_EVERY
+	attacks += 1
 
 
 func _face_target(at: Vector2) -> void:

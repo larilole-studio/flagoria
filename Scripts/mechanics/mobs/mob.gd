@@ -112,7 +112,7 @@ func _ready() -> void:
 		PHYSICS_INTERPOLATION_MODE_ON if multiplayer.is_server() else PHYSICS_INTERPOLATION_MODE_OFF
 	)
 	reset_physics_interpolation()
-	sprite.texture = MobCatalog.sheet(mob_type)
+	_set_sprite_art()
 	puff.texture = load(MobCatalog.PUFF_SHEET)
 	var shape := RectangleShape2D.new()
 	shape.size = MobCatalog.stat(mob_type, "hurtbox")
@@ -141,7 +141,15 @@ func _process(delta: float) -> void:
 			int((anim_time - HURT_TIME) * MobCatalog.PUFF_FPS), MobCatalog.PUFF_FRAMES - 1
 		)
 	else:
-		sprite.frame_coords = MobCatalog.frame(anim_name(), facing, anim_time)
+		_set_sprite_frame()
+
+
+func _set_sprite_art() -> void:
+	sprite.texture = MobCatalog.sheet(mob_type)
+
+
+func _set_sprite_frame() -> void:
+	sprite.frame_coords = MobCatalog.frame(anim_name(), facing, anim_time)
 
 
 func update_chart_visibility() -> void:
