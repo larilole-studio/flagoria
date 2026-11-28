@@ -89,6 +89,9 @@ func _ready():
 	var aim := AttackAimScript.new()  # local mouse aim; only the attack is sent
 	aim.name = "AttackAim"
 	add_child(aim)
+	var command := SoldierCommand.new()
+	command.name = "SoldierCommand"
+	add_child(command)
 	PlayerHud.bind(self, health)
 	var interaction = get_node_or_null(INTERACTION_PATH)
 	if interaction:
@@ -146,7 +149,7 @@ func _unhandled_input(event):
 	if PlayerCamera.map_covers_play(get_tree()):
 		return
 
-	if not event.is_action_pressed("attack"):
+	if not event.is_action_pressed("attack") or command_armed():
 		return
 	if bomb_armed():
 		var aim := get_node_or_null("AttackAim") as AttackAim
@@ -154,6 +157,11 @@ func _unhandled_input(event):
 			PlayerCombat.throw_bomb(self, null)
 	else:
 		attack_animation.rpc()
+
+
+func command_armed() -> bool:
+	var wheel := get_node_or_null(PlayerCombat.TOOL_WHEEL_PATH) as ToolWheel
+	return wheel != null and wheel.tool == ToolWheel.Tool.COMMAND
 
 
 func bomb_armed() -> bool:

@@ -18,7 +18,7 @@ static func capture(game: Node) -> Array:
 						"name": str(s.name),
 						"pos": [s.position.x, s.position.y],
 						"owner": s.owner_peer,
-						"order": s.order,
+						"order": "hold" if s.order == "move" else s.order,
 						"hp": s.hp,
 						"barracks_anchor": [s.barracks_anchor.x, s.barracks_anchor.y],
 						"seed": s.spawn_seed,

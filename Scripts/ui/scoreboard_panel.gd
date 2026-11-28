@@ -221,6 +221,10 @@ func _join_index(peer_id: int) -> int:
 	return _join_order().find(peer_id) + 1
 
 
+func flag_color(peer_id: int) -> Color:
+	return _flag_color(peer_id)
+
+
 func _flag_color(peer_id: int) -> Color:
 	if peer_id == Points.SERVER_ID:
 		return FLAG_HOST

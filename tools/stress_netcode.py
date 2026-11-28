@@ -104,6 +104,7 @@ SCENARIO_WORST_S = {
     "test_build_picker_buttons": 6.9,
     "test_barracks_build_two_players": 12.0,
     "test_soldier_train_two_players": 15.0,
+    "test_soldier_move_two_players": 12.0,
     "test_soldier_fight_two_players": 18.0,
     "test_soldier_player_two_players": 18.0,
     "test_build_sync_two_players": 8.0,
