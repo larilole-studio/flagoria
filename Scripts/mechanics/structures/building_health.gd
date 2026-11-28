@@ -59,6 +59,37 @@ func nearest_in_arc(origin: Vector2, angle: float, reach: float, arc: float) -> 
 	return best
 
 
+func nearest_enemy(origin: Vector2, reach: float, attacker_side: int) -> Dictionary:
+	var radius := Vector2.ONE * reach
+	var first := _map.local_to_map(_map.to_local(origin - radius))
+	var last := _map.local_to_map(_map.to_local(origin + radius))
+	var best := {}
+	var best_distance := reach * reach
+	var eligible := {}
+	for y in range(first.y, last.y + 1):
+		for x in range(first.x, last.x + 1):
+			var cell := Vector2i(x, y)
+			var id := _map._structures.placement_at(cell)
+			if id == 0:
+				continue
+			if not eligible.has(id):
+				var entry := _map._structures.placement_details(id)
+				var owner: int = entry.get("owner", StructurePlacer.OWNER_NEUTRAL)
+				eligible[id] = (
+					owner != attacker_side
+					and owner != StructurePlacer.OWNER_NEUTRAL
+					and _remaining_hp(entry) > 0
+				)
+			if not eligible[id]:
+				continue
+			var at := _map.to_global(_map.map_to_local(cell))
+			var distance := origin.distance_squared_to(at)
+			if distance <= best_distance:
+				best_distance = distance
+				best = {"id": id, "position": at}
+	return best
+
+
 func host_damage(placement_id: int, amount: int, attacker_side: int) -> bool:
 	if not multiplayer.is_server() or amount <= 0:
 		return false

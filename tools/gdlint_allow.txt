@@ -63,8 +63,6 @@ Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of 
 Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	7b7062cb7d666563
 Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	bae653427b5b7e60
 Scripts/mechanics/mobs/mob_spawner.gd	class-definitions-order	Definition out of order in global scope	bd2c0b5463b6edb4
-Scripts/mechanics/npcs/soldier.gd	class-definitions-order	Definition out of order in global scope	87b93a096efde368
-Scripts/mechanics/npcs/soldier.gd	unused-argument	unused function argument 'leash'
 Scripts/mechanics/npcs/soldier_requests.gd	max-returns	Function "host_train" has more than 6 return statements
 Scripts/mechanics/npcs/soldier_requests.gd	unused-argument	unused function argument 'map'
 Scripts/mechanics/structures/structure_placer.gd	load-constant-name	Constant (load/preload) name "_FootprintOrientation" is not valid

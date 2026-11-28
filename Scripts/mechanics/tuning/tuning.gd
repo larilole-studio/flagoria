@@ -63,6 +63,7 @@ static func _static_init() -> void:
 	_add(&"soldiers.training_stone", SOLDIERS, "Training stone", 4, 0, 100, 1)
 	_add(&"soldiers.train_seconds", SOLDIERS, "Training time (s)", 4.0, 0.5, 60, 0.5, false)
 	_add(&"soldiers.cap_per_barracks", SOLDIERS, "Soldiers per barracks", 20, 1, 100, 1)
+	_add(&"soldiers.sight_range", SOLDIERS, "Sight range (px)", 96, 16, 192, 1, false)
 	_add(&"soldiers.walk_speed", SOLDIERS, "Walk speed (px/s)", 48, 1, 120, 0.5, false)
 	_add(
 		&"movement.keyboard_speed", MOVEMENT, "Keyboard speed (px/s)", 130, 1, PLAYER_SPEED_LIMIT, 1

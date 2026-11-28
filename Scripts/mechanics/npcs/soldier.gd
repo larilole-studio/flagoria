@@ -1,20 +1,26 @@
 class_name Soldier
 extends Mob
-## A trained unit that follows its owner or holds position (#553), fights
-## nearby mobs on the host (#554), and strikes enemy players (#555).
+## A trained unit that follows or holds, engaging nearby enemies on the host.
 
 const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
+const BUILDING_REACH := 17.0
+const SCAN_INTERVAL := 0.2
+const RETURN_STOP := 1.0
 
 @export var owner_peer: int = 0
 @export var order: String = "follow"
 @export var move_target := Vector2.ZERO
 @export var barracks_anchor: Vector2i = Vector2i.ZERO
 
-var _blocked_seconds := 0.0
-var _hold_pos := Vector2.ZERO
 var spawn_seed := 0
+
+var _hold_pos := Vector2.ZERO
+var _blocked_seconds := 0.0
 var _strike_cd := 0.0
 var _hurt_cd := 0.0
+var _scan_cd := 0.0
+var _unit_target: Node2D
+var _building_target := {}
 
 
 func setup_soldier(data: Dictionary) -> void:
@@ -61,8 +67,12 @@ func think(delta: float) -> void:
 		if _timer <= 0.0:
 			_start_idle()
 		return
-	_step_move(delta)
-	_fight()
+	_scan_cd -= delta
+	if _scan_cd <= 0.0:
+		_scan_cd = SCAN_INTERVAL
+		_scan_targets()
+	if not _engage(delta):
+		_step_move(delta)
 
 
 func take_hit(by_peer: int = 0, damage: int = 1) -> bool:
@@ -73,9 +83,7 @@ func take_hit(by_peer: int = 0, damage: int = 1) -> bool:
 
 func _step_move(delta: float) -> void:
 	if order == "hold":
-		global_position = _hold_pos
-		direction = Vector2.ZERO
-		state = State.IDLE
+		_walk_toward(_hold_pos, delta, RETURN_STOP)
 		return
 	if order == "move":
 		_step_command(delta)
@@ -85,19 +93,22 @@ func _step_move(delta: float) -> void:
 		direction = Vector2.ZERO
 		state = State.IDLE
 		return
-	var to := owner.global_position - global_position
-	if to.length() <= SoldierStats.FOLLOW_STOP:
-		direction = Vector2.ZERO
-		state = State.IDLE
-		return
-	_steer(to, delta)
+	_walk_toward(owner.global_position, delta, SoldierStats.FOLLOW_STOP)
 	_hold_pos = global_position
 
 
-func _steer(to: Vector2, delta: float) -> void:
-	var motion := to.limit_length(Tuning.value(&"soldiers.walk_speed") * delta)
-	facing = MobCatalog.facing_for(to)
+func _walk_toward(goal: Vector2, delta: float, stop: float) -> void:
+	var offset := goal - global_position
+	var distance := offset.length()
+	if distance <= stop:
+		direction = Vector2.ZERO
+		state = State.IDLE
+		return
+	direction = offset / distance
+	facing = MobCatalog.facing_for(offset)
 	state = State.WALK
+	var travel := minf(distance, Tuning.value(&"soldiers.walk_speed") * delta)
+	var motion := direction * travel
 	if not step(motion, false) and not step(Vector2(motion.x, 0), false):
 		step(Vector2(0, motion.y), false)
 
@@ -108,7 +119,7 @@ func _step_command(delta: float) -> void:
 		set_order("hold")
 		state = State.IDLE
 		return
-	_steer(to, delta)
+	_walk_toward(move_target, delta, 0.0)
 	# Sliding counts only while it makes progress toward the target.
 	if to.length() - global_position.distance_to(move_target) > 0.001:
 		_blocked_seconds = 0.0
@@ -119,37 +130,78 @@ func _step_command(delta: float) -> void:
 			state = State.IDLE
 
 
-func _fight() -> void:
-	var world := get_parent().get_parent() if get_parent() != null else null
-	var mob_root := world.get_node_or_null("Mobs") if world != null else null
-	if mob_root == null or not mob_root.has_method("mobs"):
+func _scan_targets() -> void:
+	var world := get_node_or_null("../..")
+	if world == null:
 		return
-	var owner := world.get_node_or_null(str(owner_peer)) as Node2D
-	var players: Array = []
-	if world != null:
-		for child in world.get_children():
-			if child is CharacterBody2D and str(child.name).is_valid_int():
-				players.append(child)
-	var target: Object = SoldierTarget.pick(self, owner, mob_root.mobs(), players)
-	if target == null:
-		return
-	var my_box := contact_box()
-	if target is Mob:
-		var mob := target as Mob
-		var their_box := mob.contact_box()
-		if my_box.intersects(their_box) and _strike_cd <= 0.0:
-			if mob.take_hit(owner_peer):
-				_strike_cd = SoldierStats.HIT_EVERY
-		if their_box.intersects(my_box) and _hurt_cd <= 0.0:
-			if take_hit(0):
-				_hurt_cd = SoldierStats.HIT_EVERY
-	elif target is Node2D:
-		var player := target as Node2D
-		var their_box := player_box(player)
-		if my_box.intersects(their_box) and _strike_cd <= 0.0:
-			var health := player.get_node_or_null("Health") as PlayerHealth
-			if health != null and health.take_damage(1):
-				_strike_cd = SoldierStats.HIT_EVERY
+	var mobs := world.get_node_or_null("Mobs") as MobSpawner
+	var units: Array = get_parent().get_children()
+	if mobs != null:
+		units.append_array(mobs.mobs())
+	var sight := Tuning.value(&"soldiers.sight_range")
+	_unit_target = SoldierTarget.pick(self, units, players(), sight)
+	var health := world.get_node_or_null("BuildingHealth") as BuildingHealth
+	_building_target = {}
+	if health != null:
+		var reach := sight
+		if is_instance_valid(_unit_target):
+			reach = global_position.distance_to(_unit_target.global_position)
+		_building_target = health.nearest_enemy(global_position, reach, owner_peer)
+
+
+func _engage(delta: float) -> bool:
+	if not _building_target.is_empty():
+		return _engage_building(delta)
+	if not is_instance_valid(_unit_target) or _unit_target.is_queued_for_deletion():
+		return false
+	var mob := _unit_target as Mob
+	if (mob != null and mob.state == State.DYING) or (mob == null and not is_alive(_unit_target)):
+		return false
+	var target_position := _unit_target.global_position
+	if global_position.distance_to(target_position) > Tuning.value(&"soldiers.sight_range"):
+		return false
+	var target_box := mob.contact_box() if mob != null else player_box(_unit_target)
+	if not contact_box().intersects(target_box):
+		_walk_toward(target_position, delta, 0.0)
+		return true
+	_face_target(target_position)
+	if _strike_cd <= 0.0 and _hit_unit(mob):
+		_strike_cd = SoldierStats.HIT_EVERY
+	if mob != null and not mob is Soldier and mob.state != State.DYING and _hurt_cd <= 0.0:
+		if take_hit():
+			_hurt_cd = SoldierStats.HIT_EVERY
+	return true
+
+
+func _hit_unit(mob: Mob) -> bool:
+	if mob != null:
+		return mob.take_hit(owner_peer)
+	var health := _unit_target.get_node_or_null("Health") as PlayerHealth
+	return health != null and health.take_damage(1)
+
+
+func _engage_building(delta: float) -> bool:
+	var health := get_node_or_null("../../BuildingHealth") as BuildingHealth
+	var id: int = _building_target["id"]
+	if health == null or health.hp(id) <= 0:
+		_building_target = {}
+		return false
+	var target_position: Vector2 = _building_target["position"]
+	if global_position.distance_to(target_position) > BUILDING_REACH:
+		_walk_toward(target_position, delta, BUILDING_REACH)
+		return true
+	_face_target(target_position)
+	if _strike_cd <= 0.0 and health.host_damage(id, 1, owner_peer):
+		_strike_cd = SoldierStats.HIT_EVERY
+	return true
+
+
+func _face_target(at: Vector2) -> void:
+	var offset := at - global_position
+	if not offset.is_zero_approx():
+		facing = MobCatalog.facing_for(offset)
+	direction = Vector2.ZERO
+	state = State.IDLE
 
 
 func is_owned_alive(peer_id: int) -> bool:
@@ -170,7 +222,7 @@ func set_order(next: String) -> void:
 		_hold_pos = global_position
 
 
-func step(motion: Vector2, leash: bool = true) -> bool:
+func step(motion: Vector2, _leash: bool = true) -> bool:
 	var to := global_position + motion
 	if motion == Vector2.ZERO or not can_stand_at(to):
 		return false

@@ -90,3 +90,29 @@ func _check(ok: bool, label: String) -> bool:
 	if not ok:
 		printerr("FAIL building_health: " + label)
 	return ok
+
+
+func _test_soldier_building_targets() -> int:
+	print("-- test_soldier_building_targets")
+	var scene := mount_main_scene()
+	var map: WorldMap = scene.get_node("World/worldMap")
+	var buildings: BuildingHealth = scene.get_node("World/BuildingHealth")
+	map.set_process(false)
+	map.apply_map_params(_spawn_params(11, 0.0))
+	map.replace_structures(
+		[["barracks", 1, Vector2i(26, 24)], ["barracks", 0, TOWER], ["barracks", 258, BARRACKS]]
+	)
+	var from := map.to_global(map.map_to_local(Vector2i(23, 24)))
+	var enemy := buildings.nearest_enemy(from, 240, 1)
+	var ok := _check(enemy.get("id", 0) == 3, "friendly and neutral barracks are skipped")
+	ok = (
+		_check(buildings.nearest_enemy(from, 96, 1).is_empty(), "sight radius limits targets")
+		and ok
+	)
+	ok = _check(not buildings.host_damage(1, 1, 1), "friendly barracks remains at full HP") and ok
+	ok = _check(buildings.hp(1) == 30, "friendly damage leaves HP unchanged") and ok
+	scene.queue_free()
+	await process_frame
+	if ok:
+		print("PASS test_soldier_building_targets")
+	return 0 if ok else 1

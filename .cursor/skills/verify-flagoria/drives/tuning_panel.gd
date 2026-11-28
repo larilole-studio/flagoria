@@ -21,7 +21,7 @@ const ROW_COUNTS := {
 	"Sawmill": 2,
 	"Handmining": 2,
 	"Chopping": 6,
-	"Soldiers": 5,
+	"Soldiers": 6,
 	"Movement": 2,
 	"Visuals": 3,
 }
