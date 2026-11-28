@@ -1,12 +1,12 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Atlas v4 structure finals: v3 pixels unchanged, catalog coords, placement and collisions.
+## Atlas v4 structure finals: legacy art, catalog coordinates, placement and collisions.
 
 
 func _test_structure_final_tiles() -> int:
 	## Time cost: about 0.3 s in tools/verify.sh (~0.8 s alone with --only).
 	print("-- test_structure_final_tiles")
 	var fail := 0
-	fail += _v3_pixels_unchanged_in_v4()
+	fail += _legacy_pixels_unchanged_in_v4()
 	fail += _pre_v4_catalog_coords_unchanged()
 	fail += _placement_pieces_in_tileset()
 	fail += _write_structure_render()
@@ -15,7 +15,7 @@ func _test_structure_final_tiles() -> int:
 	return fail
 
 
-func _v3_pixels_unchanged_in_v4() -> int:
+func _legacy_pixels_unchanged_in_v4() -> int:
 	var v3_path := ProjectSettings.globalize_path("res://tests/golden/flagoria_tiles_v3_atlas.png")
 	var v4_path := ProjectSettings.globalize_path("res://art/flagoria/flagoria_tiles_v4.png")
 	var v3 := Image.load_from_file(v3_path)
@@ -26,11 +26,18 @@ func _v3_pixels_unchanged_in_v4() -> int:
 	if v4.get_size() != v3.get_size():
 		printerr("FAIL structure_final_tiles: atlas size %s != %s" % [v4.get_size(), v3.get_size()])
 		return 1
+	# Stone walls have new perspective art. Keep checking every other v3 cell.
+	var redrawn := {}
+	for tile_name: String in TileCatalog.TILES:
+		if tile_name.begins_with("WALL_"):
+			redrawn[TileCatalog.TILES[tile_name]["atlas"]] = true
 	var cols := v4.get_width() / 16
 	var rows := v4.get_height() / 16
 	var fail := 0
 	for cy in rows:
 		for cx in cols:
+			if redrawn.has(Vector2i(cx, cy)):
+				continue
 			var ox := cx * 16
 			var oy := cy * 16
 			var used := false
