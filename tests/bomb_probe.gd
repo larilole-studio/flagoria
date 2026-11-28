@@ -6,6 +6,10 @@ const CLIENT_MARK := Vector2(168, 8)
 
 var fired := false
 var seen := {}
+var warning_seen := false
+var warning_radius := 0.0
+var _shot_taken := false
+var _shot_pending := false
 
 
 func _run() -> void:
@@ -46,6 +50,13 @@ func _run() -> void:
 			for phase in BombThrows.Phase.values():
 				if bombs.has_phase(phase):
 					seen[phase] = true
+			if bombs.has_phase(BombThrows.Phase.FUSE):
+				warning_seen = true
+				warning_radius = bombs.fuse_radius()
+				if _shot_pending:
+					_save_warning_shot(main)
+				else:
+					_shot_pending = true
 		if snapshot_due(main):
 			write_state(main)
 		await process_frame
@@ -64,6 +75,20 @@ func write_state(main: Node) -> void:
 			"health": health,
 			"peers": peer_positions(main),
 			"phases_seen": seen.size(),
+			"warning_seen": warning_seen,
+			"warning_radius": warning_radius,
 			"errors": _errors.snapshot(),
 		}
 	)
+
+
+func _save_warning_shot(main: Node) -> void:
+	if _shot_taken or DisplayServer.get_name() == "headless":
+		return
+	var path := option("--shot")
+	if path.is_empty():
+		return
+	var image := main.get_viewport().get_texture().get_image()
+	if image != null:
+		_shot_taken = true
+		image.save_png(path)

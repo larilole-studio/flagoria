@@ -104,17 +104,25 @@ func resolve(sender_id: int, origin: Vector2, reach: Vector2) -> bool:
 		return false
 	_cooldown_until[sender_id] = now + roundi(Tuning.value(&"bomb.cooldown_seconds") * 1000.0)
 	_next_id += 1
-	show_throw.rpc(_next_id, start, end, BombShot.travel_seconds(start.distance_to(end)))
+	var radius: float = Tuning.value(&"bomb.blast_radius")
+	show_throw.rpc(_next_id, start, end, BombShot.travel_seconds(start.distance_to(end)), radius)
 	var pot := _pots[_next_id]
 	pot.sender_id = sender_id
 	pot.fuse = Tuning.value(&"bomb.fuse_seconds")
-	pot.radius = Tuning.value(&"bomb.blast_radius")
+	pot.radius = radius
 	pot.damage = int(Tuning.value(&"bomb.damage"))
 	return true
 
 
 func is_ready(sender_id: int) -> bool:
 	return Time.get_ticks_msec() >= _cooldown_until.get(sender_id, 0)
+
+
+func fuse_radius() -> float:
+	for pot in _pots.values():
+		if pot.phase == Phase.FUSE:
+			return pot.radius
+	return 0.0
 
 
 func has_phase(phase: Phase) -> bool:
@@ -125,11 +133,12 @@ func has_phase(phase: Phase) -> bool:
 
 
 @rpc("authority", "call_local", "reliable")
-func show_throw(id: int, origin: Vector2, end: Vector2, travel: float) -> void:
+func show_throw(id: int, origin: Vector2, end: Vector2, travel: float, radius: float) -> void:
 	var pot := Pot.new()
 	pot.origin = origin
 	pot.end = end
 	pot.travel = travel
+	pot.radius = radius
 	pot.phase_started = Time.get_ticks_msec()
 	_pots[id] = pot
 
@@ -181,9 +190,24 @@ func _draw() -> void:
 				point = to_local(BombShot.arc_point(pot.origin, pot.end, age / pot.travel))
 				draw_texture_rect(POT_IDLE, Rect2(point - POT_SIZE / 2.0, POT_SIZE), false)
 			Phase.FUSE:
+				_draw_warning(point, pot.radius)
 				draw_texture_rect(POT_FUSE, Rect2(point - POT_SIZE / 2.0, POT_SIZE), false)
 			Phase.BLAST:
 				_draw_burst(point, pot.radius, clampf(age / BURST_SECONDS, 0.0, 1.0))
+
+
+func _draw_warning(center: Vector2, radius: float) -> void:
+	# A dashed red-orange ring, same flattened ellipse as the blast, distinct
+	# from the thrower's filled orange aim preview.
+	var radii := BombShot.radii(radius)
+	var zoom := get_global_transform_with_canvas().get_scale().x
+	var px := 1.0 / zoom if zoom > 0.0 else 1.0
+	var segments := 20
+	var color := Color(1.0, 0.22, 0.08, 0.92)
+	for i in segments:
+		var from := center + Vector2.from_angle(TAU * i / segments) * radii
+		var to := center + Vector2.from_angle(TAU * (i + 0.55) / segments) * radii
+		draw_line(from, to, color, 2.0 * px, true)
 
 
 func _draw_burst(center: Vector2, radius: float, t: float) -> void:
