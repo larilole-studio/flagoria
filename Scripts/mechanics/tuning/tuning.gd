@@ -2,6 +2,7 @@ class_name Tuning
 extends RefCounted
 ## In-memory gameplay tuning shared within the local game process.
 
+const BUILDINGS := "Buildings"
 const BUILDING := "Building costs"
 const MINE := "Mine"
 const SAWMILL := "Sawmill"
@@ -36,6 +37,14 @@ static func _static_init() -> void:
 	_add(&"building.barracks_stone", BUILDING, "Barracks stone", 10, 0, 100, 1)
 	_add(&"building.sawmill_stone", BUILDING, "Sawmill stone", 15, 0, 100, 1)
 	_add(&"building.refund_share", BUILDING, "Demolish refund share", 0.5, 0, 1, 0.05, false)
+	_add(&"building_hp.castle", BUILDINGS, "Castle health", 60, 1, 300, 1)
+	_add(&"building_hp.barracks", BUILDINGS, "Barracks health", 30, 1, 300, 1)
+	_add(&"building_hp.tower_wood", BUILDINGS, "Wooden tower health", 40, 1, 300, 1)
+	_add(&"building_hp.guard_post", BUILDINGS, "Guard post health", 40, 1, 300, 1)
+	_add(&"building_hp.mine", BUILDINGS, "Mine health", 25, 1, 300, 1)
+	_add(&"building_hp.sawmill", BUILDINGS, "Sawmill health", 25, 1, 300, 1)
+	_add(&"building_hp.default", BUILDINGS, "Other buildings health", 25, 1, 300, 1)
+	_add(&"building_damage.sword", BUILDINGS, "Sword damage", 1, 1, 10, 1)
 	_add(&"mine.cycle_seconds", MINE, "Production cycle (s)", 60, 1, 600, 0.5, false)
 	_add(&"mine.stone_per_cycle", MINE, "Stone per cycle", 1, 1, 100, 1)
 	_add(&"sawmill.cycle_seconds", SAWMILL, "Production cycle (s)", 60, 1, 600, 0.5, false)
@@ -65,6 +74,13 @@ static func _static_init() -> void:
 	_add(&"visuals.cloud_far_speed", VISUALS, "Far cloud drift (px/s)", 0.5, 0.1, 5, 0.1, false)
 	_add(&"visuals.cloud_near_speed", VISUALS, "Near cloud drift (px/s)", 1.0, 0.1, 5, 0.1, false)
 	_add(&"visuals.mine_cart_fps", VISUALS, "Mine cart animation (fps)", 5, 1, 30, 0.5, false)
+
+
+static func building_max_hp(structure_name: String) -> int:
+	var key := StringName("building_hp." + structure_name)
+	if not _entries.has(key):
+		key = &"building_hp.default"
+	return int(value(key))
 
 
 static func value(key: StringName) -> float:

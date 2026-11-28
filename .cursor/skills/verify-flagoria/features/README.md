@@ -92,6 +92,7 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
+- [Building health](./building-health.md) — sword and bomb damage, building destruction, and saved HP (#763).
 - [Wall and tower junctions](./wall-junctions.md) — mask pieces, collar overlays on stone, tower ring with the team flag, far corner flips when a loop closes.
 - [Walls and bridges](./walls-and-bridges.md) — wall solver and plank bridges, live via the build picker.
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).

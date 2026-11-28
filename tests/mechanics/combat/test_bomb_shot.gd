@@ -99,13 +99,10 @@ func _test_bomb_shot() -> int:
 	):
 		printerr("FAIL bomb_shot: walls did not receive exactly two hits inside the ellipse")
 		fail += 1
-	if (
-		map.structure_placement_at(own_tower).is_empty()
-		or map.structure_placement_at(enemy_castle).is_empty()
-	):
-		printerr(
-			"FAIL bomb_shot: a named placement was removed; this slice only damages palisade walls"
-		)
+	var ally_tower := map.structure_placement_at(own_tower)
+	var castle := map.structure_placement_at(enemy_castle)
+	if ally_tower.is_empty() or ally_tower.get("hp", 40) != 40 or castle.get("hp") != 58:
+		printerr("FAIL bomb_shot: expected one blast hit on the castle and a full friendly tower")
 		fail += 1
 
 	scene.queue_free()

@@ -5,8 +5,8 @@ Source: Scripts/mechanics/walls/wall_builder.gd
 Source: Scripts/player/player_combat.gd
 
 Free-form palisade cells take three sword hits on the host (#35). Damage
-syncs to every peer and to late joiners. Castle auto-walls, towers and stone
-structure walls are unchanged.
+syncs to every peer and to late joiners. Named placements have their own
+[building health](./building-health.md) across the footprint.
 
 ## Sub-features
 

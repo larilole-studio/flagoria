@@ -203,7 +203,7 @@ free-form palisade wall cell (#276) is an entry on its cell:
 | `rotation` | Optional quarter turns clockwise (0–3) for a footprint structure placed in a rotated orientation (#493). Omitted when zero. |
 | `production_elapsed` | For a mine, host game seconds elapsed in the current 60-second cycle (#723). A missing field starts a fresh cycle. |
 | `wall` | `palisade`: a free-form wall cell. Its piece is solved again on load. |
-| `hp` | Optional remaining hits on a free-form wall (1 or 2). Omitted means full health (#35). |
+| `hp` | Optional remaining HP. Free-form walls save 1 or 2 hits (#35). Named buildings save remaining HP, including zero for a starting castle (#763). Omitted means full health. |
 
 `StructureSaves.to_changes` writes the entries and `StructureSaves.restore`
 reads them back, placements first so the walls join the structure walls.
