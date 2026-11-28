@@ -21,9 +21,13 @@ const TINT := {
 	StructurePlacer.OWNER_NEUTRAL: Color(0.55, 0.55, 0.6, 0.35),
 }
 const TINT_OTHER := Color(0.88, 0.29, 0.29, 0.35)
+const TRIM_BLUE := preload("res://art/flagoria/city_wall_trim_blue.png")
+const TRIM_RED := preload("res://art/flagoria/city_wall_trim_red.png")
+const TILE_SIZE := Vector2(16, 16)
 
 ## tower id -> {"walls": Dictionary cell->true, "interior": Dictionary cell->true}
 var cities: Dictionary = {}
+var _stone_trim_cells := {}
 @onready var _map: TileMap = get_node_or_null("../worldMap")
 var _frames := 0
 var _stamp := 0
@@ -31,6 +35,9 @@ var _stamp := 0
 
 func _ready() -> void:
 	z_index = 9  # under capture bars (10), over walls
+	for tile_name: String in TileCatalog.TILES:
+		if tile_name.begins_with("WALL_") or tile_name.begins_with("ARCHER_POST_STONE_"):
+			_stone_trim_cells[TileCatalog.TILES[tile_name]["atlas"]] = true
 
 
 func _physics_process(_delta: float) -> void:
@@ -244,10 +251,47 @@ func _cities_differ(a: Dictionary, b: Dictionary) -> bool:
 func _draw() -> void:
 	if _map == null:
 		return
-	var placed: Dictionary = _map._structures.placements()
+	var placed: Dictionary = _map.placed_structures()
 	for id: int in cities:
 		var owner: int = placed.get(id, {}).get("owner", 0)
 		var colour: Color = TINT.get(owner, TINT_OTHER)
-		for cell: Vector2i in cities[id]["walls"]:
-			var centre := to_local(_map.to_global(_map.map_to_local(cell)))
-			draw_rect(Rect2(centre - Vector2(8, 8), Vector2(16, 16)), colour)
+		var trim := TRIM_BLUE if owner == 1 else TRIM_RED
+		var walls: Dictionary = cities[id]["walls"]
+		for cell: Vector2i in walls:
+			if owner > 0 and _draw_trim(cell, trim):
+				continue
+			draw_rect(_wall_rect(cell), colour)
+		if owner > 0:
+			for cell: Vector2i in _diagonal_walls(walls, cities[id]["interior"]):
+				_draw_trim(cell, trim)
+
+
+func _wall_rect(cell: Vector2i) -> Rect2:
+	var centre := to_local(_map.to_global(_map.map_to_local(cell)))
+	return Rect2(centre - TILE_SIZE / 2, TILE_SIZE)
+
+
+func _draw_trim(cell: Vector2i, trim: Texture2D) -> bool:
+	var atlas := _map.get_cell_atlas_coords(1, cell)
+	if not _stone_trim_cells.has(atlas):
+		return false
+	draw_texture_rect_region(trim, _wall_rect(cell), Rect2(Vector2(atlas) * TILE_SIZE, TILE_SIZE))
+	return true
+
+
+func _diagonal_walls(walls: Dictionary, interior: Dictionary) -> Dictionary:
+	# A convex corner can touch the city only diagonally. Paint it when both
+	# adjacent arms bound that same interior tile, keeping the city data intact.
+	var diagonal := {}
+	for cell: Vector2i in walls:
+		for step: Vector2i in STEPS:
+			var corner := cell + step
+			if walls.has(corner) or diagonal.has(corner):
+				continue
+			var side := Vector2i(step.y, step.x)
+			if (
+				(walls.has(corner + side) and interior.has(cell + side))
+				or (walls.has(corner - side) and interior.has(cell - side))
+			):
+				diagonal[corner] = true
+	return diagonal
