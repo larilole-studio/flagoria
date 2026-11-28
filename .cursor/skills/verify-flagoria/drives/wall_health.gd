@@ -32,7 +32,7 @@ func run() -> void:
 	step("wall-cracked")
 	player.global_position = interaction.cell_center(mid + Vector2i(0, 1))
 	await settle(SETTLE)
-	await _swing(player, "Up", 0.0)
+	await _swing(player, "Up", Vector2.UP.angle())
 	if map._walls.hp(mid) != 2:
 		printerr("wall_health: cracked hp want 2 got %d" % map._walls.hp(mid))
 		done(false)
@@ -40,8 +40,8 @@ func run() -> void:
 	await settle(SETTLE)
 	await snapshot("wall-cracked")
 	step("wall-broken")
-	await _swing(player, "Up", 0.0)
-	await _swing(player, "Up", 0.0)
+	await _swing(player, "Up", Vector2.UP.angle())
+	await _swing(player, "Up", Vector2.UP.angle())
 	if map.has_wall(mid):
 		printerr("wall_health: middle cell still stands")
 		done(false)

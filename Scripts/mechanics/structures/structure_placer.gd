@@ -1,14 +1,10 @@
 class_name StructurePlacer
 extends RefCounted
-## Structures placed on the world map (#270): the footprint check, writing
-## the cells, and the list of placements. The map keeps wrappers
-## (can_place_structure, place_structure, placed_structures) and asks
-## has_cell / ground_at / object_at when it draws or predicts a cell.
-## can_place still reports multiplayer on, so a client does not write. The
-## host writes an accepted tower with place_from_host (#497), and a joining
-## peer's starting castle the same way (#278). A joining peer gets the host's
-## list with the map (to_sync, replace_from_host). Free-form walls placed
-## after a join go through StructureRequests (#498).
+## Owns placed footprints and their metadata. The map delegates placement,
+## prediction and painting here. Live peers use place_from_host and join
+## snapshots replace the list before chunks draw.
+
+signal health_display_changed
 
 const _WorldMap := preload("res://Scripts/world/TileMap.gd")
 const _FootprintOrientation := preload("res://Scripts/mechanics/building/footprint_orientation.gd")
@@ -43,7 +39,7 @@ var _cells: Dictionary = {}
 ## Auto wall or tower-ring cell -> WallSolver entry. Solved with free-form
 ## walls, not on its own (#414).
 var _auto: Dictionary = {}
-## Placement id -> {"name", "owner", "anchor"} (for saves, #42).
+## Placement id -> name, owner, anchor and optional rotation, start_castle and hp.
 var _placed: Dictionary = {}
 var _footprints: Dictionary = {}  ## Placement id -> occupied cells.
 ## Placement id -> its `team` flag cells, the towers TowerCapture watches.
@@ -91,13 +87,22 @@ func placement_at(cell: Vector2i) -> int:
 
 
 func placement_details_at(cell: Vector2i) -> Dictionary:
-	var id := placement_at(cell)
-	if id == 0:
+	return placement_details(placement_at(cell))
+
+
+func placement_details(id: int) -> Dictionary:
+	if not _placed.has(id):
 		return {}
 	var details: Dictionary = _placed[id].duplicate()
 	details["id"] = id
 	details["cells"] = _footprints[id].duplicate()
 	return details
+
+
+func set_building_hp(id: int, remaining: int) -> void:
+	if _placed.has(id):
+		_placed[id]["hp"] = remaining
+		health_display_changed.emit()
 
 
 func mark_start_castle(id: int) -> void:
@@ -153,6 +158,7 @@ func clear() -> void:
 	_footprints.clear()
 	_flags.clear()
 	_next_id = 1
+	health_display_changed.emit()
 
 
 func auto_cells() -> Dictionary:
@@ -264,8 +270,7 @@ func place(structure: Structure, anchor_cell: Vector2i, owner: int, quarter_turn
 	## ground cells, then object cells. Auto walls and tower rings are solved
 	## with every other wall (an `open` gate drawn open). The owner's flag
 	## colour is applied. Plants, decor and stumps under it are removed.
-	## Returns the new placement id, or -1 and nothing written when can_place
-	## gives any reason.
+	## Returns the placement ID, or -1 if the footprint is refused.
 	if not can_place(structure, anchor_cell, quarter_turns).is_empty():
 		return -1
 	return _write(structure, anchor_cell, owner, quarter_turns)
@@ -288,9 +293,8 @@ func place_from_host(
 
 
 func to_sync(include_identity := false) -> Array:
-	## The placements in id order as [name, owner, anchor, rotation?], the
-	## list in id order. Join snapshots also carry the id and starting castle
-	## designation so a removed placement does not shift city or capture IDs.
+	## Compact rows contain name, owner, anchor and nonzero rotation.
+	## Join rows also carry the ID, starting castle flag, and any remaining HP.
 	var out := []
 	var ids := _placed.keys()
 	ids.sort()
@@ -301,6 +305,8 @@ func to_sync(include_identity := false) -> Array:
 			out.append(
 				[p["name"], p["owner"], p["anchor"], turns, id, p.get("start_castle", false)]
 			)
+			if p.has("hp"):
+				out.back().append(p["hp"])
 		elif turns == 0:
 			out.append([p["name"], p["owner"], p["anchor"]])
 		else:
@@ -309,12 +315,7 @@ func to_sync(include_identity := false) -> Array:
 
 
 func replace_from_host(list: Array) -> int:
-	## Client: make the placements exactly the host's `list` (to_sync), in
-	## its order, so ids match. Call it right after the params are applied,
-	## before the chunks are drawn again. The host checked each placement, so
-	## can_place is not asked (it refuses while multiplayer is on). An entry
-	## of the wrong shape, or naming no shipped structure file, is skipped.
-	## Returns how many placements it holds.
+	## Restore authoritative join or save rows before chunks draw.
 	clear()
 	for entry in list:
 		if (
@@ -334,6 +335,10 @@ func replace_from_host(list: Array) -> int:
 			var placed_id := _write(structure, entry[2], entry[1], turns, id)
 			if entry.size() >= 6 and entry[5] == true:
 				mark_start_castle(placed_id)
+			if entry.size() >= 7 and (entry[6] is int or entry[6] is float):
+				var hp := int(entry[6])
+				if hp > 0 or (hp == 0 and _placed[placed_id].get("start_castle", false)):
+					set_building_hp(placed_id, hp)
 	return _placed.size()
 
 
@@ -462,6 +467,8 @@ func set_owner(id: int, owner: int) -> void:
 		_map._predict_cache.erase(cell)
 		if _map.get_cell_source_id(1, cell) != -1:
 			_map.set_cell(1, cell, TileCatalog.SOURCE_ID, flag)
+	if _placed[id].has("hp"):
+		health_display_changed.emit()
 
 
 static func footprint(structure: Structure, anchor_cell: Vector2i) -> Dictionary:
