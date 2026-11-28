@@ -1,19 +1,19 @@
 class_name ToolWheel
 extends Control
-## Hold-to-select sword, bomb and chop (#574).
+## Hold-to-select sword, bomb, chop and command (#574).
 ## A tap under TAP_MS with no drag swaps to the previous tool. A longer
 ## press, or any drag, opens a half-moon to the left of the button when that
 ## arc fits, and otherwise toward the open side of the screen so every
 ## option stays visible. Releasing selects the highlighted tool.
 ## A headless --server host never builds this node. It does not run _process.
 
-enum Tool { SWORD, BOMB, CHOP }
+enum Tool { SWORD, BOMB, CHOP, COMMAND }
 
 const TAP_MS := 200
 const DRAG_PX := 6.0
-const ARC_R := 56.0
-const NAMES: PackedStringArray = ["Sword", "Bomb", "Chop"]
-const DIRECT: PackedStringArray = ["tool_sword", "tool_bomb", "tool_chop"]
+const ARC_R := 64.0
+const NAMES: PackedStringArray = ["Sword", "Bomb", "Chop", "Command"]
+const DIRECT: PackedStringArray = ["tool_sword", "tool_bomb", "tool_chop", "tool_command"]
 const ARC_COLOR := Color(0.95, 0.92, 0.86, 0.9)
 const _MOUSE := -2
 
@@ -98,7 +98,7 @@ func place_button(pos: Vector2) -> void:
 
 
 func select(next: int) -> void:
-	if next < Tool.SWORD or next > Tool.CHOP:
+	if next < Tool.SWORD or next > Tool.COMMAND:
 		return
 	if next != tool:
 		previous = tool
@@ -271,7 +271,7 @@ func _end(pos: Vector2) -> void:
 
 
 func _nudge(step: int) -> void:
-	_highlight = clampi(_highlight + step, Tool.SWORD, Tool.CHOP)
+	_highlight = clampi(_highlight + step, Tool.SWORD, Tool.COMMAND)
 	_paint_options()
 
 
@@ -286,8 +286,8 @@ func _highlight_at(pos: Vector2) -> void:
 		theta = 0.0 if theta > -PI * 0.5 else PI
 	var best := 0
 	var best_d := INF
-	for i in 3:
-		var opt := PI * (float(i) + 0.5) / 3.0
+	for i in NAMES.size():
+		var opt := PI * (float(i) + 0.5) / NAMES.size()
 		var d := absf(theta - opt)
 		if d < best_d:
 			best_d = d
@@ -331,7 +331,7 @@ func _option_center(index: int) -> Vector2:
 
 
 func _raw_center(index: int, sign: float, radius: float) -> Vector2:
-	var theta := PI * (float(index) + 0.5) / 3.0
+	var theta := PI * (float(index) + 0.5) / NAMES.size()
 	return _button_center() + Vector2(sign * sin(theta), -cos(theta)) * radius
 
 
@@ -364,7 +364,7 @@ func _layout_fan() -> void:
 func _fan_fits(sign: float, radius: float) -> bool:
 	var view := get_viewport().get_visible_rect()
 	var half := Vector2.ONE * RoundHudStyle.HIT * 0.5
-	for i in 3:
+	for i in NAMES.size():
 		var center := _raw_center(i, sign, radius)
 		if not view.encloses(Rect2(center - half, half * 2.0)):
 			return false
@@ -431,6 +431,7 @@ func _ensure_actions() -> void:
 	_bind("tool_sword", KEY_1)
 	_bind("tool_bomb", KEY_2)
 	_bind("tool_chop", KEY_3)
+	_bind("tool_command", KEY_4)
 
 
 func _bind(action: String, key: Key) -> void:

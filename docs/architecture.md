@@ -167,6 +167,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 - `Scripts/player/player_hud.gd`
 - `Scripts/player/player_input.gd`
 - `Scripts/player/player_wall_draw.gd`
+- `Scripts/player/soldier_command.gd`
 
 ### `Scripts/saves/`
 

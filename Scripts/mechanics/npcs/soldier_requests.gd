@@ -1,6 +1,9 @@
 class_name SoldierRequests
 extends Node2D
-## Host pipeline for barracks soldier training and follow/hold (#553).
+## Host pipeline for soldier training and orders.
+
+const MOVE_SEARCH_CELLS := 3
+const MOVE_COORD_LIMIT := 1 << 20
 
 const NEIGHBOR_CLOCK := [
 	Vector2i(1, 0),
@@ -128,10 +131,9 @@ func request_train(anchor: Vector2i, reported: Vector2i) -> void:
 func host_set_order(peer_id: int) -> bool:
 	if not multiplayer.is_server():
 		return false
-	var next := "hold"
+	var next := "hold" if _owner_order(peer_id) == "follow" else "follow"
 	for child in get_children():
-		if child is Soldier and child.owner_peer == peer_id and child.state != Soldier.State.DYING:
-			next = "hold" if child.order == "follow" else "follow"
+		if child is Soldier and child.is_owned_alive(peer_id):
 			child.set_order(next)
 	return true
 
@@ -178,6 +180,52 @@ func restore_training(rows: Array) -> void:
 
 static func _finite_number(value: Variant) -> bool:
 	return (value is int or value is float) and is_finite(value)
+
+
+func host_move(peer_id: int, names: PackedStringArray, target: Vector2) -> bool:
+	if not multiplayer.is_server() or not target.is_finite():
+		return false
+	if maxf(absf(target.x), absf(target.y)) > MOVE_COORD_LIMIT:
+		return false
+	var body := get_parent().get_node_or_null(str(peer_id)) as Node2D
+	var map := _map()
+	if body == null or Interaction.player_dead(body) or map == null:
+		return false
+	var requested := {}
+	for unit_name in names:
+		requested[unit_name] = true
+	var cell := map.local_to_map(map.to_local(target))
+	var offsets: Array[Vector2i] = [Vector2i.ZERO]
+	for radius in range(1, MOVE_SEARCH_CELLS + 1):
+		for y in range(-radius, radius + 1):
+			for x in range(-radius, radius + 1):
+				if maxi(absi(x), absi(y)) == radius:
+					offsets.append(Vector2i(x, y))
+	offsets.sort_custom(
+		func(a: Vector2i, b: Vector2i) -> bool:
+			return (
+				map.to_global(map.map_to_local(cell + a)).distance_squared_to(target)
+				< (map.to_global(map.map_to_local(cell + b)).distance_squared_to(target))
+			)
+	)
+	var assigned := false
+	for unit: Soldier in soldiers():
+		if not requested.has(str(unit.name)) or not unit.is_owned_alive(peer_id):
+			continue
+		for offset in offsets:
+			var destination := map.to_global(map.map_to_local(cell + offset))
+			if unit.can_stand_at(destination):
+				unit.move_to(destination)
+				offsets.erase(offset)
+				assigned = true
+				break
+	return assigned
+
+
+@rpc("any_peer", "reliable", "call_remote")
+func request_move(names: PackedStringArray, target: Vector2) -> void:
+	if multiplayer.is_server():
+		host_move(multiplayer.get_remote_sender_id(), names, target)
 
 
 func spawn_saved(row: Dictionary) -> void:
@@ -389,7 +437,7 @@ func _living_for_owner(peer_id: int) -> int:
 
 func _owner_order(peer_id: int) -> String:
 	for child in get_children():
-		if child is Soldier and child.owner_peer == peer_id and child.state != Soldier.State.DYING:
+		if child is Soldier and child.is_owned_alive(peer_id) and child.order != "follow":
 			return child.order
 	return "follow"
 

@@ -69,6 +69,63 @@ func _test_soldier_train_two_players() -> int:
 	return fail
 
 
+func _test_soldier_move_two_players() -> int:
+	print("-- test_soldier_move_two_players")
+	var session := _open("move")
+	if session.is_empty():
+		return 1
+	var read: Callable = session["read"]
+	var launch: Callable = session["launch"]
+	var wait_for: Callable = session["wait_for"]
+	var ok: bool = await wait_for.call(
+		func() -> bool: return read.call(0).get("ready", false), 15000
+	)
+	if ok:
+		launch.call(false, "move")
+		ok = await wait_for.call(func() -> bool: return _move_agrees(read, 1), 15000)
+	if ok:
+		launch.call(false, "watch")
+		ok = await wait_for.call(func() -> bool: return _move_agrees(read, 2), 15000)
+	var fail := 0
+	for i in session["outs"].size():
+		if not read.call(i).get("errors", []).is_empty():
+			ok = false
+	if not ok:
+		printerr(
+			(
+				"FAIL soldier_move_two_players: host %s client %s late %s"
+				% [read.call(0), read.call(1), read.call(2) if session["outs"].size() > 2 else {}]
+			)
+		)
+		fail = 1
+	await _close(session)
+	if fail == 0:
+		print("PASS test_soldier_move_two_players")
+	return fail
+
+
+func _move_agrees(read: Callable, other: int) -> bool:
+	var host: Dictionary = read.call(0).get("command", {})
+	var client: Dictionary = read.call(other).get("command", {})
+	var issued: Array = read.call(1).get("issued", [])
+	var owner: int = int(read.call(1).get("id", "0"))
+	if (
+		not host.get("saw_move", false)
+		or not read.call(1).get("command", {}).get("saw_move", false)
+	):
+		return false
+	var row: Array = host.get("row", [])
+	return (
+		row.size() == 4
+		and issued.size() == 2
+		and int(row[0]) == owner
+		and row[1] == "hold"
+		and row[3] == issued
+		and row[2] == row[3]
+		and row == client.get("row", [])
+	)
+
+
 func _trained(read: Callable) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
@@ -92,7 +149,7 @@ func _order_is(read: Callable, want: String, peer_count: int = 2) -> bool:
 	return true
 
 
-func _open() -> Dictionary:
+func _open(mode := "place") -> Dictionary:
 	var port := _free_udp_port()
 	if port == 0:
 		printerr("FAIL soldier sync found no free UDP port")
@@ -116,7 +173,7 @@ func _open() -> Dictionary:
 		probes.append(spawn_probe(PROBE, outs[-1], args))
 	var read := read_probe_at.bind(probes)
 	var wait_for := wait_until
-	launch.call(true, "place")
+	launch.call(true, mode)
 	return {
 		"dir": dir,
 		"outs": outs,

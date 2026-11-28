@@ -246,7 +246,7 @@ func _input(event: InputEvent) -> void:
 	# Touches go here, not to _unhandled_input: the move stick and the map
 	# zoom read touches in _input too, and a finger on the button must be seen
 	# whatever they do with the other fingers.
-	if HudLayoutVisual.blocks_hud_actions():
+	if player.command_armed() or HudLayoutVisual.blocks_hud_actions():
 		return
 	if _parchment_open():
 		if _touch_index != -1:
@@ -309,7 +309,9 @@ func _on_touch(event: InputEventScreenTouch) -> void:
 
 
 func _process(_delta: float) -> void:
-	if aiming and not can_aim():
+	if player.command_armed() and (aiming or _touch_index != -1):
+		_drop_touch()
+	elif aiming and not can_aim():
 		cancel()
 	if aiming:
 		queue_redraw()  # the player and the camera move under a still cursor
@@ -318,7 +320,8 @@ func _process(_delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if (
-		not (event is InputEventMouse)
+		player.command_armed()
+		or not (event is InputEventMouse)
 		or event.device == InputEvent.DEVICE_ID_EMULATION
 		or _touch_index != -1
 	):

@@ -7,8 +7,10 @@ const SOLDIER_SCENE := "res://Mobs/soldier.tscn"
 
 @export var owner_peer: int = 0
 @export var order: String = "follow"
+@export var move_target := Vector2.ZERO
 @export var barracks_anchor: Vector2i = Vector2i.ZERO
 
+var _blocked_seconds := 0.0
 var _hold_pos := Vector2.ZERO
 var spawn_seed := 0
 var _strike_cd := 0.0
@@ -75,6 +77,9 @@ func _step_move(delta: float) -> void:
 		direction = Vector2.ZERO
 		state = State.IDLE
 		return
+	if order == "move":
+		_step_command(delta)
+		return
 	var owner := get_node_or_null("../../" + str(owner_peer)) as Node2D
 	if owner == null or not is_alive(owner):
 		direction = Vector2.ZERO
@@ -85,12 +90,33 @@ func _step_move(delta: float) -> void:
 		direction = Vector2.ZERO
 		state = State.IDLE
 		return
-	var motion := to.normalized() * Tuning.value(&"soldiers.walk_speed") * delta
+	_steer(to, delta)
+	_hold_pos = global_position
+
+
+func _steer(to: Vector2, delta: float) -> void:
+	var motion := to.limit_length(Tuning.value(&"soldiers.walk_speed") * delta)
 	facing = MobCatalog.facing_for(to)
 	state = State.WALK
 	if not step(motion, false) and not step(Vector2(motion.x, 0), false):
 		step(Vector2(0, motion.y), false)
-	_hold_pos = global_position
+
+
+func _step_command(delta: float) -> void:
+	var to := move_target - global_position
+	if to.length() <= 0.5:
+		set_order("hold")
+		state = State.IDLE
+		return
+	_steer(to, delta)
+	# Sliding counts only while it makes progress toward the target.
+	if to.length() - global_position.distance_to(move_target) > 0.001:
+		_blocked_seconds = 0.0
+	else:
+		_blocked_seconds += delta
+		if _blocked_seconds >= Tuning.value(&"command.blocked_seconds"):
+			set_order("hold")
+			state = State.IDLE
 
 
 func _fight() -> void:
@@ -124,6 +150,18 @@ func _fight() -> void:
 			var health := player.get_node_or_null("Health") as PlayerHealth
 			if health != null and health.take_damage(1):
 				_strike_cd = SoldierStats.HIT_EVERY
+
+
+func is_owned_alive(peer_id: int) -> bool:
+	return (
+		owner_peer == peer_id and hp > 0 and state != State.DYING and not is_queued_for_deletion()
+	)
+
+
+func move_to(destination: Vector2) -> void:
+	move_target = destination
+	_blocked_seconds = 0.0
+	set_order("move")
 
 
 func set_order(next: String) -> void:

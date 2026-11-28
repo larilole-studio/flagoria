@@ -1,8 +1,11 @@
 extends "res://tests/helpers/probe_base.gd"
-## One peer of a barracks soldier sync session (#553). Modes place, watch.
+## One peer of a barracks soldier sync session (#553). Modes place, move, watch.
 
 var _place_error := ""
 var _training_charge := Vector2i.ZERO
+var _train_anchor := Vector2i.ZERO
+var _saw_move := false
+var _issued: Array = []
 
 
 func _run() -> void:
@@ -41,10 +44,64 @@ func _run() -> void:
 			phase = "working"
 			_place_error = await _do_place(main, world, me, requests)
 			phase = "done"
+		if ready and mode == "move" and phase == "idle":
+			if host and main.multiplayer.get_peers().size() == 1:
+				var client: int = main.multiplayer.get_peers()[0]
+				_place_error = _spawn_move_fixture(world, requests, client)
+				phase = "done"
+			elif not host:
+				var unit := requests.get_node_or_null("command_probe") as Soldier
+				if unit != null:
+					var target := unit.position + Vector2(64, 0)
+					_issued = _coords(target)
+					requests.request_move.rpc_id(1, PackedStringArray(["command_probe"]), target)
+					phase = "done"
 		if snapshot_due(main):
 			_write(main, world, me, requests)
 		await process_frame
 	finish(main, func() -> void: _write(main, world, local_player(main), requests))
+
+
+func _spawn_move_fixture(world: TileMap, requests: SoldierRequests, owner: int) -> String:
+	var start: Variant = _search(
+		world,
+		func(cell: Vector2i) -> bool:
+			for i in 5:
+				if not world.predicted_clear(cell + Vector2i(i, 0)):
+					return false
+			return true
+	)
+	if start == null:
+		return "no clear command lane"
+	(
+		requests
+		. spawn_saved(
+			{
+				"name": "command_probe",
+				"owner": owner,
+				"order": "hold",
+				"pos": world.to_global(world.map_to_local(start)),
+				"seed": 11,
+			}
+		)
+	)
+	return ""
+
+
+func _coords(pos: Vector2) -> Array:
+	return [snappedf(pos.x, 0.01), snappedf(pos.y, 0.01)]
+
+
+func _command_snapshot(requests: SoldierRequests) -> Dictionary:
+	var unit := requests.get_node_or_null("command_probe") as Soldier
+	if unit == null:
+		return {}
+	_saw_move = _saw_move or unit.order == "move"
+	return {
+		"saw_move": _saw_move,
+		"row":
+		[unit.owner_peer, unit.order, _coords(unit.global_position), _coords(unit.move_target)],
+	}
 
 
 func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
@@ -199,6 +256,8 @@ func _write(main, world, me: Node2D, requests: SoldierRequests) -> void:
 			"peers": peers,
 			"soldiers": _soldier_rows(requests),
 			"training_charge": [_training_charge.x, _training_charge.y],
+			"issued": _issued,
+			"command": _command_snapshot(requests) if requests != null else {},
 			"pending_jobs": requests.pending_job_count() if requests != null else 0,
 			"errors": _errors.snapshot(),
 		}
