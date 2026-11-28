@@ -9,8 +9,8 @@ const MAP_TOP := Vector2(2, 14)
 const CELL_PX := 4
 const INK := Color("#2a2238")
 const PAPER := Color("#e8c968")
-const RED := Color("#e04a4a")
-const GOLD := Color("#ffe680")
+const ALERT_ICON := preload("res://art/soldiers/alert_icon.png")
+const ALERT_SIZE := Vector2(16, 16)
 const FONT := preload("res://art/ui/fonts/LilitaOne-Regular.ttf")
 
 var _alerts := {}
@@ -128,16 +128,15 @@ func _draw() -> void:
 func draw_markers(canvas: CanvasItem, origin: Vector2, cell_px: int, bounds: Rect2) -> void:
 	for alert: Dictionary in _alerts.values():
 		var at := (_map_position(alert["cell"], cell_px) - origin + bounds.position).round()
-		if not bounds.grow(-6).has_point(at):
+		if not bounds.grow(-8).has_point(at):
 			continue
 		var left: float = alert["left"]
-		var opacity := minf(1.0, left)
-		var radius := 4.0 + floorf(fmod(left * 4.0, 3.0))
-		canvas.draw_arc(at, radius, 0.0, TAU, 16, Color(GOLD, opacity), 1.0)
-		canvas.draw_rect(Rect2(at - Vector2(3, 4), Vector2(7, 9)), Color(INK, opacity))
-		canvas.draw_rect(Rect2(at - Vector2(2, 3), Vector2(5, 7)), Color(RED, opacity))
-		canvas.draw_rect(Rect2(at - Vector2(0, 2), Vector2(1, 3)), Color(GOLD, opacity))
-		canvas.draw_rect(Rect2(at + Vector2(0, 2), Vector2.ONE), Color(GOLD, opacity))
+		var frame := floori(left * 4) % 2
+		var source := Rect2(Vector2(frame * ALERT_SIZE.x, 0), ALERT_SIZE)
+		var target := Rect2(at - ALERT_SIZE / 2.0, ALERT_SIZE)
+		canvas.draw_texture_rect_region(
+			ALERT_ICON, target, source, Color(1.0, 1.0, 1.0, minf(1.0, left))
+		)
 
 
 func _map_position(cell: Vector2i, cell_px: int) -> Vector2:

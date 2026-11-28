@@ -6,8 +6,12 @@ const FULL_DRAG_PX := 120.0
 const NO_POINTER := -1
 const MOUSE := -2
 const KEYBOARD := -3
-const RANGE_FILL := Color(1.0, 1.0, 1.0, 0.08)
-const RANGE_LINE := Color(1.0, 1.0, 1.0, 0.35)
+const RANGE_FILL := Color(1.0, 230.0 / 255.0, 128.0 / 255.0, 24.0 / 255.0)
+const RANGE_LINE := Color(1.0, 230.0 / 255.0, 128.0 / 255.0, 96.0 / 255.0)
+const SELECTION_RING := preload("res://art/soldiers/selection_ring.png")
+const MOVE_BLUE := preload("res://art/soldiers/move_marker.png")
+const MOVE_RED := preload("res://art/soldiers/move_marker_red.png")
+const MARKER_SIZE := Vector2(16, 16)
 
 var selected_names := PackedStringArray()
 var _selector := NO_POINTER
@@ -27,13 +31,11 @@ var _saw_move := false
 @onready var _aim: AttackAim = _player.get_node("AttackAim")
 @onready var _requests: SoldierRequests = _player.get_node_or_null("../Soldiers")
 @onready var _zoom = _player.get_node_or_null("Camera2D/MapZoom")
-@onready var _scoreboard := (
-	get_node_or_null("/root/Flagoria/CanvasLayer1/ScoreboardPanel") as ScoreboardPanel
-)
 
 
 func _ready() -> void:
 	z_index = 3
+	texture_filter = TEXTURE_FILTER_NEAREST
 
 
 static func names_in_range(
@@ -218,36 +220,27 @@ func _send_move(target: Vector2) -> void:
 func _draw() -> void:
 	if _radius <= 0.0 and selected_names.is_empty() and _marker_left <= 0.0:
 		return
-	var px := _aim.screen_px()
-	var peer_id := multiplayer.get_unique_id()
-	var team := (
-		_scoreboard.flag_color(peer_id) if _scoreboard != null else ScoreboardPanel.FLAG_HOST
-	)
 	var shown := selected_names
 	if _radius > 0.0:
-		_ellipse(Vector2.ZERO, _radius, RANGE_LINE, px, RANGE_FILL)
+		_draw_range()
 		shown = preview_names()
 	for unit_name in shown:
 		var unit := _requests.get_node_or_null(NodePath(unit_name)) as Soldier
 		if unit != null and unit.visible:
-			_ellipse(to_local(unit.global_position), 7.0, Color(team.lightened(0.15), 0.65), px)
+			var feet := to_local(unit.global_position).round()
+			draw_texture(SELECTION_RING, feet - SELECTION_RING.get_size() / 2.0)
 	if _marker_left > 0.0:
-		var pos := to_local(_marker)
-		var pulse := 0.75 + 0.25 * sin(Time.get_ticks_msec() * 0.012)
-		var x := Vector2(6, 0)
-		var y := Vector2(0, 4)
-		for axis in [x, y]:
-			draw_line(pos - axis, pos + axis, Color(0.12, 0.1, 0.1, pulse), 3.0 * px, true)
-			draw_line(pos - axis, pos + axis, Color(team.lightened(0.38), pulse), 1.5 * px, true)
+		var pos := to_local(_marker).round() - Vector2(8, 12)
+		var marker := MOVE_BLUE if multiplayer.get_unique_id() == 1 else MOVE_RED
+		var frame := floori(Time.get_ticks_msec() / 140.0) % 3
+		var source := Rect2(Vector2(frame * MARKER_SIZE.x, 0), MARKER_SIZE)
+		draw_texture_rect_region(marker, Rect2(pos, MARKER_SIZE), source)
 
 
-func _ellipse(
-	center: Vector2, radius: float, line: Color, width: float, fill := Color.TRANSPARENT
-) -> void:
+func _draw_range() -> void:
 	var points := PackedVector2Array()
 	for i in 48:
-		points.append(center + Vector2.from_angle(TAU * i / 48.0) * BombShot.radii(radius))
-	if fill.a > 0.0:
-		draw_colored_polygon(points, fill)
+		points.append(Vector2.from_angle(TAU * i / 48.0) * BombShot.radii(_radius))
+	draw_colored_polygon(points, RANGE_FILL)
 	points.append(points[0])
-	draw_polyline(points, line, width, true)
+	draw_polyline(points, RANGE_LINE, 1.0)

@@ -31,7 +31,7 @@ static func texture(sprite: String) -> Texture2D:
 	var path := HUD + sprite + ".png"
 	if not _textures.has(path):
 		var image := (load(path) as Texture2D).get_image()
-		if not image.has_mipmaps():
+		if not sprite.begins_with("wheel_command_") and not image.has_mipmaps():
 			image.generate_mipmaps()
 		var art := ImageTexture.create_from_image(image)
 		art.set_size_override(image.get_size() / DENSITY)
@@ -90,7 +90,10 @@ static func apply_run(button: Button, hit: float = RUN_HIT, art: float = RUN_SIZ
 
 
 static func apply_wheel(button: Button, tool: int, hit: float = HIT, art: float = SIZE) -> void:
-	apply_disc(button, _WHEEL[tool] if tool < _WHEEL.size() else "wheel_command", hit, art, true)
+	var is_command := tool >= _WHEEL.size()
+	apply_disc(button, "wheel_command" if is_command else _WHEEL[tool], hit, art, true)
+	if is_command:
+		button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
 static func apply_disc(
@@ -138,32 +141,6 @@ static func refresh_toggle(button: Button, highlighted := false) -> void:
 
 static func _box(sprite: String, hit: float, art: float) -> StyleBoxTexture:
 	var box := StyleBoxTexture.new()
-	box.texture = (
-		_command_texture(sprite) if sprite.begins_with("wheel_command_") else texture(sprite)
-	)
+	box.texture = texture(sprite)
 	box.set_expand_margin_all((art - hit) * 0.5)
 	return box
-
-
-static func _command_texture(sprite: String) -> Texture2D:
-	if _textures.has(sprite):
-		return _textures[sprite]
-	var face := "#adb88d" if "selected" in sprite else "#86996e"
-	if sprite.ends_with("pressed"):
-		face = "#72865c"
-	var svg := (
-		"""<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24">
-	<circle cx="12" cy="12" r="11" fill="#403b33"/>
-	<circle cx="12" cy="11.5" r="9.5" fill="%s" stroke="#cdd0ac" stroke-width=".6"/>
-	<path d="M8 17.5v-12m.5 1h7l-1.8 2 1.8 2h-7" fill="#f3e7c7"
-	stroke="#403b33" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/>
-	<path d="M6.5 17.5h7" stroke="#403b33" stroke-width="1.1" stroke-linecap="round"/>
-	</svg>"""
-		% face
-	)
-	var image := Image.new()
-	image.load_svg_from_string(svg)
-	image.generate_mipmaps()
-	var icon := ImageTexture.create_from_image(image)
-	_textures[sprite] = icon
-	return icon
