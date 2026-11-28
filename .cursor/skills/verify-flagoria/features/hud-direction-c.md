@@ -13,6 +13,6 @@ In-match HUD uses `art/ui/hud_e4/` sage discs and Candy Glass stickers with line
 
 Preconditions: `doctor.sh` exits `0`. Time cost: about 25 s for this drive plus existing HUD drives in CI gameplay matrix.
 
-- **Run (headless).** `tools/verify.sh` (`test_hud_round_buttons`, layout and bow tests).
+- **Run (headless).** `tools/verify.sh` (`test_hud_round_buttons`, layout and bomb-slot tests).
 - **Drive (live).** `bin/launch.sh drives/hud_direction_c.gd --display --seed 49`, and `hud_round_buttons`, `hud_customize`, `combat_hud`, `ranged_bow` for regression.
-- **Proof.** Snapshots: `hud-1280`, `mode-interact`, `weapon-bow-1280`, `hud-disabled-edit`, `hud-1920`.
+- **Proof.** Snapshots: `hud-1280`, `mode-interact`, `weapon-bomb-1280`, `hud-disabled-edit`, `hud-1920`.

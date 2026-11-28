@@ -7,16 +7,15 @@ func run() -> void:
 	if not await start_game():
 		return
 	var bombs := current_scene.get_node("World/BombThrows") as BombThrows
-	var shots := current_scene.get_node("World/RangedShots") as RangedShots
 	var wheel := current_scene.get_node("CanvasLayer1/ToolWheel") as ToolWheel
 	var aim := hero().get_node("AttackAim") as AttackAim
 	step("arm bomb")
 	await tap_key(KEY_2)
-	var ok := await wait_until(wheel.bow_armed, 2.0)
+	var ok := await wait_until(wheel.bomb_armed, 2.0)
 
 	step("hud icon")
 	var tool_button: Button = wheel.get_node("ToolButton")
-	ok = ok and _icon_is(tool_button, "wheel_bow")
+	ok = ok and _icon_is(tool_button, "wheel_bomb")
 	await snapshot("bomb-hud-icon")
 
 	step("open wheel")
@@ -26,7 +25,7 @@ func run() -> void:
 	await snapshot("bomb-wheel-open")
 	_touch_at(at, false)
 	await process_frame
-	ok = wheel.bow_armed() and not wheel.is_open() and ok
+	ok = wheel.bomb_armed() and not wheel.is_open() and ok
 
 	var center: Vector2 = root.get_final_transform() * aim.attack_button().aim_center()
 	if not await _tap_enemy(bombs, center):
@@ -48,12 +47,11 @@ func run() -> void:
 		await snapshot("bomb-preview-" + preview[0])
 
 	step("throw")
-	var before := shots.lines_shown()
 	_touch_at(center + drag_direction * 145.0, false)
 	var flying := await wait_until(
 		func() -> bool: return bombs.has_phase(BombThrows.Phase.FLIGHT), 2.0
 	)
-	ok = ok and flying and shots.lines_shown() == before and not hero().isAttacking
+	ok = ok and flying and not hero().isAttacking
 	await create_timer(0.14).timeout
 	ok = ok and bombs.has_phase(BombThrows.Phase.FLIGHT)
 	await snapshot("bomb-mid-arc")

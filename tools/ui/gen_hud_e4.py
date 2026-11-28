@@ -294,7 +294,7 @@ def render_discs():
     disc('menu', 24, 'menu', 1.20, basic)
     disc('build', 24, 'build', 1.50, toggle)
     disc('rotate', 24, 'rotate', 1.42, basic)
-    for name, icon in (('sword', 'sword'), ('chop', 'chop'), ('bow', 'pot')):
+    for name, icon in (('sword', 'sword'), ('chop', 'chop'), ('bomb', 'pot')):
         disc(f'wheel_{name}', 24, icon, 1.4, toggle)
     for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'mine', 'demolish'):
         disc(f'pick_{icon}', 24, icon, 1.72, toggle)

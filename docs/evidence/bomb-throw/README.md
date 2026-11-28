@@ -15,5 +15,6 @@ Drive `ranged_bow.gd` on seed 49, after arming the bow tool.
 11. A second throw during the cooldown is ignored; the Attack button uses its disabled art, and only the first pot is on the ground.
 12. After the cooldown, a throw lands again.
 13. After the pot lands, a dashed red-orange warning ellipse (same flattened size as the blast) is drawn at the landing until it explodes.
+14. After archer mode is removed, the open tool wheel shows the clay pot between sword and chop. There is no bow icon or Bow label.
 
 Crops are the same frames, tighter on the throw, the landing, or the HUD.

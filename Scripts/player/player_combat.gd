@@ -1,5 +1,5 @@
 extends RefCounted
-## Executes player sword swings and routes aimed bow shots.
+## Executes player sword swings and routes aimed bomb throws.
 
 const MAP_PATH := "/root/Flagoria/World/worldMap"
 const TOOL_WHEEL_PATH := "/root/Flagoria/CanvasLayer1/ToolWheel"
@@ -9,7 +9,7 @@ const AttackAimScript := preload("res://Scripts/player/attack_aim.gd")
 
 static func bomb_armed(player) -> bool:
 	var wheel := player.get_node_or_null(TOOL_WHEEL_PATH) as ToolWheel
-	return wheel != null and wheel.bow_armed()
+	return wheel != null and wheel.bomb_armed()
 
 
 static func throw_bomb(player, aimed_reach: Variant) -> void:

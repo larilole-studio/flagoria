@@ -1,19 +1,19 @@
 class_name ToolWheel
 extends Control
-## Hold-to-select sword, bow and chop (#574).
+## Hold-to-select sword, bomb and chop (#574).
 ## A tap under TAP_MS with no drag swaps to the previous tool. A longer
 ## press, or any drag, opens a half-moon to the left of the button when that
 ## arc fits, and otherwise toward the open side of the screen so every
 ## option stays visible. Releasing selects the highlighted tool.
 ## A headless --server host never builds this node. It does not run _process.
 
-enum Tool { SWORD, BOW, CHOP }
+enum Tool { SWORD, BOMB, CHOP }
 
 const TAP_MS := 200
 const DRAG_PX := 6.0
 const ARC_R := 56.0
-const NAMES: PackedStringArray = ["Sword", "Bow", "Chop"]
-const DIRECT: PackedStringArray = ["tool_sword", "tool_bow", "tool_chop"]
+const NAMES: PackedStringArray = ["Sword", "Bomb", "Chop"]
+const DIRECT: PackedStringArray = ["tool_sword", "tool_bomb", "tool_chop"]
 const ARC_COLOR := Color(0.95, 0.92, 0.86, 0.9)
 const _MOUSE := -2
 
@@ -45,8 +45,8 @@ static func headless_host() -> bool:
 	return not builds_on(OS.get_cmdline_user_args(), DisplayServer.get_name())
 
 
-func bow_armed() -> bool:
-	return tool == Tool.BOW
+func bomb_armed() -> bool:
+	return tool == Tool.BOMB
 
 
 func is_open() -> bool:
@@ -429,7 +429,7 @@ func _make_disc(node_name: String) -> Button:
 func _ensure_actions() -> void:
 	_bind("tool_wheel", KEY_Q)
 	_bind("tool_sword", KEY_1)
-	_bind("tool_bow", KEY_2)
+	_bind("tool_bomb", KEY_2)
 	_bind("tool_chop", KEY_3)
 
 
