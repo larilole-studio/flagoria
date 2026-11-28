@@ -26,10 +26,14 @@ func _legacy_pixels_unchanged_in_v4() -> int:
 	if v4.get_size() != v3.get_size():
 		printerr("FAIL structure_final_tiles: atlas size %s != %s" % [v4.get_size(), v3.get_size()])
 		return 1
-	# Stone walls have new perspective art. Keep checking every other v3 cell.
+	# Wall fronts and their collars have new perspective art.
 	var redrawn := {}
 	for tile_name: String in TileCatalog.TILES:
-		if tile_name.begins_with("WALL_"):
+		if (
+			tile_name.begins_with("WALL_")
+			or tile_name.begins_with("PALISADE_")
+			or tile_name.begins_with("CAP_COLLAR_")
+		):
 			redrawn[TileCatalog.TILES[tile_name]["atlas"]] = true
 	var cols := v4.get_width() / 16
 	var rows := v4.get_height() / 16

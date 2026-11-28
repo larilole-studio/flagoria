@@ -21,6 +21,11 @@ its own. Removing a cell clears every cap layer; placing it again restores
 them. A loop closing or opening still repaints distant inside and outside
 corners.
 
+Palisades expose four rows of south front under the stake tops. Stone collars
+span the transition at tiles that touch a stone wall and follow the stone
+edge and palisade face. The joins and loop captures in `drives/wall_junctions.gd`
+show the wall profile on a straight run, a bend, and the nearby stone joins.
+
 ## Sub-features
 
 - `wall-junctions` straight, corner, T and cross palisades pick the mask piece
