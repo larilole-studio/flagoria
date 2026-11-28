@@ -10,6 +10,7 @@ extends TouchScreenButton
 @export var texture_down: Texture2D  ## a finger on it, still inside the dead zone
 @export var texture_aim: Texture2D  ## a finger dragged past the dead zone: aiming
 @export var texture_disabled: Texture2D  ## greyed when input is blocked
+var cooling_down := false  ## bomb recharge: AttackAim sets this, then the disabled art
 
 
 func _ready() -> void:
@@ -19,7 +20,7 @@ func _ready() -> void:
 func show_touch_state(state: int) -> void:
 	## Shows the art for an AttackAim TOUCH_* state; a missing texture keeps
 	## the current one.
-	if texture_disabled != null and HudLayoutVisual.blocks_hud_actions():
+	if texture_disabled != null and (HudLayoutVisual.blocks_hud_actions() or cooling_down):
 		texture_normal = texture_disabled
 		return
 	var art: Texture2D = [texture_idle, texture_down, texture_aim][state]

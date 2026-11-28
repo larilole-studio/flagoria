@@ -79,6 +79,11 @@ def icon_shapes(name):
               ('s', 'M22 74 L77 19', 'shade', 4),
               ('s', 'M35 61 L80 81', 'main', 6),
               ('f', '<path d="M82 68 L91 86 L71 89 Z"/>', 'acc')]
+    elif name == 'pot':
+        E += [('s', 'M50 27 Q50 14 65 13 L71 15', 'shade', 7),
+              ('f', '<path d="M40 24 H59 L61 41 H38 Z"/>', 'shade'),
+              ('f', '<path d="M35 39 H65 L63 46 C77 53 79 67 71 77 L64 84 H36 L29 77 C21 67 23 53 37 46 Z"/>', 'main'),
+              ('d', '<path d="M27 62 Q50 74 73 62"/>', 'shade', 7)]
     elif name == 'rotate':
         E += [('s', 'M77 46 A28 28 0 1 0 69 72', 'main', 11),
               ('f', '<path d="M58 42 L91 38 L79 64 Z"/>', 'acc')]
@@ -289,8 +294,8 @@ def render_discs():
     disc('menu', 24, 'menu', 1.20, basic)
     disc('build', 24, 'build', 1.50, toggle)
     disc('rotate', 24, 'rotate', 1.42, basic)
-    for icon in ('sword', 'chop', 'bow'):
-        disc(f'wheel_{icon}', 24, icon, 1.4, toggle)
+    for name, icon in (('sword', 'sword'), ('chop', 'chop'), ('bow', 'pot')):
+        disc(f'wheel_{name}', 24, icon, 1.4, toggle)
     for icon in ('plank', 'wall', 'tower', 'castle', 'guard', 'barracks', 'mine', 'demolish'):
         disc(f'pick_{icon}', 24, icon, 1.72, toggle)
     sheet = OUT.parent.parent / 'structures' / 'sawmill_sheet.png'

@@ -179,8 +179,17 @@ func touch_state() -> int:
 
 func _show_touch_state() -> void:
 	var button = attack_button()
+	if button != null and "cooling_down" in button:
+		button.cooling_down = _bomb_cooling()
 	if button != null and button.has_method("show_touch_state"):
 		button.show_touch_state(touch_state())
+
+
+func _bomb_cooling() -> bool:
+	if player == null or not player.bomb_armed():
+		return false
+	var bombs := player.get_node_or_null("/root/Flagoria/World/BombThrows") as BombThrows
+	return bombs != null and not bombs.is_ready(player.multiplayer.get_unique_id())
 
 
 func _start_aim() -> void:
@@ -304,6 +313,7 @@ func _process(_delta: float) -> void:
 		cancel()
 	if aiming:
 		queue_redraw()  # the player and the camera move under a still cursor
+	_show_touch_state()
 
 
 func _unhandled_input(event: InputEvent) -> void:

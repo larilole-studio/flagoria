@@ -161,3 +161,54 @@ func _test_bomb_auto_target() -> int:
 	if fail == 0:
 		print("PASS test_bomb_auto_target")
 	return fail
+
+
+func _test_bomb_cooldown() -> int:
+	print("-- test_bomb_cooldown")
+	var scene := mount_main_scene()
+	var world := scene.get_node("World")
+	world.get_node("TowerGuns").set_physics_process(false)
+	var map := world.get_node("worldMap") as WorldMap
+	map.set_process(false)
+	var bombs := world.get_node("BombThrows") as BombThrows
+	var origin := Vector2(200, 200)
+	_spawn(PLAYER, world, origin - AttackAim.ORIGIN, "1")
+	var fail := 0
+	var previous: float = Tuning.value(&"bomb.cooldown_seconds")
+	Tuning.set_value(&"bomb.cooldown_seconds", 0.4)
+	if not bombs.is_ready(1) or not bombs.resolve(1, origin, Vector2(40, 0)):
+		printerr("FAIL bomb_cooldown: first throw rejected")
+		fail += 1
+	if bombs.is_ready(1) or bombs.resolve(1, origin, Vector2(40, 0)):
+		printerr("FAIL bomb_cooldown: second throw during cooldown was accepted")
+		fail += 1
+	await create_timer(0.15).timeout
+	if bombs.is_ready(1) or bombs.resolve(1, origin, Vector2(40, 0)):
+		printerr("FAIL bomb_cooldown: throw accepted before the 0.4 s wait")
+		fail += 1
+	if not await wait_until(func() -> bool: return bombs.is_ready(1), 1000):
+		printerr("FAIL bomb_cooldown: did not become ready after 0.4 s")
+		fail += 1
+	if not bombs.resolve(1, origin, Vector2(40, 0)):
+		printerr("FAIL bomb_cooldown: throw after the 0.4 s wait rejected")
+		fail += 1
+	if not await wait_until(func() -> bool: return bombs.is_ready(1), 1000):
+		printerr("FAIL bomb_cooldown: did not become ready before the longer wait")
+		fail += 1
+	Tuning.set_value(&"bomb.cooldown_seconds", 0.8)
+	if not bombs.resolve(1, origin, Vector2(40, 0)):
+		printerr("FAIL bomb_cooldown: throw with a 0.8 s wait rejected")
+		fail += 1
+	await create_timer(0.45).timeout
+	if bombs.is_ready(1) or bombs.resolve(1, origin, Vector2(40, 0)):
+		printerr("FAIL bomb_cooldown: 0.8 s wait was not honoured")
+		fail += 1
+	if not await wait_until(func() -> bool: return bombs.is_ready(1), 1000):
+		printerr("FAIL bomb_cooldown: 0.8 s cooldown did not elapse")
+		fail += 1
+	Tuning.set_value(&"bomb.cooldown_seconds", previous)
+	scene.queue_free()
+	await process_frame
+	if fail == 0:
+		print("PASS test_bomb_cooldown")
+	return fail
