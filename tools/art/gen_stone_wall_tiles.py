@@ -126,12 +126,13 @@ def draw_gate(draw, name):
         draw.line((4, 10, 4, 14), fill=COLORS["wood"])
         draw.line((11, 10, 11, 14), fill=COLORS["wood_dark"])
         draw.point((4, 11), fill=COLORS["wood_light"])
+        draw.line((4, 14, 11, 14), fill=COLORS["outline"])
         return
 
-    draw.rectangle((4, 10, 11, 14), fill=COLORS["wood"])
+    draw.rectangle((4, 10, 11, 13), fill=COLORS["wood"])
     draw.line((4, 10, 11, 10), fill=COLORS["wood_light"])
     draw.line((4, 13, 11, 13), fill=COLORS["wood_dark"])
-    draw.line((8, 10, 8, 14), fill=COLORS["outline"])
+    draw.line((8, 10, 8, 13), fill=COLORS["outline"])
     draw.point([(6, 12), (9, 12)], fill=COLORS["gold"])
 
 
