@@ -69,6 +69,7 @@ Scripts/mechanics/npcs/soldier_requests.gd	max-returns	Function "host_train" has
 Scripts/mechanics/npcs/soldier_requests.gd	unused-argument	unused function argument 'map'
 Scripts/mechanics/structures/structure_placer.gd	load-constant-name	Constant (load/preload) name "_FootprintOrientation" is not valid
 Scripts/mechanics/structures/structure_placer.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
+Scripts/mechanics/structures/structure_placer.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
 Scripts/mechanics/structures/structure_saves.gd	load-constant-name	Constant (load/preload) name "_WorldMap" is not valid
 Scripts/mechanics/trees/chop_action.gd	class-definitions-order	Definition out of order in global scope	b915cf9d2f668c97
 Scripts/mechanics/trees/chop_action.gd	class-definitions-order	Definition out of order in global scope	c9fc4c0e3a74d492

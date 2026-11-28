@@ -129,7 +129,10 @@ func _move_agrees(read: Callable, other: int) -> bool:
 func _trained(read: Callable) -> bool:
 	var host: Dictionary = read.call(0)
 	var client: Dictionary = read.call(1)
-	if host.get("soldiers") != client.get("soldiers"):
+	if (
+		host.get("soldiers") != client.get("soldiers")
+		or client.get("training_charge") != [8.0, 5.0]
+	):
 		return false
 	var rows: Array = host.get("soldiers", [])
 	if rows.is_empty():
@@ -153,9 +156,9 @@ func _open(mode := "place") -> Dictionary:
 		return {}
 	var dir := make_probe_dir("soldier_sync_%d_%d" % [OS.get_process_id(), port])
 	var params := _spawn_params(SEED, 0.0)
-	var saved := MapSave.save_world(
-		WorldSave.new(params), "test_soldier_sync_%d_%d" % [OS.get_process_id(), port]
-	)
+	var world := WorldSave.new(params)
+	world.tuning_overrides = {"soldiers.training_stone": 5}
+	var saved := MapSave.save_world(world, "test_soldier_sync_%d_%d" % [OS.get_process_id(), port])
 	if saved["error"] != "":
 		printerr("FAIL soldier sync could not save the map: %s" % saved["error"])
 		return {}

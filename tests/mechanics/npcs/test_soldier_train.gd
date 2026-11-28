@@ -70,14 +70,33 @@ func _test_soldier_train() -> int:
 		return 1
 	var inventory: Inventory = scene.get_node("Inventory")
 	inventory.add(Inventory.WOOD, 7)
+	inventory.add(Inventory.STONE, 4)
 	if requests.host_train(peer, anchor) or requests.soldiers().size() > 0:
 		printerr("FAIL soldier_train: short wood accepted")
 		fail += 1
 	inventory.add(Inventory.WOOD, 1)
+	inventory.spend(Inventory.STONE, 1)
+	if (
+		requests.host_train(peer, anchor)
+		or requests.pending_job_count() != 0
+		or not requests.soldiers().is_empty()
+		or BuildCosts.balance(inventory) != Vector2i(8, 3)
+	):
+		printerr("FAIL soldier_train: short stone charged or queued a soldier")
+		scene.queue_free()
+		await process_frame
+		return fail + 1
+	inventory.add(Inventory.STONE, 1)
 	if not requests.host_train(peer, anchor):
-		printerr("FAIL soldier_train: train refused with 8 wood")
+		printerr("FAIL soldier_train: train refused with 8 wood and 4 stone")
+		scene.queue_free()
+		await process_frame
+		return fail + 1
+	requests.advance(3.75)
+	if not requests.soldiers().is_empty():
+		printerr("FAIL soldier_train: soldier spawned before four seconds")
 		fail += 1
-	requests.advance(SoldierStats.TRAIN_TIME)
+	requests.advance(0.25)
 	await process_frame
 	var troops := requests.soldiers()
 	if (
@@ -87,10 +106,14 @@ func _test_soldier_train() -> int:
 		or troops[0].order != "follow"
 	):
 		printerr("FAIL soldier_train: spawn %s" % troops)
+		scene.queue_free()
+		await process_frame
+		return fail + 1
+	if BuildCosts.balance(inventory) != Vector2i.ZERO:
+		printerr("FAIL soldier_train: training balance %s" % BuildCosts.balance(inventory))
 		fail += 1
-	if inventory.count_of(Inventory.WOOD) != 0:
-		printerr("FAIL soldier_train: wood %d" % inventory.count_of(Inventory.WOOD))
-		fail += 1
+	inventory.add(Inventory.WOOD, 24)
+	inventory.add(Inventory.STONE, 12)
 	body.global_position = world.map_to_local(anchor) + Vector2(512, 0)
 	if requests.host_train(peer, anchor):
 		printerr("FAIL soldier_train: far train accepted")
@@ -115,13 +138,6 @@ func _test_soldier_train() -> int:
 		printerr(
 			"FAIL soldier_train: follow distance %s from %s" % [d_after_follow, start_follow_d]
 		)
-		fail += 1
-	for i in 3:
-		if not requests.host_train(peer, anchor):
-			break
-		requests.advance(SoldierStats.TRAIN_TIME)
-	if requests.host_train(peer, anchor):
-		printerr("FAIL soldier_train: fifth train at cap")
 		fail += 1
 	scene.spawn_mobs()
 	scene.get_node("World/Mobs").clear_mobs()
@@ -170,8 +186,56 @@ func _test_soldier_train() -> int:
 	if requests.get_node_or_null(str(row.get("name", ""))) == null:
 		printerr("FAIL soldier_train: restore spawn")
 		fail += 1
+	body.global_position = spawn_pos
+	fail += _check_training_cap_and_refund(requests, world, inventory, peer, anchor)
 	scene.queue_free()
 	await process_frame
 	if fail == 0:
 		print("PASS test_soldier_train")
+	return fail
+
+
+func _check_training_cap_and_refund(
+	requests: SoldierRequests, world: TileMap, inventory: Inventory, peer: int, anchor: Vector2i
+) -> int:
+	var overrides := Tuning.overrides()
+	Tuning.set_value(&"soldiers.cap_per_barracks", 2)
+	Tuning.set_value(&"soldiers.train_seconds", 2.5)
+	Tuning.set_value(&"soldiers.training_wood", 9)
+	Tuning.set_value(&"soldiers.training_stone", 6)
+	var before := BuildCosts.balance(inventory)
+	var fail := 0
+	if not requests.host_train(peer, anchor) or requests.host_train(peer, anchor):
+		printerr("FAIL soldier_train: cap should count one living soldier and one pending job")
+		fail += 1
+	if BuildCosts.balance(inventory) != before - Vector2i(9, 6):
+		printerr("FAIL soldier_train: expected exactly one tuned charge")
+		fail += 1
+	requests.advance(1.5)
+	var save := WorldSave.new()
+	SoldierSaves.capture_world(save, requests.get_parent().get_parent())
+	var loaded := WorldSave.new()
+	var saved_data: Dictionary = JSON.parse_string(JSON.stringify(save.world_to_dict()))
+	if loaded.world_from_dict(saved_data) != "" or loaded.soldier_training.size() != 1:
+		printerr("FAIL soldier_train: pending job did not round trip")
+		fail += 1
+	requests.restore_training(loaded.soldier_training)
+	var placement: Dictionary = world.structure_placement_at(anchor)
+	if not world.remove_structure(placement["id"]):
+		printerr("FAIL soldier_train: could not remove barracks for refund check")
+		fail += 1
+	Tuning.set_value(&"soldiers.training_stone", 7)
+	requests.advance(0.75)
+	if requests.pending_job_count() != 1:
+		printerr("FAIL soldier_train: tuned job finished too early")
+		fail += 1
+	requests.advance(0.25)
+	if (
+		requests.pending_job_count() != 0
+		or requests.soldiers().size() != 1
+		or BuildCosts.balance(inventory) != before
+	):
+		printerr("FAIL soldier_train: failed spawn did not refund the original cost")
+		fail += 1
+	Tuning.replace_overrides(overrides)
 	return fail

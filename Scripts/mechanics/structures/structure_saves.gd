@@ -20,6 +20,8 @@ static func to_changes(map: _WorldMap) -> Dictionary[String, Dictionary]:
 		var cell_data := {"structure": entry[0], "owner": entry[1], "order": order}
 		if entry.size() >= 4 and int(entry[3]) != 0:
 			cell_data["rotation"] = int(entry[3])
+		if entry.size() >= 7:
+			cell_data["hp"] = entry[6]
 		if entry[0] == BuildCosts.NAMED_STRUCTURES[BuildCosts.CASTLE]:
 			cell_data["start_castle"] = entry[5]
 		if entry[0] == MineProduction.STRUCTURE_NAME:
@@ -68,7 +70,8 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 						cell,
 						turns,
 						entry.get("start_castle"),
-						entry.get("production_elapsed")
+						entry.get("production_elapsed"),
+						entry.get("hp")
 					]
 				)
 			elif (
@@ -86,7 +89,7 @@ static func restore(changes: Dictionary, map: _WorldMap) -> int:
 			# Older saves recorded the starting castle as the owner's first castle.
 			starting = bool(p[5]) if p[5] != null else not castle_owners.has(p[2])
 			castle_owners[p[2]] = true
-		list.append([p[1], p[2], p[3], p[4], 0, starting])
+		list.append([p[1], p[2], p[3], p[4], 0, starting, p[7]])
 	var count: int = map.replace_structures(list) if not list.is_empty() else 0
 	for p: Array in placed:
 		if p[1] == MineProduction.STRUCTURE_NAME:

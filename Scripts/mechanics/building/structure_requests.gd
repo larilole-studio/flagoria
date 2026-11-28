@@ -125,12 +125,18 @@ func host_demolish(cell: Vector2i, peer_id: int) -> bool:
 		BuildCosts.WALL_BLOCK:
 			_publish()
 		_:
-			if online:
-				apply_structure_removed.rpc(target["anchor"])
-			_publish()
+			publish_structure_removed(target["id"])
 	if not local and target["refund"] != Vector2i.ZERO:
 		receive_refund.rpc_id(peer_id, target["refund"])
 	return true
+
+
+func publish_structure_removed(placement_id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	if not multiplayer.get_peers().is_empty():
+		apply_structure_removed.rpc(placement_id)
+	_publish()
 
 
 @rpc("any_peer", "reliable", "call_remote")
@@ -139,12 +145,9 @@ func request_demolish(cell: Vector2i) -> void:
 
 
 @rpc("authority", "reliable", "call_remote")
-func apply_structure_removed(anchor: Vector2i) -> void:
-	if multiplayer.get_remote_sender_id() != 1:
-		return
-	var placement := map.structure_placement_at(anchor)
-	if not placement.is_empty() and placement["anchor"] == anchor:
-		map.remove_structure(placement["id"])
+func apply_structure_removed(placement_id: int) -> void:
+	if multiplayer.get_remote_sender_id() == 1:
+		map.remove_structure(placement_id)
 
 
 @rpc("authority", "reliable", "call_remote")

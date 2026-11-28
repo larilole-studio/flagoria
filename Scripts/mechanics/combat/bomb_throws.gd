@@ -34,6 +34,7 @@ var _next_id := 0
 
 @onready var _map: WorldMap = $"../worldMap"
 @onready var _structures: StructureRequests = $"../StructureRequests"
+@onready var _buildings: BuildingHealth = $"../BuildingHealth"
 
 
 func nearest_enemy(thrower: Node2D, origin: Vector2) -> Node2D:
@@ -244,6 +245,7 @@ func _blast(pot: Pot) -> void:
 
 
 func _blast_cells(pot: Pot) -> void:
+	var buildings := {}
 	var radii := BombShot.radii(pot.radius)
 	var first := _map.local_to_map(_map.to_local(pot.end - radii))
 	var last := _map.local_to_map(_map.to_local(pot.end + radii))
@@ -253,5 +255,10 @@ func _blast_cells(pot: Pot) -> void:
 			var center := _map.to_global(_map.map_to_local(cell))
 			if not BombShot.contains(pot.end, pot.radius, center):
 				continue
+			var id := _buildings.placement_at(center)
+			if id > 0:
+				buildings[id] = true
 			for hit in range(mini(pot.damage, _map.wall_hp(cell))):
 				_structures.host_damage_wall(cell)
+	for id: int in buildings:
+		_buildings.host_damage(id, pot.damage, pot.sender_id)

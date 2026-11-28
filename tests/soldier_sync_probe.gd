@@ -2,6 +2,7 @@ extends "res://tests/helpers/probe_base.gd"
 ## One peer of a barracks soldier sync session (#553). Modes place, move, watch.
 
 var _place_error := ""
+var _training_charge := Vector2i.ZERO
 var _train_anchor := Vector2i.ZERO
 var _saw_move := false
 var _issued: Array = []
@@ -39,8 +40,6 @@ func _run() -> void:
 			break
 		var me: Node2D = main.get_node_or_null("World/" + str(main.multiplayer.get_unique_id()))
 		var ready := main.world_params != null and me != null
-		if host and ready and requests.pending_job_count() > 0:
-			requests.advance(SoldierStats.TRAIN_TIME)
 		if not host and mode == "place" and phase == "idle" and ready:
 			phase = "working"
 			_place_error = await _do_place(main, world, me, requests)
@@ -125,17 +124,16 @@ func _do_place(main, world, me: Node2D, requests: SoldierRequests) -> String:
 	var builder: int = main.multiplayer.get_unique_id()
 	if not await _until(func() -> bool: return _barracks_count(world, builder) >= 1, 8000):
 		return "built barracks was not applied"
-	_train_anchor = land
 	err = await _ready_to_build(main, me, interaction.cell_center(land) + Vector2(0, 48))
 	if err != "":
 		return err
 	inventory.add(Inventory.WOOD, 8)
-	if main.multiplayer.is_server():
-		requests.host_train(builder, land)
-	else:
-		requests.request_train.rpc_id(1, land)
+	inventory.add(Inventory.STONE, 5)
+	var before := BuildCosts.balance(inventory)
+	requests.train(land)
 	if not await _until(func() -> bool: return _soldier_rows(requests).size() >= 1, 15000):
 		return "soldier did not spawn"
+	_training_charge = before - BuildCosts.balance(inventory)
 	if not main.multiplayer.is_server():
 		requests.request_order.rpc_id(1)
 	if not await _until(
@@ -257,6 +255,7 @@ func _write(main, world, me: Node2D, requests: SoldierRequests) -> void:
 			"place_error": _place_error,
 			"peers": peers,
 			"soldiers": _soldier_rows(requests),
+			"training_charge": [_training_charge.x, _training_charge.y],
 			"issued": _issued,
 			"command": _command_snapshot(requests) if requests != null else {},
 			"pending_jobs": requests.pending_job_count() if requests != null else 0,

@@ -1,106 +1,106 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 11
-## Place a barracks, train a soldier, toggle follow and hold.
+## Place a barracks and train a soldier through the HUD.
 
-const ROTATE_BTN := "CanvasLayer1/FootprintRotateButton"
-const STAND_OFFS := [
-	Vector2i(0, 5),
-	Vector2i(5, 0),
-	Vector2i(-5, 0),
-	Vector2i(0, -5),
-	Vector2i(0, 4),
-	Vector2i(4, 0),
-	Vector2i(-4, 0),
-	Vector2i(0, -4),
-]
+const BuildDrag := preload("res://.cursor/skills/verify-flagoria/bin/build_drag.gd")
+const TRAIN := "CanvasLayer1/TrainButton"
+const ORDER := "CanvasLayer1/SoldierOrderButton"
 
 
 func run() -> void:
-	step("start")
 	if not await start_game():
 		return
-	var it: Interaction = current_scene.get_node(INTERACTION)
+	var interaction: Interaction = current_scene.get_node(INTERACTION)
 	var map: TileMap = current_scene.get_node(WORLD_MAP)
 	var inventory: Inventory = current_scene.get_node(INVENTORY)
 	var requests: SoldierRequests = current_scene.get_node("World/Soldiers")
-	var peer: int = current_scene.multiplayer.get_unique_id()
+	var peer := get_multiplayer().get_unique_id()
 	await grant_resources()
-	await toggle_mode()
+	var anchor: Vector2i = await _reachable_site(map, interaction)
+	if anchor == Vector2i.MAX:
+		printerr("train_soldier: no nearby buildable barracks")
+		done(false)
+		return
+
+	step("build an owned barracks")
 	await click("CanvasLayer1/BuildingsButton")
-	it.build.set_tool(BuildPlacement.Tool.BARRACKS)
-	var placer := ConstructionPlacer.new(map)
-	var anchor: Variant = _find_anchor(map, placer)
-	if anchor == null:
-		printerr("train_soldier: no anchor on this seed")
+	await click("CanvasLayer1/BuildPicker/BarracksButton")
+	var center := root.get_visible_rect().get_center()
+	var finger := root.get_final_transform() * (center + Vector2(-60, -64))
+	var from := interaction.build.cost_viewport
+	var origin := map.local_to_map(map.to_local(interaction.to_world(from)))
+	var shift := to_window(map, map.map_to_local(anchor)) - to_window(map, map.map_to_local(origin))
+	await BuildDrag.drag_touch(self, finger, finger + shift)
+	var placement: Dictionary = map.structure_placement_at(anchor)
+	var train: Button = current_scene.get_node(TRAIN)
+	if (
+		placement.get("name") != "barracks"
+		or placement.get("owner") != peer
+		or not await wait_until(func() -> bool: return train.is_visible_in_tree(), 2.0)
+	):
+		printerr("train_soldier: no owned barracks with a visible Train button at ", anchor)
 		done(false)
 		return
-	if not await _stand_near(it, map, placer, inventory, anchor):
-		printerr("train_soldier: could not reach anchor %s" % anchor)
-		done(false)
-		return
-	step("barracks")
-	it.build.commit()
-	for _i in 20:
-		await physics_frame
-	hero().global_position = map.to_global(map.map_to_local(anchor) + Vector2(32, 40))
-	for _i in 20:
-		await physics_frame
-	var train_btn: Button = current_scene.get_node("CanvasLayer1/TrainButton")
-	train_btn.visible = true
-	await snapshot("train-ready")
-	requests.host_train(peer, anchor)
-	for _i in 40:
-		requests.advance(SoldierStats.TRAIN_TIME / 40.0)
-		await physics_frame
-	var hero_node := hero()
-	var start := hero_node.global_position
-	hero_node.global_position = start + Vector2(64, 0)
-	for _i in 30:
-		await physics_frame
-	await snapshot("soldier-following")
-	var order_btn: Button = current_scene.get_node("CanvasLayer1/SoldierOrderButton")
-	order_btn.pressed.emit()
-	for _i in 8:
-		await process_frame
-	hero_node.global_position = start + Vector2(128, 0)
-	for _i in 30:
-		await physics_frame
-	await snapshot("soldier-holding")
-	done(true)
+
+	done(await _train_and_hold(inventory, requests, train, peer))
 
 
-func _find_anchor(map: TileMap, placer: ConstructionPlacer) -> Variant:
-	var base: Vector2i = map.spawn_point + Vector2i(20, 2)
-	for r in range(8, 56):
-		for dy in range(-r, r + 1):
-			for dx in range(-r, r + 1):
-				if maxi(absi(dx), absi(dy)) != r:
-					continue
-				var cell := base + Vector2i(dx, dy)
-				if placer.can_place_geometry(BuildCosts.BARRACKS, [cell], 0).is_empty():
-					return cell
-	return null
-
-
-func _stand_near(
-	it: Interaction,
-	map: TileMap,
-	placer: ConstructionPlacer,
-	inventory: Inventory,
-	anchor: Vector2i
+func _train_and_hold(
+	inventory: Inventory, requests: SoldierRequests, train: Button, peer: int
 ) -> bool:
-	var one: Array[Vector2i] = [anchor]
-	for off: Vector2i in STAND_OFFS:
-		hero().global_position = map.to_global(map.map_to_local(anchor + off))
-		for i in 8:
-			await process_frame
-		if (
-			it.in_reach(anchor)
-			and (
-				placer
-				. can_place(BuildCosts.BARRACKS, one, inventory, it.build.footprint_rotation)
-				. is_empty()
-			)
-		):
-			return true
-	return false
+	var before := BuildCosts.balance(inventory)
+	var seconds := Tuning.value(&"soldiers.train_seconds")
+	var cost := Vector2i(
+		Tuning.value(&"soldiers.training_wood"), Tuning.value(&"soldiers.training_stone")
+	)
+	if train.text != "Train %dw %ds" % [cost.x, cost.y]:
+		printerr("train_soldier: incorrect Train label: ", train.text)
+		return false
+	await snapshot("train-ready")
+
+	step("pay wood and stone and wait for training")
+	var started := Time.get_ticks_msec()
+	await click(TRAIN)
+	if (
+		BuildCosts.balance(inventory) != before - cost
+		or requests.pending_job_count() != 1
+		or not requests.soldiers().is_empty()
+	):
+		printerr("train_soldier: waiting state or training charge did not match")
+		return false
+	await snapshot("training-paid")
+	if not await wait_until(func() -> bool: return requests.soldiers().size() == 1, seconds + 5.0):
+		printerr("train_soldier: timed out waiting for the soldier")
+		return false
+	var soldier: Soldier = requests.soldiers()[0]
+	var elapsed := (Time.get_ticks_msec() - started) / 1000.0
+	if elapsed < seconds - 0.15 or soldier.owner_peer != peer or soldier.order != "follow":
+		printerr("train_soldier: unexpected trained soldier or wait of %.2f s" % elapsed)
+		return false
+	await snapshot("soldier-following")
+
+	step("switch the soldier to Hold")
+	await click(ORDER)
+	if soldier.order != "hold":
+		printerr("train_soldier: Hold was not applied")
+		return false
+	await snapshot("soldier-holding")
+	return true
+
+
+func _reachable_site(map: TileMap, interaction: Interaction) -> Vector2i:
+	var placer := ConstructionPlacer.new(map)
+	for action in ["", "ui_up", "ui_right", "ui_up", "ui_right", "ui_up", "ui_left"]:
+		if not action.is_empty():
+			await hold(action, 30)
+		var origin := map.local_to_map(map.to_local(hero().global_position))
+		for dy in [-4, -3, -2, 1, 2, 3]:
+			for dx in [0, 3, -3, 4, -4, 1, -1]:
+				var cell := origin + Vector2i(dx, dy)
+				if (
+					interaction.in_reach(cell)
+					and placer.can_place_geometry(BuildCosts.BARRACKS, [cell]).is_empty()
+					and SoldierRequests.spawn_cell(map, cell, 0) != Vector2.INF
+				):
+					return cell
+	return Vector2i.MAX

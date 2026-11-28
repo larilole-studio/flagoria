@@ -1,4 +1,4 @@
-[gd_scene load_steps=38 format=3 uid="uid://cxtnu53ko1bon"]
+[gd_scene load_steps=39 format=3 uid="uid://cxtnu53ko1bon"]
 
 [ext_resource type="Script" path="res://flagoria_main.gd" id="1_p55uv"]
 [ext_resource type="Script" path="res://addons/virtual_joystick/scripts/virtual_joystick.gd" id="2_54anv"]
@@ -32,6 +32,7 @@
 [ext_resource type="Script" path="res://Scripts/mechanics/conquest/land_score.gd" id="22_land"]
 [ext_resource type="Script" path="res://Scripts/mechanics/defense/tower_guns.gd" id="23_tower_guns"]
 [ext_resource type="Script" path="res://Scripts/mechanics/building_blocks/generated_buildings.gd" id="23_buildings"]
+[ext_resource type="Script" path="res://Scripts/mechanics/structures/building_health.gd" id="24_building_health"]
 [ext_resource type="Script" path="res://Scripts/mechanics/combat/bomb_throws.gd" id="24_bombs"]
 [ext_resource type="Script" path="res://Scripts/mechanics/mobs/raid_director.gd" id="25_raid"]
 [ext_resource type="Script" path="res://Scripts/mechanics/npcs/soldier_requests.gd" id="26_soldiers"]
@@ -244,6 +245,10 @@ script = ExtResource("22_land")
 
 [node name="GeneratedBuildings" type="Node" parent="World"]
 script = ExtResource("23_buildings")
+
+[node name="BuildingHealth" type="Node2D" parent="World"]
+z_index = 11
+script = ExtResource("24_building_health")
 
 [node name="BombThrows" type="Node2D" parent="World"]
 z_index = 20

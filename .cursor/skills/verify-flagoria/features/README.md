@@ -86,13 +86,14 @@ Maintained recipes for proving user-facing and CI-facing behavior. Read this ind
 - [Sawmill animation and sound](./sawmill-animation.md) — the placed sawmill strokes its blade and plays a positional wood-cutting sound while producing (#751).
 - [Produce stone at placed mines](./mine-production.md) — each mine credits its owner one stone per minute (#723).
 - [Mine cart animation](./mine-cart.md) — producing mines animate the cart and idle mines show the parked pose (#725).
-- [Train soldier](./train-soldier.md) — train at an owned barracks for 8 wood; Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
+- [Train soldier](./train-soldier.md) — train at an owned barracks for wood and stone with a tuned timer and cap (#778); Follow and Hold for every living soldier that peer owns; save/reload and multiplayer sync (#553).
 - [Command tool](./command-tool.md) — select owned soldiers with the Attack drag and send them to a map position (#779).
 - [Soldier fight](./soldier-fight.md) — trained soldiers strike nearby mobs; owner hits miss, bomb hits from other peers land; multiplayer hp sync (#554).
 - [Soldier vs peer](./soldier-vs-peer.md) — trained soldiers on Follow or Hold strike living enemy players; owner is never a target; health sync (#555).
 - [Footprint rotation](./footprint-rotation.md) — rotate tower, castle, guard post and barracks footprints before placing (#493).
 - [Free-form walls](./free-form-walls.md) — connected palisade chain via Wall tip, 2 wood per block (#276, #498).
 - [Wall health](./wall-health.md) — sword breaks on free-form palisades, hp sync and saves (#35).
+- [Building health](./building-health.md) — sword and bomb damage, building destruction, and saved HP (#763).
 - [Wall and tower junctions](./wall-junctions.md) — mask pieces, collar overlays on stone, tower ring with the team flag, far corner flips when a loop closes.
 - [Walls and bridges](./walls-and-bridges.md) — wall solver and plank bridges, live via the build picker.
 - [Bridge joins](./bridge-joins.md) — adjoining plank placements share plain interior planks; rope and tips stay on shores and open ends (#416).

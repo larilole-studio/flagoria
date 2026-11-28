@@ -3,6 +3,19 @@ extends RefCounted
 ## Save and restore trained soldiers (#553).
 
 
+static func capture_world(save: WorldSave, game: Node) -> void:
+	save.soldiers = capture(game)
+	var requests := game.get_node_or_null("World/Soldiers") as SoldierRequests
+	if requests != null and requests.multiplayer.is_server():
+		save.soldier_training = requests.capture_training()
+
+
+static func restore_world(save: WorldSave, requests: SoldierRequests) -> int:
+	var restored := restore(save.soldiers, requests)
+	requests.restore_training(save.soldier_training)
+	return restored
+
+
 static func capture(game: Node) -> Array:
 	var soldiers := game.get_node_or_null("World/Soldiers") as SoldierRequests
 	if soldiers == null:
