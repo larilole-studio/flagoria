@@ -187,3 +187,44 @@ func _close(session: Dictionary) -> void:
 	await stop_probes(session["probes"], 10000)
 	_remove_dir(session["dir"])
 	DirAccess.remove_absolute(session["saved"])
+
+
+func _test_castle_siege_two_players() -> int:
+	print("-- test_castle_siege_two_players")
+	var session := saved_probe_session(
+		"castle_siege_two_players", "res://tests/castle_siege_probe.gd", _spawn_params(11, 0.0), []
+	)
+	if session.is_empty():
+		return 1
+	var launch: Callable = session["launch"]
+	var read: Callable = session["read"]
+	launch.call(session["host_args"])
+	launch.call([])
+	var ok := await wait_until(_siege_state.bind(read, 1, 60, false), 25000)
+	var attacker := int(read.call(1).get("peer", 0))
+	if ok and publish_probe_command(session["probes"][0]["out"] + ".siege", "breach"):
+		ok = await wait_until(_siege_state.bind(read, 1, 0, true), 5000)
+	else:
+		ok = false
+	if ok and publish_probe_command(session["probes"][1]["out"] + ".siege", "capture"):
+		ok = await wait_until(_siege_state.bind(read, attacker, 60, false), 12000)
+	else:
+		ok = false
+	if not ok:
+		printerr("FAIL castle_siege_two_players: host %s client %s" % [read.call(0), read.call(1)])
+	await close_probe_session(session)
+	if ok:
+		print("PASS test_castle_siege_two_players")
+	return 0 if ok else 1
+
+
+func _siege_state(read: Callable, owner: int, hp: int, dropped: bool) -> bool:
+	for i in 2:
+		var snapshot: Dictionary = read.call(i)
+		if not snapshot.get("ready", false) or not snapshot.get("errors", []).is_empty():
+			return false
+		if snapshot.get("owner") != owner or snapshot.get("hp") != hp:
+			return false
+		if snapshot.get("dropped") != dropped:
+			return false
+	return true

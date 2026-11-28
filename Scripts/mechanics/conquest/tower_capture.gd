@@ -28,12 +28,19 @@ const BAR_COLOURS := {
 	1: Color(0.23, 0.44, 0.88), StructurePlacer.OWNER_MOBS: Color(0.61, 0.33, 0.77)
 }
 const BAR_OTHER := Color(0.88, 0.29, 0.29)
+const FLAG_OUTLINE := Color("#2a2238")
+const FLAG_POLE := Color("#b06f3c")
+const FLAG_MOBS := Color("#3d3a5c")
+const FLAG_BLUE := Color("#3b6fe0")
+const FLAG_RED := Color("#e04a4a")
 
 ## Placement id -> {"side": the side the progress belongs to, "progress": s}.
 ## Only towers with progress above 0 are listed.
 var progress: Dictionary = {}
 ## Placement id -> its `team` flag cells; refreshed on ground_changed.
 var _towers: Dictionary = {}
+var _castle_ids: Array[int] = []
+var _breached := {}
 @onready var _map: TileMap = get_node_or_null("../worldMap")
 @onready var _mobs: Node = get_node_or_null("../Mobs")
 
@@ -42,7 +49,9 @@ func _ready() -> void:
 	z_index = 10  # over the flag and wall layers
 	if _map != null and _map.has_signal("ground_changed"):
 		_map.ground_changed.connect(_on_ground_changed)
+		_map._structures.health_display_changed.connect(_refresh_breached_flags)
 	_refresh_towers()
+	_refresh_breached_flags()
 
 
 func _on_ground_changed(_cells: Rect2i) -> void:
@@ -50,15 +59,43 @@ func _on_ground_changed(_cells: Rect2i) -> void:
 	for id in progress.keys():
 		if not _towers.has(id):
 			progress.erase(id)
-			queue_redraw()
+	_refresh_breached_flags()
 
 
 func _refresh_towers() -> void:
 	## One deep copy when the map's structures change; ticks read `_towers`.
+	_castle_ids.clear()
 	if _map == null or _map._structures == null:
 		_towers = {}
 		return
-	_towers = _map._structures.towers()
+	var placer: StructurePlacer = _map._structures
+	_towers = placer.towers()
+	for id: int in _towers:
+		if placer.placement_details(id).get("name") == "castle":
+			_castle_ids.append(id)
+
+
+func _refresh_breached_flags() -> void:
+	if _map == null:
+		return
+	var placer: StructurePlacer = _map._structures
+	var previous := _breached
+	_breached = {}
+	for id in _castle_ids:
+		var castle := placer.placement_details(id)
+		if not castle.get("start_castle", false) or castle.get("hp", 1) != 0:
+			continue
+		_breached[id] = _towers[id]
+		for cell: Vector2i in _breached[id]:
+			if _map.is_drawn(cell) and _map.get_cell_source_id(1, cell) != -1:
+				_map.erase_cell(1, cell)
+	for id: int in previous:
+		if _breached.has(id):
+			continue
+		for cell: Vector2i in previous[id]:
+			if _map.is_drawn(cell) and _map.get_cell_source_id(1, cell) == -1:
+				placer.paint_object(cell)
+	queue_redraw()
 
 
 func _physics_process(delta: float) -> void:
@@ -77,6 +114,11 @@ func tick(delta: float) -> bool:
 	var players := _player_list()
 	var changed := false
 	for id: int in _towers:
+		if id in _castle_ids:
+			var castle := placer.placement_details(id)
+			if castle.get("start_castle", false) and castle.get("hp", 1) > 0:
+				changed = progress.erase(id) or changed
+				continue
 		var sides := sides_near(_centre(_towers[id][0]), players)
 		changed = _step(placer, id, placer.owner_of(id), sides, delta) or changed
 	for id in progress.keys():
@@ -126,7 +168,7 @@ func receive_capture_state(entries: Array) -> void:
 		var prog := float(entry[3])
 		seen[id] = true
 		if _towers.has(id) and _map._structures.owner_of(id) != owner:
-			_map._structures.set_owner(id, owner)
+			_capture(_map._structures, id, owner)
 		if prog <= 0.0:
 			progress.erase(id)
 		else:
@@ -148,13 +190,19 @@ func _step(placer: StructurePlacer, id: int, owner: int, sides: Dictionary, delt
 	else:
 		state["progress"] = maxf(0.0, before - delta)
 	if state["progress"] >= CAPTURE_TIME:
-		placer.set_owner(id, state["side"])
+		_capture(placer, id, state["side"])
 		progress.erase(id)
 	elif state["progress"] <= 0.0:
 		progress.erase(id)
 	else:
 		progress[id] = state
 	return state["progress"] != before
+
+
+func _capture(placer: StructurePlacer, id: int, owner: int) -> void:
+	placer.set_owner(id, owner)
+	if id in _castle_ids and placer.placement_details(id).get("start_castle", false):
+		placer.set_building_hp(id, Tuning.building_max_hp("castle"))
 
 
 func _player_list() -> Array:
@@ -196,6 +244,10 @@ func _centre(cell: Vector2i) -> Vector2:
 func _draw() -> void:
 	if _map == null:
 		return
+	for id: int in _breached:
+		for cell: Vector2i in _breached[id]:
+			if _map.is_drawn(cell):
+				_draw_dropped_flag(to_local(_centre(cell)), _map._structures.owner_of(id))
 	for id: int in progress:
 		if not _towers.has(id):
 			continue
@@ -206,3 +258,19 @@ func _draw() -> void:
 			Rect2(at, Vector2(BAR_SIZE.x * part, BAR_SIZE.y)),
 			BAR_COLOURS.get(progress[id]["side"], BAR_OTHER)
 		)
+
+
+func _draw_dropped_flag(at: Vector2, owner: int) -> void:
+	var cloth := FLAG_RED
+	if owner == 1:
+		cloth = FLAG_BLUE
+	elif owner == StructurePlacer.OWNER_MOBS:
+		cloth = FLAG_MOBS
+	draw_line(at + Vector2(-7, 4), at + Vector2(6, 1), FLAG_OUTLINE, 3.0)
+	draw_line(at + Vector2(-7, 4), at + Vector2(6, 1), FLAG_POLE, 1.0)
+	var polygon := PackedVector2Array(
+		[at + Vector2(-2, 2), at + Vector2(6, 0), at + Vector2(7, 4), at + Vector2(0, 5)]
+	)
+	draw_colored_polygon(polygon, cloth)
+	polygon.append(polygon[0])
+	draw_polyline(polygon, FLAG_OUTLINE, 1.0)

@@ -110,6 +110,7 @@ SCENARIO_WORST_S = {
     "test_soldier_player_two_players": 18.0,
     "test_build_sync_two_players": 8.0,
     "test_castle_build_two_players": 8.3,
+    "test_castle_siege_two_players": 12.0,
     "test_castle_owners_two_players": 13.6,
     "test_castle_sync_join": 6.1,
     "test_cities_client_keeps_list": 4.2,
