@@ -192,6 +192,7 @@ Where each part of the game lives today, how data moves between the parts, and w
 ### `Scripts/ui/`
 
 - `Scripts/ui/MapAdminPanel.gd`
+- `Scripts/ui/building_alerts.gd`
 - `Scripts/ui/hearts_hud.gd`
 - `Scripts/ui/hud_layout.gd`
 - `Scripts/ui/hud_layout_defaults.gd`

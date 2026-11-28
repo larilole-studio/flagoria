@@ -320,7 +320,7 @@ func _draw_map() -> void:
 		- Vector2(MapChart.HERO_ANCHOR) * marker_scale
 	)
 	_view.draw_texture_rect(marker, Rect2(hero_at, marker_size), false)
-	chart.paint_city_walls(_view, top_left, Vector2i(window), cell_px)
+	chart.paint_overlays(_view, origin, window, cell_px)
 
 
 func _origin() -> Vector2:
