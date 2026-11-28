@@ -1,5 +1,5 @@
 extends "res://tests/helpers/probe_base.gd"
-## One peer of a barracks soldier sync session (#553). Modes place, move, watch.
+## One peer of a barracks soldier sync session (#553). Modes place, move, formation, watch.
 
 var _place_error := ""
 var _training_charge := Vector2i.ZERO
@@ -59,6 +59,10 @@ func _run() -> void:
 					_issued = _coords(target)
 					requests.request_move.rpc_id(1, PackedStringArray(["command_probe"]), target)
 					phase = "done"
+		if ready and host and mode == "formation" and phase == "idle":
+			if main.multiplayer.get_peers().size() == 1:
+				_spawn_formation_fixture(main, requests)
+				phase = "done"
 		if snapshot_due(main):
 			_write(main, world, me, requests)
 		await process_frame
@@ -99,6 +103,27 @@ func _spawn_move_fixture(world: TileMap, requests: SoldierRequests, owner: int) 
 		)
 	)
 	return ""
+
+
+func _spawn_formation_fixture(main: Node, requests: SoldierRequests) -> void:
+	main.get_node("World/Mobs").set_physics_process(false)
+	park_mobs(main)
+	for i in 5:
+		requests.spawn_saved(
+			{
+				"name": "squad_probe_%d" % i,
+				"owner": 1,
+				"order": "hold",
+				"pos": Vector2(4096 + 2 * i, 4096),
+				"seed": i
+			}
+		)
+
+
+func _formation_counts(requests: SoldierRequests) -> Array:
+	var counts := requests.soldiers().map(func(unit: Soldier) -> int: return unit.member_count())
+	counts.sort()
+	return counts
 
 
 func _coords(pos: Vector2) -> Array:
@@ -271,6 +296,7 @@ func _write(main, world, me: Node2D, requests: SoldierRequests) -> void:
 			"training_charge": [_training_charge.x, _training_charge.y],
 			"issued": _issued,
 			"command": _command_snapshot(requests) if requests != null else {},
+			"formation_counts": _formation_counts(requests) if requests != null else [],
 			"pending_jobs": requests.pending_job_count() if requests != null else 0,
 			"errors": _errors.snapshot(),
 		}

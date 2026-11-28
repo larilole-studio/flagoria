@@ -16,7 +16,11 @@ const NEIGHBOR_CLOCK := [
 	Vector2i(1, -1)
 ]
 
+const FORMATION_INTERVAL := 0.25
+
 var _jobs: Array[Dictionary] = []
+var _formation_cd := 0.0
+var _formations := SoldierFormations.new()
 var _next_index := {}
 var _train_button: Button
 var _order_button: Button
@@ -31,12 +35,17 @@ func _ready() -> void:
 	_ensure_buttons()
 	if not _headless:
 		set_process(true)
-	set_physics_process(false)
 
 
 func _physics_process(delta: float) -> void:
-	if multiplayer.is_server():
+	if not multiplayer.is_server():
+		return
+	if not _jobs.is_empty():
 		advance(delta)
+	_formation_cd -= delta
+	if _formation_cd <= 0.0:
+		_formation_cd = FORMATION_INTERVAL
+		_formations.refresh(self)
 
 
 func _process(_delta: float) -> void:
@@ -76,7 +85,6 @@ func advance(seconds: float) -> void:
 				_refund(job["peer_id"], job["cost"])
 	for i in range(finished.size() - 1, -1, -1):
 		_jobs.remove_at(finished[i])
-	set_physics_process(multiplayer.is_server() and not _jobs.is_empty())
 
 
 func train(anchor: Vector2i) -> void:
@@ -117,7 +125,6 @@ func host_train(peer_id: int, anchor: Vector2i, reported := Vector2i.ZERO) -> bo
 			}
 		)
 	)
-	set_physics_process(true)
 	return true
 
 
@@ -175,7 +182,6 @@ func restore_training(rows: Array) -> void:
 				}
 			)
 		)
-	set_physics_process(not _jobs.is_empty())
 
 
 static func _finite_number(value: Variant) -> bool:
@@ -228,18 +234,20 @@ func request_move(names: PackedStringArray, target: Vector2) -> void:
 		host_move(multiplayer.get_remote_sender_id(), names, target)
 
 
-func spawn_saved(row: Dictionary) -> void:
+func spawn_saved(row: Dictionary) -> Soldier:
 	if not multiplayer.is_server():
-		return
+		return null
 	var spawner := get_node_or_null("MultiplayerSpawner") as MultiplayerSpawner
 	if spawner == null:
-		return
+		return null
 	var name := str(row.get("name", "soldier_saved"))
-	spawner.spawn(_spawn_dict(name, row))
+	return spawner.spawn(_spawn_dict(name, row)) as Soldier
 
 
 func soldiers() -> Array:
-	return get_children().filter(func(n: Node) -> bool: return n is Soldier)
+	return get_children().filter(
+		func(n: Node) -> bool: return n is Soldier and not n.is_queued_for_deletion()
+	)
 
 
 func _spawn_job(job: Dictionary) -> bool:
@@ -285,14 +293,9 @@ static func spawn_cell(map: TileMap, anchor: Vector2i, rotation: int) -> Vector2
 
 
 func _spawn_dict(name: String, data: Dictionary) -> Dictionary:
-	var pos: Vector2 = data.get("pos", Vector2.ZERO)
-	var anchor: Vector2i = data.get("barracks_anchor", Vector2i.ZERO)
-	if data.has("barracks_anchor") and data["barracks_anchor"] is Array:
-		var a: Array = data["barracks_anchor"]
-		anchor = Vector2i(int(a[0]), int(a[1]))
-	if data.has("pos") and data["pos"] is Array:
-		var p: Array = data["pos"]
-		pos = Vector2(float(p[0]), float(p[1]))
+	var saved_pos: Variant = data.get("pos", Vector2.ZERO)
+	var pos := Vector2(float(saved_pos[0]), float(saved_pos[1]))
+	var anchors := Soldier.read_members(data)
 	return {
 		"name": name,
 		"type": MobCatalog.SOLDIER,
@@ -301,7 +304,9 @@ func _spawn_dict(name: String, data: Dictionary) -> Dictionary:
 		"owner": int(data.get("owner", 0)),
 		"order": str(data.get("order", "follow")),
 		"hp": int(data.get("hp", MobCatalog.stat(MobCatalog.SOLDIER, "hp"))),
-		"barracks_anchor": anchor,
+		"barracks_anchor": anchors[0],
+		"members": anchors,
+		"move_target": data.get("move_target", Vector2.ZERO),
 	}
 
 
@@ -354,14 +359,9 @@ func _in_reach(body: Node2D, map: TileMap, entry: Dictionary) -> bool:
 
 func _slots_used(peer_id: int, anchor: Vector2i) -> int:
 	var count := 0
-	for child in get_children():
-		if (
-			child is Soldier
-			and child.owner_peer == peer_id
-			and child.barracks_anchor == anchor
-			and child.state != Soldier.State.DYING
-		):
-			count += 1
+	for soldier: Soldier in soldiers():
+		if soldier.is_owned_alive(peer_id):
+			count += soldier.member_anchors.count(anchor)
 	for job in _jobs:
 		if int(job["peer_id"]) == peer_id and job["anchor"] == anchor:
 			count += 1
