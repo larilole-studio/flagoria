@@ -41,7 +41,8 @@ func _run() -> void:
 				fired = true
 				var wheel := main.get_node("CanvasLayer1/ToolWheel") as ToolWheel
 				wheel.select(ToolWheel.Tool.BOW)
-				me.attack_toward("Right" if host else "Left", 0.0 if host else PI)
+				var reach := Vector2(240, 0) if host else Vector2(-240, 0)
+				me.attack_toward("", NAN, reach)
 			for phase in BombThrows.Phase.values():
 				if bombs.has_phase(phase):
 					seen[phase] = true

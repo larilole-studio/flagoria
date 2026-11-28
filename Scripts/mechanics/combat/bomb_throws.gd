@@ -36,19 +36,54 @@ var _next_id := 0
 @onready var _structures: StructureRequests = $"../StructureRequests"
 
 
-func send_throw(origin: Vector2, direction: Vector2) -> void:
+func nearest_enemy(thrower: Node2D, origin: Vector2) -> Node2D:
+	var nearest: Node2D
+	var max_range: float = Tuning.value(&"bomb.max_range")
+	var best_distance := max_range * max_range
+	var sender_id := str(thrower.name).to_int()
+	for container in [get_parent(), $"../Mobs", $"../Soldiers"]:
+		for candidate in container.get_children():
+			if candidate == thrower or not _is_enemy(candidate, sender_id):
+				continue
+			var distance: float = origin.distance_squared_to(candidate.global_position)
+			if distance <= best_distance:
+				best_distance = distance
+				nearest = candidate
+	return nearest
+
+
+func auto_reach(thrower: Node2D, origin: Vector2, facing: Vector2) -> Vector2:
+	var target := nearest_enemy(thrower, origin)
+	if target != null:
+		return target.global_position - origin
+	# With no enemy in range, send the pot 60% of max range along the hero's facing.
+	return facing * float(Tuning.value(&"bomb.max_range")) * 0.6
+
+
+func _is_enemy(candidate: Node, sender_id: int) -> bool:
+	if candidate is Soldier and candidate.owner_peer == sender_id:
+		return false
+	if candidate is Mob:
+		return candidate.state != Mob.State.DYING
+	if candidate is CharacterBody2D:
+		var health := candidate.get_node_or_null("Health") as PlayerHealth
+		return health != null and not health.is_dead()
+	return false
+
+
+func send_throw(origin: Vector2, reach: Vector2) -> void:
 	if multiplayer.is_server():
-		resolve(multiplayer.get_unique_id(), origin, direction)
+		resolve(multiplayer.get_unique_id(), origin, reach)
 	elif Interaction.multiplayer_on(multiplayer):
-		request_throw.rpc_id(1, origin, direction)
+		request_throw.rpc_id(1, origin, reach)
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func request_throw(origin: Vector2, direction: Vector2) -> void:
-	resolve(multiplayer.get_remote_sender_id(), origin, direction)
+func request_throw(origin: Vector2, reach: Vector2) -> void:
+	resolve(multiplayer.get_remote_sender_id(), origin, reach)
 
 
-func resolve(sender_id: int, origin: Vector2, direction: Vector2) -> bool:
+func resolve(sender_id: int, origin: Vector2, reach: Vector2) -> bool:
 	if not multiplayer.is_server():
 		return false
 	var body := get_node_or_null("../" + str(sender_id)) as CharacterBody2D
@@ -56,17 +91,15 @@ func resolve(sender_id: int, origin: Vector2, direction: Vector2) -> bool:
 	if health == null or health.is_dead():
 		return false
 	var now := Time.get_ticks_msec()
-	var length_squared := direction.length_squared()
+	var start := body.to_global(AttackAim.ORIGIN)
 	if (
 		now < _cooldown_until.get(sender_id, 0)
 		or not origin.is_finite()
 		or origin.distance_to(body.global_position) > ORIGIN_LIMIT
-		or not is_finite(length_squared)
-		or length_squared <= 0.0000001
+		or not is_finite(reach.length_squared())
 	):
 		return false
-	var start := body.global_position + AttackAim.ORIGIN
-	var end := BombShot.landing(start, direction, Tuning.value(&"bomb.max_range"))
+	var end := BombShot.landing(start, reach, Tuning.value(&"bomb.max_range"))
 	if not _valid_landing(end):
 		return false
 	_cooldown_until[sender_id] = now + roundi(Tuning.value(&"bomb.cooldown_seconds") * 1000.0)

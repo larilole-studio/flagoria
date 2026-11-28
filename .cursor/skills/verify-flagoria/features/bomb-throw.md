@@ -3,13 +3,19 @@
 Drive: drives/ranged_bow.gd
 Source: Scripts/mechanics/combat/bomb_shot.gd
 Source: Scripts/mechanics/combat/bomb_throws.gd
+Source: Scripts/player/attack_aim.gd
+Source: Scripts/player/player.gd
+Source: Scripts/player/player_combat.gd
 
-Arm the bow with key 2 and release along the existing aim cone. The pot flies over terrain to the full throw range, lands with a lit fuse, and bursts. A tap on the touch attack button uses the current facing. Drag length and tap auto-targeting are tracked in #756.
+Arm the bomb in the existing bow slot with key 2. Hold Attack and aim to see a faint dashed lob and an orange blast ellipse. The preview is visible only to the thrower. With a mouse, the landing follows the cursor up to the maximum throw range from the hero's aim origin. On touch, drag from the Attack button to set direction and distance. A 120-screen-pixel drag from its center reaches full range, and shorter drags scale proportionally. Drag back inside the 8-viewport-pixel dead zone to cancel. Sword mode still shows the swing cone. Interact mode does not aim a throw.
 
-The host validates the throw and decides when the pot lands and explodes. The blast tests player and mob positions and tile centers against an ellipse with a vertical radius of 60% of its horizontal radius. It skips the thrower and their soldiers. An enemy-owned named placement is removed if any footprint cell center is inside. Free-form palisade cells take one existing wall hit per damage point.
+Tap Attack without dragging past the dead zone, or press Space without an active aim, to throw at the nearest living enemy player, mob or enemy soldier in range. If no enemy is in range, the pot lands at 60% of the maximum range in the hero's facing direction.
+
+The host validates the throw, caps its reach and decides when the pot lands and explodes. The pot flies over terrain, lands with a lit fuse, and bursts. The blast tests player and mob positions and tile centers against an ellipse with a vertical radius of 60% of its horizontal radius. It skips the thrower and their soldiers. Free-form palisade cells take one existing wall hit per damage point.
 
 The Bomb category in Tuning defaults to 160 px throw range, 40 px horizontal blast radius, 1.0 s fuse, 1.5 s cooldown, and 2 damage.
 
-- **Host seam.** `test_bomb_shot` checks blast geometry, flight over a wall, validation, cooldown, fuse timing, and damage to actors and structures. About 1.5 s.
-- **Two peers.** `test_bomb_two_players` uses seed 11. Both replicas see the host's three phases and agree on enemy health and unchanged thrower health. A return throw exercises the client's request to the host. About 5–10 s per stress run.
-- **Live drive.** Run `bin/launch.sh drives/ranged_bow.gd --display`. Expect `bow-aim` with the aim cone, `bomb-mid-arc` with an unlit pot above the flight path, `bomb-landed-fuse` with the lit pot, and `bomb-explosion` with a short burst at the same landing point.
+- **Host seam.** `test_bomb_shot` checks a mid-range throw, blast geometry, flight over a wall, validation, cooldown, fuse timing, and damage to actors and palisades. About 1.5 s.
+- **Auto-target seam.** `test_bomb_auto_target` checks nearest in-range enemies, skips an allied soldier and a dead player, and checks the facing fallback. Under 1 s.
+- **Two peers.** `test_bomb_two_players` uses seed 11 and oversize requests in both directions to check the host range cap. Both replicas see the host's three phases and agree on enemy health and unchanged thrower health. About 5–10 s per stress run.
+- **Live drive.** Run `bin/launch.sh drives/ranged_bow.gd --display`. Expect `bomb-preview-short`, `bomb-preview-medium`, and `bomb-preview-long` to show the same blast area at increasing distances along a faint dashed trail. Expect `bomb-mid-arc` with an unlit pot, `bomb-landed-fuse` and `bomb-explosion` at the long preview's landing point, and `bomb-tap-auto-target` with a lit pot near the enemy.

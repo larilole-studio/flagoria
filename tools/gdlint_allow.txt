@@ -122,7 +122,6 @@ Scripts/player/player.gd	class-variable-name	Class-scope variable name "lastAnim
 Scripts/player/player.gd	function-name	Function name "updateAnimation" is not valid
 Scripts/player/player.gd	max-line-length	Max allowed line length (100) exceeded	cb352582155df4cc
 Scripts/player/player.gd	unused-argument	unused function argument 'anim_name'
-Scripts/player/player.gd	unused-argument	unused function argument 'event'
 Scripts/player/player_health.gd	class-definitions-order	Definition out of order in global scope	8baced8ad6c55b7e
 Scripts/saves/map_save.gd	max-line-length	Max allowed line length (100) exceeded	37ce007bf24ee323
 Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	26db0f4b0eae23d1

@@ -146,14 +146,25 @@ func _unhandled_input(event):
 	if PlayerCamera.map_covers_play(get_tree()):
 		return
 
-	if Input.is_action_just_pressed("attack"):
+	if not event.is_action_pressed("attack"):
+		return
+	if bomb_armed():
+		var aim := get_node_or_null("AttackAim") as AttackAim
+		if aim != null and aim.can_aim() and not aim.aiming:
+			PlayerCombat.throw_bomb(self, null)
+	else:
 		attack_animation.rpc()
 
 
-func attack_toward(direction: String, angle := NAN):
-	## An aimed attack (AttackAim). The bow tool sends one shot and does
-	## not swing. The sword path is the same call as before.
-	if not PlayerCombat.try_bow_shot(self, direction, angle):
+func bomb_armed() -> bool:
+	return PlayerCombat.bomb_armed(self)
+
+
+func attack_toward(direction: String, angle := NAN, bomb_reach: Variant = null):
+	## Bomb reach is a world offset. A missing offset auto-targets from the hero.
+	if bomb_armed():
+		PlayerCombat.throw_bomb(self, bomb_reach)
+	else:
 		attack_animation.rpc(direction, angle)
 
 
