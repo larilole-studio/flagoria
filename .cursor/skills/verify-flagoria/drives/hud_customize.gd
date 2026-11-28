@@ -444,7 +444,7 @@ func _arc_on_screen(wheel: ToolWheel) -> bool:
 			printerr("hud customize: %s off screen %s view %s" % [node_name, rect, view])
 			return false
 		if (
-			node_name == "Bow"
+			node_name == "Bomb"
 			and (
 				rect.get_center().distance_to(view.get_center()) + 4.0
 				< button.distance_to(view.get_center())

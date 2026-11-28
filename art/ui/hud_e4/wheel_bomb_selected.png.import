@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b5xte5d0a8my7"
-path="res://.godot/imported/wheel_bow_selected_pressed.png-ad551ddf42813c180dfc1d6b817bf635.ctex"
+uid="uid://behntv85t8qf3"
+path="res://.godot/imported/wheel_bomb_selected.png-7e748853e7934e6a3dfe87a3c7d58862.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/ui/hud_e4/wheel_bow_selected_pressed.png"
-dest_files=["res://.godot/imported/wheel_bow_selected_pressed.png-ad551ddf42813c180dfc1d6b817bf635.ctex"]
+source_file="res://art/ui/hud_e4/wheel_bomb_selected.png"
+dest_files=["res://.godot/imported/wheel_bomb_selected.png-7e748853e7934e6a3dfe87a3c7d58862.ctex"]
 
 [params]
 

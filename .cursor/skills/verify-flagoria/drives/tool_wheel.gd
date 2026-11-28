@@ -64,7 +64,7 @@ func run() -> void:
 		return
 
 	step("drag-select")
-	for tool in [ToolWheel.Tool.BOW, ToolWheel.Tool.SWORD, ToolWheel.Tool.CHOP]:
+	for tool in [ToolWheel.Tool.BOMB, ToolWheel.Tool.SWORD, ToolWheel.Tool.CHOP]:
 		var option: Control = wheel.get_node(ToolWheel.NAMES[tool])
 		var target := to_window(option, option.size * 0.5)
 		_touch(at, true)
@@ -102,7 +102,7 @@ func _selected(wheel: ToolWheel, interaction: Interaction, tool: ToolWheel.Tool)
 		not wheel.is_open()
 		and wheel.tool == tool
 		and interaction.mode == mode
-		and wheel.bow_armed() == (tool == ToolWheel.Tool.BOW)
+		and wheel.bomb_armed() == (tool == ToolWheel.Tool.BOMB)
 	)
 
 

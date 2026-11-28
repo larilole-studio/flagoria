@@ -14,7 +14,7 @@ const MENU_ART := 24.0
 
 const _FONT_PATH := "res://art/ui/fonts/LilitaOne-Regular.ttf"
 const _PLUM := Color("#3B1748")
-const _WHEEL: PackedStringArray = ["wheel_sword", "wheel_bow", "wheel_chop"]
+const _WHEEL: PackedStringArray = ["wheel_sword", "wheel_bomb", "wheel_chop"]
 static var _textures: Dictionary[String, Texture2D] = {}
 static var _labels: Dictionary[int, LabelSettings] = {}
 

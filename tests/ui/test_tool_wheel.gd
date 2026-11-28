@@ -1,5 +1,5 @@
 extends "res://tests/helpers/test_helpers.gd"
-## Tool wheel: hold or drag selects sword, bow or chop. A short tap swaps
+## Tool wheel: hold or drag selects sword, bomb or chop. A short tap swaps
 ## back. Keys do the same. A headless dedicated host builds no wheel (#574).
 
 
@@ -53,7 +53,7 @@ func _test_tool_wheel_keys() -> int:
 	_key(scene, KEY_DOWN, true)
 	await process_frame
 	_key(scene, KEY_DOWN, false)
-	if wheel.highlighted() != ToolWheel.Tool.BOW:
+	if wheel.highlighted() != ToolWheel.Tool.BOMB:
 		printerr("FAIL tool_wheel_keys: down highlight %s" % wheel.highlighted())
 		fail += 1
 	_key(scene, KEY_DOWN, true)
@@ -62,7 +62,7 @@ func _test_tool_wheel_keys() -> int:
 	_key(scene, KEY_UP, true)
 	await process_frame
 	_key(scene, KEY_UP, false)
-	if wheel.highlighted() != ToolWheel.Tool.BOW:
+	if wheel.highlighted() != ToolWheel.Tool.BOMB:
 		printerr("FAIL tool_wheel_keys: up highlight %s" % wheel.highlighted())
 		fail += 1
 	await _wheel(scene, MOUSE_BUTTON_WHEEL_DOWN)
@@ -77,15 +77,15 @@ func _test_tool_wheel_keys() -> int:
 		fail += 1
 	_key(scene, KEY_Q, false)
 	await process_frame
-	if wheel.is_open() or wheel.tool != ToolWheel.Tool.SWORD or wheel.bow_armed():
+	if wheel.is_open() or wheel.tool != ToolWheel.Tool.SWORD or wheel.bomb_armed():
 		printerr(
-			"FAIL tool_wheel_keys: releasing Q armed %s bow %s" % [wheel.tool, wheel.bow_armed()]
+			"FAIL tool_wheel_keys: releasing Q armed %s bomb %s" % [wheel.tool, wheel.bomb_armed()]
 		)
 		fail += 1
 	_key(scene, KEY_2, true)
 	_key(scene, KEY_2, false)
 	await process_frame
-	if not wheel.bow_armed() or interaction.mode != Interaction.Mode.COMBAT:
+	if not wheel.bomb_armed() or interaction.mode != Interaction.Mode.COMBAT:
 		printerr("FAIL tool_wheel_keys: key 2 tool %s mode %s" % [wheel.tool, interaction.mode])
 		fail += 1
 	_key(scene, KEY_3, true)
@@ -94,12 +94,12 @@ func _test_tool_wheel_keys() -> int:
 	if (
 		wheel.tool != ToolWheel.Tool.CHOP
 		or interaction.mode != Interaction.Mode.INTERACT
-		or wheel.bow_armed()
+		or wheel.bomb_armed()
 	):
 		printerr(
 			(
-				"FAIL tool_wheel_keys: key 3 tool %s mode %s bow %s"
-				% [wheel.tool, interaction.mode, wheel.bow_armed()]
+				"FAIL tool_wheel_keys: key 3 tool %s mode %s bomb %s"
+				% [wheel.tool, interaction.mode, wheel.bomb_armed()]
 			)
 		)
 		fail += 1
@@ -109,7 +109,7 @@ func _test_tool_wheel_keys() -> int:
 	if (
 		wheel.tool != ToolWheel.Tool.SWORD
 		or interaction.mode != Interaction.Mode.COMBAT
-		or wheel.bow_armed()
+		or wheel.bomb_armed()
 	):
 		printerr("FAIL tool_wheel_keys: key 1 tool %s mode %s" % [wheel.tool, interaction.mode])
 		fail += 1

@@ -238,14 +238,10 @@ tests/mechanics/building/test_construction_placer.gd	duplicated-load	duplicated 
 tests/mechanics/building/test_construction_placer.gd	max-line-length	Max allowed line length (100) exceeded	5f7b57dcefb765c0
 tests/mechanics/building_blocks/test_building_merge.gd	unused-argument	unused function argument 'first'
 tests/mechanics/building_blocks/test_building_merge.gd	unused-argument	unused function argument 'second'
-tests/mechanics/combat/test_ranged_shot.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
 tests/mechanics/day_night/test_night_mobs.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/mechanics/interactables/test_bushes.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/mechanics/interactables/test_interactable_catalog.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/mechanics/interactables/test_interactable_catalog.gd	max-line-length	Max allowed line length (100) exceeded	702bfaf97b6ea012
-tests/mechanics/npcs/test_soldier_fight.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
-tests/mechanics/npcs/test_soldier_fight.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
-tests/mechanics/npcs/test_soldier_fight.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
 tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"
 tests/mechanics/npcs/test_soldier_player.gd	duplicated-load	duplicated loading of "res://Scripts/player/character_body_2d.tscn"

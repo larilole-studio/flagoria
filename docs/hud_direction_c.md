@@ -42,6 +42,6 @@ Keep the approved centre **(77, 201)**. The 56×56 base then occupies (49, 173, 
 
 Pressed faces shift down and turn deep green. Map and picker selection add a
 gold ring. Buildings shows a close icon in a gold ring while the picker is
-open. The tool wheel switches among sword, bow, and axe icons. Attack has
+open. The tool wheel switches among sword, bomb, and axe icons. Attack has
 an off-white charge arc and a gold aim arc. Disabled discs use a muted
 mauve face and lighter sage marks.

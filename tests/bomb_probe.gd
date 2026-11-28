@@ -44,7 +44,7 @@ func _run() -> void:
 			if not fired and FileAccess.file_exists(probe_out + ".fire"):
 				fired = true
 				var wheel := main.get_node("CanvasLayer1/ToolWheel") as ToolWheel
-				wheel.select(ToolWheel.Tool.BOW)
+				wheel.select(ToolWheel.Tool.BOMB)
 				var reach := Vector2(240, 0) if host else Vector2(-240, 0)
 				me.attack_toward("", NAN, reach)
 			for phase in BombThrows.Phase.values():
