@@ -6,6 +6,7 @@ const PANEL := "CanvasLayer2/MapAdminPanel"
 const ADVANCED := PANEL + "/Margin/VBox/Advanced"
 const COMMON := PANEL + "/Margin/VBox/Simple"
 const RAW := PANEL + "/Margin/VBox/Scroll"
+const FORM := RAW + "/Form"
 const BACK := PANEL + "/Margin/VBox/ButtonsDefaults/Back"
 const START := PANEL + "/Margin/VBox/Buttons2/Start"
 ## The five action buttons, in row order.
@@ -59,7 +60,29 @@ func run() -> void:
 	step("advanced")
 	await click(ADVANCED)
 	layout_ok = _buttons_fit("advanced") and raw.visible and not simple.visible and layout_ok
+	var seeds: Control = current_scene.get_node(FORM + "/Seeds/Rows")
+	var chunks: Control = current_scene.get_node(FORM + "/Chunks/Rows")
+	layout_ok = (
+		_only_group_open("Seeds")
+		and raw.get_global_rect().encloses(seeds.get_global_rect())
+		and layout_ok
+	)
 	await snapshot("map-settings-advanced")
+
+	step("collapse-seeds")
+	await click(FORM + "/Seeds/Header")
+	layout_ok = _only_group_open("") and layout_ok
+	step("expand-chunks")
+	await click(FORM + "/Chunks/Header")
+	layout_ok = _only_group_open("Chunks") and layout_ok
+	await _scroll_down(raw, 3.2)
+	layout_ok = raw.get_global_rect().encloses(chunks.get_global_rect()) and layout_ok
+	await snapshot("map-settings-chunks")
+	step("collapse-chunks")
+	await click(FORM + "/Chunks/Header")
+	layout_ok = _only_group_open("") and layout_ok
+	await _scroll_down(raw, 4.0)
+	await snapshot("map-settings-collapsed")
 	await click(ADVANCED)
 
 	step("back")
@@ -74,6 +97,10 @@ func run() -> void:
 		_fail("Back did not return to Worlds")
 		return
 	await click(MAP_SETTINGS_BUTTON)
+	step("reopen-advanced")
+	await click(ADVANCED)
+	layout_ok = _only_group_open("Seeds") and layout_ok
+	await click(ADVANCED)
 	step("host-with-these")
 	await click(START)
 	if not await wait_until(func() -> bool: return hero() != null, START_TIMEOUT_S):
@@ -81,6 +108,28 @@ func run() -> void:
 		return
 	await snapshot("spawn")
 	done(layout_ok)
+
+
+func _only_group_open(open_group: String) -> bool:
+	for group in current_scene.get_node(FORM).get_children():
+		if group.get_node("Rows").is_visible_in_tree() != (group.name == open_group):
+			printerr("Map Settings: unexpected row visibility for ", group.name)
+			return false
+	return true
+
+
+func _scroll_down(scroll: Control, amount: float) -> void:
+	var at := to_window(scroll, Vector2(8, scroll.size.y / 2.0))
+	for pressed in [true, false]:
+		var event := InputEventMouseButton.new()
+		event.button_index = MOUSE_BUTTON_WHEEL_DOWN
+		event.pressed = pressed
+		event.factor = amount
+		event.position = at
+		event.global_position = at
+		Input.parse_input_event(event)
+		await process_frame
+		await process_frame
 
 
 func _resize(width: int, height: int) -> Vector2i:
