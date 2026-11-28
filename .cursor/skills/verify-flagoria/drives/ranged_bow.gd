@@ -1,6 +1,6 @@
 extends "res://.cursor/skills/verify-flagoria/bin/drive_base.gd"
 ## launch: --seed 49
-## Touch bomb aim, the three phases of a throw, and a tap at a nearby enemy.
+## Touch bomb aim, the clay pot HUD icon, cooldown, and a tap at a nearby enemy.
 
 
 func run() -> void:
@@ -14,8 +14,26 @@ func run() -> void:
 	await tap_key(KEY_2)
 	var ok := await wait_until(wheel.bow_armed, 2.0)
 
+	step("hud icon")
+	var tool_button: Button = wheel.get_node("ToolButton")
+	ok = ok and _icon_is(tool_button, "wheel_bow")
+	await snapshot("bomb-hud-icon")
+
+	step("open wheel")
+	var at := to_window(tool_button, tool_button.size * 0.5)
+	_touch_at(at, true)
+	ok = await wait_until(wheel.is_open, 2.0) and ok
+	await snapshot("bomb-wheel-open")
+	_touch_at(at, false)
+	await process_frame
+	ok = wheel.bow_armed() and not wheel.is_open() and ok
+
 	var center: Vector2 = root.get_final_transform() * aim.attack_button().aim_center()
 	if not await _tap_enemy(bombs, center):
+		done(false)
+		return
+
+	if not await _cooldown_throw(bombs, center):
 		done(false)
 		return
 
@@ -73,9 +91,48 @@ func _tap_enemy(bombs: BombThrows, center: Vector2) -> bool:
 		return false
 	await process_frame
 	await snapshot("bomb-tap-auto-target")
+	_touch_at(center, true)
+	await process_frame
+	_touch_at(center, false)
+	await process_frame
+	var sender := str(hero().name).to_int()
+	if bombs.is_ready(sender) or bombs.has_phase(BombThrows.Phase.FLIGHT):
+		printerr("ranged_bow: second throw during cooldown was accepted")
+		return false
+	await snapshot("bomb-cooldown-rejected")
 	if not await wait_until(func() -> bool: return bombs.has_phase(BombThrows.Phase.BLAST), 2.0):
 		return false
 	return await wait_until(func() -> bool: return not bombs.has_phase(BombThrows.Phase.BLAST), 2.0)
+
+
+func _cooldown_throw(bombs: BombThrows, center: Vector2) -> bool:
+	step("throw after cooldown")
+	var sender := str(hero().name).to_int()
+	if not await wait_until(func() -> bool: return bombs.is_ready(sender), 3.0):
+		printerr("ranged_bow: cooldown did not elapse")
+		return false
+	_touch_at(center, true)
+	await process_frame
+	_touch_at(center, false)
+	if not await wait_until(func() -> bool: return bombs.has_phase(BombThrows.Phase.FUSE), 2.0):
+		printerr("ranged_bow: throw after cooldown did not land")
+		return false
+	await process_frame
+	await snapshot("bomb-cooldown-ready")
+	if not await wait_until(func() -> bool: return bombs.has_phase(BombThrows.Phase.BLAST), 2.0):
+		return false
+	return await wait_until(func() -> bool: return not bombs.has_phase(BombThrows.Phase.BLAST), 2.0)
+
+
+func _icon_is(button: Button, sprite: String) -> bool:
+	var style := button.get_theme_stylebox("normal") as StyleBoxTexture
+	return (
+		style != null
+		and (
+			style.texture == RoundHudStyle.texture(sprite + "_normal")
+			or style.texture == RoundHudStyle.texture(sprite + "_selected")
+		)
+	)
 
 
 func _touch_at(point: Vector2, pressed: bool) -> void:

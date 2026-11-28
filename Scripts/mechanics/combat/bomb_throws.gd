@@ -113,6 +113,10 @@ func resolve(sender_id: int, origin: Vector2, reach: Vector2) -> bool:
 	return true
 
 
+func is_ready(sender_id: int) -> bool:
+	return Time.get_ticks_msec() >= _cooldown_until.get(sender_id, 0)
+
+
 func has_phase(phase: Phase) -> bool:
 	for pot in _pots.values():
 		if pot.phase == phase:
