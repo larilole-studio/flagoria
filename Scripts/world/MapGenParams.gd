@@ -22,6 +22,7 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 @export_storage var cay_trees: bool = true
 
 # Seeds (0 means "pick a random seed when applied", matching prior randi() behaviour)
+@export_group("Seeds")
 @export var altitude_seed: int = 0
 @export var moisture_seed: int = 0
 @export var temperature_seed: int = 0
@@ -29,6 +30,7 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 @export var biome_seed: int = 0
 
 # FastNoiseLite — engine defaults except items frequency which was hardcoded to 1
+@export_group("Noise")
 @export var noise_type: int = 1  # FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 @export_range(0.001, 1.0, 0.001) var altitude_frequency: float = 0.01
 @export_range(0.001, 1.0, 0.001) var moisture_frequency: float = 0.01
@@ -61,12 +63,14 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 @export_range(0.0, 2.0, 0.05) var fractal_gain: float = 0.5
 
 # Chunk generation size around the player
+@export_group("Chunks")
 @export_range(8, 128) var chunk_width: int = 32
 @export_range(8, 128) var chunk_height: int = 32
 # Frames between chunk regenerations around the local player
 @export_range(1, 120) var chunk_refresh_frames: int = 15
 
 # Terrain altitude thresholds (layer 0)
+@export_group("Terrain")
 @export_range(-1.0, 1.0, 0.01) var water_max_alt: float = 0.2
 @export_range(-1.0, 1.0, 0.01) var sand_max_alt: float = 0.25
 @export_range(-1.0, 1.0, 0.01) var swamp_special_alt: float = 0.26
@@ -95,6 +99,7 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 @export_range(-1.0, 1.0, 0.05) var ground_chance_c: float = 0.75
 
 # Foliage (layer 1)
+@export_group("Foliage")
 @export_range(-1.0, 1.0, 0.01) var bush_min_alt: float = 0.3
 @export_range(-1.0, 1.0, 0.01) var bush_max_alt: float = 0.4
 @export_range(-1.0, 1.0, 0.05) var bush_min_chance: float = 0.0
@@ -128,6 +133,7 @@ const BIOME_FREQUENCIES := [0.006, 0.003, 0.002]
 # On-demand WFC building (#26). Width and height are the footprint in cells.
 # Style 0 keeps the stone piece tiles; style 1 remaps walls onto the moss set
 # and shifts the solve seed. The host sends the values used for each building.
+@export_group("Game")
 @export_range(5, 16) var building_width: int = 6
 @export_range(5, 16) var building_height: int = 5
 @export_range(0, 1) var building_style: int = 0
@@ -369,10 +375,17 @@ func ensure_seeds() -> void:
 
 
 func exported_properties() -> Array[Dictionary]:
-	## Property-list entries for every @export variable, in declaration order.
+	## Editor-visible exports in declaration order, with their @export_group names.
 	var props: Array[Dictionary] = []
+	var group := ""
 	for prop in get_property_list():
-		if prop["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE and prop["usage"] & PROPERTY_USAGE_EDITOR:
+		var usage: int = prop["usage"]
+		if usage & PROPERTY_USAGE_CATEGORY:
+			group = ""
+		elif usage & PROPERTY_USAGE_GROUP:
+			group = prop["name"]
+		elif usage & PROPERTY_USAGE_SCRIPT_VARIABLE and usage & PROPERTY_USAGE_EDITOR:
+			prop["group"] = group
 			props.append(prop)
 	return props
 

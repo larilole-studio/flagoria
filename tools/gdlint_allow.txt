@@ -124,15 +124,6 @@ Scripts/player/player.gd	max-line-length	Max allowed line length (100) exceeded	
 Scripts/player/player.gd	unused-argument	unused function argument 'anim_name'
 Scripts/player/player_health.gd	class-definitions-order	Definition out of order in global scope	8baced8ad6c55b7e
 Scripts/saves/map_save.gd	max-line-length	Max allowed line length (100) exceeded	37ce007bf24ee323
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	26db0f4b0eae23d1
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	39f8f92fb63ce1ea
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	7605f8b426b54630
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	7cab0638593fc973
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	82f4386fc793839b
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	d7d131b5a788ca74
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	de3014c9185ccfc0
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	e9ea3c4bbb6a33e4
-Scripts/ui/MapAdminPanel.gd	class-definitions-order	Definition out of order in global scope	f32c71338830e65f
 Scripts/ui/hud_layout.gd	class-definitions-order	Definition out of order in global scope	1ad8646697da83c0
 Scripts/ui/hud_layout.gd	class-definitions-order	Definition out of order in global scope	8a0adf5b6af7b064
 Scripts/ui/hud_layout.gd	max-public-methods	"Class global scope" has more than 20 public methods (functions)
@@ -359,11 +350,6 @@ tests/world/test_decorations.gd	function-variable-name	Function-scope variable n
 tests/world/test_island_shape.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/world/test_island_shape.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/world/test_island_shape.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
-tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
-tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
-tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
-tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
-tests/world/test_map_settings.gd	duplicated-load	duplicated loading of "res://Scripts/ui/map_admin_panel.tscn"
 tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"
 tests/world/test_spawn.gd	duplicated-load	duplicated loading of "res://flagoria_main.tscn"

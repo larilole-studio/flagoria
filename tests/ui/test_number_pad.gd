@@ -11,7 +11,7 @@ func _test_number_pad_first_key_replaces() -> int:
 	panel.find_child("Advanced").button_pressed = true
 	var pad = panel.get_node("NumberPad")
 	var fail := 0
-	var seed_field: LineEdit = panel.find_child("ItemsSeed")
+	var seed_field: LineEdit = panel.find_child("ItemsSeed", true, false)
 	for how in ["focus", "tap"]:
 		seed_field.release_focus()
 		pad.close()
@@ -46,6 +46,7 @@ func _test_number_pad_first_key_replaces() -> int:
 			fail += 1
 	pad.close()
 	seed_field.release_focus()
+	panel.get_node("Margin/VBox/Scroll/Form/Terrain/Header").button_pressed = true
 	var spin: SpinBox = panel._spin_boxes["ground_chance_a"]
 	var field := spin.get_line_edit()
 	for lone in ["-", "."]:
@@ -127,7 +128,7 @@ func _test_number_pad_keycap_style() -> int:
 		if not theme.get_type_variation_list(&"Button").has(StringName(type)):
 			printerr("FAIL number_pad_keycap_style theme has no %s button style" % type)
 			fail += 1
-	panel.find_child("ItemsSeed").grab_focus()
+	panel.find_child("ItemsSeed", true, false).grab_focus()
 	await process_frame
 	var want := {"Digit5": &"KeyCap", "Delete": &"KeyCapDelete", "OK": &"KeyCapOK"}
 	for key in want:
